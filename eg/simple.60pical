@@ -1,0 +1,19 @@
+assign word fnord 4000
+assign byte blerf 4002
+
+reserve byte foo
+reserve word bar
+
+routine hello {
+    lda fnord
+    cmp blerf
+    lda foo
+}
+
+routine bye {
+    lda fnord
+    cmp bar
+}
+
+routine byee {
+}

@@ -1,0 +1,14 @@
+reserve byte m_high
+reserve byte m_low
+reserve byte n_high
+reserve byte n_low
+
+routine compare_16_bit {
+    lda m_high
+    cmp n_high
+    beq {
+        lda m_low
+        cmp n_low
+    } else {
+    }
+}
