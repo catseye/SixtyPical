@@ -1,7 +1,6 @@
 -- encoding: UTF-8
 
 module Main where
---module Sixtype where
 
 import qualified Data.Map as Map
 
@@ -189,7 +188,13 @@ block = do
     return cs
 
 command :: Parser Instruction
-command = cmp <|> lda <|> beq
+command = cmp <|> lda <|> beq <|> nop
+
+nop :: Parser Instruction
+nop = do
+    string "nop"
+    spaces
+    return NOP
 
 cmp :: Parser Instruction
 cmp = do
@@ -237,24 +242,22 @@ address = do
 
 -- -- -- -- driver -- -- -- --
 
+usage = do
+    putStrLn "Usage: sixtypical (parse|check) filename.60pical"
+    exitWith $ ExitFailure 1
+
 main = do
     args <- getArgs
     case args of
-        [filename] -> do
+        [verb, filename] -> do
             programText <- readFile filename
-            case parse toplevel "" programText of
-                Right program -> do
+            case (verb, parse toplevel "" programText) of
+                ("parse", Right program) -> do
                     putStrLn $ show $ program
+                ("check", Right program) -> do
                     putStrLn $ show $ checkProgram program
-                Left problem -> do
+                (_, Left problem) -> do
                     hPutStrLn stderr (show problem)
                     exitWith $ ExitFailure 1
-        _ -> do
-            putStrLn "Usage: sixtypical filename.60pical"
-            exitWith $ ExitFailure 1
-
-{-
-test = checkProgram [(Routine "wait" [LOAD Y "score", COPY Y A]),
-                     (Routine "main" [LOAD X "score", JSR "wait"])]
-                    Map.empty
--}
+                (_, _) -> usage
+        _ -> usage
