@@ -148,3 +148,12 @@ Even in inner blocks.
     |    }
     | }
     ? undeclared location
+
+No duplicate declarations.
+
+    | reserve word score
+    | assign word score 4000
+    | routine main {
+    |    nop
+    | }
+    ? duplicate declaration

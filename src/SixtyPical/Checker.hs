@@ -14,11 +14,12 @@ routineDeclared routName (Program _ routines) =
     where
         getRoutineName (Routine name _) = name
 
+getDeclLocationName (Assign name _ _) = name
+getDeclLocationName (Reserve name _) = name
+
 locationDeclared locName (Program decls _) =
-    elem locName (map (getLocationName) decls)
+    elem locName (map (getDeclLocationName) decls)
     where
-        getLocationName (Assign name _ _) = name
-        getLocationName (Reserve name _) = name
 
 routineUsedLocations (Routine _ instrs) = blockUsedLocations instrs
 
@@ -41,6 +42,21 @@ allRoutineLocationsDeclared program routine =
 allUsedLocationsDeclared p@(Program _ routines) =
     allTrue (map (allRoutineLocationsDeclared p) routines)
 
+noDuplicateDecls p@(Program decls routines) =
+    collectDecls decls []
+    where
+        collectDecls [] acc = True
+        collectDecls (decl:decls) acc =
+            if
+                name `elem` acc
+              then
+                 error ("duplicate declaration '" ++ name ++ "'")
+              else
+                 collectDecls decls (name:acc)
+            where
+                name = getDeclLocationName decl
+
 checkProgram program =
     trueOrDie "missing 'main' routine" (routineDeclared "main" program) &&
-      trueOrDie "undeclared location" (allUsedLocationsDeclared program)
+      trueOrDie "undeclared location" (allUsedLocationsDeclared program) &&
+      noDuplicateDecls program
