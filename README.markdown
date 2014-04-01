@@ -110,9 +110,9 @@ Tests
 A program may reserve and assign.
 
     | reserve word score
-    | assign word scram 4000
+    | assign word screen 4000
     | routine main {
-    |    lda scram
+    |    lda screen
     |    cmp score
     | }
     = True
@@ -120,7 +120,31 @@ A program may reserve and assign.
 All declarations (`reserve`s and `assign`s) must come before any `routines`.
 
     | routine main {
-    |    lda scram
+    |    lda score
     | }
     | reserve word score
     ? expecting "routine"
+
+All locations used in all routines must be declared first.
+
+    | reserve word score
+    | routine main {
+    |    lda score
+    |    cmp screen
+    | }
+    ? undeclared location
+
+Even in inner blocks.
+
+    | reserve word score
+    | assign word screen 4000
+    | routine main {
+    |    lda score
+    |    cmp screen
+    |    beq {
+    |      lda score
+    |    } else {
+    |      lda fnord
+    |    }
+    | }
+    ? undeclared location
