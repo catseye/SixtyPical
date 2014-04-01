@@ -15,8 +15,11 @@ Routine  := "routine" RoutineName Block.
 Block    := "{" {Command} "}".
 Command  := "beq" Block "else" Block
           | "lda" (LocationName | Immediate)
+          | "ldx" (LocationName | Immediate)
+          | "ldy" (LocationName | Immediate)
           | "txa" | "tax" | "tya" | "tay"
           | "cmp" (LocationName | Immediate)
+          | "nop".
 
 -}
 
@@ -70,7 +73,9 @@ block = do
     return cs
 
 command :: Parser Instruction
-command = cmp <|> lda <|> beq <|> nop
+command = cmp <|> (try lda) <|> (try ldx) <|> (try ldy) <|>
+          (try txa) <|> (try tax) <|> (try tya) <|> (try tay) <|>
+          beq <|> nop
 
 nop :: Parser Instruction
 nop = do
@@ -91,6 +96,44 @@ lda = do
     spaces
     l <- locationName
     return (LOAD A l)
+
+ldx :: Parser Instruction
+ldx = do
+    string "ldx"
+    spaces
+    l <- locationName
+    return (LOAD X l)
+
+ldy :: Parser Instruction
+ldy = do
+    string "ldy"
+    spaces
+    l <- locationName
+    return (LOAD Y l)
+
+txa :: Parser Instruction
+txa = do
+    string "txa"
+    spaces
+    return (COPY X A)
+
+tax :: Parser Instruction
+tax = do
+    string "tax"
+    spaces
+    return (COPY A X)
+
+tya :: Parser Instruction
+tya = do
+    string "tya"
+    spaces
+    return (COPY Y A)
+
+tay :: Parser Instruction
+tay = do
+    string "tay"
+    spaces
+    return (COPY A Y)
 
 beq :: Parser Instruction
 beq = do

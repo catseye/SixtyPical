@@ -70,17 +70,36 @@ An address knows if it is an address of a byte, of a word, or of a table.
 
 ### Blocks ###
 
-Each routine is a block.  It may be composed of inner blocks.
+Each routine is a block.  It may be composed of inner blocks, attached to
+some instructions.
 
 SixtyPical does not have instructions that map literally to the 6502 branch
 instructions.  Instead, each branch instruction has a corresponding
-"if-then-else"-like construct with the same name as the branch.
+"if-then-else"-like construct with the same name as the branch instruction.
+These _test_ instructions each have two blocks, for the then and the else.
 
 The abstract states of the machine at each of the different block exits are
 merged during analysis.  If any register or memory location is treated
 inconsistently (e.g. updated in one branch of the test, but not the other,)
 that register cannot subsequently be used without a declaration to the effect
 that we know what's going on.  (This is all a bit fuzzy right now.)
+
+There is also no `rts` instruction.  It is included at the end of a routine,
+but only when the routine is used as a subroutine.
+
+There are also _with_ instructions, which are associated with an opcode
+that has a natural symmetrical opcode (e.g. `pha`, `sei`).  These instructions
+take a block.  The natural symmetrical opcode is inserted at the end of the
+block.
+
+TODO
+----
+
+*   Parse HEX values like $40A3
+*   Full machine model
+*   Check before analyzing
+*   Check, analyze, generate
+*   Addressing modes; rename instructions to match
 
 Tests
 -----
@@ -113,7 +132,13 @@ A program may reserve and assign.
     | assign word screen 4000
     | routine main {
     |    lda screen
+    |    tax
+    |    tay
     |    cmp score
+    |    ldx score
+    |    txa
+    |    ldy score
+    |    tya
     | }
     = True
 
