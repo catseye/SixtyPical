@@ -262,10 +262,12 @@ TODO
 ----
 
 *   Parse HEX values like $40A3
-*   Fuller machine model
+*   Tables
+*   Character tables ("strings" to everybody else)
+*   External routines
+*   Work out the analyses again and document them
 *   parse support immediate loads, compares
 *   Addressing modes; rename instructions to match
-*   Generate code for BEQ
 
 Tests
 -----
@@ -391,5 +393,34 @@ No duplicate declarations.
     =   ldy score
     =   cpy screen
     =   tya
+    =   sta screen
+    =   rts
+
+    | assign word screen 4000
+    | routine main {
+    |    lda screen
+    |    cmp screen
+    |    if beq {
+    |        tax
+    |    } else {
+    |        tay
+    |    }
+    |    sta screen
+    | }
+    = .org 0
+    = .word $0801
+    = .org $0801
+    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
+    =   jmp main
+    = .alias screen 4000
+    = main:
+    =   lda screen
+    =   cmp screen
+    =   BEQ _label
+    =   tay
+    =   jmp _past
+    = _label:
+    =   tax
+    = _past:
     =   sta screen
     =   rts
