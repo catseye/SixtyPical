@@ -198,7 +198,11 @@ No duplicate declarations.
     |    ldy score
     |    tya
     | }
-    = .org $c000
+    = .org 0
+    = .word $0801
+    = .org $0801
+    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
+    =   jmp main
     = score: .word 0
     = .alias screen 4000
     = main:

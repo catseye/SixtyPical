@@ -4,8 +4,15 @@ module SixtyPical.Emitter where
 
 import SixtyPical.Model
 
+basicHeader =
+    ".org 0\n" ++
+    ".word $0801\n" ++
+    ".org $0801\n" ++
+    ".byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00\n" ++
+    "  jmp main\n"
+
 emitProgram p@(Program decls routines) =
-    ".org $c000\n" ++
+    basicHeader ++
     emitDecls p decls ++
     emitRoutines p routines
 
