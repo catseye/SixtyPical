@@ -177,20 +177,20 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
       cpy absolute
     X cpy #immediate
     
-    X dec absolute
+      dec absolute
     
-    X dex
+      dex
     
-    X dey
+      dey
     
     X eor #immediate
     X eor absolute
     
-    X inc absolute
+      inc absolute
     
-    X inx
+      inx
     
-    X iny
+      iny
     
     ! jmp
     
@@ -267,6 +267,8 @@ TODO
 *   External routines
 *   Work out the analyses again and document them
 *   parse support immediate loads, compares
+*   number ifs and repeats
+*   hello, world sort of program
 *   Addressing modes; rename instructions to match
 
 Tests
@@ -360,9 +362,14 @@ No duplicate declarations.
     | assign word screen 4000
     | routine main {
     |    lda screen
+    |    inc screen
     |    tax
+    |    inx
+    |    dex
     |    stx score
     |    tay
+    |    iny
+    |    dey
     |    sty score
     |    cmp score
     |    ldx score
@@ -372,6 +379,7 @@ No duplicate declarations.
     |    cpy screen
     |    tya
     |    sta screen
+    |    dec screen
     | }
     = .org 0
     = .word $0801
@@ -382,9 +390,14 @@ No duplicate declarations.
     = .alias screen 4000
     = main:
     =   lda screen
+    =   inc screen
     =   tax
+    =   inx
+    =   dex
     =   stx score
     =   tay
+    =   iny
+    =   dey
     =   sty score
     =   cmp score
     =   ldx score
@@ -394,6 +407,7 @@ No duplicate declarations.
     =   cpy screen
     =   tya
     =   sta screen
+    =   dec screen
     =   rts
 
     | assign word screen 4000

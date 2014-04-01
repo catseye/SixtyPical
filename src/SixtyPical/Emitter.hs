@@ -50,6 +50,13 @@ emitInstr p r (CMP A (NamedLocation label)) = "cmp " ++ label
 emitInstr p r (CMP X (NamedLocation label)) = "cpx " ++ label
 emitInstr p r (CMP Y (NamedLocation label)) = "cpy " ++ label
 
+emitInstr p r (DELTA X 1) = "inx"
+emitInstr p r (DELTA X (-1)) = "dex"
+emitInstr p r (DELTA Y 1) = "iny"
+emitInstr p r (DELTA Y (-1)) = "dey"
+emitInstr p r (DELTA (NamedLocation label) 1) = "inc " ++ label
+emitInstr p r (DELTA (NamedLocation label) (-1)) = "dec " ++ label
+
 emitInstr p r (COPY A X) = "tax"
 emitInstr p r (COPY A Y) = "tay"
 emitInstr p r (COPY X A) = "txa"

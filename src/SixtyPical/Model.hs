@@ -54,6 +54,7 @@ data Instruction = LOADIMM StorageLocation DataValue
                  | CMP StorageLocation StorageLocation
                  | JSR RoutineName
                  | IF Branch [Instruction] [Instruction]
+                 | DELTA StorageLocation DataValue
                  | NOP
     deriving (Show, Ord, Eq)
 

@@ -21,6 +21,7 @@ Command  := "if" Branch Block "else" Block
           | "cmp" (LocationName | Immediate)
           | "cpx" (LocationName | Immediate)
           | "cpy" (LocationName | Immediate)
+          | "inx" | "iny" | "dex" | "dey"
           | "nop".
 Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
@@ -80,6 +81,8 @@ command = (try lda) <|> (try ldx) <|> (try ldy) <|>
           (try sta) <|> (try stx) <|> (try sty) <|>
           (try txa) <|> (try tax) <|> (try tya) <|> (try tay) <|>
           (try cmp) <|> (try cpx) <|> (try cpy) <|>
+          (try inx) <|> (try iny) <|> (try dex) <|> (try dey) <|>
+          (try inc) <|> (try dec) <|>
           if_statement <|> nop
 
 nop :: Parser Instruction
@@ -87,6 +90,44 @@ nop = do
     string "nop"
     spaces
     return NOP
+
+inx :: Parser Instruction
+inx = do
+    string "inx"
+    spaces
+    return $ DELTA X 1
+
+iny :: Parser Instruction
+iny = do
+    string "iny"
+    spaces
+    return $ DELTA Y 1
+
+dex :: Parser Instruction
+dex = do
+    string "dex"
+    spaces
+    return $ DELTA X (-1)
+
+dey :: Parser Instruction
+dey = do
+    string "dey"
+    spaces
+    return $ DELTA Y (-1)
+
+inc :: Parser Instruction
+inc = do
+    string "inc"
+    spaces
+    l <- locationName
+    return (DELTA (NamedLocation l) 1)
+
+dec :: Parser Instruction
+dec = do
+    string "dec"
+    spaces
+    l <- locationName
+    return (DELTA (NamedLocation l) (-1))
 
 cmp :: Parser Instruction
 cmp = do
