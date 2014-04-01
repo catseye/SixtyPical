@@ -56,10 +56,12 @@ assign = do
 get_storage "byte" = Byte
 get_storage "word" = Word
 get_storage "vector" = Vector
+get_storage "byte table" = ByteTable
 
 storage_type :: Parser StorageType
 storage_type = do
-    s <- (string "byte") <|> (string "word") <|> (string "vector")
+    s <- (try $ string "byte table") <|> (string "byte") <|>
+         (string "word") <|> (string "vector")
     spaces
     return $ get_storage s
 
@@ -107,31 +109,31 @@ clc :: Parser Instruction
 clc = do
     string "clc"
     spaces
-    return $ LOADIMM FlagC 0
+    return $ PUT FlagC 0
 
 cld :: Parser Instruction
 cld = do
     string "cld"
     spaces
-    return $ LOADIMM FlagD 0
+    return $ PUT FlagD 0
 
 clv :: Parser Instruction
 clv = do
     string "clv"
     spaces
-    return $ LOADIMM FlagV 0
+    return $ PUT FlagV 0
 
 sec :: Parser Instruction
 sec = do
     string "sec"
     spaces
-    return $ LOADIMM FlagC 1
+    return $ PUT FlagC 1
 
 sed :: Parser Instruction
 sed = do
     string "sed"
     spaces
-    return $ LOADIMM FlagD 1
+    return $ PUT FlagD 1
 
 inx :: Parser Instruction
 inx = do
@@ -203,25 +205,33 @@ absolute f = do
     l <- locationName
     return $ f l
 
+index :: Parser StorageLocation
+index = do
+    string ","
+    spaces
+    string "x"
+    spaces
+    return X
+
 lda :: Parser Instruction
 lda = do
     string "lda"
     spaces
-    (try $ immediate (\v -> LOADIMM A v) <|>
+    (try $ immediate (\v -> PUT A v) <|>
      absolute (\l -> COPY (NamedLocation l) A))
 
 ldx :: Parser Instruction
 ldx = do
     string "ldx"
     spaces
-    (try $ immediate (\v -> LOADIMM X v) <|>
+    (try $ immediate (\v -> PUT X v) <|>
      absolute (\l -> COPY (NamedLocation l) X))
 
 ldy :: Parser Instruction
 ldy = do
     string "ldy"
     spaces
-    (try $ immediate (\v -> LOADIMM Y v) <|>
+    (try $ immediate (\v -> PUT Y v) <|>
      absolute (\l -> COPY (NamedLocation l) Y))
 
 sta :: Parser Instruction
@@ -229,7 +239,12 @@ sta = do
     string "sta"
     spaces
     l <- locationName
-    return (COPY A (NamedLocation l))
+    indexes <- many index
+    return $ case indexes of
+        [] ->
+            COPY A (NamedLocation l)
+        [X] ->
+            COPYINDEXED A (NamedLocation l) X
 
 stx :: Parser Instruction
 stx = do

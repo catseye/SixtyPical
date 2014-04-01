@@ -41,6 +41,7 @@ allRegisters = [A, X, Y, FlagN, FlagV, FlagD, FlagZ, FlagC]
 data StorageType = Byte
                  | Word
                  | Vector
+                 | ByteTable
     deriving (Show, Ord, Eq)
 
 data Decl = Assign LocationName StorageType Address -- .alias
@@ -52,8 +53,9 @@ type RoutineName = String
 data Branch = BCC | BCS | BEQ | BMI | BNE | BPL | BVC | BVS
     deriving (Show, Ord, Eq)
 
-data Instruction = LOADIMM StorageLocation DataValue
+data Instruction = PUT StorageLocation DataValue
                  | COPY StorageLocation StorageLocation
+                 | COPYINDEXED StorageLocation StorageLocation StorageLocation
                  | CMPIMM StorageLocation DataValue
                  | CMP StorageLocation StorageLocation
                  | JSR RoutineName

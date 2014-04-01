@@ -80,13 +80,13 @@ An address knows what kind of data is stored at the address:
     *   copying the address of a routine into a vector
     *   jumping indirectly to a vector (i.e. to the code at the address
         contained in the vector (and this can only happen at the end of a
-        routine)
+        routine (NYI))
     *   `jsr`'ing indirectly to a vector (which is done with a fun
-        generated trick
+        generated trick (NYI))
     
-*   `byte table`: (not yet implemented) a series of `byte`s
-    contiguous in memory starting from the address.
-    this is the only kind of address that can be used in indexed addressing.
+*   `byte table`: a series of `byte`s contiguous in memory starting from the
+    address.  This is the only kind of address that can be used in
+    indexed addressing.
 
 ### Blocks ###
 
@@ -290,19 +290,18 @@ Tests
     | }
     ? missing 'main' routine
 
-A program may reserve and assign.
+A program may `reserve` and `assign`.
 
+    | reserve byte lives
+    | assign byte gdcol 647
     | reserve word score
-    | assign word screen 1024
+    | assign word memstr 641
+    | reserve vector v
+    | assign vector cinv 788
+    | reserve byte table frequencies
+    | assign byte table screen 1024
     | routine main {
-    |    lda screen
-    |    tax
-    |    tay
-    |    cmp score
-    |    ldx score
-    |    txa
-    |    ldy score
-    |    tya
+    |    nop
     | }
     = True
 
@@ -381,13 +380,37 @@ We can't jump to a byte.
     | }
     ? jmp to non-vector
 
+We can absolute-indexed a byte table.
+
+    | assign byte table screen 1024
+    | routine main {
+    |    sta screen, x
+    | }
+    = True
+
+We cannot absolute-indexed a byte.
+
+    | assign byte screen 1024
+    | routine main {
+    |    sta screen, x
+    | }
+    ? indexed access of non-table
+
+We cannot absolute-indexed a word.
+
+    | assign word screen 1024
+    | routine main {
+    |    sta screen, x
+    | }
+    ? indexed access of non-table
+
     -> Tests for functionality "Emit ASM for SixtyPical program"
     
     -> Functionality "Emit ASM for SixtyPical program" is implemented by
     -> shell command "bin/sixtypical emit %(test-file)"
 
     | reserve word score
-    | assign word screen 1024
+    | assign byte table screen 1024
     | routine main {
     |    lda #4
     |    ldx #0
@@ -413,6 +436,7 @@ We can't jump to a byte.
     |    cpy #32
     |    tya
     |    sta screen
+    |    sta screen, x
     |    dec screen
     |    clc
     |    cld
@@ -452,6 +476,7 @@ We can't jump to a byte.
     =   cpy #32
     =   tya
     =   sta screen
+    =   sta screen, x
     =   dec screen
     =   clc
     =   cld

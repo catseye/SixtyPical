@@ -83,6 +83,20 @@ noJmpsToNonVectors p@(Program decls routines) =
                 Nothing -> (COPY A A)
         checkInstr other = other
 
+noIndexedAccessOfNonTables p@(Program decls routines) =
+    let
+        mappedProgram = mapProgramRoutines (checkInstr) p
+    in
+        mappedProgram == p
+    where
+        checkInstr j@(COPYINDEXED _ (NamedLocation g) _) =
+            case lookupDecl p g of
+                Just (Assign _ ByteTable _) -> j
+                Just (Reserve _ ByteTable) -> j
+                Just _ -> (COPY A A)
+                Nothing -> (COPY A A)
+        checkInstr other = other
+
 checkAndTransformProgram :: Program -> Maybe Program
 checkAndTransformProgram program =
     if
@@ -90,7 +104,8 @@ checkAndTransformProgram program =
         trueOrDie "undeclared location" (allUsedLocationsDeclared program) &&
         trueOrDie "duplicate location name" (noDuplicateDecls program) &&
         trueOrDie "duplicate routine name" (noDuplicateRoutines program) &&
-        trueOrDie "jmp to non-vector" (noJmpsToNonVectors program)
+        trueOrDie "jmp to non-vector" (noJmpsToNonVectors program) &&
+        trueOrDie "indexed access of non-table" (noIndexedAccessOfNonTables program) 
       then
         Just $ numberProgramLoops program
       else Nothing

@@ -63,8 +63,8 @@ checkRoutine (Routine name (instr : instrs)) progCtx routCtx =
     in
         checkRoutine (Routine name instrs) progCtx routCtx'
 
-checkInstr (LOADIMM reg imm) progCtx routCtx =
-    Map.insert reg (Value imm) routCtx
+checkInstr (PUT dst imm) progCtx routCtx =
+    Map.insert dst (Value imm) routCtx
 checkInstr (COPY src dst) progCtx routCtx =
     Map.insert dst (Map.findWithDefault Unknown src routCtx) routCtx
 checkInstr (JSR name) progCtx routCtx =
