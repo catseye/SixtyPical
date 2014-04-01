@@ -19,6 +19,8 @@ Command  := "if" Branch Block "else" Block
           | "ldy" (LocationName | Immediate)
           | "txa" | "tax" | "tya" | "tay"
           | "cmp" (LocationName | Immediate)
+          | "cpx" (LocationName | Immediate)
+          | "cpy" (LocationName | Immediate)
           | "nop".
 Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
@@ -74,9 +76,10 @@ block = do
     return cs
 
 command :: Parser Instruction
-command = cmp <|> (try lda) <|> (try ldx) <|> (try ldy) <|>
+command = (try lda) <|> (try ldx) <|> (try ldy) <|>
           (try sta) <|> (try stx) <|> (try sty) <|>
           (try txa) <|> (try tax) <|> (try tya) <|> (try tay) <|>
+          (try cmp) <|> (try cpx) <|> (try cpy) <|>
           if_statement <|> nop
 
 nop :: Parser Instruction
@@ -91,6 +94,20 @@ cmp = do
     spaces
     l <- locationName
     return (CMP A (NamedLocation l))
+
+cpx :: Parser Instruction
+cpx = do
+    string "cpx"
+    spaces
+    l <- locationName
+    return (CMP X (NamedLocation l))
+
+cpy :: Parser Instruction
+cpy = do
+    string "cpy"
+    spaces
+    l <- locationName
+    return (CMP Y (NamedLocation l))
 
 lda :: Parser Instruction
 lda = do

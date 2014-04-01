@@ -171,10 +171,10 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
       cmp absolute
     X cmp #immediate
       
-    X cpx absolute
+      cpx absolute
     X cpx #immediate
     
-    X cpy absolute
+      cpy absolute
     X cpy #immediate
     
     X dec absolute
@@ -364,8 +364,10 @@ No duplicate declarations.
     |    sty score
     |    cmp score
     |    ldx score
+    |    cpx screen
     |    txa
     |    ldy score
+    |    cpy screen
     |    tya
     |    sta screen
     | }
@@ -384,8 +386,10 @@ No duplicate declarations.
     =   sty score
     =   cmp score
     =   ldx score
+    =   cpx screen
     =   txa
     =   ldy score
+    =   cpy screen
     =   tya
     =   sta screen
     =   rts

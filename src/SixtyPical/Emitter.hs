@@ -46,8 +46,9 @@ emitInstr p r (COPY (NamedLocation label) A) = "lda " ++ label
 emitInstr p r (COPY (NamedLocation label) X) = "ldx " ++ label
 emitInstr p r (COPY (NamedLocation label) Y) = "ldy " ++ label
 
-
 emitInstr p r (CMP A (NamedLocation label)) = "cmp " ++ label
+emitInstr p r (CMP X (NamedLocation label)) = "cpx " ++ label
+emitInstr p r (CMP Y (NamedLocation label)) = "cpy " ++ label
 
 emitInstr p r (COPY A X) = "tax"
 emitInstr p r (COPY A Y) = "tay"
