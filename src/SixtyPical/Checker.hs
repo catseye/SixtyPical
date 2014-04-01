@@ -19,7 +19,15 @@ getDeclLocationName (Reserve name _) = name
 
 locationDeclared locName (Program decls _) =
     elem locName (map (getDeclLocationName) decls)
-    where
+
+lookupDecl (Program [] _) _ = Nothing
+lookupDecl (Program (decl:decls) routs) name =
+    if
+        (getDeclLocationName decl) == name
+      then
+        Just decl
+      else
+        lookupDecl (Program decls routs) name
 
 -- in the following, we mean Named locations
 
@@ -48,26 +56,41 @@ allRoutineLocationsDeclared program routine =
 allUsedLocationsDeclared p@(Program _ routines) =
     allTrue (map (allRoutineLocationsDeclared p) routines)
 
+isUnique [] = True
+isUnique (x:xs) = (not (x `elem` xs)) && isUnique xs
+
 noDuplicateDecls p@(Program decls routines) =
-    collectDecls decls []
+    isUnique (map (getDeclLocationName) decls)
+
+noDuplicateRoutines p@(Program decls routines) =
+    isUnique (map (getRoutineName) routines)
     where
-        collectDecls [] acc = True
-        collectDecls (decl:decls) acc =
-            if
-                name `elem` acc
-              then
-                 error ("duplicate declaration '" ++ name ++ "'")
-              else
-                 collectDecls decls (name:acc)
-            where
-                name = getDeclLocationName decl
+        getRoutineName (Routine name _) = name
+
+-- wow.  efficiency is clearly our watchword
+-- (and sarcasm is our backup watchword)
+noJmpsToNonVectors p@(Program decls routines) =
+    let
+        mappedProgram = mapProgramRoutines (checkInstr) p
+    in
+        mappedProgram == p
+    where
+        checkInstr j@(JMPVECTOR (NamedLocation g)) =
+            case lookupDecl p g of
+                Just (Assign _ Vector _) -> j
+                Just (Reserve _ Vector) -> j
+                Just _ -> (COPY A A)
+                Nothing -> (COPY A A)
+        checkInstr other = other
 
 checkAndTransformProgram :: Program -> Maybe Program
 checkAndTransformProgram program =
     if
         trueOrDie "missing 'main' routine" (routineDeclared "main" program) &&
         trueOrDie "undeclared location" (allUsedLocationsDeclared program) &&
-        noDuplicateDecls program
+        trueOrDie "duplicate location name" (noDuplicateDecls program) &&
+        trueOrDie "duplicate routine name" (noDuplicateRoutines program) &&
+        trueOrDie "jmp to non-vector" (noJmpsToNonVectors program)
       then
         Just $ numberProgramLoops program
       else Nothing

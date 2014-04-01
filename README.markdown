@@ -264,7 +264,6 @@ TODO
 *   Work out the analyses again and document them
 *   `repeat jmp`
 *   Addressing modes; rename instructions to match
-*   no two routines with same name
 
 Tests
 -----
@@ -339,14 +338,24 @@ Even in inner blocks.
     | }
     ? undeclared location
 
-No duplicate declarations.
+No duplicate location names in declarations.
 
     | reserve word score
     | assign word score 4000
     | routine main {
     |    nop
     | }
-    ? duplicate declaration
+    ? duplicate location name
+
+No duplicate routine names..
+
+    | routine main {
+    |    nop
+    | }
+    | routine main {
+    |    txa
+    | }
+    ? duplicate routine name
 
 We can jump to a vector.
 
@@ -358,11 +367,19 @@ We can jump to a vector.
 
 We can't jump to a word.
 
-    *| reserve word blah
-    *| routine main {
-    *|    jmp blah
-    *| }
-    *? wtf
+    | reserve word blah
+    | routine main {
+    |    jmp blah
+    | }
+    ? jmp to non-vector
+
+We can't jump to a byte.
+
+    | assign byte screen 1024
+    | routine main {
+    |    jmp screen
+    | }
+    ? jmp to non-vector
 
     -> Tests for functionality "Emit ASM for SixtyPical program"
     
