@@ -62,7 +62,67 @@ noDuplicateDecls p@(Program decls routines) =
             where
                 name = getDeclLocationName decl
 
-checkProgram program =
-    trueOrDie "missing 'main' routine" (routineDeclared "main" program) &&
-      trueOrDie "undeclared location" (allUsedLocationsDeclared program) &&
-      noDuplicateDecls program
+checkAndTransformProgram :: Program -> Maybe Program
+checkAndTransformProgram program =
+    if
+        trueOrDie "missing 'main' routine" (routineDeclared "main" program) &&
+        trueOrDie "undeclared location" (allUsedLocationsDeclared program) &&
+        noDuplicateDecls program
+      then
+        Just $ numberProgramLoops program
+      else Nothing
+
+-- - - - - - -
+
+-- in the following "number" means "assign a unique ID to" and "loop"
+-- means "REPEAT or IF" (because i'm in such a good mood)
+
+numberProgramLoops :: Program -> Program
+numberProgramLoops (Program decls routines) =
+    let
+        (routines', _) = numberRoutinesLoops routines 0
+    in
+        (Program decls routines')
+
+numberRoutinesLoops :: [Routine] -> InternalID -> ([Routine], InternalID)
+numberRoutinesLoops [] iid = ([], iid)
+numberRoutinesLoops (routine:routines) iid =
+    let
+        (routine', iid') = numberRoutineLoops routine iid
+        (routines', iid'') = numberRoutinesLoops routines iid'
+    in
+        ((routine':routines'), iid'')
+
+numberRoutineLoops :: Routine -> InternalID -> (Routine, InternalID)
+numberRoutineLoops (Routine name instrs) iid =
+    let
+        (instrs', iid') = numberBlockLoops instrs iid
+    in
+        ((Routine name instrs'), iid')
+
+numberBlockLoops :: [Instruction] -> InternalID -> ([Instruction], InternalID)
+numberBlockLoops [] iid = ([], iid)
+numberBlockLoops (instr:instrs) iid =
+    let
+        (instr', iid') = numberInstruction instr iid
+        (instrs', iid'') = numberBlockLoops instrs iid'
+    in
+        ((instr':instrs'), iid'')
+
+numberInstruction :: Instruction -> InternalID -> (Instruction, InternalID)
+numberInstruction (IF _ branch b1 b2) iid =
+    let
+        (b1', iid') = numberBlockLoops b1 iid
+        (b2', iid'') = numberBlockLoops b2 iid'
+        newIid = iid'' + 1
+        newInstr = IF newIid branch b1' b2'
+    in
+        (newInstr, newIid)
+numberInstruction (REPEAT _ branch blk) iid =
+    let
+        (blk', iid') = numberBlockLoops blk iid
+        newIid = iid' + 1
+        newInstr = REPEAT newIid branch blk'
+    in
+        (newInstr, newIid)
+numberInstruction i iid = (i, iid)

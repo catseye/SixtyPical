@@ -8,7 +8,7 @@ import System.Exit
 
 import SixtyPical.Model
 import SixtyPical.Parser (parseProgram)
-import SixtyPical.Checker (checkProgram)
+import SixtyPical.Checker (checkAndTransformProgram)
 import SixtyPical.Analyzer (analyzeProgram)
 import SixtyPical.Emitter (emitProgram)
 
@@ -17,6 +17,11 @@ import SixtyPical.Emitter (emitProgram)
 usage = do
     putStrLn "Usage: sixtypical (parse|check|analyze|emit) filename.60pical"
     exitWith $ ExitFailure 1
+
+checkProgram p =
+    case checkAndTransformProgram p of
+        Just newprog ->
+            True
 
 main = do
     args <- getArgs
@@ -28,16 +33,16 @@ main = do
                     putStrLn $ show $ program
                 ("check", Right program) -> do
                     putStrLn $ show $ checkProgram program
-                ("analyze", Right program) -> do
-                    case checkProgram program of
-                        True ->
-                            putStrLn $ show $ analyzeProgram program
-                ("emit", Right program) -> do
-                    case checkProgram program of
-                        True ->
-                            case analyzeProgram program of
+                ("analyze", Right program) ->
+                    case checkAndTransformProgram program of
+                        Just newprog ->
+                            putStrLn $ show $ analyzeProgram newprog
+                ("emit", Right program) ->
+                    case checkAndTransformProgram program of
+                        Just newprog ->
+                            case analyzeProgram newprog of
                                 _ ->
-                                    putStr $ emitProgram program
+                                    putStr $ emitProgram newprog
                 (_, Left problem) -> do
                     hPutStrLn stderr (show problem)
                     exitWith $ ExitFailure 1

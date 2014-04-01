@@ -238,7 +238,6 @@ TODO
 *   Character tables ("strings" to everybody else)
 *   External routines
 *   Work out the analyses again and document them
-*   number ifs and repeats
 *   `repeat jmp`
 *   Addressing modes; rename instructions to match
 *   no two routines with same name
@@ -424,12 +423,12 @@ No duplicate declarations.
     = main:
     =   lda screen
     =   cmp screen
-    =   BEQ _label_0
+    =   BEQ _label_1
     =   tay
-    =   jmp _past_0
-    = _label_0:
+    =   jmp _past_1
+    = _label_1:
     =   tax
-    = _past_0:
+    = _past_1:
     =   sta screen
     =   rts
 
@@ -454,10 +453,51 @@ No duplicate declarations.
     = main:
     =   ldy zero
     =   
-    = _repeat_0:
+    = _repeat_1:
     =   inc screen
     =   dey
     =   cpy zero
-    =   BNE _repeat_0
+    =   BNE _repeat_1
     =   sty screen
+    =   rts
+
+Nested ifs.
+
+    | routine main {
+    |   if beq {
+    |     if bcc {
+    |       lda #0
+    |     } else {
+    |       if bvs {
+    |         lda #1
+    |       } else {
+    |         lda #2
+    |       }
+    |     }
+    |   } else {
+    |     lda #3
+    |   }
+    | }
+    = .org 0
+    = .word $0801
+    = .org $0801
+    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
+    =   jmp main
+    = main:
+    =   BEQ _label_3
+    =   lda #3
+    =   jmp _past_3
+    = _label_3:
+    =   BCC _label_2
+    =   BVS _label_1
+    =   lda #2
+    =   jmp _past_1
+    = _label_1:
+    =   lda #1
+    = _past_1:
+    =   jmp _past_2
+    = _label_2:
+    =   lda #0
+    = _past_2:
+    = _past_3:
     =   rts
