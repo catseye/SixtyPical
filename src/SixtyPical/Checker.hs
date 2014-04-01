@@ -34,8 +34,10 @@ instrUsedLocations (COPY (NamedLocation loc) _) = [loc]
 instrUsedLocations (COPY _ (NamedLocation loc)) = [loc]
 instrUsedLocations (CMP reg (NamedLocation loc)) = [loc]
 -- TODO: JSR...
-instrUsedLocations (IF branch b1 b2) =
+instrUsedLocations (IF _ branch b1 b2) =
     blockUsedLocations b1 ++ blockUsedLocations b2
+instrUsedLocations (REPEAT _ branch blk) =
+    blockUsedLocations blk
 instrUsedLocations _ = []
 
 allRoutineLocationsDeclared program routine =

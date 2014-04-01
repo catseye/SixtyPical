@@ -55,6 +55,7 @@ checkRoutines (rout@(Routine name _) : routs) progCtx =
     in
         checkRoutines routs progCtx'
 
+-- TODO: have this call checkblock on its instrs, use checkblock below too...
 checkRoutine (Routine _ []) progCtx routCtx = routCtx
 checkRoutine (Routine name (instr : instrs)) progCtx routCtx =
     let
@@ -75,8 +76,11 @@ checkInstr (JSR name) progCtx routCtx =
 checkInstr (CMP reg addr) progCtx routCtx =
     -- TODO: mark Carry bit as "touched" here
     routCtx
-checkInstr (IF branch b1 b2) progCtx routCtx =
+checkInstr (IF _ branch b1 b2) progCtx routCtx =
     -- TODO: oooh, this one's gonna be fun
+    routCtx
+checkInstr (REPEAT _ branch blk) progCtx routCtx =
+    -- TODO: oooh, this one's gonna be fun too
     routCtx
 checkInstr NOP progCtx routCtx =
     routCtx

@@ -98,6 +98,16 @@ that has a natural symmetrical opcode (e.g. `pha`, `sei`).  These instructions
 take a block.  The natural symmetrical opcode is inserted at the end of the
 block.
 
+Unsupported Opcodes
+-------------------
+
+6502 opcodes with no language-level equivalent instructions in SixtyPical
+are `brk`, `cli`, `jmp`, `pla`, `plp`, `rti`, and `rts`.  These may be
+inserted into the output program as a SixtyPical → 6502 compiler sees fit,
+however.
+
+Note to self, the `pl` opcodes *do* change flags.
+
 Instruction Support so far
 --------------------------
 
@@ -130,8 +140,6 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     
       if bpl { block } else { block }
     
-    ! brk
-    
       if bvc { block } else { block }
     
       if bvs { block } else { block }
@@ -139,8 +147,6 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
       clc
     
       cld
-    
-    ! cli
     
       clv
     
@@ -168,8 +174,6 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     
       iny
     
-    ! jmp
-    
     * jsr routine
     
       lda #immediate
@@ -193,19 +197,11 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     
     X php { block }
     
-    ! pla -- (although note this does change flags)
-    
-    ! plp -- (although note this does change flags -- obviously)
-    
     X rol
     X rol absolute
     
     X ror
     X ror absolute
-    
-    ! rti
-    
-    ! rts
     
     X sbc #immediate
     X sbc absolute
@@ -242,7 +238,6 @@ TODO
 *   Character tables ("strings" to everybody else)
 *   External routines
 *   Work out the analyses again and document them
-*   parse support immediate loads, compares
 *   number ifs and repeats
 *   `repeat jmp`
 *   Addressing modes; rename instructions to match
@@ -429,12 +424,12 @@ No duplicate declarations.
     = main:
     =   lda screen
     =   cmp screen
-    =   BEQ _label
+    =   BEQ _label_0
     =   tay
-    =   jmp _past
-    = _label:
+    =   jmp _past_0
+    = _label_0:
     =   tax
-    = _past:
+    = _past_0:
     =   sta screen
     =   rts
 
@@ -459,10 +454,10 @@ No duplicate declarations.
     = main:
     =   ldy zero
     =   
-    = _repeat:
+    = _repeat_0:
     =   inc screen
     =   dey
     =   cpy zero
-    =   BNE _repeat
+    =   BNE _repeat_0
     =   sty screen
     =   rts

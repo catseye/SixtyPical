@@ -72,18 +72,18 @@ emitInstr p r (COPY A Y) = "tay"
 emitInstr p r (COPY X A) = "txa"
 emitInstr p r (COPY Y A) = "tya"
 
-emitInstr p r (IF branch b1 b2) =
-    (show branch) ++ " _label\n" ++
+emitInstr p r (IF iid branch b1 b2) =
+    (show branch) ++ " _label_" ++ (show iid) ++ "\n" ++
     emitInstrs p r b2 ++
-    "  jmp _past\n" ++
-    "_label:\n" ++
+    "  jmp _past_" ++ (show iid) ++ "\n" ++
+    "_label_" ++ (show iid) ++ ":\n" ++
     emitInstrs p r b1 ++
-    "_past:"
+    "_past_" ++ (show iid) ++ ":"
 
-emitInstr p r (REPEAT branch blk) =
-    "\n_repeat:\n" ++
+emitInstr p r (REPEAT iid branch blk) =
+    "\n_repeat_" ++ (show iid) ++ ":\n" ++
     emitInstrs p r blk ++
-    "  " ++ (show branch) ++ " _repeat"
+    "  " ++ (show branch) ++ " _repeat_" ++ (show iid)
 
 emitInstr p r i = error "Internal error: sixtypical doesn't know how to emit assembler code for '" ++ show i ++ "'"
 

@@ -7,6 +7,8 @@ module SixtyPical.Model where
 type DataValue = Int -- LET'S ASSUME THIS IS AT LEAST 8 BITS
 type Address = Int -- LET'S ASSUME THIS IS AT LEAST 16 BITS
 
+type InternalID = Int -- for numbering labels for if/repeat
+
 type LocationName = String
 
 -- We do not include the PC as it of course changes constantly.
@@ -54,8 +56,8 @@ data Instruction = LOADIMM StorageLocation DataValue
                  | CMPIMM StorageLocation DataValue
                  | CMP StorageLocation StorageLocation
                  | JSR RoutineName
-                 | IF Branch [Instruction] [Instruction]
-                 | REPEAT Branch [Instruction]
+                 | IF InternalID Branch [Instruction] [Instruction]
+                 | REPEAT InternalID Branch [Instruction]
                  | DELTA StorageLocation DataValue
                  | NOP
     deriving (Show, Ord, Eq)

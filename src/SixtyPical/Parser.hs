@@ -271,7 +271,7 @@ if_statement = do
     string "else"
     spaces
     b2 <- block
-    return (IF brch b1 b2)
+    return (IF 0 brch b1 b2)
 
 repeat_statement :: Parser Instruction
 repeat_statement = do
@@ -279,7 +279,7 @@ repeat_statement = do
     spaces
     brch <- branch
     blk <- block
-    return (REPEAT brch blk)
+    return (REPEAT 0 brch blk)
 
 branch :: Parser Branch
 branch = try (b "bcc" BCC) <|> try (b "bcs" BCS) <|> try (b "beq" BEQ) <|>
