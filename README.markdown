@@ -78,6 +78,10 @@ instructions.  Instead, it has an `if` construct, with two blocks (for the
 "then" and `else` parts), and the branch instructions map to conditions for
 this construct.
 
+Similarly, there is a `repeat` construct.  The same branch instructions can
+be used in the condition to this construct.  In this case, they branch back
+to the top of the `repeat` loop.
+
 The abstract states of the machine at each of the different block exits are
 merged during analysis.  If any register or memory location is treated
 inconsistently (e.g. updated in one branch of the test, but not the other,)
@@ -93,34 +97,6 @@ There are also _with_ instructions, which are associated with an opcode
 that has a natural symmetrical opcode (e.g. `pha`, `sei`).  These instructions
 take a block.  The natural symmetrical opcode is inserted at the end of the
 block.
-
-### Loops ###
-
-Still need to figure this out.
-
-Typical `repeat` loop looks like:
-
-    ldy #0
-    _loop:
-    lda #65
-    sta screen, y
-    iny
-    cpy #250
-    bne _loop
-
-This might be
-
-    routine blah {
-        ldy# 0
-        repeat bne {
-            lda# 65
-            sta,y screen
-            iny
-            cpy# 250
-        }
-    }
-
-Note, `screen` must be a `byte table` here.
 
 Instruction Support so far
 --------------------------
@@ -437,4 +413,33 @@ No duplicate declarations.
     =   tax
     = _past:
     =   sta screen
+    =   rts
+
+    | assign byte screen 4000
+    | reserve byte zero
+    | routine main {
+    |    ldy zero
+    |    repeat bne {
+    |       inc screen
+    |       dey
+    |       cpy zero
+    |    }
+    |    sty screen
+    | }
+    = .org 0
+    = .word $0801
+    = .org $0801
+    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
+    =   jmp main
+    = .alias screen 4000
+    = zero: .byte 0
+    = main:
+    =   ldy zero
+    =   
+    = _repeat:
+    =   inc screen
+    =   dey
+    =   cpy zero
+    =   BNE _repeat
+    =   sty screen
     =   rts

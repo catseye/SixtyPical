@@ -83,7 +83,7 @@ command = (try lda) <|> (try ldx) <|> (try ldy) <|>
           (try cmp) <|> (try cpx) <|> (try cpy) <|>
           (try inx) <|> (try iny) <|> (try dex) <|> (try dey) <|>
           (try inc) <|> (try dec) <|>
-          if_statement <|> nop
+          if_statement <|> repeat_statement <|> nop
 
 nop :: Parser Instruction
 nop = do
@@ -226,6 +226,14 @@ if_statement = do
     spaces
     b2 <- block
     return (IF brch b1 b2)
+
+repeat_statement :: Parser Instruction
+repeat_statement = do
+    string "repeat"
+    spaces
+    brch <- branch
+    blk <- block
+    return (REPEAT brch blk)
 
 branch :: Parser Branch
 branch = try (b "bcc" BCC) <|> try (b "bcs" BCS) <|> try (b "beq" BEQ) <|>

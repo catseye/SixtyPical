@@ -1,0 +1,11 @@
+assign byte screen 1024
+reserve byte zero
+routine main {
+   ldy zero
+   repeat bne {
+      inc screen
+      dey
+      cpy zero
+   }
+   sty screen
+}

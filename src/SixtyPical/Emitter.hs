@@ -70,5 +70,10 @@ emitInstr p r (IF branch b1 b2) =
     emitInstrs p r b1 ++
     "_past:"
 
+emitInstr p r (REPEAT branch blk) =
+    "\n_repeat:\n" ++
+    emitInstrs p r blk ++
+    "  " ++ (show branch) ++ " _repeat"
+
 emitInstr p r i = error "Internal error: sixtypical doesn't know how to emit assembler code for '" ++ show i ++ "'"
 

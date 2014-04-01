@@ -1,0 +1,7 @@
+assign byte screen 1024
+routine main {
+   repeat bcc {
+      inc screen
+      clc
+   }
+}
