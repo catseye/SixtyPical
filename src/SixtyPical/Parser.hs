@@ -77,8 +77,11 @@ block = do
     spaces
     return cs
 
+--command = (try lda_imm) <|> (try lda) <|>
+
 command :: Parser Instruction
-command = (try lda) <|> (try ldx) <|> (try ldy) <|>
+command = (try lda) <|>
+          (try ldx) <|> (try ldy) <|>
           (try sta) <|> (try stx) <|> (try sty) <|>
           (try txa) <|> (try tax) <|> (try tya) <|> (try tay) <|>
           (try cmp) <|> (try cpx) <|> (try cpy) <|>
@@ -182,12 +185,23 @@ cpy = do
     l <- locationName
     return (CMP Y (NamedLocation l))
 
+immediate :: (DataValue -> Instruction) -> Parser Instruction
+immediate f = do
+    string "#"
+    v <- data_value
+    return $ f v
+
+absolute :: (LocationName -> Instruction) -> Parser Instruction
+absolute f = do
+    l <- locationName
+    return $ f l
+
 lda :: Parser Instruction
 lda = do
     string "lda"
     spaces
-    l <- locationName
-    return (COPY (NamedLocation l) A)
+    (try $ immediate (\v -> LOADIMM A v) <|>
+     absolute (\l -> COPY (NamedLocation l) A))
 
 ldx :: Parser Instruction
 ldx = do
@@ -297,6 +311,12 @@ address = do
     digits <- many digit
     spaces
     return (read digits :: Address)
+
+data_value :: Parser DataValue
+data_value = do
+    digits <- many digit
+    spaces
+    return (read digits :: DataValue)
 
 -- -- -- driver -- -- --
 

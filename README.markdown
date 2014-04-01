@@ -246,6 +246,7 @@ TODO
 *   number ifs and repeats
 *   `repeat jmp`
 *   Addressing modes; rename instructions to match
+*   no two routines with same name
 
 Tests
 -----
@@ -275,7 +276,7 @@ Tests
 A program may reserve and assign.
 
     | reserve word score
-    | assign word screen 4000
+    | assign word screen 1024
     | routine main {
     |    lda screen
     |    tax
@@ -308,7 +309,7 @@ All locations used in all routines must be declared first.
 Even in inner blocks.
 
     | reserve word score
-    | assign word screen 4000
+    | assign word screen 1024
     | routine main {
     |    lda score
     |    cmp screen
@@ -335,8 +336,9 @@ No duplicate declarations.
     -> shell command "bin/sixtypical emit %(test-file)"
 
     | reserve word score
-    | assign word screen 4000
+    | assign word screen 1024
     | routine main {
+    |    lda #4
     |    lda screen
     |    inc screen
     |    tax
@@ -368,8 +370,9 @@ No duplicate declarations.
     = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
     =   jmp main
     = score: .word 0
-    = .alias screen 4000
+    = .alias screen 1024
     = main:
+    =   lda #4
     =   lda screen
     =   inc screen
     =   tax
@@ -396,7 +399,7 @@ No duplicate declarations.
     =   sed
     =   rts
 
-    | assign word screen 4000
+    | assign word screen 1024
     | routine main {
     |    lda screen
     |    cmp screen
@@ -412,7 +415,7 @@ No duplicate declarations.
     = .org $0801
     = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
     =   jmp main
-    = .alias screen 4000
+    = .alias screen 1024
     = main:
     =   lda screen
     =   cmp screen
@@ -425,7 +428,7 @@ No duplicate declarations.
     =   sta screen
     =   rts
 
-    | assign byte screen 4000
+    | assign byte screen 1024
     | reserve byte zero
     | routine main {
     |    ldy zero
@@ -441,7 +444,7 @@ No duplicate declarations.
     = .org $0801
     = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
     =   jmp main
-    = .alias screen 4000
+    = .alias screen 1024
     = zero: .byte 0
     = main:
     =   ldy zero
