@@ -21,14 +21,16 @@ locationDeclared locName (Program decls _) =
     elem locName (map (getDeclLocationName) decls)
     where
 
+-- in the following, we mean Named locations
+
 routineUsedLocations (Routine _ instrs) = blockUsedLocations instrs
 
 blockUsedLocations [] = []
 blockUsedLocations (instr:instrs) =
     (instrUsedLocations instr) ++ blockUsedLocations instrs
 
-instrUsedLocations (LOAD reg loc) = [loc]
-instrUsedLocations (CMP reg loc) = [loc]
+instrUsedLocations (LOAD reg (NamedLocation loc)) = [loc]
+instrUsedLocations (CMP reg (NamedLocation loc)) = [loc]
 -- TODO: JSR...
 instrUsedLocations (IFEQ b1 b2) =
     blockUsedLocations b1 ++ blockUsedLocations b2

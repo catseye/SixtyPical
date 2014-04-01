@@ -35,10 +35,10 @@ emitInstrs _ _ [] = ""
 emitInstrs p r (instr:instrs) =
     "  " ++ emitInstr p r instr ++ "\n" ++ emitInstrs p r instrs
 
-emitInstr p r (LOAD A label) = "lda " ++ label
-emitInstr p r (LOAD X label) = "ldx " ++ label
-emitInstr p r (LOAD Y label) = "ldy " ++ label
-emitInstr p r (CMP A label) = "cmp " ++ label
+emitInstr p r (LOAD A (NamedLocation label)) = "lda " ++ label
+emitInstr p r (LOAD X (NamedLocation label)) = "ldx " ++ label
+emitInstr p r (LOAD Y (NamedLocation label)) = "ldy " ++ label
+emitInstr p r (CMP A (NamedLocation label)) = "cmp " ++ label
 
 emitInstr p r (COPY A X) = "tax"
 emitInstr p r (COPY A Y) = "tay"

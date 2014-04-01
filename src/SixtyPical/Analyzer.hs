@@ -9,11 +9,11 @@ import SixtyPical.Model
 -- -- -- -- data-flow-analysis context -- -- -- --
 
 data Usage = Unknown
-           | Value LocationName -- obviously a bit daft for now
-           | Retained Register
+           | Value StorageLocation -- obviously a bit daft for now
+           | Retained StorageLocation
     deriving (Show, Ord, Eq)
 
-type RoutineContext = Map.Map Register Usage
+type RoutineContext = Map.Map StorageLocation Usage
 
 type ProgramContext = Map.Map RoutineName RoutineContext
 

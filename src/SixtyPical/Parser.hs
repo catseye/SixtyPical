@@ -88,28 +88,28 @@ cmp = do
     string "cmp"
     spaces
     l <- locationName
-    return (CMP A l)
+    return (CMP A (NamedLocation l))
 
 lda :: Parser Instruction
 lda = do
     string "lda"
     spaces
     l <- locationName
-    return (LOAD A l)
+    return (LOAD A (NamedLocation l))
 
 ldx :: Parser Instruction
 ldx = do
     string "ldx"
     spaces
     l <- locationName
-    return (LOAD X l)
+    return (LOAD X (NamedLocation l))
 
 ldy :: Parser Instruction
 ldy = do
     string "ldy"
     spaces
     l <- locationName
-    return (LOAD Y l)
+    return (LOAD Y (NamedLocation l))
 
 txa :: Parser Instruction
 txa = do

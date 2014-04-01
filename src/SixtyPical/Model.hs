@@ -8,10 +8,30 @@ type Address = Int -- LET'S ASSUME THIS IS AT LEAST 16 BITS
 
 type LocationName = String
 
-data Register = A | X | Y    -- | MemLoc LocationName
+-- We do not include the PC as it of course changes constantly.
+-- We do not include the stack pointer, as it should not change over
+-- the lifetime of a single routine.  (Always pop what you pushed.)
+-- Ditto the I flag.  (always enable interrupts after disabling them.)
+-- We do not include the B flag, because for us, BRK is game over, man.
+
+-- One of these should never refer to the program code.  We can only police
+-- this up to a point.
+
+data StorageLocation = A
+              | Y
+              | X
+              | FlagN
+              | FlagV
+              | FlagD
+              | FlagZ
+              | FlagC
+              | NamedLocation LocationName
     deriving (Show, Ord, Eq)
 
-allRegisters = [A, X, Y]
+-- this is bunk, man.  if a location does not appear in an analysis
+-- map the meaning should be taken to be "preserved".
+
+allRegisters = [A, X, Y, FlagN, FlagV, FlagD, FlagZ, FlagC]
 
 -- -- -- -- program model -- -- -- --
 
@@ -25,9 +45,9 @@ data Decl = Assign LocationName Size Address -- .alias
 
 type RoutineName = String
 
-data Instruction = LOAD Register LocationName
-                 | COPY Register Register
-                 | CMP Register LocationName
+data Instruction = LOAD StorageLocation StorageLocation
+                 | COPY StorageLocation StorageLocation
+                 | CMP StorageLocation StorageLocation
                  | JSR RoutineName
                  | IFEQ [Instruction] [Instruction]
                  | NOP

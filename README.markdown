@@ -92,11 +92,39 @@ that has a natural symmetrical opcode (e.g. `pha`, `sei`).  These instructions
 take a block.  The natural symmetrical opcode is inserted at the end of the
 block.
 
+### Loops ###
+
+Still need to figure this out.
+
+Typical `repeat` loop looks like:
+
+    ldy #0
+    _loop:
+    lda #65
+    sta screen, y
+    iny
+    cpy #250
+    bne _loop
+
+This might be
+
+    routine blah {
+        ldy# 0
+        repeat bne {
+            lda# 65
+            sta,y screen
+            iny
+            cpy# 250
+        }
+    }
+
+Note, `screen` must be a `byte table` here.
+
 TODO
 ----
 
 *   Parse HEX values like $40A3
-*   Full machine model
+*   Fuller machine model
 *   Addressing modes; rename instructions to match
 
 Tests
