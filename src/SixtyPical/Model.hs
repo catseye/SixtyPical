@@ -38,12 +38,13 @@ allRegisters = [A, X, Y, FlagN, FlagV, FlagD, FlagZ, FlagC]
 
 -- -- -- -- program model -- -- -- --
 
-data Size = Byte
-          | Word
+data StorageType = Byte
+                 | Word
+                 | Vector
     deriving (Show, Ord, Eq)
 
-data Decl = Assign LocationName Size Address -- .alias
-          | Reserve LocationName Size -- .word, .byte
+data Decl = Assign LocationName StorageType Address -- .alias
+          | Reserve LocationName StorageType -- .word, .byte
     deriving (Show, Ord, Eq)
 
 type RoutineName = String
@@ -59,6 +60,9 @@ data Instruction = LOADIMM StorageLocation DataValue
                  | IF InternalID Branch [Instruction] [Instruction]
                  | REPEAT InternalID Branch [Instruction]
                  | DELTA StorageLocation DataValue
+                 | SEI [Instruction]
+                 | COPYVECTOR StorageLocation StorageLocation
+                 | COPYROUTINE RoutineName StorageLocation
                  | NOP
     deriving (Show, Ord, Eq)
 

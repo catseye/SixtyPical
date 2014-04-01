@@ -59,14 +59,27 @@ assembler, with the understanding that the value will be treated "like an
 address."  This is generally an address into the operating system or hardware
 (e.g. kernal routine, I/O port, etc.)
 
-Inside a routine, an address may be declared with `temporary`.  This is like
-`static` in C, except the value at that address is not guaranteed to be
-retained between invokations of the routine.  Such addresses may only be used
-within the routine where they are declared.  If analysis indicates that two
-temporary addresses are never used simultaneously, they may be merged
-to the same address.
+Not there yet:
 
-An address knows if it is an address of a byte, of a word, or of a table.
+> Inside a routine, an address may be declared with `temporary`.  This is like
+> `static` in C, except the value at that address is not guaranteed to be
+> retained between invokations of the routine.  Such addresses may only be used
+> within the routine where they are declared.  If analysis indicates that two
+> temporary addresses are never used simultaneously, they may be merged
+> to the same address.
+
+An address knows what kind of data is stored at the address:
+    
+*   `byte`: an 8-bit byte.  not part of a word.  not to be used as an address.
+    (could be an index though.)
+*   `word`: a 16-bit word.  not to be used as an address.
+*   `vector`: a 16-bit address of a routine.  two operations are supported
+    on vectors: copying the contents of one vector to another, and jumping
+    to the code at the address contained in the vector (and this can only
+    happen at the end of a routine.)
+*   `byte table`: (not yet implemented) a series of `byte`s
+    contiguous in memory starting from the address.
+    this is the only kind of address that can be used in indexed addressing.
 
 ### Blocks ###
 
@@ -501,3 +514,21 @@ Nested ifs.
     = _past_2:
     = _past_3:
     =   rts
+
+
+    | assign byte screen 1024
+    | assign vector cinv 788
+    | reserve vector save_cinv
+    | 
+    | routine patch_cinv {
+    |   sei {
+    |     copy vector cinv to save_cinv
+    |     copy routine our_cinv to cinv
+    |   }
+    | }
+    | 
+    | routine our_cinv {
+    |   inc screen
+    |   jmp save_cinv
+    | }
+    = story checks out

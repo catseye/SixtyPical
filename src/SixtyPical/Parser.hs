@@ -8,9 +8,9 @@ import Text.ParserCombinators.Parsec
 {-
 
 Toplevel := {Decl} {Routine}.
-Decl     := "reserve" Size LocationName
-          | "assign" Size LocationName Address.
-Size     := "byte" | "word".
+Decl     := "reserve" StorageType LocationName
+          | "assign" StorageType LocationName Address.
+StorageType := "byte" | "word" | "vector".
 Routine  := "routine" RoutineName Block.
 Block    := "{" {Command} "}".
 Command  := "if" Branch Block "else" Block
@@ -23,6 +23,7 @@ Command  := "if" Branch Block "else" Block
           | "cpy" (LocationName | Immediate)
           | "inx" | "iny" | "dex" | "dey" | "inc" Location | "dec" Location
           | "clc" | "cld" | "clv" | "sec" | "sed"
+          | "sei" Block
           | "nop".
 Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
@@ -38,8 +39,7 @@ reserve :: Parser Decl
 reserve = do
     string "reserve"
     spaces
-    sz <- size
-    spaces  -- size does not do its own spacesising
+    sz <- storage_type
     name <- locationName
     return $ Reserve name sz
 
@@ -47,18 +47,20 @@ assign :: Parser Decl
 assign = do
     string "assign"
     spaces
-    sz <- size
-    spaces  -- size does not do its own spacesising
+    sz <- storage_type
     name <- locationName
     addr <- address
     return $ Assign name sz addr
 
-size :: Parser Size
-size = do
-    s <- (string "byte") <|> (string "word")
-    return $ case s of
-        "byte" -> Byte
-        "word" -> Word
+get_storage "byte" = Byte
+get_storage "word" = Word
+get_storage "vector" = Vector
+
+storage_type :: Parser StorageType
+storage_type = do
+    s <- (string "byte") <|> (string "word") <|> (string "vector")
+    spaces
+    return $ get_storage s
 
 routine :: Parser Routine
 routine = do
@@ -88,6 +90,9 @@ command = (try lda) <|>
           (try inx) <|> (try iny) <|> (try dex) <|> (try dey) <|>
           (try inc) <|> (try dec) <|>
           (try clc) <|> (try cld) <|> (try clv) <|> (try sec) <|> (try sed) <|>
+          (try sei) <|>
+          (try copy_vector_statement) <|>
+          (try copy_routine_statement) <|>
           if_statement <|> repeat_statement <|> nop
 
 nop :: Parser Instruction
@@ -262,6 +267,13 @@ tay = do
     spaces
     return (COPY A Y)
 
+sei :: Parser Instruction
+sei = do
+    string "sei"
+    spaces
+    blk <- block
+    return (SEI blk)
+
 if_statement :: Parser Instruction
 if_statement = do
     string "if"
@@ -280,6 +292,30 @@ repeat_statement = do
     brch <- branch
     blk <- block
     return (REPEAT 0 brch blk)
+
+copy_vector_statement :: Parser Instruction
+copy_vector_statement = do
+    string "copy"
+    spaces
+    string "vector"
+    spaces
+    src <- locationName
+    string "to"
+    spaces
+    dst <- locationName
+    return (COPYVECTOR (NamedLocation src) (NamedLocation dst))
+
+copy_routine_statement :: Parser Instruction
+copy_routine_statement = do
+    string "copy"
+    spaces
+    string "routine"
+    spaces
+    src <- routineName
+    string "to"
+    spaces
+    dst <- locationName
+    return (COPYROUTINE src (NamedLocation dst))
 
 branch :: Parser Branch
 branch = try (b "bcc" BCC) <|> try (b "bcs" BCS) <|> try (b "beq" BEQ) <|>
