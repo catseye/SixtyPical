@@ -41,7 +41,7 @@ mergeRoutCtxs routCtx calledRoutCtx =
 
 -- -- -- -- static analyzer -- -- -- --
 
-checkProgram (Program decls routines) =
+analyzeProgram (Program decls routines) =
     checkRoutines routines Map.empty
 
 checkRoutines [] progCtx = progCtx
