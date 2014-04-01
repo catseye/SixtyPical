@@ -21,7 +21,8 @@ Command  := "if" Branch Block "else" Block
           | "cmp" (LocationName | Immediate)
           | "cpx" (LocationName | Immediate)
           | "cpy" (LocationName | Immediate)
-          | "inx" | "iny" | "dex" | "dey"
+          | "inx" | "iny" | "dex" | "dey" | "inc" Location | "dec" Location
+          | "clc" | "cld" | "clv" | "sec" | "sed"
           | "nop".
 Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
@@ -83,6 +84,7 @@ command = (try lda) <|> (try ldx) <|> (try ldy) <|>
           (try cmp) <|> (try cpx) <|> (try cpy) <|>
           (try inx) <|> (try iny) <|> (try dex) <|> (try dey) <|>
           (try inc) <|> (try dec) <|>
+          (try clc) <|> (try cld) <|> (try clv) <|> (try sec) <|> (try sed) <|>
           if_statement <|> repeat_statement <|> nop
 
 nop :: Parser Instruction
@@ -90,6 +92,36 @@ nop = do
     string "nop"
     spaces
     return NOP
+
+clc :: Parser Instruction
+clc = do
+    string "clc"
+    spaces
+    return $ LOADIMM FlagC 0
+
+cld :: Parser Instruction
+cld = do
+    string "cld"
+    spaces
+    return $ LOADIMM FlagD 0
+
+clv :: Parser Instruction
+clv = do
+    string "clv"
+    spaces
+    return $ LOADIMM FlagV 0
+
+sec :: Parser Instruction
+sec = do
+    string "sec"
+    spaces
+    return $ LOADIMM FlagC 1
+
+sed :: Parser Instruction
+sed = do
+    string "sed"
+    spaces
+    return $ LOADIMM FlagD 1
 
 inx :: Parser Instruction
 inx = do

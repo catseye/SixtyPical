@@ -39,6 +39,12 @@ emitInstr p r (LOADIMM A val) = "lda #" ++ (show val)
 emitInstr p r (LOADIMM X val) = "ldx #" ++ (show val)
 emitInstr p r (LOADIMM Y val) = "ldy #" ++ (show val)
 
+emitInstr p r (LOADIMM FlagC 0) = "clc"
+emitInstr p r (LOADIMM FlagD 0) = "cld"
+emitInstr p r (LOADIMM FlagV 0) = "clv"
+emitInstr p r (LOADIMM FlagC 1) = "sec"
+emitInstr p r (LOADIMM FlagD 1) = "sed"
+
 emitInstr p r (COPY A (NamedLocation label)) = "sta " ++ label
 emitInstr p r (COPY X (NamedLocation label)) = "stx " ++ label
 emitInstr p r (COPY Y (NamedLocation label)) = "sty " ++ label

@@ -136,13 +136,13 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     
       if bvs { block } else { block }
     
-    X clc
+      clc
     
-    X cld
+      cld
     
     ! cli
     
-    X clv
+      clv
     
       cmp absolute
     X cmp #immediate
@@ -210,9 +210,9 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     X sbc #immediate
     X sbc absolute
     
-    X sec
+      sec
     
-    X sed
+      sed
     
     X sei { block }
     
@@ -244,7 +244,7 @@ TODO
 *   Work out the analyses again and document them
 *   parse support immediate loads, compares
 *   number ifs and repeats
-*   hello, world sort of program
+*   `repeat jmp`
 *   Addressing modes; rename instructions to match
 
 Tests
@@ -356,6 +356,11 @@ No duplicate declarations.
     |    tya
     |    sta screen
     |    dec screen
+    |    clc
+    |    cld
+    |    clv
+    |    sec
+    |    sed
     | }
     = .org 0
     = .word $0801
@@ -384,6 +389,11 @@ No duplicate declarations.
     =   tya
     =   sta screen
     =   dec screen
+    =   clc
+    =   cld
+    =   clv
+    =   sec
+    =   sed
     =   rts
 
     | assign word screen 4000
