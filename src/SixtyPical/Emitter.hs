@@ -23,6 +23,7 @@ emitDecls p (decl:decls) =
 emitDecl p (Assign name _ addr) = ".alias " ++ name ++ " " ++ (show addr)
 emitDecl p (Reserve name Byte) = name ++ ": .byte 0"
 emitDecl p (Reserve name Word) = name ++ ": .word 0"
+emitDecl p (Reserve name Vector) = name ++ ": .word 0"
 
 emitRoutines _ [] = ""
 emitRoutines p (rout:routs) =
@@ -85,5 +86,21 @@ emitInstr p r (REPEAT iid branch blk) =
     emitInstrs p r blk ++
     "  " ++ (show branch) ++ " _repeat_" ++ (show iid)
 
-emitInstr p r i = error "Internal error: sixtypical doesn't know how to emit assembler code for '" ++ show i ++ "'"
+emitInstr p r (SEI blk) =
+    "sei\n" ++
+    emitInstrs p r blk ++
+    "cli"
+
+emitInstr p r (COPYVECTOR (NamedLocation src) (NamedLocation dst)) =
+    "COPYVECTOR " ++ src ++ " " ++ dst
+
+emitInstr p r (COPYROUTINE src (NamedLocation dst)) =
+    "COPYROUTINE " ++ src ++ " " ++ dst
+
+emitInstr p r (JMPVECTOR (NamedLocation dst)) =
+    "jmp (" ++ dst ++ ")"
+
+emitInstr p r i = error (
+    "Internal error: sixtypical doesn't know how to " ++
+    "emit assembler code for '" ++ (show i) ++ "'")
 

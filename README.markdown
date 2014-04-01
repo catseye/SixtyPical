@@ -7,7 +7,7 @@ with block structure and static analysis through abstract interpretation.
 It is a work in progress, currently at the proof-of-concept stage.
 
 It is expected that a common use case for SixtyPical would be retroprogramming
-for the Commodore 64, VIC-20, Apple ][, etc.
+for the Commodore 64 and other 6502-based computers such as the VIC-20.
 
 Many SixtyPical instructions map precisely to 6502 opcodes.  However, SixtyPical
 is not an assembly language.  The programmer does not have total control over
@@ -73,18 +73,25 @@ An address knows what kind of data is stored at the address:
 *   `byte`: an 8-bit byte.  not part of a word.  not to be used as an address.
     (could be an index though.)
 *   `word`: a 16-bit word.  not to be used as an address.
-*   `vector`: a 16-bit address of a routine.  two operations are supported
-    on vectors: copying the contents of one vector to another, and jumping
-    to the code at the address contained in the vector (and this can only
-    happen at the end of a routine.)
+*   `vector`: a 16-bit address of a routine.  Only a handful of operations
+    are supported on vectors:
+    
+    *   copying the contents of one vector to another
+    *   copying the address of a routine into a vector
+    *   jumping indirectly to a vector (i.e. to the code at the address
+        contained in the vector (and this can only happen at the end of a
+        routine)
+    *   `jsr`'ing indirectly to a vector (which is done with a fun
+        generated trick
+    
 *   `byte table`: (not yet implemented) a series of `byte`s
     contiguous in memory starting from the address.
     this is the only kind of address that can be used in indexed addressing.
 
 ### Blocks ###
 
-Each routine is a block.  It may be composed of inner blocks, attached to
-some instructions.
+Each routine is a block.  It may be composed of inner blocks, if those
+inner blocks are attached to certain instructions.
 
 SixtyPical does not have instructions that map literally to the 6502 branch
 instructions.  Instead, it has an `if` construct, with two blocks (for the
@@ -115,7 +122,7 @@ Unsupported Opcodes
 -------------------
 
 6502 opcodes with no language-level equivalent instructions in SixtyPical
-are `brk`, `cli`, `jmp`, `pla`, `plp`, `rti`, and `rts`.  These may be
+are `brk`, `cli`, `pla`, `plp`, `rti`, and `rts`.  These may be
 inserted into the output program as a SixtyPical → 6502 compiler sees fit,
 however.
 
@@ -188,6 +195,10 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
       iny
     
     * jsr routine
+    X jsr vector
+    
+    X jmp routine
+    * jmp vector
     
       lda #immediate
       lda absolute
@@ -336,6 +347,22 @@ No duplicate declarations.
     |    nop
     | }
     ? duplicate declaration
+
+We can jump to a vector.
+
+    | reserve vector blah
+    | routine main {
+    |    jmp blah
+    | }
+    = True
+
+We can't jump to a word.
+
+    *| reserve word blah
+    *| routine main {
+    *|    jmp blah
+    *| }
+    *? wtf
 
     -> Tests for functionality "Emit ASM for SixtyPical program"
     
@@ -515,12 +542,13 @@ Nested ifs.
     = _past_3:
     =   rts
 
+Installing an interrupt handler (at the Kernal level, i.e. with CINV)
 
     | assign byte screen 1024
     | assign vector cinv 788
     | reserve vector save_cinv
     | 
-    | routine patch_cinv {
+    | routine main {
     |   sei {
     |     copy vector cinv to save_cinv
     |     copy routine our_cinv to cinv

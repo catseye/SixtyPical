@@ -57,6 +57,8 @@ data Instruction = LOADIMM StorageLocation DataValue
                  | CMPIMM StorageLocation DataValue
                  | CMP StorageLocation StorageLocation
                  | JSR RoutineName
+              -- | JSRVECTOR StorageLocation
+                 | JMPVECTOR StorageLocation
                  | IF InternalID Branch [Instruction] [Instruction]
                  | REPEAT InternalID Branch [Instruction]
                  | DELTA StorageLocation DataValue
@@ -71,3 +73,17 @@ data Routine = Routine RoutineName [Instruction]
 
 data Program = Program [Decl] [Routine]
     deriving (Show, Ord, Eq)
+
+mapBlock :: (Instruction -> Instruction) -> [Instruction] -> [Instruction]
+mapBlock = map
+
+mapRoutine :: (Instruction -> Instruction) -> Routine -> Routine
+mapRoutine f (Routine name instrs) = Routine name (mapBlock f instrs)
+
+mapRoutines :: (Instruction -> Instruction) -> [Routine] -> [Routine]
+mapRoutines f [] = []
+mapRoutines f (rout:routs) =
+    (mapRoutine f rout):(mapRoutines f routs)
+
+mapProgramRoutines :: (Instruction -> Instruction) -> Program -> Program
+mapProgramRoutines f (Program decls routs) = Program decls $ mapRoutines f routs

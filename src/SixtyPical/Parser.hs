@@ -24,6 +24,7 @@ Command  := "if" Branch Block "else" Block
           | "inx" | "iny" | "dex" | "dey" | "inc" Location | "dec" Location
           | "clc" | "cld" | "clv" | "sec" | "sed"
           | "sei" Block
+          | "jmp" LocationName
           | "nop".
 Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
@@ -91,6 +92,7 @@ command = (try lda) <|>
           (try inc) <|> (try dec) <|>
           (try clc) <|> (try cld) <|> (try clv) <|> (try sec) <|> (try sed) <|>
           (try sei) <|>
+          (try jmp) <|>
           (try copy_vector_statement) <|>
           (try copy_routine_statement) <|>
           if_statement <|> repeat_statement <|> nop
@@ -273,6 +275,13 @@ sei = do
     spaces
     blk <- block
     return (SEI blk)
+
+jmp :: Parser Instruction
+jmp = do
+    string "jmp"
+    spaces
+    l <- locationName
+    return $ JMPVECTOR (NamedLocation l)
 
 if_statement :: Parser Instruction
 if_statement = do
