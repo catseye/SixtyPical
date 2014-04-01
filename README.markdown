@@ -97,8 +97,6 @@ TODO
 
 *   Parse HEX values like $40A3
 *   Full machine model
-*   Check before analyzing
-*   Check, analyze, generate
 *   Addressing modes; rename instructions to match
 
 Tests
@@ -200,15 +198,16 @@ No duplicate declarations.
     |    ldy score
     |    tya
     | }
-    = (decl)
-    = (decl)
+    = .org $c000
+    = score: .word 0
+    = .alias screen 4000
     = main:
     =   lda screen
     =   tax
     =   tay
     =   cmp score
-    =   (instr)
+    =   ldx score
     =   txa
-    =   (instr)
+    =   ldy score
     =   tya
     =   rts
