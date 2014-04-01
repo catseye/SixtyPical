@@ -89,13 +89,19 @@ emitInstr p r (REPEAT iid branch blk) =
 emitInstr p r (SEI blk) =
     "sei\n" ++
     emitInstrs p r blk ++
-    "cli"
+    "  cli"
 
 emitInstr p r (COPYVECTOR (NamedLocation src) (NamedLocation dst)) =
-    "COPYVECTOR " ++ src ++ " " ++ dst
+    "lda " ++ src ++ "\n" ++
+    "  sta " ++ dst ++ "\n" ++
+    "  lda " ++ src ++ "+1\n" ++
+    "  sta " ++ dst ++ "+1"
 
 emitInstr p r (COPYROUTINE src (NamedLocation dst)) =
-    "COPYROUTINE " ++ src ++ " " ++ dst
+    "lda #<" ++ src ++ "\n" ++
+    "  sta " ++ dst ++ "\n" ++
+    "  lda #>" ++ src ++ "\n" ++
+    "  sta " ++ dst ++ "+1"
 
 emitInstr p r (JMPVECTOR (NamedLocation dst)) =
     "jmp (" ++ dst ++ ")"

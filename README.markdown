@@ -559,4 +559,28 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     |   inc screen
     |   jmp save_cinv
     | }
-    = story checks out
+    = .org 0
+    = .word $0801
+    = .org $0801
+    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
+    =   jmp main
+    = .alias screen 1024
+    = .alias cinv 788
+    = save_cinv: .word 0
+    = main:
+    =   sei
+    =   lda cinv
+    =   sta save_cinv
+    =   lda cinv+1
+    =   sta save_cinv+1
+    =   lda #<our_cinv
+    =   sta cinv
+    =   lda #>our_cinv
+    =   sta cinv+1
+    =   cli
+    =   rts
+    = 
+    = our_cinv:
+    =   inc screen
+    =   jmp (save_cinv)
+    =   rts
