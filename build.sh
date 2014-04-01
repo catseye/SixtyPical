@@ -1,4 +1,3 @@
 #!/bin/sh
 
-mkdir -p bin
-ghc src/Main.hs -o bin/sixtypical
+cd src && mkdir -p ../bin && ghc Main.hs -o ../bin/sixtypical
