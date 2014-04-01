@@ -10,11 +10,12 @@ import SixtyPical.Model
 import SixtyPical.Parser (parseProgram)
 import SixtyPical.Checker (checkProgram)
 import SixtyPical.Analyzer (analyzeProgram)
+import SixtyPical.Emitter (emitProgram)
 
 -- -- -- -- driver -- -- -- --
 
 usage = do
-    putStrLn "Usage: sixtypical (parse|check|analyze) filename.60pical"
+    putStrLn "Usage: sixtypical (parse|check|analyze|emit) filename.60pical"
     exitWith $ ExitFailure 1
 
 main = do
@@ -28,7 +29,15 @@ main = do
                 ("check", Right program) -> do
                     putStrLn $ show $ checkProgram program
                 ("analyze", Right program) -> do
-                    putStrLn $ show $ analyzeProgram program
+                    case checkProgram program of
+                        True ->
+                            putStrLn $ show $ analyzeProgram program
+                ("emit", Right program) -> do
+                    case checkProgram program of
+                        True ->
+                            case analyzeProgram program of
+                                _ ->
+                                    putStr $ emitProgram program
                 (_, Left problem) -> do
                     hPutStrLn stderr (show problem)
                     exitWith $ ExitFailure 1

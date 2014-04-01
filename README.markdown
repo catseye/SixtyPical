@@ -182,3 +182,33 @@ No duplicate declarations.
     |    nop
     | }
     ? duplicate declaration
+
+    -> Tests for functionality "Emit ASM for SixtyPical program"
+    
+    -> Functionality "Emit ASM for SixtyPical program" is implemented by
+    -> shell command "bin/sixtypical emit %(test-file)"
+
+    | reserve word score
+    | assign word screen 4000
+    | routine main {
+    |    lda screen
+    |    tax
+    |    tay
+    |    cmp score
+    |    ldx score
+    |    txa
+    |    ldy score
+    |    tya
+    | }
+    = (decl)
+    = (decl)
+    = main:
+    =   lda screen
+    =   tax
+    =   tay
+    =   cmp score
+    =   (instr)
+    =   txa
+    =   (instr)
+    =   tya
+    =   rts
