@@ -1,11 +1,10 @@
 assign byte screen 1024
-reserve byte zero
 routine main {
-   ldy zero
+   ldy #0
    repeat bne {
       inc screen
       dey
-      cpy zero
+      cpy #0
    }
    sty screen
 }

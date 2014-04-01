@@ -168,22 +168,22 @@ cmp :: Parser Instruction
 cmp = do
     string "cmp"
     spaces
-    l <- locationName
-    return (CMP A (NamedLocation l))
+    (try $ immediate (\v -> CMPIMM A v) <|>
+     absolute (\l -> CMP A (NamedLocation l)))
 
 cpx :: Parser Instruction
 cpx = do
     string "cpx"
     spaces
-    l <- locationName
-    return (CMP X (NamedLocation l))
+    (try $ immediate (\v -> CMPIMM X v) <|>
+     absolute (\l -> CMP X (NamedLocation l)))
 
 cpy :: Parser Instruction
 cpy = do
     string "cpy"
     spaces
-    l <- locationName
-    return (CMP Y (NamedLocation l))
+    (try $ immediate (\v -> CMPIMM Y v) <|>
+     absolute (\l -> CMP Y (NamedLocation l)))
 
 immediate :: (DataValue -> Instruction) -> Parser Instruction
 immediate f = do
@@ -207,15 +207,15 @@ ldx :: Parser Instruction
 ldx = do
     string "ldx"
     spaces
-    l <- locationName
-    return (COPY (NamedLocation l) X)
+    (try $ immediate (\v -> LOADIMM X v) <|>
+     absolute (\l -> COPY (NamedLocation l) X))
 
 ldy :: Parser Instruction
 ldy = do
     string "ldy"
     spaces
-    l <- locationName
-    return (COPY (NamedLocation l) Y)
+    (try $ immediate (\v -> LOADIMM Y v) <|>
+     absolute (\l -> COPY (NamedLocation l) Y))
 
 sta :: Parser Instruction
 sta = do

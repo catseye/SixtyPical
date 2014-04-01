@@ -56,6 +56,10 @@ emitInstr p r (CMP A (NamedLocation label)) = "cmp " ++ label
 emitInstr p r (CMP X (NamedLocation label)) = "cpx " ++ label
 emitInstr p r (CMP Y (NamedLocation label)) = "cpy " ++ label
 
+emitInstr p r (CMPIMM A val) = "cmp #" ++ (show val)
+emitInstr p r (CMPIMM X val) = "cpx #" ++ (show val)
+emitInstr p r (CMPIMM Y val) = "cpy #" ++ (show val)
+
 emitInstr p r (DELTA X 1) = "inx"
 emitInstr p r (DELTA X (-1)) = "dex"
 emitInstr p r (DELTA Y 1) = "iny"

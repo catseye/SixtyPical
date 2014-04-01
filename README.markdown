@@ -144,14 +144,14 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     
       clv
     
+      cmp #immediate
       cmp absolute
-    X cmp #immediate
       
+      cpx #immediate
       cpx absolute
-    X cpx #immediate
     
+      cpy #immediate
       cpy absolute
-    X cpy #immediate
     
       dec absolute
     
@@ -172,14 +172,14 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     
     * jsr routine
     
+      lda #immediate
       lda absolute
-    X lda #immediate
 
+      ldx #immediate
       ldx absolute
-    X ldx #immediate
 
+      ldy #immediate
       ldy absolute
-    X ldy #immediate
 
     X lsr
     X lsr absolute
@@ -339,6 +339,8 @@ No duplicate declarations.
     | assign word screen 1024
     | routine main {
     |    lda #4
+    |    ldx #0
+    |    ldy #255
     |    lda screen
     |    inc screen
     |    tax
@@ -350,11 +352,14 @@ No duplicate declarations.
     |    dey
     |    sty score
     |    cmp score
+    |    cmp #30
     |    ldx score
     |    cpx screen
+    |    cpx #31
     |    txa
     |    ldy score
     |    cpy screen
+    |    cpy #32
     |    tya
     |    sta screen
     |    dec screen
@@ -373,6 +378,8 @@ No duplicate declarations.
     = .alias screen 1024
     = main:
     =   lda #4
+    =   ldx #0
+    =   ldy #255
     =   lda screen
     =   inc screen
     =   tax
@@ -384,11 +391,14 @@ No duplicate declarations.
     =   dey
     =   sty score
     =   cmp score
+    =   cmp #30
     =   ldx score
     =   cpx screen
+    =   cpx #31
     =   txa
     =   ldy score
     =   cpy screen
+    =   cpy #32
     =   tya
     =   sta screen
     =   dec screen

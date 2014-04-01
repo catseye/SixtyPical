@@ -51,6 +51,7 @@ data Branch = BCC | BCS | BEQ | BMI | BNE | BPL | BVC | BVS
 
 data Instruction = LOADIMM StorageLocation DataValue
                  | COPY StorageLocation StorageLocation
+                 | CMPIMM StorageLocation DataValue
                  | CMP StorageLocation StorageLocation
                  | JSR RoutineName
                  | IF Branch [Instruction] [Instruction]
