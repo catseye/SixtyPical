@@ -74,9 +74,9 @@ Each routine is a block.  It may be composed of inner blocks, attached to
 some instructions.
 
 SixtyPical does not have instructions that map literally to the 6502 branch
-instructions.  Instead, each branch instruction has a corresponding
-"if-then-else"-like construct with the same name as the branch instruction.
-These _test_ instructions each have two blocks, for the then and the else.
+instructions.  Instead, it has an `if` construct, with two blocks (for the
+"then" and `else` parts), and the branch instructions map to conditions for
+this construct.
 
 The abstract states of the machine at each of the different block exits are
 merged during analysis.  If any register or memory location is treated
@@ -85,7 +85,9 @@ that register cannot subsequently be used without a declaration to the effect
 that we know what's going on.  (This is all a bit fuzzy right now.)
 
 There is also no `rts` instruction.  It is included at the end of a routine,
-but only when the routine is used as a subroutine.
+but only when the routine is used as a subroutine.  Also, if the routine
+ends by `jsr`ing another routine, it reserves the right to do a tail-call
+or even a fallthrough.
 
 There are also _with_ instructions, which are associated with an opcode
 that has a natural symmetrical opcode (e.g. `pha`, `sei`).  These instructions
@@ -120,12 +122,150 @@ This might be
 
 Note, `screen` must be a `byte table` here.
 
+Instruction Support so far
+--------------------------
+
+A `X` indicates unsupported.  A `!` indicates will-not-support.
+
+Funny syntax indicates use of a special form.
+
+In these, `absolute` must be a `reserve`d or `locate`d address.
+
+    X adc #immediate
+    X adc absolute
+    
+    X and #immediate
+    X and absolute
+    
+    X asl
+    X asl absolute
+    
+      if bcc { block } else { block }
+    
+      if bcs { block } else { block }
+    
+      if beq { block } else { block }
+    
+    X bit absolute
+    
+      if bmi { block } else { block }
+    
+      if bne { block } else { block }
+    
+      if bpl { block } else { block }
+    
+    ! brk
+    
+      if bvc { block } else { block }
+    
+      if bvs { block } else { block }
+    
+    X clc
+    
+    X cld
+    
+    ! cli
+    
+    X clv
+    
+      cmp absolute
+    X cmp #immediate
+      
+    X cpx absolute
+    X cpx #immediate
+    
+    X cpy absolute
+    X cpy #immediate
+    
+    X dec absolute
+    
+    X dex
+    
+    X dey
+    
+    X eor #immediate
+    X eor absolute
+    
+    X inc absolute
+    
+    X inx
+    
+    X iny
+    
+    ! jmp
+    
+    * jsr routine
+    
+      lda absolute
+    X lda #immediate
+
+      ldx absolute
+    X ldx #immediate
+
+      ldy absolute
+    X ldy #immediate
+
+    X lsr
+    X lsr absolute
+    
+      nop
+      
+    X ora #immediate
+    X ora absolute
+
+    X pha { block }
+    
+    X php { block }
+    
+    ! pla -- (although note this does change flags)
+    
+    ! plp -- (although note this does change flags -- obviously)
+    
+    X rol
+    X rol absolute
+    
+    X ror
+    X ror absolute
+    
+    ! rti
+    
+    ! rts
+    
+    X sbc #immediate
+    X sbc absolute
+    
+    X sec
+    
+    X sed
+    
+    X sei { block }
+    
+      sta absolute
+      
+      stx absolute
+      
+      sty absolute
+
+      tax
+      
+      tay
+      
+    X tsx
+    
+      txa
+    
+    X txs
+    
+      tya
+
 TODO
 ----
 
 *   Parse HEX values like $40A3
 *   Fuller machine model
+*   parse support immediate loads, compares
 *   Addressing modes; rename instructions to match
+*   Generate code for BEQ
 
 Tests
 -----
@@ -192,7 +332,7 @@ Even in inner blocks.
     | routine main {
     |    lda score
     |    cmp screen
-    |    beq {
+    |    if beq {
     |      lda score
     |    } else {
     |      lda fnord

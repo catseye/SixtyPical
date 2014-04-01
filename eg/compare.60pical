@@ -6,7 +6,7 @@ reserve byte n_low
 routine compare_16_bit {
     lda m_high
     cmp n_high
-    beq {
+    if beq {
         lda m_low
         cmp n_low
     } else {

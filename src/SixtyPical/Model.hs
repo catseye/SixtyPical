@@ -46,11 +46,14 @@ data Decl = Assign LocationName Size Address -- .alias
 
 type RoutineName = String
 
+data Branch = BCC | BCS | BEQ | BMI | BNE | BPL | BVC | BVS
+    deriving (Show, Ord, Eq)
+
 data Instruction = LOADIMM StorageLocation DataValue
                  | COPY StorageLocation StorageLocation
                  | CMP StorageLocation StorageLocation
                  | JSR RoutineName
-                 | IFEQ [Instruction] [Instruction]
+                 | IF Branch [Instruction] [Instruction]
                  | NOP
     deriving (Show, Ord, Eq)
 

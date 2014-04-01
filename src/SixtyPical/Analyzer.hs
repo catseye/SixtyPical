@@ -75,7 +75,7 @@ checkInstr (JSR name) progCtx routCtx =
 checkInstr (CMP reg addr) progCtx routCtx =
     -- TODO: mark Carry bit as "touched" here
     routCtx
-checkInstr (IFEQ b1 b2) progCtx routCtx =
+checkInstr (IF branch b1 b2) progCtx routCtx =
     -- TODO: oooh, this one's gonna be fun
     routCtx
 checkInstr NOP progCtx routCtx =

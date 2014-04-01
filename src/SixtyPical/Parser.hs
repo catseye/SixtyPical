@@ -13,13 +13,14 @@ Decl     := "reserve" Size LocationName
 Size     := "byte" | "word".
 Routine  := "routine" RoutineName Block.
 Block    := "{" {Command} "}".
-Command  := "beq" Block "else" Block
+Command  := "if" Branch Block "else" Block
           | "lda" (LocationName | Immediate)
           | "ldx" (LocationName | Immediate)
           | "ldy" (LocationName | Immediate)
           | "txa" | "tax" | "tya" | "tay"
           | "cmp" (LocationName | Immediate)
           | "nop".
+Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
 -}
 
@@ -76,7 +77,7 @@ command :: Parser Instruction
 command = cmp <|> (try lda) <|> (try ldx) <|> (try ldy) <|>
           (try sta) <|> (try stx) <|> (try sty) <|>
           (try txa) <|> (try tax) <|> (try tya) <|> (try tay) <|>
-          beq <|> nop
+          if_statement <|> nop
 
 nop :: Parser Instruction
 nop = do
@@ -157,15 +158,27 @@ tay = do
     spaces
     return (COPY A Y)
 
-beq :: Parser Instruction
-beq = do
-    string "beq"
+if_statement :: Parser Instruction
+if_statement = do
+    string "if"
     spaces
+    brch <- branch
     b1 <- block
     string "else"
     spaces
     b2 <- block
-    return (IFEQ b1 b2)
+    return (IF brch b1 b2)
+
+branch :: Parser Branch
+branch = try (b "bcc" BCC) <|> try (b "bcs" BCS) <|> try (b "beq" BEQ) <|>
+         try (b "bmi" BMI) <|> try (b "bne" BNE) <|> try (b "bpl" BPL) <|>
+         try (b "bvc" BVC) <|> (b "bvs" BVS)
+
+b :: String -> Branch -> Parser Branch
+b s k = do
+    string s
+    spaces
+    return k
 
 routineName :: Parser String
 routineName = do
