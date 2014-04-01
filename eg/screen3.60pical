@@ -1,0 +1,14 @@
+assign byte table screen 1024
+reserve byte value
+routine main {
+    lda #0
+    sta value
+    ldx #0
+    repeat bne {
+        lda value
+        inc value
+        sta screen, x
+        inx
+        cpx #80
+    }
+}
