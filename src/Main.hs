@@ -8,8 +8,8 @@ import System.Exit
 
 import SixtyPical.Model
 import SixtyPical.Parser (parseProgram)
-import SixtyPical.BasicCheck (checkProgram)
-import SixtyPical.Context (analyzeProgram)
+import SixtyPical.Checker (checkProgram)
+import SixtyPical.Analyzer (analyzeProgram)
 
 -- -- -- -- driver -- -- -- --
 

@@ -1,4 +1,6 @@
-module SixtyPical.Context where
+-- encoding: UTF-8
+
+module SixtyPical.Analyzer where
 
 import qualified Data.Map as Map
 

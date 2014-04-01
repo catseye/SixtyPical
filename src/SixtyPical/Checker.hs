@@ -1,6 +1,6 @@
 -- encoding: UTF-8
 
-module SixtyPical.BasicCheck where
+module SixtyPical.Checker where
 
 import SixtyPical.Model
 
