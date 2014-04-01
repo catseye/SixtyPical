@@ -213,12 +213,20 @@ index = do
     spaces
     return X
 
+absolute_indexed :: (LocationName -> [StorageLocation] -> Instruction) -> Parser Instruction
+absolute_indexed f = do
+    l <- locationName
+    indexes <- many index
+    return $ f l indexes
+
 lda :: Parser Instruction
 lda = do
     string "lda"
     spaces
-    (try $ immediate (\v -> PUT A v) <|>
-     absolute (\l -> COPY (NamedLocation l) A))
+    (try $ immediate (\v -> PUT A v) <|> absolute_indexed gen)
+    where
+       gen l [] = COPY (NamedLocation l) A
+       gen l [X] = COPYINDEXED (NamedLocation l) A X
 
 ldx :: Parser Instruction
 ldx = do
@@ -238,13 +246,10 @@ sta :: Parser Instruction
 sta = do
     string "sta"
     spaces
-    l <- locationName
-    indexes <- many index
-    return $ case indexes of
-        [] ->
-            COPY A (NamedLocation l)
-        [X] ->
-            COPYINDEXED A (NamedLocation l) X
+    absolute_indexed gen
+    where
+       gen l [] = COPY A (NamedLocation l)
+       gen l [X] = COPYINDEXED A (NamedLocation l) X
 
 stx :: Parser Instruction
 stx = do

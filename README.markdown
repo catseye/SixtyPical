@@ -202,6 +202,7 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     
       lda #immediate
       lda absolute
+      lda absolute, x
 
       ldx #immediate
       ldx absolute
@@ -237,6 +238,7 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     X sei { block }
     
       sta absolute
+      sta absolute, x
       
       stx absolute
       
@@ -258,7 +260,7 @@ TODO
 ----
 
 *   Parse HEX values like $40A3
-*   Tables
+*   Initial values for reserved, incl. tables
 *   Character tables ("strings" to everybody else)
 *   External routines
 *   Work out the analyses again and document them
@@ -416,6 +418,7 @@ We cannot absolute-indexed a word.
     |    ldx #0
     |    ldy #255
     |    lda screen
+    |    lda screen, x
     |    inc screen
     |    tax
     |    inx
@@ -456,6 +459,7 @@ We cannot absolute-indexed a word.
     =   ldx #0
     =   ldy #255
     =   lda screen
+    =   lda screen, x
     =   inc screen
     =   tax
     =   inx
