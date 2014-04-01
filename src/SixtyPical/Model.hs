@@ -4,6 +4,7 @@ module SixtyPical.Model where
 
 -- -- -- -- machine model -- -- -- --
 
+type DataValue = Int -- LET'S ASSUME THIS IS AT LEAST 8 BITS
 type Address = Int -- LET'S ASSUME THIS IS AT LEAST 16 BITS
 
 type LocationName = String
@@ -45,7 +46,7 @@ data Decl = Assign LocationName Size Address -- .alias
 
 type RoutineName = String
 
-data Instruction = LOAD StorageLocation StorageLocation
+data Instruction = LOADIMM StorageLocation DataValue
                  | COPY StorageLocation StorageLocation
                  | CMP StorageLocation StorageLocation
                  | JSR RoutineName

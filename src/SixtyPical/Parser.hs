@@ -74,6 +74,7 @@ block = do
 
 command :: Parser Instruction
 command = cmp <|> (try lda) <|> (try ldx) <|> (try ldy) <|>
+          (try sta) <|> (try stx) <|> (try sty) <|>
           (try txa) <|> (try tax) <|> (try tya) <|> (try tay) <|>
           beq <|> nop
 
@@ -95,21 +96,42 @@ lda = do
     string "lda"
     spaces
     l <- locationName
-    return (LOAD A (NamedLocation l))
+    return (COPY (NamedLocation l) A)
 
 ldx :: Parser Instruction
 ldx = do
     string "ldx"
     spaces
     l <- locationName
-    return (LOAD X (NamedLocation l))
+    return (COPY (NamedLocation l) X)
 
 ldy :: Parser Instruction
 ldy = do
     string "ldy"
     spaces
     l <- locationName
-    return (LOAD Y (NamedLocation l))
+    return (COPY (NamedLocation l) Y)
+
+sta :: Parser Instruction
+sta = do
+    string "sta"
+    spaces
+    l <- locationName
+    return (COPY A (NamedLocation l))
+
+stx :: Parser Instruction
+stx = do
+    string "stx"
+    spaces
+    l <- locationName
+    return (COPY X (NamedLocation l))
+
+sty :: Parser Instruction
+sty = do
+    string "sty"
+    spaces
+    l <- locationName
+    return (COPY Y (NamedLocation l))
 
 txa :: Parser Instruction
 txa = do

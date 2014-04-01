@@ -29,7 +29,9 @@ blockUsedLocations [] = []
 blockUsedLocations (instr:instrs) =
     (instrUsedLocations instr) ++ blockUsedLocations instrs
 
-instrUsedLocations (LOAD reg (NamedLocation loc)) = [loc]
+--instrUsedLocations (LOADIMM reg (NamedLocation loc)) = [loc]
+instrUsedLocations (COPY (NamedLocation loc) _) = [loc]
+instrUsedLocations (COPY _ (NamedLocation loc)) = [loc]
 instrUsedLocations (CMP reg (NamedLocation loc)) = [loc]
 -- TODO: JSR...
 instrUsedLocations (IFEQ b1 b2) =

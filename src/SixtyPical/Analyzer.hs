@@ -9,7 +9,7 @@ import SixtyPical.Model
 -- -- -- -- data-flow-analysis context -- -- -- --
 
 data Usage = Unknown
-           | Value StorageLocation -- obviously a bit daft for now
+           | Value DataValue -- obviously a bit daft for now
            | Retained StorageLocation
     deriving (Show, Ord, Eq)
 
@@ -62,8 +62,8 @@ checkRoutine (Routine name (instr : instrs)) progCtx routCtx =
     in
         checkRoutine (Routine name instrs) progCtx routCtx'
 
-checkInstr (LOAD reg addr) progCtx routCtx =
-    Map.insert reg (Value addr) routCtx
+checkInstr (LOADIMM reg imm) progCtx routCtx =
+    Map.insert reg (Value imm) routCtx
 checkInstr (COPY src dst) progCtx routCtx =
     Map.insert dst (Map.findWithDefault Unknown src routCtx) routCtx
 checkInstr (JSR name) progCtx routCtx =

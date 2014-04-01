@@ -219,12 +219,15 @@ No duplicate declarations.
     | routine main {
     |    lda screen
     |    tax
+    |    stx score
     |    tay
+    |    sty score
     |    cmp score
     |    ldx score
     |    txa
     |    ldy score
     |    tya
+    |    sta screen
     | }
     = .org 0
     = .word $0801
@@ -236,10 +239,13 @@ No duplicate declarations.
     = main:
     =   lda screen
     =   tax
+    =   stx score
     =   tay
+    =   sty score
     =   cmp score
     =   ldx score
     =   txa
     =   ldy score
     =   tya
+    =   sta screen
     =   rts
