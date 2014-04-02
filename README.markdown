@@ -265,11 +265,9 @@ TODO
 *   Parse HEX values like $40A3
 *   Initial values for reserved, incl. tables
 *   Character tables ("strings" to everybody else)
-*   External routines
 *   Work out the analyses again and document them
 *   `repeat jmp`
 *   Addressing modes; rename instructions to match
-*   Not responsible for BASIC header (cat externally)
 *   Put data at end, no need for jmp main
 
 Tests
@@ -485,10 +483,6 @@ We cannot absolute-indexed a word.
     |    ora #8
     |    ora screen
     | }
-    = .org 0
-    = .word $0801
-    = .org $0801
-    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
     =   jmp main
     = score: .word 0
     = .alias screen 1024
@@ -548,10 +542,6 @@ We cannot absolute-indexed a word.
     |    }
     |    sta screen
     | }
-    = .org 0
-    = .word $0801
-    = .org $0801
-    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
     =   jmp main
     = .alias screen 1024
     = main:
@@ -577,10 +567,6 @@ We cannot absolute-indexed a word.
     |    }
     |    sty screen
     | }
-    = .org 0
-    = .word $0801
-    = .org $0801
-    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
     =   jmp main
     = .alias screen 1024
     = zero: .byte 0
@@ -612,10 +598,6 @@ Nested ifs.
     |     lda #3
     |   }
     | }
-    = .org 0
-    = .word $0801
-    = .org $0801
-    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
     =   jmp main
     = main:
     =   BEQ _label_3
@@ -653,10 +635,6 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     |   inc screen
     |   jmp save_cinv
     | }
-    = .org 0
-    = .word $0801
-    = .org $0801
-    = .byte $10, $08, $c9, $07, $9e, $32, $30, $36, $31, $00, $00, $00
     =   jmp main
     = .alias screen 1024
     = .alias cinv 788

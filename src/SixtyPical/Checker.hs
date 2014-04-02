@@ -84,6 +84,7 @@ noUseOfUndeclaredRoutines p@(Program decls routines) =
         mappedProgram == p
     where
         routineNames = declaredRoutineNames p
+        -- TODO also check COPYROUTINE here
         checkInstr j@(JSR routName) =
             case routName `elem` routineNames of
                 True -> j
