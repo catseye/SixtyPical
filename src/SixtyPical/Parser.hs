@@ -94,6 +94,7 @@ command = (try lda) <|>
           (try inc) <|> (try dec) <|>
           (try clc) <|> (try cld) <|> (try clv) <|> (try sec) <|> (try sed) <|>
           (try adc) <|> (try SixtyPical.Parser.and) <|>
+          (try sbc) <|> (try ora) <|>
           (try sei) <|>
           (try jmp) <|>
           (try copy_vector_statement) <|>
@@ -202,12 +203,26 @@ adc = do
     (try $ immediate (\v -> ADDIMM A v) <|>
      absolute (\l -> ADD A (NamedLocation l)))
 
+sbc :: Parser Instruction
+sbc = do
+    string "sbc"
+    spaces
+    (try $ immediate (\v -> SUBIMM A v) <|>
+     absolute (\l -> SUB A (NamedLocation l)))
+
 and :: Parser Instruction
 and = do
     string "and"
     spaces
     (try $ immediate (\v -> ANDIMM A v) <|>
      absolute (\l -> AND A (NamedLocation l)))
+
+ora :: Parser Instruction
+ora = do
+    string "ora"
+    spaces
+    (try $ immediate (\v -> ORIMM A v) <|>
+     absolute (\l -> OR A (NamedLocation l)))
 
 immediate :: (DataValue -> Instruction) -> Parser Instruction
 immediate f = do

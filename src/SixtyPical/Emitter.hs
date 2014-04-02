@@ -78,6 +78,12 @@ emitInstr p r (ADDIMM A val) = "adc #" ++ (show val)
 emitInstr p r (AND A (NamedLocation label)) = "and " ++ label
 emitInstr p r (ANDIMM A val) = "and #" ++ (show val)
 
+emitInstr p r (SUB A (NamedLocation label)) = "sbc " ++ label
+emitInstr p r (SUBIMM A val) = "sbc #" ++ (show val)
+
+emitInstr p r (OR A (NamedLocation label)) = "ora " ++ label
+emitInstr p r (ORIMM A val) = "ora #" ++ (show val)
+
 emitInstr p r (DELTA X 1) = "inx"
 emitInstr p r (DELTA X (-1)) = "dex"
 emitInstr p r (DELTA Y 1) = "iny"

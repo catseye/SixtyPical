@@ -217,8 +217,8 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     
       nop
       
-    X ora #immediate
-    X ora absolute
+      ora #immediate
+      ora absolute
 
     X pha { block }
     
@@ -230,8 +230,8 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     X ror
     X ror absolute
     
-    X sbc #immediate
-    X sbc absolute
+      sbc #immediate
+      sbc absolute
     
       sec
     
@@ -457,6 +457,10 @@ We cannot absolute-indexed a word.
     |    adc screen
     |    and #8
     |    and screen
+    |    sbc #8
+    |    sbc screen
+    |    ora #8
+    |    ora screen
     | }
     = .org 0
     = .word $0801
@@ -504,6 +508,10 @@ We cannot absolute-indexed a word.
     =   adc screen
     =   and #8
     =   and screen
+    =   sbc #8
+    =   sbc screen
+    =   ora #8
+    =   ora screen
     =   rts
 
     | assign word screen 1024

@@ -62,6 +62,10 @@ data Instruction = PUT StorageLocation DataValue
                  | ADD StorageLocation StorageLocation
                  | ANDIMM StorageLocation DataValue
                  | AND StorageLocation StorageLocation
+                 | SUBIMM StorageLocation DataValue
+                 | SUB StorageLocation StorageLocation
+                 | ORIMM StorageLocation DataValue
+                 | OR StorageLocation StorageLocation
                  | JSR RoutineName
               -- | JSRVECTOR StorageLocation
                  | JMPVECTOR StorageLocation
