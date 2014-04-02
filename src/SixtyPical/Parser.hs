@@ -132,8 +132,8 @@ index = do
         "x" -> X
         "y" -> Y
 
-data Directness = Direct LocationName
-                | Indirect LocationName
+data Directness = Directly LocationName
+                | Indirectly LocationName
     deriving (Ord, Show, Eq)
 
 indirect_location :: Parser Directness
@@ -143,12 +143,12 @@ indirect_location = do
     l <- locationName
     string ")"
     spaces
-    return $ Indirect l
+    return $ Indirectly l
 
 direct_location :: Parser Directness
 direct_location = do
     l <- locationName
-    return $ Direct l
+    return $ Directly l
 
 directness_location = (try indirect_location) <|> direct_location
 
@@ -197,31 +197,31 @@ clc :: Parser Instruction
 clc = do
     string "clc"
     spaces
-    return $ PUT FlagC 0
+    return $ COPY (Immediate 0) FlagC
 
 cld :: Parser Instruction
 cld = do
     string "cld"
     spaces
-    return $ PUT FlagD 0
+    return $ COPY (Immediate 0) FlagD
 
 clv :: Parser Instruction
 clv = do
     string "clv"
     spaces
-    return $ PUT FlagV 0
+    return $ COPY (Immediate 0) FlagV
 
 sec :: Parser Instruction
 sec = do
     string "sec"
     spaces
-    return $ PUT FlagC 1
+    return $ COPY (Immediate 1) FlagC
 
 sed :: Parser Instruction
 sed = do
     string "sed"
     spaces
-    return $ PUT FlagD 1
+    return $ COPY (Immediate 1) FlagD
 
 inx :: Parser Instruction
 inx = do
@@ -314,7 +314,7 @@ lda :: Parser Instruction
 lda = do
     string "lda"
     spaces
-    (try $ immediate (\v -> PUT A v) <|> absolute_indexed gen)
+    (try $ immediate (\v -> COPY (Immediate v) A) <|> absolute_indexed gen)
     where
        gen l [] = COPY (NamedLocation l) A
        gen l [reg] = COPYINDEXED (NamedLocation l) A reg
@@ -323,14 +323,14 @@ ldx :: Parser Instruction
 ldx = do
     string "ldx"
     spaces
-    (try $ immediate (\v -> PUT X v) <|>
+    (try $ immediate (\v -> COPY (Immediate v) X) <|>
      absolute (\l -> COPY (NamedLocation l) X))
 
 ldy :: Parser Instruction
 ldy = do
     string "ldy"
     spaces
-    (try $ immediate (\v -> PUT Y v) <|>
+    (try $ immediate (\v -> COPY (Immediate v) Y) <|>
      absolute (\l -> COPY (NamedLocation l) Y))
 
 sta :: Parser Instruction
@@ -339,9 +339,9 @@ sta = do
     spaces
     indirect_indexed gen
     where
-       gen (Direct l) [] = COPY A (NamedLocation l)
-       gen (Direct l) [reg] = COPYINDEXED A (NamedLocation l) reg
-       gen (Indirect l) [reg] = COPYINDIRECTINDEXED A (NamedLocation l) reg
+       gen (Directly l) [] = COPY A (NamedLocation l)
+       gen (Directly l) [reg] = COPYINDEXED A (NamedLocation l) reg
+       gen (Indirectly l) [reg] = COPYINDIRECTINDEXED A (NamedLocation l) reg
 
 stx :: Parser Instruction
 stx = do

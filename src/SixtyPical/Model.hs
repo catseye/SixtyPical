@@ -28,6 +28,10 @@ data StorageLocation = A
               | FlagD
               | FlagZ
               | FlagC
+              | Immediate DataValue
+              | Indirect StorageLocation
+              | Indexed StorageLocation StorageLocation
+              | IndirectIndexed StorageLocation StorageLocation
               | NamedLocation LocationName
     deriving (Show, Ord, Eq)
 
@@ -54,8 +58,7 @@ type RoutineName = String
 data Branch = BCC | BCS | BEQ | BMI | BNE | BPL | BVC | BVS
     deriving (Show, Ord, Eq)
 
-data Instruction = PUT StorageLocation DataValue
-                 | COPY StorageLocation StorageLocation
+data Instruction = COPY StorageLocation StorageLocation
                  | COPYINDEXED StorageLocation StorageLocation StorageLocation
                  | COPYINDIRECTINDEXED StorageLocation StorageLocation StorageLocation
                  | CMPIMM StorageLocation DataValue

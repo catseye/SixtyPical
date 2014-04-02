@@ -32,15 +32,15 @@ emitInstrs _ _ [] = ""
 emitInstrs p r (instr:instrs) =
     "  " ++ emitInstr p r instr ++ "\n" ++ emitInstrs p r instrs
 
-emitInstr p r (PUT A val) = "lda #" ++ (show val)
-emitInstr p r (PUT X val) = "ldx #" ++ (show val)
-emitInstr p r (PUT Y val) = "ldy #" ++ (show val)
+emitInstr p r (COPY (Immediate val) A) = "lda #" ++ (show val)
+emitInstr p r (COPY (Immediate val) X) = "ldx #" ++ (show val)
+emitInstr p r (COPY (Immediate val) Y) = "ldy #" ++ (show val)
 
-emitInstr p r (PUT FlagC 0) = "clc"
-emitInstr p r (PUT FlagD 0) = "cld"
-emitInstr p r (PUT FlagV 0) = "clv"
-emitInstr p r (PUT FlagC 1) = "sec"
-emitInstr p r (PUT FlagD 1) = "sed"
+emitInstr p r (COPY (Immediate 0) FlagC) = "clc"
+emitInstr p r (COPY (Immediate 0) FlagD) = "cld"
+emitInstr p r (COPY (Immediate 0) FlagV) = "clv"
+emitInstr p r (COPY (Immediate 1) FlagC) = "sec"
+emitInstr p r (COPY (Immediate 1) FlagD) = "sed"
 
 emitInstr p r (COPY A (NamedLocation label)) = "sta " ++ label
 emitInstr p r (COPY X (NamedLocation label)) = "stx " ++ label
