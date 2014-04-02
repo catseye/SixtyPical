@@ -268,7 +268,6 @@ TODO
 *   Work out the analyses again and document them
 *   `repeat jmp`
 *   Addressing modes; rename instructions to match
-*   Put data at end, no need for jmp main
 
 Tests
 -----
@@ -483,9 +482,6 @@ We cannot absolute-indexed a word.
     |    ora #8
     |    ora screen
     | }
-    =   jmp main
-    = score: .word 0
-    = .alias screen 1024
     = main:
     =   lda #4
     =   ldx #0
@@ -530,6 +526,9 @@ We cannot absolute-indexed a word.
     =   ora #8
     =   ora screen
     =   rts
+    = 
+    = score: .word 0
+    = .alias screen 1024
 
     | assign word screen 1024
     | routine main {
@@ -542,8 +541,6 @@ We cannot absolute-indexed a word.
     |    }
     |    sta screen
     | }
-    =   jmp main
-    = .alias screen 1024
     = main:
     =   lda screen
     =   cmp screen
@@ -555,6 +552,8 @@ We cannot absolute-indexed a word.
     = _past_1:
     =   sta screen
     =   rts
+    = 
+    = .alias screen 1024
 
     | assign byte screen 1024
     | reserve byte zero
@@ -567,9 +566,6 @@ We cannot absolute-indexed a word.
     |    }
     |    sty screen
     | }
-    =   jmp main
-    = .alias screen 1024
-    = zero: .byte 0
     = main:
     =   ldy zero
     =   
@@ -580,6 +576,9 @@ We cannot absolute-indexed a word.
     =   BNE _repeat_1
     =   sty screen
     =   rts
+    = 
+    = .alias screen 1024
+    = zero: .byte 0
 
 Nested ifs.
 
@@ -598,7 +597,6 @@ Nested ifs.
     |     lda #3
     |   }
     | }
-    =   jmp main
     = main:
     =   BEQ _label_3
     =   lda #3
@@ -635,10 +633,6 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     |   inc screen
     |   jmp save_cinv
     | }
-    =   jmp main
-    = .alias screen 1024
-    = .alias cinv 788
-    = save_cinv: .word 0
     = main:
     =   sei
     =   lda cinv
@@ -656,3 +650,7 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     =   inc screen
     =   jmp (save_cinv)
     =   rts
+    = 
+    = .alias screen 1024
+    = .alias cinv 788
+    = save_cinv: .word 0

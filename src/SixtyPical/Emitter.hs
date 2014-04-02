@@ -5,9 +5,8 @@ module SixtyPical.Emitter where
 import SixtyPical.Model
 
 emitProgram p@(Program decls routines) =
-    "  jmp main\n" ++
-    emitDecls p decls ++
-    emitRoutines p routines
+    emitRoutines p routines ++
+    emitDecls p decls
 
 emitDecls _ [] = ""
 emitDecls p (decl:decls) =
