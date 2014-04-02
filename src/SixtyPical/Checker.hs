@@ -111,22 +111,17 @@ fillOutNamedLocationTypes p@(Program decls routines) =
     mapProgramRoutines (xform) p
     where
         xform (COPY src dest) =
-            -- ewww special-case-y
-            case ((resolve src), (resolve dest)) of
-                ((NamedLocation (Just Word) name), A) ->
-                    error ("absolute access of non-byte-based address '" ++ name ++ "'")
-                _ ->
-                    COPY (resolve src) (resolve dest)
+            typeMatch src dest (COPY)
         xform (CMP dest other) =
-            CMP (resolve dest) (resolve other)
+            typeMatch dest other (CMP)
         xform (ADD dest other) =
-            ADD (resolve dest) (resolve other)
+            typeMatch dest other (ADD)
         xform (AND dest other) =
-            AND (resolve dest) (resolve other)
+            typeMatch dest other (AND)
         xform (SUB dest other) =
-            SUB (resolve dest) (resolve other)
+            typeMatch dest other (SUB)
         xform (OR dest other) =
-            OR (resolve dest) (resolve other)
+            typeMatch dest other (OR)
         xform (JMPVECTOR dest) =
             case (resolve dest) of
                 d@(NamedLocation (Just Vector) _) ->
@@ -147,6 +142,23 @@ fillOutNamedLocationTypes p@(Program decls routines) =
             COPYROUTINE name (resolve dest)
         xform other =
             other
+        getType (NamedLocation (Just t) _) = t
+        getType A = Byte
+        getType X = Byte
+        getType Y = Byte
+        getType _ = Byte
+        typeMatch x y constructor =
+            let
+                rx = resolve x
+                ry = resolve y
+                typeRx = getType rx
+                typeRy = getType ry
+            in
+                case (typeRx == typeRy, typeRx, typeRy) of
+                    (True, _, _) -> constructor rx ry
+                    (_, Byte, ByteTable) -> constructor rx ry
+                    (_, ByteTable, Byte) -> constructor rx ry                    
+                    _ -> error ("incompatible types '" ++ (show typeRx) ++ "' and '" ++ (show typeRy) ++ "'")
         resolve (NamedLocation Nothing name) =
             case lookupDecl p name of
                 Just decl ->

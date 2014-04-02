@@ -467,9 +467,17 @@ We cannot absolute access a word.
 
     | assign word screen 1024
     | routine main {
-    |    lda screen
+    |    ldx screen
     | }
-    ? absolute access of non-byte-based address
+    ? incompatible types 'Word' and 'Byte'
+
+No, not even with `ora`.
+
+    | assign word screen 1024
+    | routine main {
+    |    ora screen
+    | }
+    ? incompatible types 'Byte' and 'Word'
 
 Instead, we have to do this.
 
@@ -480,112 +488,122 @@ Instead, we have to do this.
     | }
     = True
 
+We cannot absolute access a vector.
+
+    | assign vector screen 1024
+    | routine main {
+    |    lda screen
+    | }
+    ? incompatible types 'Vector' and 'Byte'
+
     -> Tests for functionality "Emit ASM for SixtyPical program"
     
     -> Functionality "Emit ASM for SixtyPical program" is implemented by
     -> shell command "bin/sixtypical emit %(test-file)"
 
-    | reserve word score
-    | assign byte table screen 1024
+    | reserve word vword
+    | reserve byte vbyte
+    | assign byte table table 1024
     | routine main {
     |    lda #4
     |    ldx #0
     |    ldy #$FF
-    |    lda screen
-    |    lda screen, x
-    |    lda screen, y
-    |    lda (screen), y
-    |    lda <score
-    |    lda >score
-    |    inc screen
+    |    lda vbyte
+    |    lda table, x
+    |    lda table, y
+    |    lda (vword), y
+    |    lda <vword
+    |    lda >vword
+    |    inc vbyte
     |    tax
     |    inx
     |    dex
-    |    stx score
+    |    stx vbyte
     |    tay
     |    iny
     |    dey
-    |    sty score
-    |    cmp score
+    |    sty vbyte
+    |    cmp vbyte
     |    cmp #30
-    |    ldx score
-    |    cpx screen
+    |    ldx vbyte
+    |    cpx vbyte
     |    cpx #31
     |    txa
-    |    ldy score
-    |    cpy screen
+    |    ldy vbyte
+    |    cpy vbyte
     |    cpy #32
     |    tya
-    |    sta screen
-    |    sta screen, x
-    |    sta screen, y
-    |    sta (screen), y
-    |    dec screen
+    |    sta vbyte
+    |    sta table, x
+    |    sta table, y
+    |    sta (vword), y
+    |    dec vbyte
     |    clc
     |    cld
     |    clv
     |    sec
     |    sed
     |    adc #8
-    |    adc screen
+    |    adc vbyte
     |    and #8
-    |    and screen
+    |    and vbyte
     |    sbc #8
-    |    sbc screen
+    |    sbc vbyte
     |    ora #8
-    |    ora screen
+    |    ora vbyte
     | }
     = main:
     =   lda #4
     =   ldx #0
     =   ldy #255
-    =   lda screen
-    =   lda screen, x
-    =   lda screen, y
-    =   lda (screen), y
-    =   lda score
-    =   lda score+1
-    =   inc screen
+    =   lda vbyte
+    =   lda table, x
+    =   lda table, y
+    =   lda (vword), y
+    =   lda vword
+    =   lda vword+1
+    =   inc vbyte
     =   tax
     =   inx
     =   dex
-    =   stx score
+    =   stx vbyte
     =   tay
     =   iny
     =   dey
-    =   sty score
-    =   cmp score
+    =   sty vbyte
+    =   cmp vbyte
     =   cmp #30
-    =   ldx score
-    =   cpx screen
+    =   ldx vbyte
+    =   cpx vbyte
     =   cpx #31
     =   txa
-    =   ldy score
-    =   cpy screen
+    =   ldy vbyte
+    =   cpy vbyte
     =   cpy #32
     =   tya
-    =   sta screen
-    =   sta screen, x
-    =   sta screen, y
-    =   sta (screen), y
-    =   dec screen
+    =   sta vbyte
+    =   sta table, x
+    =   sta table, y
+    =   sta (vword), y
+    =   dec vbyte
     =   clc
     =   cld
     =   clv
     =   sec
     =   sed
     =   adc #8
-    =   adc screen
+    =   adc vbyte
     =   and #8
-    =   and screen
+    =   and vbyte
     =   sbc #8
-    =   sbc screen
+    =   sbc vbyte
     =   ora #8
-    =   ora screen
+    =   ora vbyte
     =   rts
     = 
-    = score: .word 0
-    = .alias screen 1024
+    = vword: .word 0
+    = vbyte: .byte 0
+    = .alias table 1024
 
     | assign byte screen $0400
     | routine main {
