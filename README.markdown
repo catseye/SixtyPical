@@ -525,6 +525,8 @@ We cannot absolute access a vector.
     |    sty vbyte
     |    cmp vbyte
     |    cmp #30
+    |    cmp <vword
+    |    cmp >vword
     |    ldx vbyte
     |    cpx vbyte
     |    cpx #31
@@ -537,6 +539,8 @@ We cannot absolute access a vector.
     |    sta table, x
     |    sta table, y
     |    sta (vword), y
+    |    sta <vword
+    |    sta >vword
     |    dec vbyte
     |    clc
     |    cld
@@ -573,6 +577,8 @@ We cannot absolute access a vector.
     =   sty vbyte
     =   cmp vbyte
     =   cmp #30
+    =   cmp vword
+    =   cmp vword+1
     =   ldx vbyte
     =   cpx vbyte
     =   cpx #31
@@ -585,6 +591,8 @@ We cannot absolute access a vector.
     =   sta table, x
     =   sta table, y
     =   sta (vword), y
+    =   sta vword
+    =   sta vword+1
     =   dec vbyte
     =   clc
     =   cld

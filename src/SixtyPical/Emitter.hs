@@ -52,6 +52,9 @@ emitInstr p r (COPY (NamedLocation st label) Y) = "ldy " ++ label
 emitInstr p r (COPY (LowByteOf (NamedLocation st label)) A) = "lda " ++ label
 emitInstr p r (COPY (HighByteOf (NamedLocation st label)) A) = "lda " ++ label ++ "+1"
 
+emitInstr p r (COPY A (LowByteOf (NamedLocation st label))) = "sta " ++ label
+emitInstr p r (COPY A (HighByteOf (NamedLocation st label))) = "sta " ++ label ++ "+1"
+
 emitInstr p r (COPY A X) = "tax"
 emitInstr p r (COPY A Y) = "tay"
 emitInstr p r (COPY X A) = "txa"
@@ -73,6 +76,9 @@ emitInstr p r (CMP Y (NamedLocation st label)) = "cpy " ++ label
 emitInstr p r (CMP A (Immediate val)) = "cmp #" ++ (show val)
 emitInstr p r (CMP X (Immediate val)) = "cpx #" ++ (show val)
 emitInstr p r (CMP Y (Immediate val)) = "cpy #" ++ (show val)
+
+emitInstr p r (CMP A (LowByteOf (NamedLocation st label))) = "cmp " ++ label
+emitInstr p r (CMP A (HighByteOf (NamedLocation st label))) = "cmp " ++ label ++ "+1"
 
 emitInstr p r (ADD A (NamedLocation st label)) = "adc " ++ label
 emitInstr p r (ADD A (Immediate val)) = "adc #" ++ (show val)

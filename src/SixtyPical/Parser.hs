@@ -272,6 +272,8 @@ cmp = do
     addressing_mode gen
     where
        gen (Immediately v) [] = CMP A (Immediate v)
+       gen (LowBytely l) [] = CMP A (LowByteOf (NamedLocation Nothing l))
+       gen (HighBytely l) [] = CMP A (HighByteOf (NamedLocation Nothing l))
        gen (Directly l) [] = CMP A (NamedLocation Nothing l)
 
 cpx :: Parser Instruction
@@ -365,6 +367,8 @@ sta = do
     spaces
     addressing_mode gen
     where
+       gen (LowBytely l) [] = COPY A (LowByteOf (NamedLocation Nothing l))
+       gen (HighBytely l) [] = COPY A (HighByteOf (NamedLocation Nothing l))
        gen (Directly l) [] = COPY A (NamedLocation Nothing l)
        gen (Directly l) [reg] = COPY A (Indexed (NamedLocation Nothing l) reg)
        gen (Indirectly l) [reg] = COPY A (IndirectIndexed (NamedLocation Nothing l) reg)

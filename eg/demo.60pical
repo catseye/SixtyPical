@@ -14,24 +14,19 @@ assign byte table vic_bg 53281
 assign vector cinv 788
 reserve vector save_cinv
 
-; TODO: this should be a word
-
-assign byte pos_lo $fb
-assign byte pos_hi $fc
+assign word position $fb
 
 reserve byte value
 
-reserve byte m_hi
-reserve byte m_lo
-reserve byte n_hi
-reserve byte n_lo
+reserve word m
+reserve word n
 
 routine main {
     lda #5
     sta vic_border
     lda #0
     sta vic_bg
-    jsr reset_pos
+    jsr reset_position
     jsr clear_screen
     sei {
         copy vector cinv to save_cinv
@@ -41,22 +36,22 @@ routine main {
     repeat bcc { }
 }
 
-routine reset_pos {
+routine reset_position {
     lda #$00
-    sta pos_lo
+    sta <position
     lda #$04
-    sta pos_hi
+    sta >position
 }
 
 routine our_cinv {
     lda value
     inc value
     ldy #0
-    sta (pos_lo), y
+    sta (position), y
     jsr increment_pos
     jsr compare_pos
     if beq {
-        jsr reset_pos
+        jsr reset_position
     } else {
     }
     jmp save_cinv
@@ -64,32 +59,32 @@ routine our_cinv {
 
 routine increment_pos {
     clc
-    lda pos_lo
+    lda <position
     adc #1
-    sta pos_lo
-    lda pos_hi
+    sta <position
+    lda >position
     adc #0
-    sta pos_hi
+    sta >position
 }
 
 routine compare_pos {
-    lda pos_lo
-    sta m_lo
-    lda pos_hi
-    sta m_hi
+    lda <position
+    sta <m
+    lda >position
+    sta >m
     lda #$07
-    sta n_hi
+    sta >n
     lda #$e8
-    sta n_lo
+    sta <n
     jsr compare_16_bit
 }
 
 routine compare_16_bit {
-    lda m_hi
-    cmp n_hi
+    lda >m
+    cmp >n
     if beq {
-        lda m_lo
-        cmp n_lo
+        lda <m
+        cmp <n
     } else {
     }
 }
