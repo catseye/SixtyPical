@@ -111,7 +111,12 @@ fillOutNamedLocationTypes p@(Program decls routines) =
     mapProgramRoutines (xform) p
     where
         xform (COPY src dest) =
-            COPY (resolve src) (resolve dest)
+            -- ewww special-case-y
+            case ((resolve src), (resolve dest)) of
+                ((NamedLocation (Just Word) name), A) ->
+                    error ("absolute access of non-byte-based address '" ++ name ++ "'")
+                _ ->
+                    COPY (resolve src) (resolve dest)
         xform (CMP dest other) =
             CMP (resolve dest) (resolve other)
         xform (ADD dest other) =
