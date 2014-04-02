@@ -84,6 +84,10 @@ data Program = Program [Decl] [Routine]
 
 -- -- -- accessors and helpers -- -- --
 
+-- bit of a hack to deepseq the eval
+programSummary p@(Program decls routs) =
+    show ((length $ show p) < 99999)
+
 getRoutineName (Routine name _) = name
 
 getDeclLocationName (Assign name _ _) = name
@@ -128,11 +132,14 @@ mapRoutines f (rout:routs) =
 mapProgramRoutines :: (Instruction -> Instruction) -> Program -> Program
 mapProgramRoutines f (Program decls routs) = Program decls $ mapRoutines f routs
 
-lookupDecl (Program [] _) _ = Nothing
-lookupDecl (Program (decl:decls) routs) name =
+lookupDecl (Program decls _) name =
+    lookupDecl' (filter (isLocationDecl) decls) name
+
+lookupDecl' [] _ = Nothing
+lookupDecl' (decl:decls) name =
     if
         (getDeclLocationName decl) == name
       then
         Just decl
       else
-        lookupDecl (Program decls routs) name
+        lookupDecl' decls name

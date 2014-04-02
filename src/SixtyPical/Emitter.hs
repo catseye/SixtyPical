@@ -54,11 +54,11 @@ emitInstr p r (COPY A Y) = "tay"
 emitInstr p r (COPY X A) = "txa"
 emitInstr p r (COPY Y A) = "tya"
 
-emitInstr p r (COPY A (Indexed (NamedLocation st label) X)) = "sta " ++ label ++ ", x"
-emitInstr p r (COPY A (Indexed (NamedLocation st label) Y)) = "sta " ++ label ++ ", y"
+emitInstr p r (COPY A (Indexed (NamedLocation (Just ByteTable) label) X)) = "sta " ++ label ++ ", x"
+emitInstr p r (COPY A (Indexed (NamedLocation (Just ByteTable) label) Y)) = "sta " ++ label ++ ", y"
 
-emitInstr p r (COPY (Indexed (NamedLocation st label) X) A) = "lda " ++ label ++ ", x"
-emitInstr p r (COPY (Indexed (NamedLocation st label) Y) A) = "lda " ++ label ++ ", y"
+emitInstr p r (COPY (Indexed (NamedLocation (Just ByteTable) label) X) A) = "lda " ++ label ++ ", x"
+emitInstr p r (COPY (Indexed (NamedLocation (Just ByteTable) label) Y) A) = "lda " ++ label ++ ", y"
 
 emitInstr p r (COPY A (IndirectIndexed (NamedLocation st label) Y)) = "sta (" ++ label ++ "), y"
 

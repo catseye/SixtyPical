@@ -562,7 +562,7 @@ We cannot absolute-indexed a word.
     = score: .word 0
     = .alias screen 1024
 
-    | assign word screen $0400
+    | assign byte screen $0400
     | routine main {
     |    lda screen
     |    cmp screen

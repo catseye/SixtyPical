@@ -9,37 +9,10 @@ allTrue = foldl (&&) True
 trueOrDie message test =
     if test then True else error message
 
--- in the following, we mean Named locations
-
-routineUsedLocations (Routine _ instrs) = blockUsedLocations instrs
-
-blockUsedLocations [] = []
-blockUsedLocations (instr:instrs) =
-    (instrUsedLocations instr) ++ blockUsedLocations instrs
-
---instrUsedLocations (LOADIMM reg (NamedLocation loc)) = [loc]
-instrUsedLocations (COPY (NamedLocation sz loc) _) = [loc]
-instrUsedLocations (COPY _ (NamedLocation sz loc)) = [loc]
-instrUsedLocations (CMP reg (NamedLocation sz loc)) = [loc]
--- TODO: JSR...
-instrUsedLocations (IF _ branch b1 b2) =
-    blockUsedLocations b1 ++ blockUsedLocations b2
-instrUsedLocations (REPEAT _ branch blk) =
-    blockUsedLocations blk
-instrUsedLocations _ = []
-
-allRoutineLocationsDeclared program routine =
-    allTrue (map (isDeclared) (routineUsedLocations routine))
-    where
-        isDeclared name = locationDeclared name program
-
-allUsedLocationsDeclared p@(Program _ routines) =
-    allTrue (map (allRoutineLocationsDeclared p) routines)
-
--- --
-
 isUnique [] = True
 isUnique (x:xs) = (not (x `elem` xs)) && isUnique xs
+
+-- --
 
 noDuplicateDecls program =
     isUnique $ declaredLocationNames program
@@ -49,20 +22,6 @@ noDuplicateRoutines program =
 
 -- wow.  efficiency is clearly our watchword
 -- (and sarcasm is our backup watchword)
-noJmpsToNonVectors p@(Program decls routines) =
-    let
-        mappedProgram = mapProgramRoutines (checkInstr) p
-    in
-        mappedProgram == p
-    where
-        checkInstr j@(JMPVECTOR (NamedLocation sz g)) =
-            case lookupDecl p g of
-                Just (Assign _ Vector _) -> j
-                Just (Reserve _ Vector) -> j
-                Just _ -> (COPY A A)
-                Nothing -> (COPY A A)
-        checkInstr other = other
-
 noIndexedAccessOfNonTables p@(Program decls routines) =
     let
         mappedProgram = mapProgramRoutines (checkInstr) p
@@ -151,31 +110,35 @@ numberInstruction i iid = (i, iid)
 fillOutNamedLocationTypes p@(Program decls routines) =
     mapProgramRoutines (xform) p
     where
-        xform j@(COPY src dest) =
+        xform (COPY src dest) =
             COPY (resolve src) (resolve dest)
-        xform j@(CMP dest other) =
+        xform (CMP dest other) =
             CMP (resolve dest) (resolve other)
-        xform j@(ADD dest other) =
+        xform (ADD dest other) =
             ADD (resolve dest) (resolve other)
-        xform j@(AND dest other) =
+        xform (AND dest other) =
             AND (resolve dest) (resolve other)
-        xform j@(SUB dest other) =
+        xform (SUB dest other) =
             SUB (resolve dest) (resolve other)
-        xform j@(OR dest other) =
+        xform (OR dest other) =
             OR (resolve dest) (resolve other)
-        xform j@(JMPVECTOR dest) =
-            JMPVECTOR (resolve dest)
-        xform j@(IF iid branch b1 b2) =
+        xform (JMPVECTOR dest) =
+            case (resolve dest) of
+                d@(NamedLocation (Just Vector) _) ->
+                    JMPVECTOR d
+                _ ->
+                    error ("jmp to non-vector '" ++ (show dest) ++ "'")
+        xform (IF iid branch b1 b2) =
             IF iid branch (mapBlock xform b1) (mapBlock xform b2)
-        xform j@(REPEAT iid branch blk) =
+        xform (REPEAT iid branch blk) =
             REPEAT iid branch (mapBlock xform blk)
-        xform j@(DELTA dest val) =
+        xform (DELTA dest val) =
             DELTA (resolve dest) val
-        xform j@(SEI blk) =
+        xform (SEI blk) =
             SEI (mapBlock xform blk)
-        xform j@(COPYVECTOR src dest) =
+        xform (COPYVECTOR src dest) =
             COPYVECTOR (resolve src) (resolve dest)
-        xform j@(COPYROUTINE name dest) =
+        xform (COPYROUTINE name dest) =
             COPYROUTINE name (resolve dest)
         xform other =
             other
@@ -185,17 +148,23 @@ fillOutNamedLocationTypes p@(Program decls routines) =
                     (NamedLocation (Just $ getDeclLocationType decl) name)
                 _ ->
                     error ("undeclared location '" ++ name ++ "'")
+        resolve (Indirect loc) =
+            (Indirect (resolve loc))
+        resolve (Indexed loc reg) =
+            (Indexed (resolve loc) (resolve reg))
+        resolve (IndirectIndexed loc reg) =
+            (IndirectIndexed (resolve loc) (resolve reg))
         resolve other =
             other
+
+-- - - - - - -
 
 checkAndTransformProgram :: Program -> Maybe Program
 checkAndTransformProgram program =
     if
         trueOrDie "missing 'main' routine" (routineDeclared "main" program) &&
-        trueOrDie "undeclared location" (allUsedLocationsDeclared program) &&
         trueOrDie "duplicate location name" (noDuplicateDecls program) &&
         trueOrDie "duplicate routine name" (noDuplicateRoutines program) &&
-        trueOrDie "jmp to non-vector" (noJmpsToNonVectors program) &&
         trueOrDie "undeclared routine" (noUseOfUndeclaredRoutines program) &&
         trueOrDie "indexed access of non-table" (noIndexedAccessOfNonTables program) 
       then
@@ -205,5 +174,3 @@ checkAndTransformProgram program =
         in
             Just program''
       else Nothing
-
--- - - - - - -

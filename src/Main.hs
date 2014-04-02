@@ -18,11 +18,6 @@ usage = do
     putStrLn "Usage: sixtypical (parse|check|analyze|emit) filename.60pical"
     exitWith $ ExitFailure 1
 
-checkProgram p =
-    case checkAndTransformProgram p of
-        Just newprog ->
-            True
-
 main = do
     args <- getArgs
     case args of
@@ -32,7 +27,9 @@ main = do
                 ("parse", Right program) -> do
                     putStrLn $ show $ program
                 ("check", Right program) -> do
-                    putStrLn $ show $ checkProgram program
+                    case checkAndTransformProgram program of
+                        Just newprog ->
+                            putStrLn $ programSummary newprog
                 ("analyze", Right program) ->
                     case checkAndTransformProgram program of
                         Just newprog ->
