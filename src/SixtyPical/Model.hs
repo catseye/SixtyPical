@@ -20,6 +20,12 @@ type LocationName = String
 -- One of these should never refer to the program code.  We can only police
 -- this up to a point.
 
+data StorageType = Byte
+                 | Word
+                 | Vector
+                 | ByteTable
+    deriving (Show, Ord, Eq)
+
 data StorageLocation = A
               | Y
               | X
@@ -32,7 +38,7 @@ data StorageLocation = A
               | Indirect StorageLocation
               | Indexed StorageLocation StorageLocation
               | IndirectIndexed StorageLocation StorageLocation
-              | NamedLocation LocationName
+              | NamedLocation (Maybe StorageType) LocationName
     deriving (Show, Ord, Eq)
 
 -- this is bunk, man.  if a location does not appear in an analysis
@@ -41,12 +47,6 @@ data StorageLocation = A
 allRegisters = [A, X, Y, FlagN, FlagV, FlagD, FlagZ, FlagC]
 
 -- -- -- -- program model -- -- -- --
-
-data StorageType = Byte
-                 | Word
-                 | Vector
-                 | ByteTable
-    deriving (Show, Ord, Eq)
 
 data Decl = Assign LocationName StorageType Address -- .alias
           | Reserve LocationName StorageType -- .word, .byte
@@ -89,6 +89,9 @@ getRoutineName (Routine name _) = name
 getDeclLocationName (Assign name _ _) = name
 getDeclLocationName (Reserve name _) = name
 
+getDeclLocationType (Assign _ t _) = t
+getDeclLocationType (Reserve _ t) = t
+
 isLocationDecl (Assign _ _ _) = True
 isLocationDecl (Reserve _ _) = True
 isLocationDecl _ = False
@@ -124,9 +127,6 @@ mapRoutines f (rout:routs) =
 
 mapProgramRoutines :: (Instruction -> Instruction) -> Program -> Program
 mapProgramRoutines f (Program decls routs) = Program decls $ mapRoutines f routs
-
-
-
 
 lookupDecl (Program [] _) _ = Nothing
 lookupDecl (Program (decl:decls) routs) name =

@@ -252,63 +252,63 @@ inc = do
     string "inc"
     spaces
     l <- locationName
-    return (DELTA (NamedLocation l) 1)
+    return (DELTA (NamedLocation Nothing l) 1)
 
 dec :: Parser Instruction
 dec = do
     string "dec"
     spaces
     l <- locationName
-    return (DELTA (NamedLocation l) (-1))
+    return (DELTA (NamedLocation Nothing l) (-1))
 
 cmp :: Parser Instruction
 cmp = do
     string "cmp"
     spaces
     (try $ immediate (\v -> CMP A (Immediate v)) <|>
-     absolute (\l -> CMP A (NamedLocation l)))
+     absolute (\l -> CMP A (NamedLocation Nothing l)))
 
 cpx :: Parser Instruction
 cpx = do
     string "cpx"
     spaces
     (try $ immediate (\v -> CMP X (Immediate v)) <|>
-     absolute (\l -> CMP X (NamedLocation l)))
+     absolute (\l -> CMP X (NamedLocation Nothing l)))
 
 cpy :: Parser Instruction
 cpy = do
     string "cpy"
     spaces
     (try $ immediate (\v -> CMP Y (Immediate v)) <|>
-     absolute (\l -> CMP Y (NamedLocation l)))
+     absolute (\l -> CMP Y (NamedLocation Nothing l)))
 
 adc :: Parser Instruction
 adc = do
     string "adc"
     spaces
     (try $ immediate (\v -> ADD A (Immediate v)) <|>
-     absolute (\l -> ADD A (NamedLocation l)))
+     absolute (\l -> ADD A (NamedLocation Nothing l)))
 
 sbc :: Parser Instruction
 sbc = do
     string "sbc"
     spaces
     (try $ immediate (\v -> SUB A (Immediate v)) <|>
-     absolute (\l -> SUB A (NamedLocation l)))
+     absolute (\l -> SUB A (NamedLocation Nothing l)))
 
 and :: Parser Instruction
 and = do
     string "and"
     spaces
     (try $ immediate (\v -> AND A (Immediate v)) <|>
-     absolute (\l -> AND A (NamedLocation l)))
+     absolute (\l -> AND A (NamedLocation Nothing l)))
 
 ora :: Parser Instruction
 ora = do
     string "ora"
     spaces
     (try $ immediate (\v -> OR A (Immediate v)) <|>
-     absolute (\l -> OR A (NamedLocation l)))
+     absolute (\l -> OR A (NamedLocation Nothing l)))
 
 lda :: Parser Instruction
 lda = do
@@ -316,22 +316,22 @@ lda = do
     spaces
     (try $ immediate (\v -> COPY (Immediate v) A) <|> absolute_indexed gen)
     where
-       gen l [] = COPY (NamedLocation l) A
-       gen l [reg] = COPY (Indexed (NamedLocation l) reg) A
+       gen l [] = COPY (NamedLocation Nothing l) A
+       gen l [reg] = COPY (Indexed (NamedLocation Nothing l) reg) A
 
 ldx :: Parser Instruction
 ldx = do
     string "ldx"
     spaces
     (try $ immediate (\v -> COPY (Immediate v) X) <|>
-     absolute (\l -> COPY (NamedLocation l) X))
+     absolute (\l -> COPY (NamedLocation Nothing l) X))
 
 ldy :: Parser Instruction
 ldy = do
     string "ldy"
     spaces
     (try $ immediate (\v -> COPY (Immediate v) Y) <|>
-     absolute (\l -> COPY (NamedLocation l) Y))
+     absolute (\l -> COPY (NamedLocation Nothing l) Y))
 
 sta :: Parser Instruction
 sta = do
@@ -339,23 +339,23 @@ sta = do
     spaces
     indirect_indexed gen
     where
-       gen (Directly l) [] = COPY A (NamedLocation l)
-       gen (Directly l) [reg] = COPY A (Indexed (NamedLocation l) reg)
-       gen (Indirectly l) [reg] = COPY A (IndirectIndexed (NamedLocation l) reg)
+       gen (Directly l) [] = COPY A (NamedLocation Nothing l)
+       gen (Directly l) [reg] = COPY A (Indexed (NamedLocation Nothing l) reg)
+       gen (Indirectly l) [reg] = COPY A (IndirectIndexed (NamedLocation Nothing l) reg)
 
 stx :: Parser Instruction
 stx = do
     string "stx"
     spaces
     l <- locationName
-    return (COPY X (NamedLocation l))
+    return (COPY X (NamedLocation Nothing l))
 
 sty :: Parser Instruction
 sty = do
     string "sty"
     spaces
     l <- locationName
-    return (COPY Y (NamedLocation l))
+    return (COPY Y (NamedLocation Nothing l))
 
 txa :: Parser Instruction
 txa = do
@@ -393,7 +393,7 @@ jmp = do
     string "jmp"
     spaces
     l <- locationName
-    return $ JMPVECTOR (NamedLocation l)
+    return $ JMPVECTOR (NamedLocation Nothing l)
 
 jsr :: Parser Instruction
 jsr = do
@@ -431,7 +431,7 @@ copy_vector_statement = do
     string "to"
     spaces
     dst <- locationName
-    return (COPYVECTOR (NamedLocation src) (NamedLocation dst))
+    return (COPYVECTOR (NamedLocation Nothing src) (NamedLocation Nothing dst))
 
 copy_routine_statement :: Parser Instruction
 copy_routine_statement = do
@@ -443,7 +443,7 @@ copy_routine_statement = do
     string "to"
     spaces
     dst <- locationName
-    return (COPYROUTINE src (NamedLocation dst))
+    return (COPYROUTINE src (NamedLocation Nothing dst))
 
 branch :: Parser Branch
 branch = try (b "bcc" BCC) <|> try (b "bcs" BCS) <|> try (b "beq" BEQ) <|>

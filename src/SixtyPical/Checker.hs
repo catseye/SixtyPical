@@ -18,9 +18,9 @@ blockUsedLocations (instr:instrs) =
     (instrUsedLocations instr) ++ blockUsedLocations instrs
 
 --instrUsedLocations (LOADIMM reg (NamedLocation loc)) = [loc]
-instrUsedLocations (COPY (NamedLocation loc) _) = [loc]
-instrUsedLocations (COPY _ (NamedLocation loc)) = [loc]
-instrUsedLocations (CMP reg (NamedLocation loc)) = [loc]
+instrUsedLocations (COPY (NamedLocation sz loc) _) = [loc]
+instrUsedLocations (COPY _ (NamedLocation sz loc)) = [loc]
+instrUsedLocations (CMP reg (NamedLocation sz loc)) = [loc]
 -- TODO: JSR...
 instrUsedLocations (IF _ branch b1 b2) =
     blockUsedLocations b1 ++ blockUsedLocations b2
@@ -55,7 +55,7 @@ noJmpsToNonVectors p@(Program decls routines) =
     in
         mappedProgram == p
     where
-        checkInstr j@(JMPVECTOR (NamedLocation g)) =
+        checkInstr j@(JMPVECTOR (NamedLocation sz g)) =
             case lookupDecl p g of
                 Just (Assign _ Vector _) -> j
                 Just (Reserve _ Vector) -> j
@@ -69,7 +69,7 @@ noIndexedAccessOfNonTables p@(Program decls routines) =
     in
         mappedProgram == p
     where
-        checkInstr j@(COPY _ (Indexed (NamedLocation g) reg)) =
+        checkInstr j@(COPY _ (Indexed (NamedLocation sz g) reg)) =
             case lookupDecl p g of
                 Just (Assign _ ByteTable _) -> j
                 Just (Reserve _ ByteTable) -> j
@@ -91,23 +91,7 @@ noUseOfUndeclaredRoutines p@(Program decls routines) =
                 False -> (COPY A A)
         checkInstr other = other
 
--- -- --
-
-checkAndTransformProgram :: Program -> Maybe Program
-checkAndTransformProgram program =
-    if
-        trueOrDie "missing 'main' routine" (routineDeclared "main" program) &&
-        trueOrDie "undeclared location" (allUsedLocationsDeclared program) &&
-        trueOrDie "duplicate location name" (noDuplicateDecls program) &&
-        trueOrDie "duplicate routine name" (noDuplicateRoutines program) &&
-        trueOrDie "jmp to non-vector" (noJmpsToNonVectors program) &&
-        trueOrDie "undeclared routine" (noUseOfUndeclaredRoutines program) &&
-        trueOrDie "indexed access of non-table" (noIndexedAccessOfNonTables program) 
-      then
-        Just $ numberProgramLoops program
-      else Nothing
-
--- - - - - - -
+-- -- -- -- -- --
 
 -- in the following "number" means "assign a unique ID to" and "loop"
 -- means "REPEAT or IF" (because i'm in such a good mood)
@@ -161,3 +145,65 @@ numberInstruction (REPEAT _ branch blk) iid =
     in
         (newInstr, newIid)
 numberInstruction i iid = (i, iid)
+
+-- -- --
+
+fillOutNamedLocationTypes p@(Program decls routines) =
+    mapProgramRoutines (xform) p
+    where
+        xform j@(COPY src dest) =
+            COPY (resolve src) (resolve dest)
+        xform j@(CMP dest other) =
+            CMP (resolve dest) (resolve other)
+        xform j@(ADD dest other) =
+            ADD (resolve dest) (resolve other)
+        xform j@(AND dest other) =
+            AND (resolve dest) (resolve other)
+        xform j@(SUB dest other) =
+            SUB (resolve dest) (resolve other)
+        xform j@(OR dest other) =
+            OR (resolve dest) (resolve other)
+        xform j@(JMPVECTOR dest) =
+            JMPVECTOR (resolve dest)
+        xform j@(IF iid branch b1 b2) =
+            IF iid branch (mapBlock xform b1) (mapBlock xform b2)
+        xform j@(REPEAT iid branch blk) =
+            REPEAT iid branch (mapBlock xform blk)
+        xform j@(DELTA dest val) =
+            DELTA (resolve dest) val
+        xform j@(SEI blk) =
+            SEI (mapBlock xform blk)
+        xform j@(COPYVECTOR src dest) =
+            COPYVECTOR (resolve src) (resolve dest)
+        xform j@(COPYROUTINE name dest) =
+            COPYROUTINE name (resolve dest)
+        xform other =
+            other
+        resolve (NamedLocation Nothing name) =
+            case lookupDecl p name of
+                Just decl ->
+                    (NamedLocation (Just $ getDeclLocationType decl) name)
+                _ ->
+                    error ("undeclared location '" ++ name ++ "'")
+        resolve other =
+            other
+
+checkAndTransformProgram :: Program -> Maybe Program
+checkAndTransformProgram program =
+    if
+        trueOrDie "missing 'main' routine" (routineDeclared "main" program) &&
+        trueOrDie "undeclared location" (allUsedLocationsDeclared program) &&
+        trueOrDie "duplicate location name" (noDuplicateDecls program) &&
+        trueOrDie "duplicate routine name" (noDuplicateRoutines program) &&
+        trueOrDie "jmp to non-vector" (noJmpsToNonVectors program) &&
+        trueOrDie "undeclared routine" (noUseOfUndeclaredRoutines program) &&
+        trueOrDie "indexed access of non-table" (noIndexedAccessOfNonTables program) 
+      then
+        let
+            program' = numberProgramLoops program
+            program'' = fillOutNamedLocationTypes program'
+        in
+            Just program''
+      else Nothing
+
+-- - - - - - -

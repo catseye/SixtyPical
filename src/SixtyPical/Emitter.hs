@@ -42,52 +42,52 @@ emitInstr p r (COPY (Immediate 0) FlagV) = "clv"
 emitInstr p r (COPY (Immediate 1) FlagC) = "sec"
 emitInstr p r (COPY (Immediate 1) FlagD) = "sed"
 
-emitInstr p r (COPY A (NamedLocation label)) = "sta " ++ label
-emitInstr p r (COPY X (NamedLocation label)) = "stx " ++ label
-emitInstr p r (COPY Y (NamedLocation label)) = "sty " ++ label
-emitInstr p r (COPY (NamedLocation label) A) = "lda " ++ label
-emitInstr p r (COPY (NamedLocation label) X) = "ldx " ++ label
-emitInstr p r (COPY (NamedLocation label) Y) = "ldy " ++ label
+emitInstr p r (COPY A (NamedLocation st label)) = "sta " ++ label
+emitInstr p r (COPY X (NamedLocation st label)) = "stx " ++ label
+emitInstr p r (COPY Y (NamedLocation st label)) = "sty " ++ label
+emitInstr p r (COPY (NamedLocation st label) A) = "lda " ++ label
+emitInstr p r (COPY (NamedLocation st label) X) = "ldx " ++ label
+emitInstr p r (COPY (NamedLocation st label) Y) = "ldy " ++ label
 
 emitInstr p r (COPY A X) = "tax"
 emitInstr p r (COPY A Y) = "tay"
 emitInstr p r (COPY X A) = "txa"
 emitInstr p r (COPY Y A) = "tya"
 
-emitInstr p r (COPY A (Indexed (NamedLocation label) X)) = "sta " ++ label ++ ", x"
-emitInstr p r (COPY A (Indexed (NamedLocation label) Y)) = "sta " ++ label ++ ", y"
+emitInstr p r (COPY A (Indexed (NamedLocation st label) X)) = "sta " ++ label ++ ", x"
+emitInstr p r (COPY A (Indexed (NamedLocation st label) Y)) = "sta " ++ label ++ ", y"
 
-emitInstr p r (COPY (Indexed (NamedLocation label) X) A) = "lda " ++ label ++ ", x"
-emitInstr p r (COPY (Indexed (NamedLocation label) Y) A) = "lda " ++ label ++ ", y"
+emitInstr p r (COPY (Indexed (NamedLocation st label) X) A) = "lda " ++ label ++ ", x"
+emitInstr p r (COPY (Indexed (NamedLocation st label) Y) A) = "lda " ++ label ++ ", y"
 
-emitInstr p r (COPY A (IndirectIndexed (NamedLocation label) Y)) = "sta (" ++ label ++ "), y"
+emitInstr p r (COPY A (IndirectIndexed (NamedLocation st label) Y)) = "sta (" ++ label ++ "), y"
 
-emitInstr p r (CMP A (NamedLocation label)) = "cmp " ++ label
-emitInstr p r (CMP X (NamedLocation label)) = "cpx " ++ label
-emitInstr p r (CMP Y (NamedLocation label)) = "cpy " ++ label
+emitInstr p r (CMP A (NamedLocation st label)) = "cmp " ++ label
+emitInstr p r (CMP X (NamedLocation st label)) = "cpx " ++ label
+emitInstr p r (CMP Y (NamedLocation st label)) = "cpy " ++ label
 
 emitInstr p r (CMP A (Immediate val)) = "cmp #" ++ (show val)
 emitInstr p r (CMP X (Immediate val)) = "cpx #" ++ (show val)
 emitInstr p r (CMP Y (Immediate val)) = "cpy #" ++ (show val)
 
-emitInstr p r (ADD A (NamedLocation label)) = "adc " ++ label
+emitInstr p r (ADD A (NamedLocation st label)) = "adc " ++ label
 emitInstr p r (ADD A (Immediate val)) = "adc #" ++ (show val)
 
-emitInstr p r (AND A (NamedLocation label)) = "and " ++ label
+emitInstr p r (AND A (NamedLocation st label)) = "and " ++ label
 emitInstr p r (AND A (Immediate val)) = "and #" ++ (show val)
 
-emitInstr p r (SUB A (NamedLocation label)) = "sbc " ++ label
+emitInstr p r (SUB A (NamedLocation st label)) = "sbc " ++ label
 emitInstr p r (SUB A (Immediate val)) = "sbc #" ++ (show val)
 
-emitInstr p r (OR A (NamedLocation label)) = "ora " ++ label
+emitInstr p r (OR A (NamedLocation st label)) = "ora " ++ label
 emitInstr p r (OR A (Immediate val)) = "ora #" ++ (show val)
 
 emitInstr p r (DELTA X 1) = "inx"
 emitInstr p r (DELTA X (-1)) = "dex"
 emitInstr p r (DELTA Y 1) = "iny"
 emitInstr p r (DELTA Y (-1)) = "dey"
-emitInstr p r (DELTA (NamedLocation label) 1) = "inc " ++ label
-emitInstr p r (DELTA (NamedLocation label) (-1)) = "dec " ++ label
+emitInstr p r (DELTA (NamedLocation st label) 1) = "inc " ++ label
+emitInstr p r (DELTA (NamedLocation st label) (-1)) = "dec " ++ label
 
 emitInstr p r (IF iid branch b1 b2) =
     (show branch) ++ " _label_" ++ (show iid) ++ "\n" ++
@@ -107,19 +107,19 @@ emitInstr p r (SEI blk) =
     emitInstrs p r blk ++
     "  cli"
 
-emitInstr p r (COPYVECTOR (NamedLocation src) (NamedLocation dst)) =
+emitInstr p r (COPYVECTOR (NamedLocation (Just Vector) src) (NamedLocation (Just Vector) dst)) =
     "lda " ++ src ++ "\n" ++
     "  sta " ++ dst ++ "\n" ++
     "  lda " ++ src ++ "+1\n" ++
     "  sta " ++ dst ++ "+1"
 
-emitInstr p r (COPYROUTINE src (NamedLocation dst)) =
+emitInstr p r (COPYROUTINE src (NamedLocation (Just Vector) dst)) =
     "lda #<" ++ src ++ "\n" ++
     "  sta " ++ dst ++ "\n" ++
     "  lda #>" ++ src ++ "\n" ++
     "  sta " ++ dst ++ "+1"
 
-emitInstr p r (JMPVECTOR (NamedLocation dst)) =
+emitInstr p r (JMPVECTOR (NamedLocation (Just Vector) dst)) =
     "jmp (" ++ dst ++ ")"
 
 emitInstr p r (JSR routineName) =
