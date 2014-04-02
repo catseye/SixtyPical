@@ -205,6 +205,7 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
       lda absolute
       lda absolute, x
       lda absolute, y
+      lda (absolute), y
 
       ldx #immediate
       ldx absolute
@@ -242,6 +243,7 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
       sta absolute
       sta absolute, x
       sta absolute, y
+      sta (absolute), y
       
       stx absolute
       
@@ -357,7 +359,7 @@ All declarations (`reserve`s and `assign`s) must come before any `routines`.
 
 All locations used in all routines must be declared first.
 
-    | reserve word score
+    | reserve byte score
     | routine main {
     |    lda score
     |    cmp screen
@@ -366,8 +368,8 @@ All locations used in all routines must be declared first.
 
 Even in inner blocks.
 
-    | reserve word score
-    | assign word screen 1024
+    | reserve byte score
+    | assign byte screen 1024
     | routine main {
     |    lda score
     |    cmp screen
@@ -461,6 +463,23 @@ We cannot absolute-indexed a word.
     | }
     ? indexed access of non-table
 
+> We cannot absolute acess a word.
+> 
+>     | assign word screen 1024
+>     | routine main {
+>     |    lda screen
+>     | }
+>     ? absolute access of non-byte-based address
+> 
+> Instead, we have to do this.
+> 
+>     | assign word screen 1024
+>     | routine main {
+>     |    lda <screen
+>     |    lda >screen
+>     | }
+>     = True
+
     -> Tests for functionality "Emit ASM for SixtyPical program"
     
     -> Functionality "Emit ASM for SixtyPical program" is implemented by
@@ -475,6 +494,7 @@ We cannot absolute-indexed a word.
     |    lda screen
     |    lda screen, x
     |    lda screen, y
+    |    lda (screen), y
     |    inc screen
     |    tax
     |    inx
@@ -520,6 +540,7 @@ We cannot absolute-indexed a word.
     =   lda screen
     =   lda screen, x
     =   lda screen, y
+    =   lda (screen), y
     =   inc screen
     =   tax
     =   inx

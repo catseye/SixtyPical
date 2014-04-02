@@ -61,6 +61,7 @@ emitInstr p r (COPY (Indexed (NamedLocation (Just ByteTable) label) X) A) = "lda
 emitInstr p r (COPY (Indexed (NamedLocation (Just ByteTable) label) Y) A) = "lda " ++ label ++ ", y"
 
 emitInstr p r (COPY A (IndirectIndexed (NamedLocation st label) Y)) = "sta (" ++ label ++ "), y"
+emitInstr p r (COPY (IndirectIndexed (NamedLocation st label) Y) A) = "lda (" ++ label ++ "), y"
 
 emitInstr p r (CMP A (NamedLocation st label)) = "cmp " ++ label
 emitInstr p r (CMP X (NamedLocation st label)) = "cpx " ++ label

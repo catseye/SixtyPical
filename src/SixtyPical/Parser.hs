@@ -111,17 +111,6 @@ comment = do
 
 -- -- -- -- -- -- commands -- -- -- -- --
 
-immediate :: (DataValue -> Instruction) -> Parser Instruction
-immediate f = do
-    string "#"
-    v <- data_value
-    return $ f v
-
-absolute :: (LocationName -> Instruction) -> Parser Instruction
-absolute f = do
-    l <- locationName
-    return $ f l
-
 index :: Parser StorageLocation
 index = do
     string ","
@@ -132,11 +121,12 @@ index = do
         "x" -> X
         "y" -> Y
 
-data Directness = Directly LocationName
-                | Indirectly LocationName
+data AddressingModality = Directly LocationName
+                        | Indirectly LocationName
+                        | Immediately DataValue
     deriving (Ord, Show, Eq)
 
-indirect_location :: Parser Directness
+indirect_location :: Parser AddressingModality
 indirect_location = do
     string "("
     spaces
@@ -145,24 +135,22 @@ indirect_location = do
     spaces
     return $ Indirectly l
 
-direct_location :: Parser Directness
+direct_location :: Parser AddressingModality
 direct_location = do
     l <- locationName
     return $ Directly l
 
-directness_location = (try indirect_location) <|> direct_location
+immediate :: Parser AddressingModality
+immediate = do
+    string "#"
+    v <- data_value
+    return $ Immediately v
 
-indirect_indexed :: (Directness -> [StorageLocation] -> Instruction) -> Parser Instruction
-indirect_indexed f = do
-    d <- directness_location
+addressing_mode :: (AddressingModality -> [StorageLocation] -> Instruction) -> Parser Instruction
+addressing_mode f = do
+    d <- ((try immediate) <|> (try indirect_location) <|> direct_location)
     indexes <- many index
     return $ f d indexes
-
-absolute_indexed :: (LocationName -> [StorageLocation] -> Instruction) -> Parser Instruction
-absolute_indexed f = do
-    l <- locationName
-    indexes <- many index
-    return $ f l indexes
 
 commented_command :: Parser Instruction
 commented_command = do
@@ -265,79 +253,99 @@ cmp :: Parser Instruction
 cmp = do
     string "cmp"
     spaces
-    (try $ immediate (\v -> CMP A (Immediate v)) <|>
-     absolute (\l -> CMP A (NamedLocation Nothing l)))
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = CMP A (Immediate v)
+       gen (Directly l) [] = CMP A (NamedLocation Nothing l)
 
 cpx :: Parser Instruction
 cpx = do
     string "cpx"
     spaces
-    (try $ immediate (\v -> CMP X (Immediate v)) <|>
-     absolute (\l -> CMP X (NamedLocation Nothing l)))
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = CMP X (Immediate v)
+       gen (Directly l) [] = CMP X (NamedLocation Nothing l)
 
 cpy :: Parser Instruction
 cpy = do
     string "cpy"
     spaces
-    (try $ immediate (\v -> CMP Y (Immediate v)) <|>
-     absolute (\l -> CMP Y (NamedLocation Nothing l)))
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = CMP Y (Immediate v)
+       gen (Directly l) [] = CMP Y (NamedLocation Nothing l)
 
 adc :: Parser Instruction
 adc = do
     string "adc"
     spaces
-    (try $ immediate (\v -> ADD A (Immediate v)) <|>
-     absolute (\l -> ADD A (NamedLocation Nothing l)))
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = ADD A (Immediate v)
+       gen (Directly l) [] = ADD A (NamedLocation Nothing l)
 
 sbc :: Parser Instruction
 sbc = do
     string "sbc"
     spaces
-    (try $ immediate (\v -> SUB A (Immediate v)) <|>
-     absolute (\l -> SUB A (NamedLocation Nothing l)))
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = SUB A (Immediate v)
+       gen (Directly l) [] = SUB A (NamedLocation Nothing l)
 
 and :: Parser Instruction
 and = do
     string "and"
     spaces
-    (try $ immediate (\v -> AND A (Immediate v)) <|>
-     absolute (\l -> AND A (NamedLocation Nothing l)))
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = AND A (Immediate v)
+       gen (Directly l) [] = AND A (NamedLocation Nothing l)
 
 ora :: Parser Instruction
 ora = do
     string "ora"
     spaces
-    (try $ immediate (\v -> OR A (Immediate v)) <|>
-     absolute (\l -> OR A (NamedLocation Nothing l)))
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = OR A (Immediate v)
+       gen (Directly l) [] = OR A (NamedLocation Nothing l)
 
 lda :: Parser Instruction
 lda = do
     string "lda"
     spaces
-    (try $ immediate (\v -> COPY (Immediate v) A) <|> absolute_indexed gen)
+    addressing_mode gen
     where
-       gen l [] = COPY (NamedLocation Nothing l) A
-       gen l [reg] = COPY (Indexed (NamedLocation Nothing l) reg) A
+       gen (Immediately v) [] = COPY (Immediate v) A
+       gen (Directly l) [] = COPY (NamedLocation Nothing l) A
+       gen (Directly l) [reg] = COPY (Indexed (NamedLocation Nothing l) reg) A
+       gen (Indirectly l) [reg] = COPY (IndirectIndexed (NamedLocation Nothing l) reg) A
 
 ldx :: Parser Instruction
 ldx = do
     string "ldx"
     spaces
-    (try $ immediate (\v -> COPY (Immediate v) X) <|>
-     absolute (\l -> COPY (NamedLocation Nothing l) X))
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = COPY (Immediate v) X
+       gen (Directly l) [] = COPY (NamedLocation Nothing l) X
 
 ldy :: Parser Instruction
 ldy = do
     string "ldy"
     spaces
-    (try $ immediate (\v -> COPY (Immediate v) Y) <|>
-     absolute (\l -> COPY (NamedLocation Nothing l) Y))
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = COPY (Immediate v) Y
+       gen (Directly l) [] = COPY (NamedLocation Nothing l) Y
 
 sta :: Parser Instruction
 sta = do
     string "sta"
     spaces
-    indirect_indexed gen
+    addressing_mode gen
     where
        gen (Directly l) [] = COPY A (NamedLocation Nothing l)
        gen (Directly l) [reg] = COPY A (Indexed (NamedLocation Nothing l) reg)
