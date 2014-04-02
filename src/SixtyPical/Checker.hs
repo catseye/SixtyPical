@@ -36,6 +36,8 @@ allRoutineLocationsDeclared program routine =
 allUsedLocationsDeclared p@(Program _ routines) =
     allTrue (map (allRoutineLocationsDeclared p) routines)
 
+-- --
+
 isUnique [] = True
 isUnique (x:xs) = (not (x `elem` xs)) && isUnique xs
 
@@ -75,6 +77,21 @@ noIndexedAccessOfNonTables p@(Program decls routines) =
                 Nothing -> (COPY A A)
         checkInstr other = other
 
+noUseOfUndeclaredRoutines p@(Program decls routines) =
+    let
+        mappedProgram = mapProgramRoutines (checkInstr) p
+    in
+        mappedProgram == p
+    where
+        routineNames = declaredRoutineNames p
+        checkInstr j@(JSR routName) =
+            case routName `elem` routineNames of
+                True -> j
+                False -> (COPY A A)
+        checkInstr other = other
+
+-- -- --
+
 checkAndTransformProgram :: Program -> Maybe Program
 checkAndTransformProgram program =
     if
@@ -83,6 +100,7 @@ checkAndTransformProgram program =
         trueOrDie "duplicate location name" (noDuplicateDecls program) &&
         trueOrDie "duplicate routine name" (noDuplicateRoutines program) &&
         trueOrDie "jmp to non-vector" (noJmpsToNonVectors program) &&
+        trueOrDie "undeclared routine" (noUseOfUndeclaredRoutines program) &&
         trueOrDie "indexed access of non-table" (noIndexedAccessOfNonTables program) 
       then
         Just $ numberProgramLoops program
