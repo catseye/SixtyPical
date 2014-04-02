@@ -85,6 +85,35 @@ data Routine = Routine RoutineName [Instruction]
 data Program = Program [Decl] [Routine]
     deriving (Show, Ord, Eq)
 
+-- -- -- accessors and helpers -- -- --
+
+getRoutineName (Routine name _) = name
+
+getDeclLocationName (Assign name _ _) = name
+getDeclLocationName (Reserve name _) = name
+
+isLocationDecl (Assign _ _ _) = True
+isLocationDecl (Reserve _ _) = True
+isLocationDecl _ = False
+
+declaredLocationNames (Program decls _) =
+    map (getDeclLocationName) (filter (isLocationDecl) decls)
+
+locationDeclared locName p =
+    elem locName $ declaredLocationNames p
+
+getDeclRoutineName (External name _) = name
+
+isRoutineDecl (External _ _) = True
+isRoutineDecl _ = False
+
+declaredRoutineNames (Program decls routines) =
+    map (getRoutineName) routines ++
+      map (getDeclRoutineName) (filter (isRoutineDecl) decls)
+
+routineDeclared routName p =
+    elem routName (declaredRoutineNames p)
+
 mapBlock :: (Instruction -> Instruction) -> [Instruction] -> [Instruction]
 mapBlock = map
 
@@ -98,3 +127,15 @@ mapRoutines f (rout:routs) =
 
 mapProgramRoutines :: (Instruction -> Instruction) -> Program -> Program
 mapProgramRoutines f (Program decls routs) = Program decls $ mapRoutines f routs
+
+
+
+
+lookupDecl (Program [] _) _ = Nothing
+lookupDecl (Program (decl:decls) routs) name =
+    if
+        (getDeclLocationName decl) == name
+      then
+        Just decl
+      else
+        lookupDecl (Program decls routs) name

@@ -9,26 +9,6 @@ allTrue = foldl (&&) True
 trueOrDie message test =
     if test then True else error message
 
-routineDeclared routName (Program _ routines) =
-    elem routName (map (getRoutineName) routines)
-    where
-        getRoutineName (Routine name _) = name
-
-getDeclLocationName (Assign name _ _) = name
-getDeclLocationName (Reserve name _) = name
-
-locationDeclared locName (Program decls _) =
-    elem locName (map (getDeclLocationName) decls)
-
-lookupDecl (Program [] _) _ = Nothing
-lookupDecl (Program (decl:decls) routs) name =
-    if
-        (getDeclLocationName decl) == name
-      then
-        Just decl
-      else
-        lookupDecl (Program decls routs) name
-
 -- in the following, we mean Named locations
 
 routineUsedLocations (Routine _ instrs) = blockUsedLocations instrs
@@ -59,13 +39,11 @@ allUsedLocationsDeclared p@(Program _ routines) =
 isUnique [] = True
 isUnique (x:xs) = (not (x `elem` xs)) && isUnique xs
 
-noDuplicateDecls p@(Program decls routines) =
-    isUnique (map (getDeclLocationName) decls)
+noDuplicateDecls program =
+    isUnique $ declaredLocationNames program
 
-noDuplicateRoutines p@(Program decls routines) =
-    isUnique (map (getRoutineName) routines)
-    where
-        getRoutineName (Routine name _) = name
+noDuplicateRoutines program =
+    isUnique $ declaredRoutineNames program
 
 -- wow.  efficiency is clearly our watchword
 -- (and sarcasm is our backup watchword)
