@@ -1,0 +1,9 @@
+external chrout 65490
+routine main {
+    lda #72
+    jsr chrout
+    lda #73
+    jsr chrout
+    lda #13
+    jsr chrout
+}

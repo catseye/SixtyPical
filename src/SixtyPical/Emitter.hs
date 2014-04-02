@@ -24,6 +24,10 @@ emitDecl p (Assign name _ addr) = ".alias " ++ name ++ " " ++ (show addr)
 emitDecl p (Reserve name Byte) = name ++ ": .byte 0"
 emitDecl p (Reserve name Word) = name ++ ": .word 0"
 emitDecl p (Reserve name Vector) = name ++ ": .word 0"
+emitDecl p (External name addr) = ".alias " ++ name ++ " " ++ (show addr)
+emitDecl p d = error (
+    "Internal error: sixtypical doesn't know how to " ++
+    "emit assembler code for '" ++ (show d) ++ "'")
 
 emitRoutines _ [] = ""
 emitRoutines p (rout:routs) =
@@ -123,6 +127,9 @@ emitInstr p r (COPYROUTINE src (NamedLocation dst)) =
 
 emitInstr p r (JMPVECTOR (NamedLocation dst)) =
     "jmp (" ++ dst ++ ")"
+
+emitInstr p r (JSR routineName) =
+    "jsr " ++ routineName
 
 emitInstr p r i = error (
     "Internal error: sixtypical doesn't know how to " ++
