@@ -301,6 +301,8 @@ adc = do
     addressing_mode gen
     where
        gen (Immediately v) [] = ADD A (Immediate v)
+       gen (LowBytely l) [] = ADD A (LowByteOf (NamedLocation Nothing l))
+       gen (HighBytely l) [] = ADD A (HighByteOf (NamedLocation Nothing l))
        gen (Directly l) [] = ADD A (NamedLocation Nothing l)
 
 sbc :: Parser Instruction
@@ -310,6 +312,8 @@ sbc = do
     addressing_mode gen
     where
        gen (Immediately v) [] = SUB A (Immediate v)
+       gen (LowBytely l) [] = SUB A (LowByteOf (NamedLocation Nothing l))
+       gen (HighBytely l) [] = SUB A (HighByteOf (NamedLocation Nothing l))
        gen (Directly l) [] = SUB A (NamedLocation Nothing l)
 
 and :: Parser Instruction

@@ -12,3 +12,13 @@ routine compare_16_bit {
     } else {
     }
 }
+
+routine compare_16_bit {
+    lda >m
+    cmp >n
+    if beq {
+        lda <m
+        cmp <n
+    } else {
+    }
+}

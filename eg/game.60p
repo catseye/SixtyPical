@@ -1,0 +1,155 @@
+assign byte table screen $0400
+assign byte table screen2 1274
+assign byte table screen3 1524
+assign byte table screen4 1774
+
+assign byte table colormap 55296
+assign byte table colormap2 55546
+assign byte table colormap3 55796
+assign byte table colormap4 56046
+
+assign byte vic_border 53280
+assign byte table vic_bg 53281
+
+assign byte joy2 $dc00
+
+assign vector cinv 788
+
+; ---------
+
+reserve vector save_cinv
+assign word position $fb
+reserve word delta
+reserve byte value
+reserve word compare_target
+
+routine main {
+    lda #5
+    sta vic_border
+    lda #0
+    sta vic_bg
+    jsr reset_position
+    jsr clear_screen
+    sei {
+        copy vector cinv to save_cinv
+        copy routine our_cinv to cinv
+    }
+    clc
+    repeat bcc { }
+}
+
+routine our_cinv {
+    lda value
+    inc value
+    ldy #0
+    sta (position), y
+    jsr read_stick
+    jsr advance_pos
+
+    lda #$07                 ; just past bottom of screen
+    sta >compare_target
+    lda #$e8
+    sta <compare_target
+    jsr compare_pos
+
+    if bcs {
+        jsr reset_position
+    } else {
+
+        lda #$04
+        sta >compare_target
+        lda #$00
+        sta <compare_target
+        jsr compare_pos
+
+        if bcc {
+            jsr reset_position
+        } else { }
+    }
+    jmp save_cinv
+}
+
+routine reset_position {
+    lda #$00
+    sta <position
+    lda #$04
+    sta >position
+}
+
+routine advance_pos {
+    clc
+    lda <position
+    adc <delta
+    sta <position
+    lda >position
+    adc >delta
+    sta >position
+}
+
+routine compare_pos {
+    lda >position
+    cmp >compare_target
+    if beq {
+        lda <position
+        cmp <compare_target
+    } else {
+    }
+}
+
+routine clear_screen {
+    ldy #0
+    repeat bne {
+        lda #1
+        sta colormap, y
+        sta colormap2, y
+        sta colormap3, y
+        sta colormap4, y
+        
+        lda #32
+        sta screen, y
+        sta screen2, y
+        sta screen3, y
+        sta screen4, y
+
+        iny
+        cpy #250
+    }
+}
+
+routine read_stick {
+    lda #0
+    sta <delta
+    sta >delta
+    ldx joy2
+    txa
+    and #1                   ; up
+    if beq {
+        lda #216             ; -40
+        sta <delta
+        lda #255
+        sta >delta
+    } else {
+        txa
+        and #2               ; down
+        if beq {
+            lda #40
+            sta <delta
+        } else {
+            txa
+            and #4           ; left
+            if beq {
+                lda #255     ; -1
+                sta <delta
+                lda #255
+                sta >delta
+            } else {
+                txa
+                and #8       ; right
+                if beq {
+                    lda #1
+                    sta <delta
+                } else { }
+            }
+        }
+    }
+}

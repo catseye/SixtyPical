@@ -83,6 +83,9 @@ emitInstr p r (CMP A (HighByteOf (NamedLocation st label))) = "cmp " ++ label ++
 emitInstr p r (ADD A (NamedLocation st label)) = "adc " ++ label
 emitInstr p r (ADD A (Immediate val)) = "adc #" ++ (show val)
 
+emitInstr p r (ADD A (LowByteOf (NamedLocation st label))) = "adc " ++ label
+emitInstr p r (ADD A (HighByteOf (NamedLocation st label))) = "adc " ++ label ++ "+1"
+
 emitInstr p r (AND A (NamedLocation st label)) = "and " ++ label
 emitInstr p r (AND A (Immediate val)) = "and #" ++ (show val)
 
