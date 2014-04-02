@@ -16,7 +16,7 @@ Decl     := "reserve" StorageType LocationName
           | "external" RoutineName Address.
 StorageType := "byte" | "word" | "vector".
 Routine  := "routine" RoutineName Block.
-Block    := "{" {Command} "}".
+Block    := "{" [Comment] {Command [Comment]} "}".
 Command  := "if" Branch Block "else" Block
           | "lda" (LocationName | Immediate)
           | "ldx" (LocationName | Immediate)
@@ -90,10 +90,18 @@ block :: Parser [Instruction]
 block = do
     string "{"
     spaces
-    cs <- many command
+    optional comment
+    cs <- many commented_command
     string "}"
     spaces
     return cs
+
+comment :: Parser ()
+comment = do
+    string ";"
+    manyTill anyChar (try (string "\n"))
+    spaces
+    return ()
 
 -- -- -- -- -- -- commands -- -- -- -- --
 
@@ -123,6 +131,12 @@ absolute_indexed f = do
     l <- locationName
     indexes <- many index
     return $ f l indexes
+
+commented_command :: Parser Instruction
+commented_command = do
+    c <- command
+    optional comment
+    return c
 
 command :: Parser Instruction
 command = (try lda) <|>

@@ -262,7 +262,6 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
 TODO
 ----
 
-*   comments
 *   Initial values for reserved, incl. tables
 *   give length for tables, must be there for reserved
 *   Character tables ("strings" to everybody else)
@@ -294,6 +293,25 @@ Tests
     |    nop
     | }
     ? missing 'main' routine
+
+A comment may appear at the start of a block.
+
+    | routine main {
+    |    ; this program does nothing
+    |    nop
+    | }
+    = True
+
+A comment may appear after each command.
+
+    | routine main {
+    |    lda #1   ; we assemble the fnord using
+    |    ldx #1   ; multiple lorem ipsums which
+    |    ldy #1
+    |    lda #1   ; we
+    |    ldx #1   ; found under the bridge by the old mill yesterday
+    | }
+    = True
 
 A program may `reserve` and `assign`.
 
