@@ -137,11 +137,12 @@ Funny syntax indicates use of a special form.
 
 In these, `absolute` must be a `reserve`d or `locate`d address.
 
-    X adc #immediate
-    X adc absolute
+    .
+      adc #immediate
+      adc absolute
     
-    X and #immediate
-    X and absolute
+      and #immediate
+      and absolute
     
     X asl
     X asl absolute
@@ -203,6 +204,7 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
       lda #immediate
       lda absolute
       lda absolute, x
+      lda absolute, y
 
       ldx #immediate
       ldx absolute
@@ -235,10 +237,11 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
     
       sed
     
-    X sei { block }
+      sei { block }
     
       sta absolute
       sta absolute, x
+      sta absolute, y
       
       stx absolute
       
@@ -266,6 +269,8 @@ TODO
 *   Work out the analyses again and document them
 *   `repeat jmp`
 *   Addressing modes; rename instructions to match
+*   Not responsible for BASIC header (cat externally)
+*   Put data at end, no need for jmp main
 
 Tests
 -----
@@ -419,6 +424,7 @@ We cannot absolute-indexed a word.
     |    ldy #255
     |    lda screen
     |    lda screen, x
+    |    lda screen, y
     |    inc screen
     |    tax
     |    inx
@@ -440,12 +446,17 @@ We cannot absolute-indexed a word.
     |    tya
     |    sta screen
     |    sta screen, x
+    |    sta screen, y
     |    dec screen
     |    clc
     |    cld
     |    clv
     |    sec
     |    sed
+    |    adc #8
+    |    adc screen
+    |    and #8
+    |    and screen
     | }
     = .org 0
     = .word $0801
@@ -460,6 +471,7 @@ We cannot absolute-indexed a word.
     =   ldy #255
     =   lda screen
     =   lda screen, x
+    =   lda screen, y
     =   inc screen
     =   tax
     =   inx
@@ -481,12 +493,17 @@ We cannot absolute-indexed a word.
     =   tya
     =   sta screen
     =   sta screen, x
+    =   sta screen, y
     =   dec screen
     =   clc
     =   cld
     =   clv
     =   sec
     =   sed
+    =   adc #8
+    =   adc screen
+    =   and #8
+    =   and screen
     =   rts
 
     | assign word screen 1024

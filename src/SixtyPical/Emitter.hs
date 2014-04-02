@@ -59,10 +59,10 @@ emitInstr p r (COPY X A) = "txa"
 emitInstr p r (COPY Y A) = "tya"
 
 emitInstr p r (COPYINDEXED A (NamedLocation label) X) = "sta " ++ label ++ ", x"
-emitInstr p r (COPYINDEXED A (NamedLocation label) Y) = "sta " ++ label ++ ", x"
+emitInstr p r (COPYINDEXED A (NamedLocation label) Y) = "sta " ++ label ++ ", y"
 
 emitInstr p r (COPYINDEXED (NamedLocation label) A X) = "lda " ++ label ++ ", x"
-emitInstr p r (COPYINDEXED (NamedLocation label) A Y) = "lda " ++ label ++ ", x"
+emitInstr p r (COPYINDEXED (NamedLocation label) A Y) = "lda " ++ label ++ ", y"
 
 emitInstr p r (CMP A (NamedLocation label)) = "cmp " ++ label
 emitInstr p r (CMP X (NamedLocation label)) = "cpx " ++ label
@@ -71,6 +71,12 @@ emitInstr p r (CMP Y (NamedLocation label)) = "cpy " ++ label
 emitInstr p r (CMPIMM A val) = "cmp #" ++ (show val)
 emitInstr p r (CMPIMM X val) = "cpx #" ++ (show val)
 emitInstr p r (CMPIMM Y val) = "cpy #" ++ (show val)
+
+emitInstr p r (ADD A (NamedLocation label)) = "adc " ++ label
+emitInstr p r (ADDIMM A val) = "adc #" ++ (show val)
+
+emitInstr p r (AND A (NamedLocation label)) = "and " ++ label
+emitInstr p r (ANDIMM A val) = "and #" ++ (show val)
 
 emitInstr p r (DELTA X 1) = "inx"
 emitInstr p r (DELTA X (-1)) = "dex"

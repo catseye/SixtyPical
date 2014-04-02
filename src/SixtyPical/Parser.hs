@@ -93,6 +93,7 @@ command = (try lda) <|>
           (try inx) <|> (try iny) <|> (try dex) <|> (try dey) <|>
           (try inc) <|> (try dec) <|>
           (try clc) <|> (try cld) <|> (try clv) <|> (try sec) <|> (try sed) <|>
+          (try adc) <|> (try SixtyPical.Parser.and) <|>
           (try sei) <|>
           (try jmp) <|>
           (try copy_vector_statement) <|>
@@ -194,6 +195,20 @@ cpy = do
     (try $ immediate (\v -> CMPIMM Y v) <|>
      absolute (\l -> CMP Y (NamedLocation l)))
 
+adc :: Parser Instruction
+adc = do
+    string "adc"
+    spaces
+    (try $ immediate (\v -> ADDIMM A v) <|>
+     absolute (\l -> ADD A (NamedLocation l)))
+
+and :: Parser Instruction
+and = do
+    string "and"
+    spaces
+    (try $ immediate (\v -> ANDIMM A v) <|>
+     absolute (\l -> AND A (NamedLocation l)))
+
 immediate :: (DataValue -> Instruction) -> Parser Instruction
 immediate f = do
     string "#"
@@ -209,9 +224,11 @@ index :: Parser StorageLocation
 index = do
     string ","
     spaces
-    string "x"
+    c <- (string "x" <|> string "y")
     spaces
-    return X
+    return $ case c of
+        "x" -> X
+        "y" -> Y
 
 absolute_indexed :: (LocationName -> [StorageLocation] -> Instruction) -> Parser Instruction
 absolute_indexed f = do
@@ -226,7 +243,7 @@ lda = do
     (try $ immediate (\v -> PUT A v) <|> absolute_indexed gen)
     where
        gen l [] = COPY (NamedLocation l) A
-       gen l [X] = COPYINDEXED (NamedLocation l) A X
+       gen l [reg] = COPYINDEXED (NamedLocation l) A reg
 
 ldx :: Parser Instruction
 ldx = do
@@ -249,7 +266,7 @@ sta = do
     absolute_indexed gen
     where
        gen l [] = COPY A (NamedLocation l)
-       gen l [X] = COPYINDEXED A (NamedLocation l) X
+       gen l [reg] = COPYINDEXED A (NamedLocation l) reg
 
 stx :: Parser Instruction
 stx = do

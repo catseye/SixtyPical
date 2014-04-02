@@ -58,6 +58,10 @@ data Instruction = PUT StorageLocation DataValue
                  | COPYINDEXED StorageLocation StorageLocation StorageLocation
                  | CMPIMM StorageLocation DataValue
                  | CMP StorageLocation StorageLocation
+                 | ADDIMM StorageLocation DataValue
+                 | ADD StorageLocation StorageLocation
+                 | ANDIMM StorageLocation DataValue
+                 | AND StorageLocation StorageLocation
                  | JSR RoutineName
               -- | JSRVECTOR StorageLocation
                  | JMPVECTOR StorageLocation
