@@ -262,11 +262,12 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
 TODO
 ----
 
-*   Parse HEX values like $40A3
+*   comments
 *   Initial values for reserved, incl. tables
+*   give length for tables, must be there for reserved
 *   Character tables ("strings" to everybody else)
 *   Work out the analyses again and document them
-*   `repeat jmp`
+*   lda wordaddress --> is not legal.  use lda <wordaddr or lda >wordaddr
 *   Addressing modes; rename instructions to match
 
 Tests
@@ -441,7 +442,7 @@ We cannot absolute-indexed a word.
     | routine main {
     |    lda #4
     |    ldx #0
-    |    ldy #255
+    |    ldy #$FF
     |    lda screen
     |    lda screen, x
     |    lda screen, y
@@ -530,7 +531,7 @@ We cannot absolute-indexed a word.
     = score: .word 0
     = .alias screen 1024
 
-    | assign word screen 1024
+    | assign word screen $0400
     | routine main {
     |    lda screen
     |    cmp screen

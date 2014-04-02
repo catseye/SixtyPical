@@ -2,8 +2,11 @@
 
 module SixtyPical.Parser (parseProgram) where
 
-import SixtyPical.Model
+import Numeric (readHex)
+
 import Text.ParserCombinators.Parsec
+
+import SixtyPical.Model
 
 {-
 
@@ -420,14 +423,34 @@ locationName = do
     spaces
     return (c:cs)
 
-address :: Parser Address
-address = do
+address = hex_address <|> decimal_address
+
+hex_address :: Parser Address
+hex_address = do
+    char '$'
+    digits <- many hexDigit
+    spaces
+    let ((d, _):_) = readHex digits
+    return (d :: Address)
+
+decimal_address :: Parser Address
+decimal_address = do
     digits <- many digit
     spaces
     return (read digits :: Address)
 
-data_value :: Parser DataValue
-data_value = do
+data_value = hex_data_value <|> decimal_data_value
+
+hex_data_value :: Parser DataValue
+hex_data_value = do
+    char '$'
+    digits <- many hexDigit
+    spaces
+    let ((d, _):_) = readHex digits
+    return (d :: DataValue)
+
+decimal_data_value :: Parser DataValue
+decimal_data_value = do
     digits <- many digit
     spaces
     return (read digits :: DataValue)
