@@ -122,9 +122,23 @@ index = do
         "y" -> Y
 
 data AddressingModality = Directly LocationName
+                        | HighBytely LocationName
+                        | LowBytely LocationName
                         | Indirectly LocationName
                         | Immediately DataValue
     deriving (Ord, Show, Eq)
+
+low_byte_of_absolute :: Parser AddressingModality
+low_byte_of_absolute = do
+    string "<"
+    l <- locationName
+    return $ LowBytely l
+
+high_byte_of_absolute :: Parser AddressingModality
+high_byte_of_absolute = do
+    string ">"
+    l <- locationName
+    return $ HighBytely l
 
 indirect_location :: Parser AddressingModality
 indirect_location = do
@@ -148,7 +162,9 @@ immediate = do
 
 addressing_mode :: (AddressingModality -> [StorageLocation] -> Instruction) -> Parser Instruction
 addressing_mode f = do
-    d <- ((try immediate) <|> (try indirect_location) <|> direct_location)
+    d <- ((try immediate) <|> (try high_byte_of_absolute) <|>
+          (try low_byte_of_absolute) <|> (try indirect_location) <|>
+          direct_location)
     indexes <- many index
     return $ f d indexes
 
@@ -319,6 +335,8 @@ lda = do
     addressing_mode gen
     where
        gen (Immediately v) [] = COPY (Immediate v) A
+       gen (LowBytely l) [] = COPY (LowByteOf (NamedLocation Nothing l)) A
+       gen (HighBytely l) [] = COPY (HighByteOf (NamedLocation Nothing l)) A
        gen (Directly l) [] = COPY (NamedLocation Nothing l) A
        gen (Directly l) [reg] = COPY (Indexed (NamedLocation Nothing l) reg) A
        gen (Indirectly l) [reg] = COPY (IndirectIndexed (NamedLocation Nothing l) reg) A

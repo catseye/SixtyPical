@@ -39,6 +39,8 @@ data StorageLocation = A
               | Indexed StorageLocation StorageLocation
               | IndirectIndexed StorageLocation StorageLocation
               | NamedLocation (Maybe StorageType) LocationName
+              | LowByteOf StorageLocation
+              | HighByteOf StorageLocation
     deriving (Show, Ord, Eq)
 
 -- this is bunk, man.  if a location does not appear in an analysis

@@ -49,6 +49,9 @@ emitInstr p r (COPY (NamedLocation st label) A) = "lda " ++ label
 emitInstr p r (COPY (NamedLocation st label) X) = "ldx " ++ label
 emitInstr p r (COPY (NamedLocation st label) Y) = "ldy " ++ label
 
+emitInstr p r (COPY (LowByteOf (NamedLocation st label)) A) = "lda " ++ label
+emitInstr p r (COPY (HighByteOf (NamedLocation st label)) A) = "lda " ++ label ++ "+1"
+
 emitInstr p r (COPY A X) = "tax"
 emitInstr p r (COPY A Y) = "tay"
 emitInstr p r (COPY X A) = "txa"

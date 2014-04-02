@@ -463,22 +463,22 @@ We cannot absolute-indexed a word.
     | }
     ? indexed access of non-table
 
-> We cannot absolute acess a word.
-> 
->     | assign word screen 1024
->     | routine main {
->     |    lda screen
->     | }
->     ? absolute access of non-byte-based address
-> 
-> Instead, we have to do this.
-> 
->     | assign word screen 1024
->     | routine main {
->     |    lda <screen
->     |    lda >screen
->     | }
->     = True
+We cannot absolute access a word.
+
+    | assign word screen 1024
+    | routine main {
+    |    lda screen
+    | }
+    ? absolute access of non-byte-based address
+
+Instead, we have to do this.
+
+    | assign word screen 1024
+    | routine main {
+    |    lda <screen
+    |    lda >screen
+    | }
+    = True
 
     -> Tests for functionality "Emit ASM for SixtyPical program"
     
@@ -495,6 +495,8 @@ We cannot absolute-indexed a word.
     |    lda screen, x
     |    lda screen, y
     |    lda (screen), y
+    |    lda <score
+    |    lda >score
     |    inc screen
     |    tax
     |    inx
@@ -541,6 +543,8 @@ We cannot absolute-indexed a word.
     =   lda screen, x
     =   lda screen, y
     =   lda (screen), y
+    =   lda score
+    =   lda score+1
     =   inc screen
     =   tax
     =   inx
