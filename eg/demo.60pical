@@ -1,0 +1,54 @@
+assign byte table screen 1024
+assign byte table screen2 1274
+assign byte table screen3 1524
+assign byte table screen4 1774
+
+assign byte table colormap 55296
+assign byte table colormap2 55546
+assign byte table colormap3 55796
+assign byte table colormap4 56046
+
+assign byte vic_border 53280
+assign byte table vic_bg 53281
+
+assign vector cinv 788
+reserve vector save_cinv
+
+routine main {
+    lda #5
+    sta vic_border
+    lda #0
+    sta vic_bg
+    jsr clear_screen
+    sei {
+        copy vector cinv to save_cinv
+        copy routine our_cinv to cinv
+    }
+    clc
+    repeat bcc { }
+}
+
+routine our_cinv {
+    inc screen
+    jmp save_cinv
+}
+
+routine clear_screen {
+    ldy #0
+    repeat bne {
+        lda #1
+        sta colormap, y
+        sta colormap2, y
+        sta colormap3, y
+        sta colormap4, y
+        
+        lda #32
+        sta screen, y
+        sta screen2, y
+        sta screen3, y
+        sta screen4, y
+
+        iny
+        cpy #250
+    }
+}

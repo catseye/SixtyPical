@@ -1,0 +1,160 @@
+assign byte table actor_0_sprite_x   60
+assign byte table actor_0_sprite_y   68
+assign byte table vic_sprite_0_x     53281
+assign byte table vic_sprite_0_y     53289
+
+reserve byte actor_msb
+reserve byte msb_counter
+
+reserve vector logic_vector
+
+assign byte vic_sprite_x_msb         55555
+
+routine main {
+    jsr display_actors
+}
+
+routine display_actors {
+     ldy #0
+     ldx #0
+
+     repeat bne {
+         lda actor_0_sprite_x, y
+         sta vic_sprite_0_x, x
+         lda actor_0_sprite_y, y
+         sta vic_sprite_0_y, x
+
+         iny
+         inx
+         inx
+         cpy #8
+     }
+     
+     lda actor_msb
+     sta vic_sprite_x_msb
+}
+
+routine update_actors {
+
+        lda #1
+        sta msb_counter
+        lda #0
+        sta actor_msb
+
+        ldy #0
+        repeat ... {
+
+            lda actor_0_logic_high, y
+            if bne {
+                sta logic_vector+1
+                lda actor_0_logic_low, y
+                sta logic_vector
+                
+                save y
+                jsr logic_vector
+                restore y
+            }
+            
+            // update_xvel
+            
+            clc
+            lda actor_0_xvel, y
+            adc actor_0_xacc, y
+            cmp #max_vel
+            bcc xvel_within_limit ; branch if accumulator is less
+            cmp #min_vel
+            bcs xvel_within_limit ; branch if accumulator is greater or equal
+            jmp update_xpos
+    
+    xvel_within_limit:
+            sta actor_0_xvel, y
+
+update_xpos:
+        clc
+        lda actor_0_xpos_low, y
+        adc actor_0_xvel, y
+        sta actor_0_xpos_low, y
+
+        lda #0
+        sta sign_extend
+        lda actor_0_xvel, y
+        and #$80
+        beq carry_x
+        dec sign_extend
+
+carry_x:
+        lda actor_0_xpos_high, y
+        adc sign_extend             ; $00, or $ff if xvel < 0
+        sta actor_0_xpos_high, y
+
+update_yvel:
+        clc
+        lda actor_0_yvel, y
+        adc actor_0_yacc, y
+        cmp #max_vel
+        bcc yvel_within_limit ; branch if accumulator is less
+        cmp #min_vel
+        bcs yvel_within_limit ; branch if accumulator is greater or equal
+        jmp update_ypos
+
+yvel_within_limit:
+        sta actor_0_yvel, y
+
+update_ypos:
+        clc
+        lda actor_0_ypos_low, y
+        adc actor_0_yvel, y
+        sta actor_0_ypos_low, y
+
+        lda #0
+        sta sign_extend
+        lda actor_0_yvel, y
+        and #$80
+        beq carry_y
+        dec sign_extend
+
+carry_y:
+        lda actor_0_ypos_high, y
+        adc sign_extend
+        sta actor_0_ypos_high, y
+
+precompute_sprite_position:
+
+        lda actor_0_xpos_low, y
+        sta temp_low
+        lda actor_0_xpos_high, y
+        sta temp_high
+
+        jsr shift_temp
+        jsr shift_temp
+        jsr shift_temp
+        sta actor_0_sprite_x, y
+
+        lda temp_high         ; calculate the sprite's msb
+        beq advance_msb_counter
+        lda actor_msb
+        ora msb_counter
+        sta actor_msb
+
+advance_msb_counter:
+        asl msb_counter
+
+set_sprite_y:
+        lda actor_0_ypos_low, y
+        sta temp_low
+        lda actor_0_ypos_high, y
+        sta temp_high
+
+        jsr shift_temp
+        jsr shift_temp
+        jsr shift_temp
+        sta actor_0_sprite_y, y
+
+next_actor:
+        cpy #$07
+        beq exit_actor_loop
+        iny
+        jmp update_actor_loop
+
+exit_actor_loop:
+        rts

@@ -1,0 +1,4 @@
+assign byte table screen 1024
+
+assign byte table actor_x 49152
+assign byte table actor_x 49152
