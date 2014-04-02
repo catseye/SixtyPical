@@ -1,4 +1,4 @@
-assign byte table screen 1024
+assign byte table screen $0400
 assign byte table screen2 1274
 assign byte table screen3 1524
 assign byte table screen4 1774
@@ -14,11 +14,24 @@ assign byte table vic_bg 53281
 assign vector cinv 788
 reserve vector save_cinv
 
+; TODO: this should be a word
+
+assign byte pos_lo $fb
+assign byte pos_hi $fc
+
+reserve byte value
+
+reserve byte m_hi
+reserve byte m_lo
+reserve byte n_hi
+reserve byte n_lo
+
 routine main {
     lda #5
     sta vic_border
     lda #0
     sta vic_bg
+    jsr reset_pos
     jsr clear_screen
     sei {
         copy vector cinv to save_cinv
@@ -28,9 +41,57 @@ routine main {
     repeat bcc { }
 }
 
+routine reset_pos {
+    lda #$00
+    sta pos_lo
+    lda #$04
+    sta pos_hi
+}
+
 routine our_cinv {
-    inc screen
+    lda value
+    inc value
+    ldy #0
+    sta (pos_lo), y
+    jsr increment_pos
+    jsr compare_pos
+    if beq {
+        jsr reset_pos
+    } else {
+    }
     jmp save_cinv
+}
+
+routine increment_pos {
+    clc
+    lda pos_lo
+    adc #1
+    sta pos_lo
+    lda pos_hi
+    adc #0
+    sta pos_hi
+}
+
+routine compare_pos {
+    lda pos_lo
+    sta m_lo
+    lda pos_hi
+    sta m_hi
+    lda #$07
+    sta n_hi
+    lda #$e8
+    sta n_lo
+    jsr compare_16_bit
+}
+
+routine compare_16_bit {
+    lda m_hi
+    cmp n_hi
+    if beq {
+        lda m_lo
+        cmp n_lo
+    } else {
+    }
 }
 
 routine clear_screen {

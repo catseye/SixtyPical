@@ -57,6 +57,7 @@ data Branch = BCC | BCS | BEQ | BMI | BNE | BPL | BVC | BVS
 data Instruction = PUT StorageLocation DataValue
                  | COPY StorageLocation StorageLocation
                  | COPYINDEXED StorageLocation StorageLocation StorageLocation
+                 | COPYINDIRECTINDEXED StorageLocation StorageLocation StorageLocation
                  | CMPIMM StorageLocation DataValue
                  | CMP StorageLocation StorageLocation
                  | ADDIMM StorageLocation DataValue

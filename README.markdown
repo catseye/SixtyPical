@@ -313,6 +313,17 @@ A comment may appear after each command.
     | }
     = True
 
+A comment may appear after each declaration.
+
+    | reserve byte lives      ; fnord
+    | assign byte gdcol 647   ; fnord
+    | external blastoff 4     ; fnnnnnnnnnnnnnnnnfffffffff
+    | 
+    | routine main {
+    |   nop
+    | }
+    = True
+
 A program may `reserve` and `assign`.
 
     | reserve byte lives
@@ -486,6 +497,7 @@ We cannot absolute-indexed a word.
     |    sta screen
     |    sta screen, x
     |    sta screen, y
+    |    sta (screen), y
     |    dec screen
     |    clc
     |    cld
@@ -530,6 +542,7 @@ We cannot absolute-indexed a word.
     =   sta screen
     =   sta screen, x
     =   sta screen, y
+    =   sta (screen), y
     =   dec screen
     =   clc
     =   cld

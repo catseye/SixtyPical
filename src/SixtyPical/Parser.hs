@@ -10,7 +10,7 @@ import SixtyPical.Model
 
 {-
 
-Toplevel := {Decl} {Routine}.
+Toplevel := {Decl [Comment]} {Routine}.
 Decl     := "reserve" StorageType LocationName
           | "assign" StorageType LocationName Address
           | "external" RoutineName Address.
@@ -37,9 +37,15 @@ Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
 toplevel :: Parser Program
 toplevel = do
-    decls <- many (try assign <|> try reserve <|> try external)
+    decls <- many decl
     routines <- many routine
     return $ Program decls routines
+
+decl :: Parser Decl
+decl = do
+    d <- (try assign <|> try reserve <|> try external)
+    optional comment
+    return d
 
 reserve :: Parser Decl
 reserve = do
@@ -125,6 +131,32 @@ index = do
     return $ case c of
         "x" -> X
         "y" -> Y
+
+data Directness = Direct LocationName
+                | Indirect LocationName
+    deriving (Ord, Show, Eq)
+
+indirect_location :: Parser Directness
+indirect_location = do
+    string "("
+    spaces
+    l <- locationName
+    string ")"
+    spaces
+    return $ Indirect l
+
+direct_location :: Parser Directness
+direct_location = do
+    l <- locationName
+    return $ Direct l
+
+directness_location = (try indirect_location) <|> direct_location
+
+indirect_indexed :: (Directness -> [StorageLocation] -> Instruction) -> Parser Instruction
+indirect_indexed f = do
+    d <- directness_location
+    indexes <- many index
+    return $ f d indexes
 
 absolute_indexed :: (LocationName -> [StorageLocation] -> Instruction) -> Parser Instruction
 absolute_indexed f = do
@@ -305,10 +337,11 @@ sta :: Parser Instruction
 sta = do
     string "sta"
     spaces
-    absolute_indexed gen
+    indirect_indexed gen
     where
-       gen l [] = COPY A (NamedLocation l)
-       gen l [reg] = COPYINDEXED A (NamedLocation l) reg
+       gen (Direct l) [] = COPY A (NamedLocation l)
+       gen (Direct l) [reg] = COPYINDEXED A (NamedLocation l) reg
+       gen (Indirect l) [reg] = COPYINDIRECTINDEXED A (NamedLocation l) reg
 
 stx :: Parser Instruction
 stx = do
