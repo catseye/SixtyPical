@@ -66,21 +66,21 @@ emitInstr p r (CMP A (NamedLocation label)) = "cmp " ++ label
 emitInstr p r (CMP X (NamedLocation label)) = "cpx " ++ label
 emitInstr p r (CMP Y (NamedLocation label)) = "cpy " ++ label
 
-emitInstr p r (CMPIMM A val) = "cmp #" ++ (show val)
-emitInstr p r (CMPIMM X val) = "cpx #" ++ (show val)
-emitInstr p r (CMPIMM Y val) = "cpy #" ++ (show val)
+emitInstr p r (CMP A (Immediate val)) = "cmp #" ++ (show val)
+emitInstr p r (CMP X (Immediate val)) = "cpx #" ++ (show val)
+emitInstr p r (CMP Y (Immediate val)) = "cpy #" ++ (show val)
 
 emitInstr p r (ADD A (NamedLocation label)) = "adc " ++ label
-emitInstr p r (ADDIMM A val) = "adc #" ++ (show val)
+emitInstr p r (ADD A (Immediate val)) = "adc #" ++ (show val)
 
 emitInstr p r (AND A (NamedLocation label)) = "and " ++ label
-emitInstr p r (ANDIMM A val) = "and #" ++ (show val)
+emitInstr p r (AND A (Immediate val)) = "and #" ++ (show val)
 
 emitInstr p r (SUB A (NamedLocation label)) = "sbc " ++ label
-emitInstr p r (SUBIMM A val) = "sbc #" ++ (show val)
+emitInstr p r (SUB A (Immediate val)) = "sbc #" ++ (show val)
 
 emitInstr p r (OR A (NamedLocation label)) = "ora " ++ label
-emitInstr p r (ORIMM A val) = "ora #" ++ (show val)
+emitInstr p r (OR A (Immediate val)) = "ora #" ++ (show val)
 
 emitInstr p r (DELTA X 1) = "inx"
 emitInstr p r (DELTA X (-1)) = "dex"

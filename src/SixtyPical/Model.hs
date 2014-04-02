@@ -59,15 +59,10 @@ data Branch = BCC | BCS | BEQ | BMI | BNE | BPL | BVC | BVS
     deriving (Show, Ord, Eq)
 
 data Instruction = COPY StorageLocation StorageLocation
-                 | CMPIMM StorageLocation DataValue
                  | CMP StorageLocation StorageLocation
-                 | ADDIMM StorageLocation DataValue
                  | ADD StorageLocation StorageLocation
-                 | ANDIMM StorageLocation DataValue
                  | AND StorageLocation StorageLocation
-                 | SUBIMM StorageLocation DataValue
                  | SUB StorageLocation StorageLocation
-                 | ORIMM StorageLocation DataValue
                  | OR StorageLocation StorageLocation
                  | JSR RoutineName
               -- | JSRVECTOR StorageLocation

@@ -265,49 +265,49 @@ cmp :: Parser Instruction
 cmp = do
     string "cmp"
     spaces
-    (try $ immediate (\v -> CMPIMM A v) <|>
+    (try $ immediate (\v -> CMP A (Immediate v)) <|>
      absolute (\l -> CMP A (NamedLocation l)))
 
 cpx :: Parser Instruction
 cpx = do
     string "cpx"
     spaces
-    (try $ immediate (\v -> CMPIMM X v) <|>
+    (try $ immediate (\v -> CMP X (Immediate v)) <|>
      absolute (\l -> CMP X (NamedLocation l)))
 
 cpy :: Parser Instruction
 cpy = do
     string "cpy"
     spaces
-    (try $ immediate (\v -> CMPIMM Y v) <|>
+    (try $ immediate (\v -> CMP Y (Immediate v)) <|>
      absolute (\l -> CMP Y (NamedLocation l)))
 
 adc :: Parser Instruction
 adc = do
     string "adc"
     spaces
-    (try $ immediate (\v -> ADDIMM A v) <|>
+    (try $ immediate (\v -> ADD A (Immediate v)) <|>
      absolute (\l -> ADD A (NamedLocation l)))
 
 sbc :: Parser Instruction
 sbc = do
     string "sbc"
     spaces
-    (try $ immediate (\v -> SUBIMM A v) <|>
+    (try $ immediate (\v -> SUB A (Immediate v)) <|>
      absolute (\l -> SUB A (NamedLocation l)))
 
 and :: Parser Instruction
 and = do
     string "and"
     spaces
-    (try $ immediate (\v -> ANDIMM A v) <|>
+    (try $ immediate (\v -> AND A (Immediate v)) <|>
      absolute (\l -> AND A (NamedLocation l)))
 
 ora :: Parser Instruction
 ora = do
     string "ora"
     spaces
-    (try $ immediate (\v -> ORIMM A v) <|>
+    (try $ immediate (\v -> OR A (Immediate v)) <|>
      absolute (\l -> OR A (NamedLocation l)))
 
 lda :: Parser Instruction
