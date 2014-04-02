@@ -46,6 +46,7 @@ data StorageType = Byte
 
 data Decl = Assign LocationName StorageType Address -- .alias
           | Reserve LocationName StorageType -- .word, .byte
+          | External RoutineName Address
     deriving (Show, Ord, Eq)
 
 type RoutineName = String

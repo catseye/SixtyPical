@@ -9,7 +9,8 @@ import Text.ParserCombinators.Parsec
 
 Toplevel := {Decl} {Routine}.
 Decl     := "reserve" StorageType LocationName
-          | "assign" StorageType LocationName Address.
+          | "assign" StorageType LocationName Address
+          | "external" RoutineName Address.
 StorageType := "byte" | "word" | "vector".
 Routine  := "routine" RoutineName Block.
 Block    := "{" {Command} "}".
@@ -25,6 +26,7 @@ Command  := "if" Branch Block "else" Block
           | "clc" | "cld" | "clv" | "sec" | "sed"
           | "sei" Block
           | "jmp" LocationName
+          | "jsr" RoutineName
           | "nop".
 Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
@@ -32,7 +34,7 @@ Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
 toplevel :: Parser Program
 toplevel = do
-    decls <- many (assign <|> try reserve)
+    decls <- many (try assign <|> try reserve <|> try external)
     routines <- many routine
     return $ Program decls routines
 
@@ -52,6 +54,14 @@ assign = do
     name <- locationName
     addr <- address
     return $ Assign name sz addr
+
+external :: Parser Decl
+external = do
+    string "external"
+    spaces
+    name <- routineName
+    addr <- address
+    return $ External name addr
 
 get_storage "byte" = Byte
 get_storage "word" = Word
@@ -82,7 +92,34 @@ block = do
     spaces
     return cs
 
---command = (try lda_imm) <|> (try lda) <|>
+-- -- -- -- -- -- commands -- -- -- -- --
+
+immediate :: (DataValue -> Instruction) -> Parser Instruction
+immediate f = do
+    string "#"
+    v <- data_value
+    return $ f v
+
+absolute :: (LocationName -> Instruction) -> Parser Instruction
+absolute f = do
+    l <- locationName
+    return $ f l
+
+index :: Parser StorageLocation
+index = do
+    string ","
+    spaces
+    c <- (string "x" <|> string "y")
+    spaces
+    return $ case c of
+        "x" -> X
+        "y" -> Y
+
+absolute_indexed :: (LocationName -> [StorageLocation] -> Instruction) -> Parser Instruction
+absolute_indexed f = do
+    l <- locationName
+    indexes <- many index
+    return $ f l indexes
 
 command :: Parser Instruction
 command = (try lda) <|>
@@ -96,7 +133,7 @@ command = (try lda) <|>
           (try adc) <|> (try SixtyPical.Parser.and) <|>
           (try sbc) <|> (try ora) <|>
           (try sei) <|>
-          (try jmp) <|>
+          (try jmp) <|> (try jsr) <|>
           (try copy_vector_statement) <|>
           (try copy_routine_statement) <|>
           if_statement <|> repeat_statement <|> nop
@@ -224,33 +261,6 @@ ora = do
     (try $ immediate (\v -> ORIMM A v) <|>
      absolute (\l -> OR A (NamedLocation l)))
 
-immediate :: (DataValue -> Instruction) -> Parser Instruction
-immediate f = do
-    string "#"
-    v <- data_value
-    return $ f v
-
-absolute :: (LocationName -> Instruction) -> Parser Instruction
-absolute f = do
-    l <- locationName
-    return $ f l
-
-index :: Parser StorageLocation
-index = do
-    string ","
-    spaces
-    c <- (string "x" <|> string "y")
-    spaces
-    return $ case c of
-        "x" -> X
-        "y" -> Y
-
-absolute_indexed :: (LocationName -> [StorageLocation] -> Instruction) -> Parser Instruction
-absolute_indexed f = do
-    l <- locationName
-    indexes <- many index
-    return $ f l indexes
-
 lda :: Parser Instruction
 lda = do
     string "lda"
@@ -334,6 +344,13 @@ jmp = do
     spaces
     l <- locationName
     return $ JMPVECTOR (NamedLocation l)
+
+jsr :: Parser Instruction
+jsr = do
+    string "jsr"
+    spaces
+    l <- routineName
+    return $ JSR l
 
 if_statement :: Parser Instruction
 if_statement = do

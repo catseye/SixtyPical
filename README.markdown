@@ -312,6 +312,14 @@ A program may `reserve` and `assign`.
     | }
     = True
 
+A program may declare an `external`.
+
+    | external blastoff 49152
+    | routine main {
+    |    jsr blastoff
+    | }
+    = True
+
 All declarations (`reserve`s and `assign`s) must come before any `routines`.
 
     | routine main {
@@ -344,6 +352,13 @@ Even in inner blocks.
     | }
     ? undeclared location
 
+All routines jsr'ed to must be defined, or external.
+
+    | routine main {
+    |    jsr blastoff
+    | }
+    ? undeclared routine
+
 No duplicate location names in declarations.
 
     | reserve word score
@@ -353,13 +368,21 @@ No duplicate location names in declarations.
     | }
     ? duplicate location name
 
-No duplicate routine names..
+No duplicate routine names.
 
     | routine main {
     |    nop
     | }
     | routine main {
     |    txa
+    | }
+    ? duplicate routine name
+
+No duplicate routine names, including externals.
+
+    | external main 7000
+    | routine main {
+    |    nop
     | }
     ? duplicate routine name
 
