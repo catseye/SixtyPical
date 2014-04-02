@@ -59,8 +59,6 @@ data Branch = BCC | BCS | BEQ | BMI | BNE | BPL | BVC | BVS
     deriving (Show, Ord, Eq)
 
 data Instruction = COPY StorageLocation StorageLocation
-                 | COPYINDEXED StorageLocation StorageLocation StorageLocation
-                 | COPYINDIRECTINDEXED StorageLocation StorageLocation StorageLocation
                  | CMPIMM StorageLocation DataValue
                  | CMP StorageLocation StorageLocation
                  | ADDIMM StorageLocation DataValue

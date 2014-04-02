@@ -317,7 +317,7 @@ lda = do
     (try $ immediate (\v -> COPY (Immediate v) A) <|> absolute_indexed gen)
     where
        gen l [] = COPY (NamedLocation l) A
-       gen l [reg] = COPYINDEXED (NamedLocation l) A reg
+       gen l [reg] = COPY (Indexed (NamedLocation l) reg) A
 
 ldx :: Parser Instruction
 ldx = do
@@ -340,8 +340,8 @@ sta = do
     indirect_indexed gen
     where
        gen (Directly l) [] = COPY A (NamedLocation l)
-       gen (Directly l) [reg] = COPYINDEXED A (NamedLocation l) reg
-       gen (Indirectly l) [reg] = COPYINDIRECTINDEXED A (NamedLocation l) reg
+       gen (Directly l) [reg] = COPY A (Indexed (NamedLocation l) reg)
+       gen (Indirectly l) [reg] = COPY A (IndirectIndexed (NamedLocation l) reg)
 
 stx :: Parser Instruction
 stx = do

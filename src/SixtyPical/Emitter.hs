@@ -54,13 +54,13 @@ emitInstr p r (COPY A Y) = "tay"
 emitInstr p r (COPY X A) = "txa"
 emitInstr p r (COPY Y A) = "tya"
 
-emitInstr p r (COPYINDEXED A (NamedLocation label) X) = "sta " ++ label ++ ", x"
-emitInstr p r (COPYINDEXED A (NamedLocation label) Y) = "sta " ++ label ++ ", y"
+emitInstr p r (COPY A (Indexed (NamedLocation label) X)) = "sta " ++ label ++ ", x"
+emitInstr p r (COPY A (Indexed (NamedLocation label) Y)) = "sta " ++ label ++ ", y"
 
-emitInstr p r (COPYINDEXED (NamedLocation label) A X) = "lda " ++ label ++ ", x"
-emitInstr p r (COPYINDEXED (NamedLocation label) A Y) = "lda " ++ label ++ ", y"
+emitInstr p r (COPY (Indexed (NamedLocation label) X) A) = "lda " ++ label ++ ", x"
+emitInstr p r (COPY (Indexed (NamedLocation label) Y) A) = "lda " ++ label ++ ", y"
 
-emitInstr p r (COPYINDIRECTINDEXED A (NamedLocation label) Y) = "sta (" ++ label ++ "), y"
+emitInstr p r (COPY A (IndirectIndexed (NamedLocation label) Y)) = "sta (" ++ label ++ "), y"
 
 emitInstr p r (CMP A (NamedLocation label)) = "cmp " ++ label
 emitInstr p r (CMP X (NamedLocation label)) = "cpx " ++ label

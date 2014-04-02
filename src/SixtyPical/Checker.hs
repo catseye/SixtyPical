@@ -69,7 +69,7 @@ noIndexedAccessOfNonTables p@(Program decls routines) =
     in
         mappedProgram == p
     where
-        checkInstr j@(COPYINDEXED _ (NamedLocation g) _) =
+        checkInstr j@(COPY _ (Indexed (NamedLocation g) reg)) =
             case lookupDecl p g of
                 Just (Assign _ ByteTable _) -> j
                 Just (Reserve _ ByteTable) -> j
