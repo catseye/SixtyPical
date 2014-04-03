@@ -34,7 +34,7 @@ routine main {
     jsr reset_position
     jsr clear_screen
     sei {
-        copy vector cinv to save_cinv
+        copy cinv save_cinv
         copy routine our_cinv to cinv
     }
     clc
@@ -42,8 +42,7 @@ routine main {
 }
 
 routine our_cinv {
-    lda value
-    inc value
+    lda #32
     ldy #0
     sta (position), y
     jsr read_stick
@@ -53,14 +52,15 @@ routine our_cinv {
         jsr install_new_position
     } else { }
 
+    lda #81
+    ldy #0
+    sta (position), y
+
     jmp (save_cinv)
 }
 
 routine reset_position {
-    lda #$00
-    sta <position
-    lda #$04
-    sta >position
+    copy #$0400 position
 }
 
 routine advance_pos {
@@ -74,27 +74,18 @@ routine advance_pos {
 }
 
 routine install_new_position {
-    lda <new_position
-    sta <position
-    lda >new_position
-    sta >position
+    copy new_position position
 }
 
 routine check_new_position_in_bounds {
-    lda #$07                 ; just past bottom of screen
-    sta >compare_target
-    lda #$e8
-    sta <compare_target
+    copy #$07e8 compare_target      ; just past bottom of screen
     jsr compare_new_pos
 
     if bcs {
         clc
     } else {
 
-        lda #$04
-        sta >compare_target
-        lda #$00
-        sta <compare_target
+        copy #$0400 compare_target
         jsr compare_new_pos
 
         if bcc {

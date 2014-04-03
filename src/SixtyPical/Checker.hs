@@ -146,6 +146,8 @@ fillOutNamedLocationTypes p@(Program decls routines) =
         getType A = Byte
         getType X = Byte
         getType Y = Byte
+        getType (Immediate x) =
+            if x > 255 then Word else Byte
         getType _ = Byte
         typeMatch x y constructor =
             let

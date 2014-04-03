@@ -2,6 +2,8 @@
 
 module SixtyPical.Emitter where
 
+import Data.Bits
+
 import SixtyPical.Model
 
 emitProgram p@(Program decls routines) =
@@ -68,6 +70,27 @@ emitInstr p r (COPY (Indexed (NamedLocation (Just ByteTable) label) Y) A) = "lda
 
 emitInstr p r (COPY A (IndirectIndexed (NamedLocation st label) Y)) = "sta (" ++ label ++ "), y"
 emitInstr p r (COPY (IndirectIndexed (NamedLocation st label) Y) A) = "lda (" ++ label ++ "), y"
+
+emitInstr p r (COPY (NamedLocation (Just st1) src) (NamedLocation (Just st2) dst))
+  | (st1 == Vector && st2 == Vector) || (st1 == Word && st2 == Word) =
+    "lda " ++ src ++ "\n" ++
+    "  sta " ++ dst ++ "\n" ++
+    "  lda " ++ src ++ "+1\n" ++
+    "  sta " ++ dst ++ "+1"
+
+emitInstr p r (COPY (Immediate v) (NamedLocation (Just st) dst))
+  | st == Byte =
+    "lda #" ++ (show v) ++ "\n" ++
+    "  sta " ++ dst
+  | st == Word =
+    let
+        low = v .&. 255
+        high = (shift v (-8)) .&. 255
+    in
+        "lda #" ++ (show low) ++ "\n" ++
+        "  sta " ++ dst ++ "\n" ++
+        "  lda #" ++ (show high) ++ "\n" ++
+        "  sta " ++ dst ++ "+1"
 
 emitInstr p r (CMP A (NamedLocation st label)) = "cmp " ++ label
 emitInstr p r (CMP X (NamedLocation st label)) = "cpx " ++ label
@@ -143,12 +166,6 @@ emitInstr p r (PUSH FlagC blk) =
     "php\n" ++
     emitInstrs p r blk ++
     "  plp"
-
-emitInstr p r (COPYVECTOR (NamedLocation (Just Vector) src) (NamedLocation (Just Vector) dst)) =
-    "lda " ++ src ++ "\n" ++
-    "  sta " ++ dst ++ "\n" ++
-    "  lda " ++ src ++ "+1\n" ++
-    "  sta " ++ dst ++ "+1"
 
 emitInstr p r (COPYROUTINE src (NamedLocation (Just Vector) dst)) =
     "lda #<" ++ src ++ "\n" ++

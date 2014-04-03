@@ -4,7 +4,7 @@ reserve vector save_cinv
 
 routine main {
   sei {
-    copy vector cinv to save_cinv
+    copy cinv save_cinv
     copy routine our_cinv to cinv
   }
 }

@@ -203,8 +203,8 @@ command = (try lda) <|>
           (try rol) <|> (try ror) <|>
           (try sei) <|> (try pha) <|> (try php) <|>
           (try jmp) <|> (try jsr) <|>
-          (try copy_vector_statement) <|>
           (try copy_routine_statement) <|>
+          (try copy_general_statement) <|>
           if_statement <|> repeat_statement <|> nop
 
 nop :: Parser Instruction
@@ -508,17 +508,17 @@ repeat_statement = do
     blk <- block
     return (REPEAT 0 brch blk)
 
-copy_vector_statement :: Parser Instruction
-copy_vector_statement = do
+copy_general_statement :: Parser Instruction
+copy_general_statement = do
     string "copy"
     spaces
-    string "vector"
-    spaces
-    src <- locationName
-    string "to"
-    spaces
-    dst <- locationName
-    return (COPYVECTOR (NamedLocation Nothing src) (NamedLocation Nothing dst))
+    src <- (try immediate <|> try direct_location)
+    dst <- direct_location
+    return $ case (src, dst) of
+        (Immediately s, Directly d) ->
+            (COPY (Immediate s) (NamedLocation Nothing d))
+        (Directly s, Directly d) ->
+            (COPY (NamedLocation Nothing s) (NamedLocation Nothing d))
 
 copy_routine_statement :: Parser Instruction
 copy_routine_statement = do

@@ -104,7 +104,7 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     | 
     | routine main {
     |   sei {
-    |     copy vector cinv to save_cinv
+    |     copy cinv save_cinv
     |     copy routine our_cinv to cinv
     |   }
     | }
@@ -134,3 +134,31 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     = .alias screen 1024
     = .alias cinv 788
     = save_cinv: .word 0
+
+Copy command: immediate -> byte
+
+    | reserve byte position
+    | routine main {
+    |     copy #23 position
+    | }
+    = main:
+    =   lda #23
+    =   sta position
+    =   rts
+    = 
+    = position: .byte 0
+
+Copy command: immediate -> word
+
+    | reserve word position 
+    | routine main {
+    |     copy #$0400 position
+    | }
+    = main:
+    =   lda #0
+    =   sta position
+    =   lda #4
+    =   sta position+1
+    =   rts
+    = 
+    = position: .word 0
