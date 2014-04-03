@@ -35,7 +35,9 @@ Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
 -}
 
-nspaces = many (oneOf " \t")
+nspaces :: Parser [Char]
+nspaces = do
+    many (char ' ' <|> char '\t')
 
 toplevel :: Parser Program
 toplevel = do
@@ -46,7 +48,7 @@ toplevel = do
 decl :: Parser Decl
 decl = do
     d <- (try assign <|> try reserve <|> try external)
-    optional comment
+    optional_comment_before_eol
     return d
 
 reserve :: Parser Decl
@@ -98,22 +100,19 @@ block :: Parser [Instruction]
 block = do
     string "{"
     spaces
-    optional comment
     cs <- many commented_command
     string "}"
     spaces
     return cs
 
-optional_comment = do
+optional_comment_before_eol = do
     optional comment
-    nspaces
 
 comment :: Parser ()
 comment = do
     string ";"
     manyTill anyChar (try (string "\n"))
     spaces
-    return ()
 
 -- -- -- -- -- -- commands -- -- -- -- --
 
@@ -186,7 +185,7 @@ addressing_mode opcode f = do
 commented_command :: Parser Instruction
 commented_command = do
     c <- command
-    optional comment
+    optional_comment_before_eol
     return c
 
 command :: Parser Instruction

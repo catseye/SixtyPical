@@ -23,14 +23,6 @@ Checking SixtyPical Programs
     | }
     ? missing 'main' routine
 
-A comment may appear at the start of a block.
-
-    | routine main {
-    |    ; this program does nothing
-    |    nop
-    | }
-    = True
-
 A comment may appear after each command.
 
     | routine main {
