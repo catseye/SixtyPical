@@ -78,7 +78,6 @@ data Instruction = COPY StorageLocation StorageLocation
                  | DELTA StorageLocation DataValue
                  | SEI [Instruction]
                  | PUSH StorageLocation [Instruction]
-                 | COPYVECTOR StorageLocation StorageLocation
                  | COPYROUTINE RoutineName StorageLocation
                  | NOP
     deriving (Show, Ord, Eq)

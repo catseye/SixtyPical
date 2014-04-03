@@ -136,8 +136,8 @@ fillOutNamedLocationTypes p@(Program decls routines) =
             DELTA (resolve dest) val
         xform (SEI blk) =
             SEI (mapBlock xform blk)
-        xform (COPYVECTOR src dest) =
-            COPYVECTOR (resolve src) (resolve dest)
+        xform (PUSH val blk) =
+            PUSH (resolve val) (mapBlock xform blk)
         xform (COPYROUTINE name dest) =
             COPYROUTINE name (resolve dest)
         xform other =
