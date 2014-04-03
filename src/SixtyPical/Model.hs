@@ -66,6 +66,10 @@ data Instruction = COPY StorageLocation StorageLocation
                  | AND StorageLocation StorageLocation
                  | SUB StorageLocation StorageLocation
                  | OR StorageLocation StorageLocation
+                 | XOR StorageLocation StorageLocation
+                 | SHL StorageLocation StorageLocation
+                 | SHR StorageLocation StorageLocation
+                 | BIT StorageLocation
                  | JSR RoutineName
               -- | JSRVECTOR StorageLocation
                  | JMPVECTOR StorageLocation

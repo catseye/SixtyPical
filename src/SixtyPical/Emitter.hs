@@ -95,6 +95,20 @@ emitInstr p r (SUB A (Immediate val)) = "sbc #" ++ (show val)
 emitInstr p r (OR A (NamedLocation st label)) = "ora " ++ label
 emitInstr p r (OR A (Immediate val)) = "ora #" ++ (show val)
 
+emitInstr p r (XOR A (NamedLocation st label)) = "eor " ++ label
+emitInstr p r (XOR A (Immediate val)) = "eor #" ++ (show val)
+
+emitInstr p r (SHL A (Immediate 0)) = "asl"
+emitInstr p r (SHL (NamedLocation st label) (Immediate 0)) = "asl " ++ label
+emitInstr p r (SHR A (Immediate 0)) = "lsr"
+emitInstr p r (SHR (NamedLocation st label) (Immediate 0)) = "lsr " ++ label
+emitInstr p r (SHL A FlagC) = "rol"
+emitInstr p r (SHL (NamedLocation st label) FlagC) = "rol " ++ label
+emitInstr p r (SHR A FlagC) = "ror"
+emitInstr p r (SHR (NamedLocation st label) FlagC) = "ror " ++ label
+
+emitInstr p r (BIT (NamedLocation st label)) = "bit " ++ label
+
 emitInstr p r (DELTA X 1) = "inx"
 emitInstr p r (DELTA X (-1)) = "dex"
 emitInstr p r (DELTA Y 1) = "iny"

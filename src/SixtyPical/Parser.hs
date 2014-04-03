@@ -126,6 +126,7 @@ data AddressingModality = Directly LocationName
                         | LowBytely LocationName
                         | Indirectly LocationName
                         | Immediately DataValue
+                        | Implicitly StorageLocation
     deriving (Ord, Show, Eq)
 
 low_byte_of_absolute :: Parser AddressingModality
@@ -154,6 +155,12 @@ direct_location = do
     l <- locationName
     return $ Directly l
 
+register_location :: Parser AddressingModality
+register_location = do
+    string "@"    --- ARGH
+    spaces
+    return $ Implicitly A
+
 immediate :: Parser AddressingModality
 immediate = do
     string "#"
@@ -164,7 +171,7 @@ addressing_mode :: (AddressingModality -> [StorageLocation] -> Instruction) -> P
 addressing_mode f = do
     d <- ((try immediate) <|> (try high_byte_of_absolute) <|>
           (try low_byte_of_absolute) <|> (try indirect_location) <|>
-          direct_location)
+          (try register_location) <|> (try direct_location))
     indexes <- many index
     return $ f d indexes
 
@@ -172,6 +179,8 @@ commented_command :: Parser Instruction
 commented_command = do
     c <- command
     optional comment
+    -- string "\n"   -- not yet...
+    -- spaces
     return c
 
 command :: Parser Instruction
@@ -185,6 +194,8 @@ command = (try lda) <|>
           (try clc) <|> (try cld) <|> (try clv) <|> (try sec) <|> (try sed) <|>
           (try adc) <|> (try SixtyPical.Parser.and) <|>
           (try sbc) <|> (try ora) <|>
+          (try asl) <|> (try bit) <|> (try eor) <|> (try lsr) <|>
+          (try rol) <|> (try ror) <|>
           (try sei) <|>
           (try jmp) <|> (try jsr) <|>
           (try copy_vector_statement) <|>
@@ -196,6 +207,42 @@ nop = do
     string "nop"
     spaces
     return NOP
+
+asl :: Parser Instruction
+asl = do
+    string "asl"
+    spaces
+    addressing_mode gen
+    where
+       gen (Implicitly A) [] = SHL A (Immediate 0)
+       gen (Directly l) [] = SHL (NamedLocation Nothing l) (Immediate 0)
+
+lsr :: Parser Instruction
+lsr = do
+    string "lsr"
+    spaces
+    addressing_mode gen
+    where
+       gen (Implicitly A) [] = SHR A (Immediate 0)
+       gen (Directly l) [] = SHR (NamedLocation Nothing l) (Immediate 0)
+
+rol :: Parser Instruction
+rol = do
+    string "rol"
+    spaces
+    addressing_mode gen
+    where
+       gen (Implicitly A) [] = SHL A FlagC
+       gen (Directly l) [] = SHL (NamedLocation Nothing l) FlagC
+
+ror :: Parser Instruction
+ror = do
+    string "ror"
+    spaces
+    addressing_mode gen
+    where
+       gen (Implicitly A) [] = SHR A FlagC
+       gen (Directly l) [] = SHR (NamedLocation Nothing l) FlagC
 
 clc :: Parser Instruction
 clc = do
@@ -333,6 +380,23 @@ ora = do
     where
        gen (Immediately v) [] = OR A (Immediate v)
        gen (Directly l) [] = OR A (NamedLocation Nothing l)
+
+eor :: Parser Instruction
+eor = do
+    string "eor"
+    spaces
+    addressing_mode gen
+    where
+       gen (Immediately v) [] = XOR A (Immediate v)
+       gen (Directly l) [] = XOR A (NamedLocation Nothing l)
+
+bit :: Parser Instruction
+bit = do
+    string "bit"
+    spaces
+    addressing_mode gen
+    where
+       gen (Directly l) [] = BIT (NamedLocation Nothing l)
 
 lda :: Parser Instruction
 lda = do
