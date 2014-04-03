@@ -1,3 +1,4 @@
 #!/bin/sh
 
-./build.sh && falderal --substring-error README.markdown
+FILES="doc/Checking.markdown doc/Emitting.markdown"
+./build.sh && falderal --substring-error ${FILES}

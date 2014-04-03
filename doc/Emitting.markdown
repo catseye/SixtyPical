@@ -1,0 +1,244 @@
+Emitting Ophis from SixtyPical Programs
+=======================================
+
+    -> Tests for functionality "Emit ASM for SixtyPical program"
+    
+    -> Functionality "Emit ASM for SixtyPical program" is implemented by
+    -> shell command "bin/sixtypical emit %(test-file)"
+
+    | reserve word vword
+    | reserve byte vbyte
+    | assign byte table table 1024
+    | routine main {
+    |    lda #4
+    |    ldx #0
+    |    ldy #$FF
+    |    lda vbyte
+    |    lda table, x
+    |    lda table, y
+    |    lda (vword), y
+    |    lda <vword
+    |    lda >vword
+    |    inc vbyte
+    |    tax
+    |    inx
+    |    dex
+    |    stx vbyte
+    |    tay
+    |    iny
+    |    dey
+    |    sty vbyte
+    |    cmp vbyte
+    |    cmp #30
+    |    cmp <vword
+    |    cmp >vword
+    |    ldx vbyte
+    |    cpx vbyte
+    |    cpx #31
+    |    txa
+    |    ldy vbyte
+    |    cpy vbyte
+    |    cpy #32
+    |    tya
+    |    sta vbyte
+    |    sta table, x
+    |    sta table, y
+    |    sta (vword), y
+    |    sta <vword
+    |    sta >vword
+    |    dec vbyte
+    |    clc
+    |    cld
+    |    clv
+    |    sec
+    |    sed
+    |    adc #8
+    |    adc vbyte
+    |    and #8
+    |    and vbyte
+    |    sbc #8
+    |    sbc vbyte
+    |    ora #8
+    |    ora vbyte
+    | }
+    = main:
+    =   lda #4
+    =   ldx #0
+    =   ldy #255
+    =   lda vbyte
+    =   lda table, x
+    =   lda table, y
+    =   lda (vword), y
+    =   lda vword
+    =   lda vword+1
+    =   inc vbyte
+    =   tax
+    =   inx
+    =   dex
+    =   stx vbyte
+    =   tay
+    =   iny
+    =   dey
+    =   sty vbyte
+    =   cmp vbyte
+    =   cmp #30
+    =   cmp vword
+    =   cmp vword+1
+    =   ldx vbyte
+    =   cpx vbyte
+    =   cpx #31
+    =   txa
+    =   ldy vbyte
+    =   cpy vbyte
+    =   cpy #32
+    =   tya
+    =   sta vbyte
+    =   sta table, x
+    =   sta table, y
+    =   sta (vword), y
+    =   sta vword
+    =   sta vword+1
+    =   dec vbyte
+    =   clc
+    =   cld
+    =   clv
+    =   sec
+    =   sed
+    =   adc #8
+    =   adc vbyte
+    =   and #8
+    =   and vbyte
+    =   sbc #8
+    =   sbc vbyte
+    =   ora #8
+    =   ora vbyte
+    =   rts
+    = 
+    = vword: .word 0
+    = vbyte: .byte 0
+    = .alias table 1024
+
+    | assign byte screen $0400
+    | routine main {
+    |    lda screen
+    |    cmp screen
+    |    if beq {
+    |        tax
+    |    } else {
+    |        tay
+    |    }
+    |    sta screen
+    | }
+    = main:
+    =   lda screen
+    =   cmp screen
+    =   BEQ _label_1
+    =   tay
+    =   jmp _past_1
+    = _label_1:
+    =   tax
+    = _past_1:
+    =   sta screen
+    =   rts
+    = 
+    = .alias screen 1024
+
+    | assign byte screen 1024
+    | reserve byte zero
+    | routine main {
+    |    ldy zero
+    |    repeat bne {
+    |       inc screen
+    |       dey
+    |       cpy zero
+    |    }
+    |    sty screen
+    | }
+    = main:
+    =   ldy zero
+    =   
+    = _repeat_1:
+    =   inc screen
+    =   dey
+    =   cpy zero
+    =   BNE _repeat_1
+    =   sty screen
+    =   rts
+    = 
+    = .alias screen 1024
+    = zero: .byte 0
+
+Nested ifs.
+
+    | routine main {
+    |   if beq {
+    |     if bcc {
+    |       lda #0
+    |     } else {
+    |       if bvs {
+    |         lda #1
+    |       } else {
+    |         lda #2
+    |       }
+    |     }
+    |   } else {
+    |     lda #3
+    |   }
+    | }
+    = main:
+    =   BEQ _label_3
+    =   lda #3
+    =   jmp _past_3
+    = _label_3:
+    =   BCC _label_2
+    =   BVS _label_1
+    =   lda #2
+    =   jmp _past_1
+    = _label_1:
+    =   lda #1
+    = _past_1:
+    =   jmp _past_2
+    = _label_2:
+    =   lda #0
+    = _past_2:
+    = _past_3:
+    =   rts
+
+Installing an interrupt handler (at the Kernal level, i.e. with CINV)
+
+    | assign byte screen 1024
+    | assign vector cinv 788
+    | reserve vector save_cinv
+    | 
+    | routine main {
+    |   sei {
+    |     copy vector cinv to save_cinv
+    |     copy routine our_cinv to cinv
+    |   }
+    | }
+    | 
+    | routine our_cinv {
+    |   inc screen
+    |   jmp save_cinv
+    | }
+    = main:
+    =   sei
+    =   lda cinv
+    =   sta save_cinv
+    =   lda cinv+1
+    =   sta save_cinv+1
+    =   lda #<our_cinv
+    =   sta cinv
+    =   lda #>our_cinv
+    =   sta cinv+1
+    =   cli
+    =   rts
+    = 
+    = our_cinv:
+    =   inc screen
+    =   jmp (save_cinv)
+    =   rts
+    = 
+    = .alias screen 1024
+    = .alias cinv 788
+    = save_cinv: .word 0
