@@ -6,6 +6,8 @@ Emitting Ophis from SixtyPical Programs
     -> Functionality "Emit ASM for SixtyPical program" is implemented by
     -> shell command "bin/sixtypical emit %(test-file)"
 
+Big test for parsing and emitting instructions.
+
     | reserve word vword
     | reserve byte vbyte
     | assign byte table table 1024
@@ -118,6 +120,42 @@ Emitting Ophis from SixtyPical Programs
     = vbyte: .byte 0
     = .alias table 1024
 
+    | reserve word vword
+    | reserve byte vbyte
+    | assign byte table table 1024
+    | routine main {
+    |    asl
+    |    asl vbyte
+    |    lsr
+    |    lsr vbyte
+    |    rol
+    |    rol vbyte
+    |    ror
+    |    ror vbyte
+    |    bit vbyte
+    |    eor #5
+    |    eor vbyte
+    | }
+    = main:
+    =   asl
+    =   asl vbyte
+    =   lsr
+    =   lsr vbyte
+    =   rol
+    =   rol vbyte
+    =   ror
+    =   ror vbyte
+    =   bit vbyte
+    =   eor #5
+    =   eor vbyte
+    =   rts
+    = 
+    = vword: .word 0
+    = vbyte: .byte 0
+    = .alias table 1024
+
+Emitting an `if`.
+
     | assign byte screen $0400
     | routine main {
     |    lda screen
@@ -142,6 +180,8 @@ Emitting Ophis from SixtyPical Programs
     =   rts
     = 
     = .alias screen 1024
+
+Emitting a `repeat`.
 
     | assign byte screen 1024
     | reserve byte zero

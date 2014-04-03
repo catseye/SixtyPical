@@ -10,17 +10,71 @@ It is expected that a common use case for SixtyPical would be retroprogramming
 for the Commodore 64 and other 6502-based computers such as the VIC-20.
 
 Many SixtyPical instructions map precisely to 6502 opcodes.  However, SixtyPical
-is not an assembly language.  The programmer does not have total control over
-the layout of code and data in memory.  The language has a type system which
-distinguishes addresses from non-addresses (16-bit values for which it does
-not make sense to treat them as addresses.)  Some 6502 opcodes have no
-SixtyPical equivalent.  Some SixtyPical instructions are named after 6502
-opcodes, but generate slightly different (safer, but intuitively related)
-sequences of opcodes.  Et cetera.
+is not an assembly language: the programmer does not have total control over
+the layout of code and data in memory.  Some 6502 opcodes have no SixtyPical
+equivalent, while some have an equivalent that acts in a slightly different
+(but intuitively related) way.  And some commands are unique to SixtyPical.
 
 `sixtypical` is the reference implementation of SixtyPical.  It is written in
 Haskell.  It can currently parse and check a SixtyPical program, and can
 emit an Ophis assembler listing for it.
+
+This distribution will soon be placed under an open-source license.
+
+Quick Start
+-----------
+
+If you have `ghc`, Ophis, and VICE 2.4 installed, clone this repo, `cd` into it,
+and run
+
+    ./loadngo.sh eg/demo.60p
+
+The Big Idea(s)
+---------------
+
+### Typed Addresses ###
+
+SixtyPical distinguishes several kinds of addresses: those that hold a byte,
+those that hold a word (in low-byte-high-byte sequence), those that are the
+beginning of a table of bytes, and vectors (those that hold a word pointer to a
+machine-language routine.)  It prevents the program from accessing them in
+certain ways.  For example, these are illegal:
+    
+    reserve byte lives
+    reserve word score
+    routine do_it {
+        lda score        ; no! can't treat word as if it were a byte
+        lda lives, x     ; no! can't treat a byte as if it were a table
+    }
+
+### Abstract Interpretation ###
+
+SixtyPical tries to prevent the program from using data that has no meaning.
+For example, the following is illegal:
+
+    routine do_it {
+        lda #0
+        jsr update_score
+        sta vic_border_colour    ; uh... what do we know about reg A here?
+    }
+
+...*unless* one of the following is true:
+
+*   the A register is declared to be a meaningful output of `update_score`
+*   `update_score` was determined to not change the value of the A registers
+
+The first must be done with an explicit declaration on `update_score` (NYI).
+The second will be done using abstract interpretation of the code of
+`update_score` (needs to be implemented again, now, and better).
+
+### Structured Programming ###
+
+You get an `if` and a `repeat` and instructions like `sei` work like `with`
+where they are followed by a block and the `cli` instruction is implicitly
+(and unavoidably) added at the end.
+
+For more information, see the docs (which are written in the form of a
+Falderal literate test suite.)
 
 Concepts
 --------
@@ -59,7 +113,7 @@ assembler, with the understanding that the value will be treated "like an
 address."  This is generally an address into the operating system or hardware
 (e.g. kernal routine, I/O port, etc.)
 
-Not there yet:
+Not there. yet:
 
 > Inside a routine, an address may be declared with `temporary`.  This is like
 > `static` in C, except the value at that address is not guaranteed to be
@@ -122,7 +176,7 @@ Unsupported Opcodes
 -------------------
 
 6502 opcodes with no language-level equivalent instructions in SixtyPical
-are `brk`, `cli`, `pla`, `plp`, `rti`, and `rts`.  These may be
+are `brk`, `cli`, `pla`, `plp`, `rti`, `rts`, `tsx`, `txs`.  These may be
 inserted into the output program as a SixtyPical → 6502 compiler sees fit,
 however.
 
@@ -255,11 +309,7 @@ In these, `absolute` must be a `reserve`d or `locate`d address.
       
       tay
       
-    X tsx
-    
       txa
-    
-    X txs
     
       tya
 
@@ -271,3 +321,4 @@ TODO
 *   Character tables ("strings" to everybody else)
 *   Work out the analyses again and document them
 *   Addressing modes; rename instructions to match
+*   fix jmp (vector) syntax
