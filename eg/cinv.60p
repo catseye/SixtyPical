@@ -11,5 +11,5 @@ routine main {
 
 routine our_cinv {
   inc screen
-  jmp save_cinv
+  jmp (save_cinv)
 }

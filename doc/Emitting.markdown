@@ -111,7 +111,7 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     | 
     | routine our_cinv {
     |   inc screen
-    |   jmp save_cinv
+    |   jmp (save_cinv)
     | }
     = main:
     =   sei

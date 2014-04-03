@@ -15,7 +15,7 @@ import SixtyPical.Emitter (emitProgram)
 -- -- -- -- driver -- -- -- --
 
 usage = do
-    putStrLn "Usage: sixtypical (parse|check|analyze|emit) filename.60pical"
+    putStrLn "Usage: sixtypical (parse|check|analyze|emit) filename.60p"
     exitWith $ ExitFailure 1
 
 main = do

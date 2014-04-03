@@ -54,7 +54,7 @@ routine our_cinv {
         jsr reset_position
     } else {
     }
-    jmp save_cinv
+    jmp (save_cinv)
 }
 
 routine increment_pos {

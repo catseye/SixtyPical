@@ -180,4 +180,6 @@ TODO
 *   Character tables ("strings" to everybody else)
 *   Work out the analyses again and document them
 *   Addressing modes; rename instructions to match
-*   fix jmp (vector) syntax
+*   `jsr (vector)`
+*   `jmp routine`
+*   insist on EOL after each instruction.  need spacesWOEOL production

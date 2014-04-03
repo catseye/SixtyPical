@@ -490,7 +490,11 @@ jmp :: Parser Instruction
 jmp = do
     string "jmp"
     spaces
+    string "("
+    spaces
     l <- locationName
+    string ")"
+    spaces
     return $ JMPVECTOR (NamedLocation Nothing l)
 
 jsr :: Parser Instruction

@@ -142,27 +142,27 @@ No duplicate routine names, including externals.
     | }
     ? duplicate routine name
 
-We can jump to a vector.
+We can jump indirectly through a vector.
 
     | reserve vector blah
     | routine main {
-    |    jmp blah
+    |    jmp (blah)
     | }
     = True
 
-We can't jump to a word.
+We can't jump indirectly through a word.
 
     | reserve word blah
     | routine main {
-    |    jmp blah
+    |    jmp (blah)
     | }
     ? jmp to non-vector
 
-We can't jump to a byte.
+We can't jump indirectly through a byte.
 
     | assign byte screen 1024
     | routine main {
-    |    jmp screen
+    |    jmp (screen)
     | }
     ? jmp to non-vector
 
