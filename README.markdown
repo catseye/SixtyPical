@@ -61,7 +61,7 @@ For example, the following is illegal:
 ...*unless* one of the following is true:
 
 *   the A register is declared to be a meaningful output of `update_score`
-*   `update_score` was determined to not change the value of the A registers
+*   `update_score` was determined to not change the value of the A register
 
 The first must be done with an explicit declaration on `update_score` (NYI).
 The second will be done using abstract interpretation of the code of
@@ -167,19 +167,19 @@ but only when the routine is used as a subroutine.  Also, if the routine
 ends by `jsr`ing another routine, it reserves the right to do a tail-call
 or even a fallthrough.
 
-There are also _with_ instructions, which are associated with an opcode
-that has a natural symmetrical opcode (e.g. `pha`, `sei`).  These instructions
-take a block.  The natural symmetrical opcode is inserted at the end of the
-block.
+There are also _with_ instructions, which are associated with three opcodes
+that have natural symmetrical opcodes: `pha`, `php`, and `sei`.  These
+instructions take a block.  The natural symmetrical opcode is inserted at
+the end of the block.
 
 TODO
 ----
 
 *   Initial values for reserved, incl. tables
-*   give length for tables, must be there for reserved
+*   give length for tables, must be there for reserved, if no init val
 *   Character tables ("strings" to everybody else)
 *   Work out the analyses again and document them
-*   Addressing modes; rename instructions to match
+*   Addressing modes — indexed mode on more instructions
 *   `jsr (vector)`
 *   `jmp routine`
 *   insist on EOL after each instruction.  need spacesWOEOL production
