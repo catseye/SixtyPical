@@ -125,6 +125,8 @@ declaredRoutineNames (Program decls routines) =
 routineDeclared routName p =
     elem routName (declaredRoutineNames p)
 
+--
+
 mapBlock :: (Instruction -> Instruction) -> [Instruction] -> [Instruction]
 mapBlock = map
 
@@ -137,7 +139,31 @@ mapRoutines f (rout:routs) =
     (mapRoutine f rout):(mapRoutines f routs)
 
 mapProgramRoutines :: (Instruction -> Instruction) -> Program -> Program
-mapProgramRoutines f (Program decls routs) = Program decls $ mapRoutines f routs
+mapProgramRoutines f (Program decls routs) =
+    Program decls $ mapRoutines f routs
+
+--
+
+foldBlock :: (Instruction -> a -> a) -> a -> [Instruction] -> a
+foldBlock = foldr
+
+foldRoutine :: (Instruction -> a -> a) -> a -> Routine -> a
+foldRoutine f a (Routine name instrs) =
+    foldBlock f a instrs
+
+foldRoutines :: (Instruction -> a -> a) -> a -> [Routine] -> a
+foldRoutines f a [] = a
+foldRoutines f a (rout:routs) =
+    let
+        z = foldRoutine f a rout
+    in
+        foldRoutines f z routs
+
+foldProgramRoutines :: (Instruction -> a -> a) -> a -> Program -> a
+foldProgramRoutines f a (Program decls routs) =
+    foldRoutines f a routs
+
+--
 
 lookupDecl (Program decls _) name =
     lookupDecl' (filter (isLocationDecl) decls) name

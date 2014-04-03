@@ -183,3 +183,4 @@ TODO
 *   `jsr (vector)`
 *   `jmp routine`
 *   insist on EOL after each instruction.  need spacesWOEOL production
+*   `copy immediate word`

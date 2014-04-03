@@ -18,7 +18,10 @@ assign vector cinv 788
 ; ---------
 
 reserve vector save_cinv
+
 assign word position $fb
+assign word new_position $fd
+
 reserve word delta
 reserve byte value
 reserve word compare_target
@@ -45,27 +48,11 @@ routine our_cinv {
     sta (position), y
     jsr read_stick
     jsr advance_pos
-
-    lda #$07                 ; just past bottom of screen
-    sta >compare_target
-    lda #$e8
-    sta <compare_target
-    jsr compare_pos
-
+    jsr check_new_position_in_bounds
     if bcs {
-        jsr reset_position
-    } else {
+        jsr install_new_position
+    } else { }
 
-        lda #$04
-        sta >compare_target
-        lda #$00
-        sta <compare_target
-        jsr compare_pos
-
-        if bcc {
-            jsr reset_position
-        } else { }
-    }
     jmp (save_cinv)
 }
 
@@ -80,17 +67,49 @@ routine advance_pos {
     clc
     lda <position
     adc <delta
-    sta <position
+    sta <new_position
     lda >position
     adc >delta
+    sta >new_position
+}
+
+routine install_new_position {
+    lda <new_position
+    sta <position
+    lda >new_position
     sta >position
 }
 
-routine compare_pos {
-    lda >position
+routine check_new_position_in_bounds {
+    lda #$07                 ; just past bottom of screen
+    sta >compare_target
+    lda #$e8
+    sta <compare_target
+    jsr compare_new_pos
+
+    if bcs {
+        clc
+    } else {
+
+        lda #$04
+        sta >compare_target
+        lda #$00
+        sta <compare_target
+        jsr compare_new_pos
+
+        if bcc {
+            clc
+        } else {
+            sec
+        }
+    }
+}
+
+routine compare_new_pos {
+    lda >new_position
     cmp >compare_target
     if beq {
-        lda <position
+        lda <new_position
         cmp <compare_target
     } else {
     }

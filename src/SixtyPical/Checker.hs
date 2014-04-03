@@ -38,17 +38,17 @@ noIndexedAccessOfNonTables p@(Program decls routines) =
 
 noUseOfUndeclaredRoutines p@(Program decls routines) =
     let
-        mappedProgram = mapProgramRoutines (checkInstr) p
+        undeclaredRoutines = foldProgramRoutines (checkInstr) 0 p
     in
-        mappedProgram == p
+        undeclaredRoutines == 0
     where
         routineNames = declaredRoutineNames p
         -- TODO also check COPYROUTINE here
-        checkInstr j@(JSR routName) =
+        checkInstr j@(JSR routName) acc =
             case routName `elem` routineNames of
-                True -> j
-                False -> (COPY A A)
-        checkInstr other = other
+                True -> acc
+                False -> error ("undeclared routine '" ++ routName ++ "'") -- acc + 1
+        checkInstr other acc = acc
 
 -- -- -- -- -- --
 
