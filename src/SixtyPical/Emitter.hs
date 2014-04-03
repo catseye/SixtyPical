@@ -134,6 +134,16 @@ emitInstr p r (SEI blk) =
     emitInstrs p r blk ++
     "  cli"
 
+emitInstr p r (PUSH A blk) =
+    "pha\n" ++
+    emitInstrs p r blk ++
+    "  pla"
+
+emitInstr p r (PUSH FlagC blk) =
+    "php\n" ++
+    emitInstrs p r blk ++
+    "  plp"
+
 emitInstr p r (COPYVECTOR (NamedLocation (Just Vector) src) (NamedLocation (Just Vector) dst)) =
     "lda " ++ src ++ "\n" ++
     "  sta " ++ dst ++ "\n" ++

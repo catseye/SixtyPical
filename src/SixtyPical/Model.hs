@@ -77,6 +77,7 @@ data Instruction = COPY StorageLocation StorageLocation
                  | REPEAT InternalID Branch [Instruction]
                  | DELTA StorageLocation DataValue
                  | SEI [Instruction]
+                 | PUSH StorageLocation [Instruction]
                  | COPYVECTOR StorageLocation StorageLocation
                  | COPYROUTINE RoutineName StorageLocation
                  | NOP

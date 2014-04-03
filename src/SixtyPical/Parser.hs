@@ -27,7 +27,7 @@ Command  := "if" Branch Block "else" Block
           | "cpy" (LocationName | Immediate)
           | "inx" | "iny" | "dex" | "dey" | "inc" Location | "dec" Location
           | "clc" | "cld" | "clv" | "sec" | "sed"
-          | "sei" Block
+          | "sei" Block | "pha" Block | "php" Block
           | "jmp" LocationName
           | "jsr" RoutineName
           | "nop".
@@ -196,7 +196,7 @@ command = (try lda) <|>
           (try sbc) <|> (try ora) <|>
           (try asl) <|> (try bit) <|> (try eor) <|> (try lsr) <|>
           (try rol) <|> (try ror) <|>
-          (try sei) <|>
+          (try sei) <|> (try pha) <|> (try php) <|>
           (try jmp) <|> (try jsr) <|>
           (try copy_vector_statement) <|>
           (try copy_routine_statement) <|>
@@ -485,6 +485,20 @@ sei = do
     spaces
     blk <- block
     return (SEI blk)
+
+pha :: Parser Instruction
+pha = do
+    string "pha"
+    spaces
+    blk <- block
+    return (PUSH A blk)
+
+php :: Parser Instruction
+php = do
+    string "php"
+    spaces
+    blk <- block
+    return (PUSH FlagC blk)
 
 jmp :: Parser Instruction
 jmp = do
