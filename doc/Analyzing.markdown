@@ -16,7 +16,7 @@ routine.
     | }
     = main ([])
     =   A: UpdatedWith (Immediate 4)
-    =   NamedLocation (Just Byte) "score": UpdatedWith A
+    =   NamedLocation Nothing "score": UpdatedWith A
 
 A routine cannot expect registers which a called routine does not
 preserve, to be preserved.
@@ -53,16 +53,15 @@ But if it does it can.
     = main ([])
     =   A: UpdatedWith (Immediate 4)
     =   X: PoisonedWith (Immediate 1)
-    =   NamedLocation (Just Byte) "border_colour": UpdatedWith A
-    =   NamedLocation (Just Byte) "score": PoisonedWith X
+    =   NamedLocation Nothing "border_colour": UpdatedWith A
+    =   NamedLocation Nothing "score": PoisonedWith X
     = 
     = update_score ([])
     =   X: UpdatedWith (Immediate 1)
-    =   NamedLocation (Just Byte) "score": UpdatedWith X
+    =   NamedLocation Nothing "score": UpdatedWith X
 
 We can't expect to stay named variables to stay unmodified either.
 
-    | assign byte border_colour 4000
     | reserve byte score
     | routine update_score
     | {
@@ -71,9 +70,9 @@ We can't expect to stay named variables to stay unmodified either.
     | }
     | routine main {
     |   jsr update_score
-    |   ldx score
+    |   lda score
     | }
-    ? routine does not preserve 'NamedLocation (Just Byte) "score"'
+    ? routine does not preserve 'NamedLocation Nothing "score"'
 
 What the solution to the above is to notate `update_score` as intentionally
 modifying score, as an "output" of the routine.
@@ -92,12 +91,12 @@ modifying score, as an "output" of the routine.
     | }
     = main ([])
     =   A: PoisonedWith (Immediate 8)
-    =   X: UpdatedWith (NamedLocation (Just Byte) "score")
-    =   NamedLocation (Just Byte) "score": UpdatedWith A
+    =   X: UpdatedWith (NamedLocation Nothing "score")
+    =   NamedLocation Nothing "score": UpdatedWith A
     = 
     = update_score ([NamedLocation Nothing "score"])
     =   A: UpdatedWith (Immediate 8)
-    =   NamedLocation (Just Byte) "score": UpdatedWith A
+    =   NamedLocation Nothing "score": UpdatedWith A
 
 Routines can name registers as outputs.
 
@@ -123,7 +122,7 @@ Routines can name registers as outputs.
     | }
     = main ([])
     =   A: UpdatedWith (Immediate 8)
-    =   NamedLocation (Just Byte) "score": UpdatedWith A
+    =   NamedLocation Nothing "score": UpdatedWith A
     = 
     = update_score ([A])
     =   A: UpdatedWith (Immediate 8)
@@ -196,3 +195,19 @@ after the `if`.
     |   sta score
     | }
     ? routine does not preserve 'A'
+
+Poisoning a high byte or low byte of a word poisons the whole word.
+
+    | reserve word score
+    | reserve byte temp
+    | routine update_score
+    | {
+    |   ldx #4
+    |   stx <score
+    | }
+    | routine main {
+    |   jsr update_score
+    |   lda >score
+    |   sta temp
+    | }
+    ? routine does not preserve 'NamedLocation Nothing "score"'

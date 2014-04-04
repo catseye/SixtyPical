@@ -34,31 +34,27 @@ analyzeProgram program@(Program decls routines) =
       -- -- -- -- -- -- -- -- -- -- -- --
       
       checkInstr (COPY src dst) progCtx routCtx =
-          case Map.lookup src routCtx of
-              Just (PoisonedWith _) ->
-                  error ("routine does not preserve '" ++ (show src) ++ "'")
-              _ ->
-                  Map.insert dst (UpdatedWith src) routCtx
+          updateRoutCtx dst (UpdatedWith src) routCtx
       checkInstr (DELTA dst val) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith (Immediate val)) routCtx
+          updateRoutCtx dst (UpdatedWith (Immediate val)) routCtx
 
       checkInstr (ADD dst src) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith src) routCtx
+          updateRoutCtx dst (UpdatedWith src) routCtx
       checkInstr (SUB dst src) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith src) routCtx
+          updateRoutCtx dst (UpdatedWith src) routCtx
 
       checkInstr (AND dst src) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith src) routCtx
+          updateRoutCtx dst (UpdatedWith src) routCtx
       checkInstr (OR dst src) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith src) routCtx
+          updateRoutCtx dst (UpdatedWith src) routCtx
       checkInstr (XOR dst src) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith src) routCtx
+          updateRoutCtx dst (UpdatedWith src) routCtx
 
       checkInstr (JSR name) progCtx routCtx =
           let
@@ -91,18 +87,18 @@ analyzeProgram program@(Program decls routines) =
 
       checkInstr (BIT dst) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith (Immediate 0)) routCtx
+          updateRoutCtx dst (UpdatedWith (Immediate 0)) routCtx
 
       checkInstr (SHR dst flg) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith flg) routCtx
+          updateRoutCtx dst (UpdatedWith flg) routCtx
       checkInstr (SHL dst flg) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith flg) routCtx
+          updateRoutCtx dst (UpdatedWith flg) routCtx
 
       checkInstr (COPYROUTINE name dst) progCtx routCtx =
           -- TODO check that dst is not poisoned
-          Map.insert dst (UpdatedWith (Immediate 7)) routCtx
+          updateRoutCtx dst (UpdatedWith (Immediate 7)) routCtx
 
       checkInstr (JMPVECTOR dst) progCtx routCtx =
           routCtx
@@ -127,19 +123,15 @@ mergeRoutCtxs routCtx calledRoutCtx calledRout@(Routine name outputs _) =
         poison location usage routCtxAccum =
             case usage of
                 UpdatedWith ulocation ->
-                    case (untypedLocation location) `elem` outputs of
+                    case location `elem` outputs of
                         True ->
-                            Map.insert location usage routCtxAccum
+                            updateRoutCtx location usage routCtxAccum
                         False ->
-                            Map.insert location (PoisonedWith ulocation) routCtxAccum
+                            updateRoutCtx location (PoisonedWith ulocation) routCtxAccum
                 PoisonedWith ulocation ->
-                    Map.insert location usage routCtxAccum
+                    updateRoutCtx location usage routCtxAccum
     in
         Map.foldrWithKey (poison) routCtx calledRoutCtx
-
-untypedLocation (NamedLocation (Just _) name) =
-    NamedLocation Nothing name
-untypedLocation x = x
 
 --
 -- Utility function:
@@ -153,7 +145,7 @@ mergeAlternateRoutCtxs routCtx1 routCtx2 =
         poison location usage2 routCtxAccum =
             case Map.lookup location routCtx1 of
                 Nothing ->
-                    Map.insert location usage2 routCtxAccum
+                    updateRoutCtx location usage2 routCtxAccum
                 Just usage1 ->
                     -- it exists in both routCtxs.
                     -- if it is poisoned in either, it's poisoned here.
@@ -164,6 +156,6 @@ mergeAlternateRoutCtxs routCtx1 routCtx2 =
                             (_, PoisonedWith _) -> usage2
                             _ -> usage1  -- or 2.  doesn't matter.
                     in
-                        Map.insert location newUsage routCtxAccum
+                        updateRoutCtx location newUsage routCtxAccum
     in
         Map.foldrWithKey (poison) routCtx1 routCtx2

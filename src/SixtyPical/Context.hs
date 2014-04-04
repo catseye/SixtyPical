@@ -26,6 +26,30 @@ type RoutineContext = Map.Map StorageLocation Usage
 
 type ProgramContext = Map.Map RoutineName RoutineContext
 
+untypedLocation (HighByteOf (NamedLocation _ name)) =
+    NamedLocation Nothing name
+untypedLocation (LowByteOf (NamedLocation _ name)) =
+    NamedLocation Nothing name
+untypedLocation (NamedLocation _ name) =
+    NamedLocation Nothing name
+untypedLocation x = x
+
+updateRoutCtx :: StorageLocation -> Usage -> RoutineContext -> RoutineContext
+updateRoutCtx dst (UpdatedWith src) routCtx =
+    let
+        s = untypedLocation src
+        d = untypedLocation dst
+    in
+        case Map.lookup s routCtx of
+            Just (PoisonedWith _) ->
+                error ("routine does not preserve '" ++ (show s) ++ "'")
+            _ ->
+                Map.insert d (UpdatedWith s) routCtx
+updateRoutCtx dst (PoisonedWith src) routCtx =
+    Map.insert (untypedLocation dst) (PoisonedWith $ untypedLocation src) routCtx
+                  
+-- pretty printing
+
 ppAnalysis :: Program -> ProgramContext -> IO ()
 ppAnalysis program progCtx =
     let

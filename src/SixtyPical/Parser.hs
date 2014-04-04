@@ -440,17 +440,19 @@ sta = do
 
 stx :: Parser Instruction
 stx = do
-    string "stx"
-    spaces
-    l <- named_location
-    return (COPY X l)
+    addressing_mode "stx" gen
+    where
+       gen (Directly l) [] = COPY X (NamedLocation Nothing l)
+       gen (LowBytely l) [] = COPY X (LowByteOf (NamedLocation Nothing l))
+       gen (HighBytely l) [] = COPY X (HighByteOf (NamedLocation Nothing l))
 
 sty :: Parser Instruction
 sty = do
-    string "sty"
-    spaces
-    l <- named_location
-    return (COPY Y l)
+    addressing_mode "sty" gen
+    where
+       gen (Directly l) [] = COPY Y (NamedLocation Nothing l)
+       gen (LowBytely l) [] = COPY Y (LowByteOf (NamedLocation Nothing l))
+       gen (HighBytely l) [] = COPY Y (HighByteOf (NamedLocation Nothing l))
 
 txa :: Parser Instruction
 txa = do
