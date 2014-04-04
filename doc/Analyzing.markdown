@@ -196,6 +196,30 @@ after the `if`.
     | }
     ? routine 'main' does not preserve 'A'
 
+    | reserve byte score
+    | routine update_score
+    | {
+    |   ldx #4
+    |   stx score
+    | }
+    | routine main {
+    |   lda #4
+    |   if beq {
+    |      jsr update_score
+    |   } else {
+    |      ldx #4
+    |   }
+    |   sta score
+    | }
+    = main ([])
+    =   A: UpdatedWith (Immediate 4)
+    =   X: PoisonedWith (Immediate 4)
+    =   NamedLocation Nothing "score": UpdatedWith A
+    = 
+    = update_score ([])
+    =   X: UpdatedWith (Immediate 4)
+    =   NamedLocation Nothing "score": UpdatedWith X
+
 Poisoning a high byte or low byte of a word poisons the whole word.
 
     | reserve word score
@@ -211,3 +235,56 @@ Poisoning a high byte or low byte of a word poisons the whole word.
     |   sta temp
     | }
     ? routine 'main' does not preserve 'NamedLocation Nothing "score"'
+
+    | assign vector cinv 788
+    | reserve vector save_cinv
+    | 
+    | assign word position $fb
+    | 
+    | reserve byte value
+    | 
+    | routine reset_position {
+    |     lda #$00
+    |     sta <position
+    |     lda #$04
+    |     sta >position
+    | }
+    | 
+    | routine our_cinv {
+    |     inc value
+    |     lda value
+    |     ldy #0
+    |     sta (position), y
+    |     if beq {
+    |         jsr reset_position
+    |     } else {
+    |     }
+    |     jmp (save_cinv)
+    | }
+    | 
+    | routine main {
+    |     jsr reset_position
+    |     sei {
+    |         copy cinv save_cinv
+    |         copy routine our_cinv to cinv
+    |     }
+    |     clc
+    |     repeat bcc { }
+    | }
+    = main ([])
+    =   A: PoisonedWith (Immediate 4)
+    =   FlagC: UpdatedWith (Immediate 0)
+    =   NamedLocation Nothing "cinv": UpdatedWith (Immediate 7)
+    =   NamedLocation Nothing "position": PoisonedWith A
+    =   NamedLocation Nothing "save_cinv": UpdatedWith (NamedLocation Nothing "cinv")
+    = 
+    = our_cinv ([])
+    =   A: PoisonedWith (Immediate 4)
+    =   Y: UpdatedWith (Immediate 0)
+    =   IndirectIndexed (NamedLocation (Just Word) "position") Y: UpdatedWith A
+    =   NamedLocation Nothing "position": PoisonedWith A
+    =   NamedLocation Nothing "value": UpdatedWith (Immediate 1)
+    = 
+    = reset_position ([])
+    =   A: UpdatedWith (Immediate 4)
+    =   NamedLocation Nothing "position": UpdatedWith A

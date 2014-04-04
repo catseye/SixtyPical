@@ -87,7 +87,6 @@ routine our_cinv {
     sta (position), y
     jsr increment_pos
     jsr compare_pos
-    lda vic_border     ; WHY DOES THE FOLLOWING NOT ANALUZE
     if beq {
         jsr reset_position
     } else {

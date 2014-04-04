@@ -63,8 +63,18 @@ analyzeProgram program@(Program decls routines) =
           routCtx
       checkInstr nm (IF _ branch b1 b2) progCtx routCtx =
           let
+              -- This works, but I worry about it.
+              -- It doesn't work if we pass routCtx to both blocks,
+              -- because when we go to merge them, there is apparently
+              -- too much information, and we end up checking things
+              -- we don't need to check.
+              -- Leaving the second one empty results in the right amount
+              -- of information.
+              -- But what are we depriving the else block context of?
+              -- More tests are needed.
+              -- Possibly the merge needs to be redone.
               routCtx1 = checkBlock nm b1 progCtx routCtx
-              routCtx2 = checkBlock nm b2 progCtx routCtx
+              routCtx2 = checkBlock nm b2 progCtx Map.empty
           in
               mergeAlternateRoutCtxs nm routCtx1 routCtx2
       checkInstr nm (REPEAT _ branch blk) progCtx routCtx =

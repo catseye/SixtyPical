@@ -26,10 +26,12 @@ type RoutineContext = Map.Map StorageLocation Usage
 
 type ProgramContext = Map.Map RoutineName RoutineContext
 
-untypedLocation (HighByteOf (NamedLocation _ name)) =
-    NamedLocation Nothing name
-untypedLocation (LowByteOf (NamedLocation _ name)) =
-    NamedLocation Nothing name
+untypedLocation (HighByteOf x) =
+    untypedLocation x
+untypedLocation (LowByteOf x) =
+    untypedLocation x
+untypedLocation (Indexed table index) =
+    untypedLocation table
 untypedLocation (NamedLocation _ name) =
     NamedLocation Nothing name
 untypedLocation x = x
