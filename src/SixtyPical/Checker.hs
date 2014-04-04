@@ -72,11 +72,11 @@ numberRoutinesLoops (routine:routines) iid =
         ((routine':routines'), iid'')
 
 numberRoutineLoops :: Routine -> InternalID -> (Routine, InternalID)
-numberRoutineLoops (Routine name instrs) iid =
+numberRoutineLoops (Routine name outputs instrs) iid =
     let
         (instrs', iid') = numberBlockLoops instrs iid
     in
-        ((Routine name instrs'), iid')
+        ((Routine name outputs instrs'), iid')
 
 numberBlockLoops :: [Instruction] -> InternalID -> ([Instruction], InternalID)
 numberBlockLoops [] iid = ([], iid)

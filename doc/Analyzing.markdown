@@ -59,3 +59,43 @@ But if it does it can.
     = update_score
     =   X: UpdatedWith (Immediate 1)
     =   NamedLocation (Just Byte) "score": UpdatedWith X
+
+We can't expect to stay named variables to stay unmodified either.
+
+    | assign byte border_colour 4000
+    | reserve byte score
+    | routine update_score
+    | {
+    |   lda #8
+    |   sta score
+    | }
+    | routine main {
+    |   jsr update_score
+    |   ldx score
+    | }
+    ? routine does not preserve 'NamedLocation (Just Byte) "score"'
+
+What the solution to the above is to notate `update_score` as intentionally
+modifying score, as an "output" of the routine.
+
+    | assign byte border_colour 4000
+    | reserve byte score
+    | routine update_score outputs (score)
+    | {
+    |   lda #8
+    |   sta score
+    | }
+    | routine main {
+    |   ldx score
+    |   jsr update_score
+    |   ldx score
+    | }
+    = main
+    =   A: UpdatedWith (Immediate 4)
+    =   X: PoisonedWith (Immediate 1)
+    =   NamedLocation (Just Byte) "border_colour": UpdatedWith A
+    =   NamedLocation (Just Byte) "score": PoisonedWith X
+    = 
+    = update_score
+    =   X: UpdatedWith (Immediate 1)
+    =   NamedLocation (Just Byte) "score": UpdatedWith X

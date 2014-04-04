@@ -15,7 +15,7 @@ Decl     := "reserve" StorageType LocationName
           | "assign" StorageType LocationName Address
           | "external" RoutineName Address.
 StorageType := "byte" | "word" | "vector".
-Routine  := "routine" RoutineName Block.
+Routine  := "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
 Block    := "{" [Comment] {Command [Comment]} "}".
 Command  := "if" Branch Block "else" Block
           | "lda" (LocationName | Immediate)
@@ -93,8 +93,20 @@ routine = do
     string "routine"
     spaces
     name <- routineName
+    outputs <- (try routine_outputs <|> return [])
     instrs <- block
-    return (Routine name instrs)
+    return (Routine name outputs instrs)
+
+routine_outputs :: Parser [StorageLocation]
+routine_outputs = do
+    string "outputs"
+    spaces
+    string "("
+    spaces
+    locations <- many locationName
+    string ")"
+    spaces
+    return (map (\x -> NamedLocation Nothing x) locations)
 
 block :: Parser [Instruction]
 block = do

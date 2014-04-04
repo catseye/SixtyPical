@@ -27,7 +27,7 @@ emitRoutines _ [] = ""
 emitRoutines p (rout:routs) =
     emitRoutine p rout ++ "\n" ++ emitRoutines p routs
 
-emitRoutine p r@(Routine name instrs) =
+emitRoutine p r@(Routine name _ instrs) =
     name ++ ":\n" ++ emitInstrs p r instrs ++ "  rts\n"
 
 emitInstrs _ _ [] = ""

@@ -78,7 +78,7 @@ data Instruction = COPY StorageLocation StorageLocation
                  | NOP
     deriving (Show, Ord, Eq)
 
-data Routine = Routine RoutineName [Instruction]
+data Routine = Routine RoutineName [StorageLocation] [Instruction]
     deriving (Show, Ord, Eq)
 
 data Program = Program [Decl] [Routine]
@@ -90,7 +90,7 @@ data Program = Program [Decl] [Routine]
 programSummary p@(Program decls routs) =
     show ((length $ show p) < 99999)
 
-getRoutineName (Routine name _) = name
+getRoutineName (Routine name _ _) = name
 
 getDeclLocationName (Assign name _ _) = name
 getDeclLocationName (Reserve name _) = name
@@ -126,7 +126,8 @@ mapBlock :: (Instruction -> Instruction) -> [Instruction] -> [Instruction]
 mapBlock = map
 
 mapRoutine :: (Instruction -> Instruction) -> Routine -> Routine
-mapRoutine f (Routine name instrs) = Routine name (mapBlock f instrs)
+mapRoutine f (Routine name outputs instrs) =
+    Routine name outputs (mapBlock f instrs)
 
 mapRoutines :: (Instruction -> Instruction) -> [Routine] -> [Routine]
 mapRoutines f [] = []
@@ -143,7 +144,7 @@ foldBlock :: (Instruction -> a -> a) -> a -> [Instruction] -> a
 foldBlock = foldr
 
 foldRoutine :: (Instruction -> a -> a) -> a -> Routine -> a
-foldRoutine f a (Routine name instrs) =
+foldRoutine f a (Routine name outputs instrs) =
     foldBlock f a instrs
 
 foldRoutines :: (Instruction -> a -> a) -> a -> [Routine] -> a
@@ -164,10 +165,14 @@ lookupDecl (Program decls _) name =
     lookupDecl' (filter (isLocationDecl) decls) name
 
 lookupDecl' [] _ = Nothing
-lookupDecl' (decl:decls) name =
-    if
-        (getDeclLocationName decl) == name
-      then
-        Just decl
-      else
-        lookupDecl' decls name
+lookupDecl' (decl:decls) name
+    | (getDeclLocationName decl) == name = Just decl
+    | otherwise                          = lookupDecl' decls name
+
+lookupRoutine (Program _ routines) name =
+    lookupRoutine' routines name
+
+lookupRoutine' [] _ = Nothing
+lookupRoutine' (rout@(Routine rname _ _):routs) name
+    | rname == name = Just rout
+    | otherwise     = lookupRoutine' routs name
