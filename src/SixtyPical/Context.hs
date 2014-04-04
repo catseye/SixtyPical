@@ -42,3 +42,29 @@ mergeRoutCtxs routCtx calledRoutCtx =
                     Map.insert location (PoisonedWith ulocation) routCtxAccum
     in
         Map.foldrWithKey (poison) routCtx calledRoutCtx
+
+
+ppAnalysis :: ProgramContext -> IO ()
+ppAnalysis progCtx =
+    let
+        li = Map.toList progCtx
+    in do
+        ppRoutines li
+
+ppRoutines [] = return ()
+ppRoutines ((name, routCtx):rest) = do
+    putStrLn $ name
+    ppRoutine routCtx
+    putStrLn ""
+    ppRoutines rest
+
+ppRoutine routCtx =
+    let
+        li = Map.toList routCtx
+    in do
+        ppUsages li
+
+ppUsages [] = return ()
+ppUsages ((loc, usage):rest) = do
+    putStrLn $ ("  " ++ (show loc) ++ ": " ++ (show usage))
+    ppUsages rest

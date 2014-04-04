@@ -35,6 +35,7 @@ checkInstr (COPY src dst) progCtx routCtx =
     -- TODO check that src is not poisoned
     Map.insert dst (UpdatedWith src) routCtx
 checkInstr (DELTA dst val) progCtx routCtx =
+    -- TODO check that dst is not poisoned
     Map.insert dst (UpdatedWith (Immediate val)) routCtx
 checkInstr (JSR name) progCtx routCtx =
     case Map.lookup name progCtx of

@@ -10,6 +10,7 @@ import SixtyPical.Model
 import SixtyPical.Parser (parseProgram)
 import SixtyPical.Checker (checkAndTransformProgram)
 import SixtyPical.Analyzer (analyzeProgram)
+import SixtyPical.Context (ppAnalysis)
 import SixtyPical.Emitter (emitProgram)
 
 -- -- -- -- driver -- -- -- --
@@ -33,7 +34,7 @@ main = do
                 ("analyze", Right program) ->
                     case checkAndTransformProgram program of
                         Just newprog ->
-                            putStrLn $ show $ analyzeProgram newprog
+                            ppAnalysis $ analyzeProgram newprog
                 ("emit", Right program) ->
                     case checkAndTransformProgram program of
                         Just newprog ->
