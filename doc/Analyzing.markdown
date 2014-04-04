@@ -33,7 +33,7 @@ preserve, to be preserved.
     |   jsr update_score
     |   sta border_colour
     | }
-    ? routine does not preserve 'A'
+    ? routine 'main' does not preserve 'A'
 
 But if it does it can.
 
@@ -72,7 +72,7 @@ We can't expect to stay named variables to stay unmodified either.
     |   jsr update_score
     |   lda score
     | }
-    ? routine does not preserve 'NamedLocation Nothing "score"'
+    ? routine 'main' does not preserve 'NamedLocation Nothing "score"'
 
 What the solution to the above is to notate `update_score` as intentionally
 modifying score, as an "output" of the routine.
@@ -109,7 +109,7 @@ Routines can name registers as outputs.
     |   jsr update_score
     |   sta score
     | }
-    ? routine does not preserve 'A'
+    ? routine 'main' does not preserve 'A'
 
     | reserve byte score
     | routine update_score outputs (.a)
@@ -144,7 +144,7 @@ after the `if`.
     |   jsr update_score
     |   sta score
     | }
-    ? routine does not preserve 'A'
+    ? routine 'main' does not preserve 'A'
 
     | reserve byte score
     | routine update_score
@@ -160,7 +160,7 @@ after the `if`.
     |   jsr update_score
     |   sta score
     | }
-    ? routine does not preserve 'A'
+    ? routine 'main' does not preserve 'A'
 
     | reserve byte score
     | routine update_score
@@ -177,7 +177,7 @@ after the `if`.
     |   }
     |   sta score
     | }
-    ? routine does not preserve 'A'
+    ? routine 'main' does not preserve 'A'
 
     | reserve byte score
     | routine update_score
@@ -194,7 +194,7 @@ after the `if`.
     |   }
     |   sta score
     | }
-    ? routine does not preserve 'A'
+    ? routine 'main' does not preserve 'A'
 
 Poisoning a high byte or low byte of a word poisons the whole word.
 
@@ -210,4 +210,4 @@ Poisoning a high byte or low byte of a word poisons the whole word.
     |   lda >score
     |   sta temp
     | }
-    ? routine does not preserve 'NamedLocation Nothing "score"'
+    ? routine 'main' does not preserve 'NamedLocation Nothing "score"'

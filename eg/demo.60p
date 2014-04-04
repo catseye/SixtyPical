@@ -81,12 +81,13 @@ routine clear_screen {
 }
 
 routine our_cinv {
-    lda value
     inc value
+    lda value
     ldy #0
     sta (position), y
     jsr increment_pos
     jsr compare_pos
+    lda vic_border     ; WHY DOES THE FOLLOWING NOT ANALUZE
     if beq {
         jsr reset_position
     } else {

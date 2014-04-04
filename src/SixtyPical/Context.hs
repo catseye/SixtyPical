@@ -34,18 +34,18 @@ untypedLocation (NamedLocation _ name) =
     NamedLocation Nothing name
 untypedLocation x = x
 
-updateRoutCtx :: StorageLocation -> Usage -> RoutineContext -> RoutineContext
-updateRoutCtx dst (UpdatedWith src) routCtx =
+updateRoutCtx :: String -> StorageLocation -> Usage -> RoutineContext -> RoutineContext
+updateRoutCtx nm dst (UpdatedWith src) routCtx =
     let
         s = untypedLocation src
         d = untypedLocation dst
     in
         case Map.lookup s routCtx of
             Just (PoisonedWith _) ->
-                error ("routine does not preserve '" ++ (show s) ++ "'")
+                error ("routine '" ++ nm ++ "' does not preserve '" ++ (show s) ++ "'")
             _ ->
                 Map.insert d (UpdatedWith s) routCtx
-updateRoutCtx dst (PoisonedWith src) routCtx =
+updateRoutCtx nm dst (PoisonedWith src) routCtx =
     Map.insert (untypedLocation dst) (PoisonedWith $ untypedLocation src) routCtx
                   
 -- pretty printing
