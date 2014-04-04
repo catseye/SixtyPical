@@ -162,7 +162,7 @@ emitInstr p r (PUSH A blk) =
     emitInstrs p r blk ++
     "  pla"
 
-emitInstr p r (PUSH FlagC blk) =
+emitInstr p r (PUSH AllFlags blk) =
     "php\n" ++
     emitInstrs p r blk ++
     "  plp"

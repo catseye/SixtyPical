@@ -469,7 +469,7 @@ php = do
     string "php"
     spaces
     blk <- block
-    return (PUSH FlagC blk)
+    return (PUSH AllFlags blk)
 
 jmp :: Parser Instruction
 jmp = do

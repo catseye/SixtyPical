@@ -5,43 +5,9 @@ module SixtyPical.Analyzer where
 import qualified Data.Map as Map
 
 import SixtyPical.Model
+import SixtyPical.Context
 
--- -- -- -- data-flow-analysis context -- -- -- --
-
-data Usage = Unknown
-           | Value DataValue -- obviously a bit daft for now
-           | Retained StorageLocation
-    deriving (Show, Ord, Eq)
-
-type RoutineContext = Map.Map StorageLocation Usage
-
-type ProgramContext = Map.Map RoutineName RoutineContext
-
---
--- Utility function:
--- Take 2 routine contexts -- the current routine and a routine that was just
--- JSR'ed to (immediately previously) -- and merge them to create a new
--- context for the current routine.
---
-mergeRoutCtxs routCtx calledRoutCtx =
-    let
-        -- insert the values into routCtx
-        -- TODO, first compare them
-        -- TODO, if not equal, 'poison' them
-        -- TODO, other special cases (eg Unknown)
-        poison key value routCtxAccum =
-            case value of
-                -- if the called routine retains it,
-                -- we keep our idea of it -- but TODO
-                -- should we mark it "was retained"?
-                Retained reg ->
-                    routCtxAccum
-                _ ->
-                    Map.insert key value routCtxAccum
-    in
-        Map.foldrWithKey (poison) routCtx calledRoutCtx
-
--- -- -- -- static analyzer -- -- -- --
+-- -- -- -- abstract interpreter -- -- -- --
 
 analyzeProgram (Program decls routines) =
     checkRoutines routines Map.empty
@@ -49,24 +15,27 @@ analyzeProgram (Program decls routines) =
 checkRoutines [] progCtx = progCtx
 checkRoutines (rout@(Routine name _) : routs) progCtx =
     let
-        routCtx = Map.fromList $ map (\reg -> (reg, Retained reg)) allRegisters
+        routCtx = Map.empty
         routAnalysis = checkRoutine rout progCtx routCtx
         progCtx' = Map.insert name routAnalysis progCtx
     in
         checkRoutines routs progCtx'
 
--- TODO: have this call checkblock on its instrs, use checkblock below too...
-checkRoutine (Routine _ []) progCtx routCtx = routCtx
-checkRoutine (Routine name (instr : instrs)) progCtx routCtx =
+checkRoutine (Routine name instrs) progCtx routCtx =
+    checkBlock instrs progCtx routCtx
+
+checkBlock [] progCtx routCtx = routCtx
+checkBlock (instr:instrs) progCtx routCtx =
     let
         routCtx' = checkInstr instr progCtx routCtx
     in
-        checkRoutine (Routine name instrs) progCtx routCtx'
+        checkBlock instrs progCtx routCtx'
 
-checkInstr (COPY (Immediate imm) dst) progCtx routCtx =
-    Map.insert dst (Value imm) routCtx
 checkInstr (COPY src dst) progCtx routCtx =
-    Map.insert dst (Map.findWithDefault Unknown src routCtx) routCtx
+    -- TODO check that src is not poisoned
+    Map.insert dst (UpdatedWith src) routCtx
+checkInstr (DELTA dst val) progCtx routCtx =
+    Map.insert dst (UpdatedWith (Immediate val)) routCtx
 checkInstr (JSR name) progCtx routCtx =
     case Map.lookup name progCtx of
         Just calledRoutCtx ->
@@ -78,9 +47,12 @@ checkInstr (CMP reg addr) progCtx routCtx =
     routCtx
 checkInstr (IF _ branch b1 b2) progCtx routCtx =
     -- TODO: oooh, this one's gonna be fun
+    --checkBlock b1 progCtx routCtx
+    --checkBlock b2 progCtx routCtx
     routCtx
 checkInstr (REPEAT _ branch blk) progCtx routCtx =
     -- TODO: oooh, this one's gonna be fun too
+    --checkBlock blk progCtx routCtx
     routCtx
 checkInstr NOP progCtx routCtx =
     routCtx

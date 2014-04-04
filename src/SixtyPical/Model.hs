@@ -34,6 +34,7 @@ data StorageLocation = A
               | FlagD
               | FlagZ
               | FlagC
+              | AllFlags   -- for PHP
               | Immediate DataValue
               | Indirect StorageLocation
               | Indexed StorageLocation StorageLocation
@@ -42,11 +43,6 @@ data StorageLocation = A
               | LowByteOf StorageLocation
               | HighByteOf StorageLocation
     deriving (Show, Ord, Eq)
-
--- this is bunk, man.  if a location does not appear in an analysis
--- map the meaning should be taken to be "preserved".
-
-allRegisters = [A, X, Y, FlagN, FlagV, FlagD, FlagZ, FlagC]
 
 -- -- -- -- program model -- -- -- --
 
