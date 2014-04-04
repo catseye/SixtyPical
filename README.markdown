@@ -50,7 +50,7 @@ certain ways.  For example, these are illegal:
 ### Abstract Interpretation ###
 
 SixtyPical tries to prevent the program from using data that has no meaning.
-For example, the following is illegal:
+For example, the following:
 
     routine do_it {
         lda #0
@@ -58,7 +58,7 @@ For example, the following is illegal:
         sta vic_border_colour    ; uh... what do we know about reg A here?
     }
 
-...*unless* one of the following is true:
+...is illegal *unless* one of the following is true:
 
 *   the A register is declared to be a meaningful output of `update_score`
 *   `update_score` was determined to not change the value of the A register
@@ -183,4 +183,4 @@ TODO
 *   `jsr (vector)`
 *   `jmp routine`
 *   insist on EOL after each instruction.  need spacesWOEOL production
-*   `copy immediate word`
+*   asl .a

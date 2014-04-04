@@ -84,3 +84,7 @@ checkInstr (REPEAT _ branch blk) progCtx routCtx =
     routCtx
 checkInstr NOP progCtx routCtx =
     routCtx
+
+checkInstr instr _ _ = error (
+    "Internal error: sixtypical doesn't know how to " ++
+    "analyze '" ++ (show instr) ++ "'")
