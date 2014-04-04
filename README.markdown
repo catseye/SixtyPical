@@ -119,5 +119,5 @@ TODO
 *   comments in any spaces; forget the eol thing
 *   `outputs` on externals
 *   Routine is a kind of StorageLocation?  (Location)?
-*   remove DELTA -> ADD
+*   remove DELTA -> ADD/SUB (requires carry be notated on ADD and SUB though)
 *   Poisoning the highbyte or lowbyte of a word should poison the word

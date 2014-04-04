@@ -98,3 +98,32 @@ modifying score, as an "output" of the routine.
     = update_score ([NamedLocation Nothing "score"])
     =   A: UpdatedWith (Immediate 8)
     =   NamedLocation (Just Byte) "score": UpdatedWith A
+
+Routines can name registers as outputs.
+
+    | reserve byte score
+    | routine update_score
+    | {
+    |   lda #8
+    | }
+    | routine main {
+    |   jsr update_score
+    |   sta score
+    | }
+    ? routine does not preserve 'A'
+
+    | reserve byte score
+    | routine update_score outputs (.a)
+    | {
+    |   lda #8
+    | }
+    | routine main {
+    |   jsr update_score
+    |   sta score
+    | }
+    = main ([])
+    =   A: UpdatedWith (Immediate 8)
+    =   NamedLocation (Just Byte) "score": UpdatedWith A
+    = 
+    = update_score ([A])
+    =   A: UpdatedWith (Immediate 8)
