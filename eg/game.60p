@@ -26,39 +26,6 @@ reserve word delta
 reserve byte value
 reserve word compare_target
 
-routine main {
-    lda #5
-    sta vic_border
-    lda #0
-    sta vic_bg
-    jsr reset_position
-    jsr clear_screen
-    sei {
-        copy cinv save_cinv
-        copy routine our_cinv to cinv
-    }
-    clc
-    repeat bcc { }
-}
-
-routine our_cinv {
-    lda #32
-    ldy #0
-    sta (position), y
-    jsr read_stick
-    jsr advance_pos
-    jsr check_new_position_in_bounds
-    if bcs {
-        jsr install_new_position
-    } else { }
-
-    lda #81
-    ldy #0
-    sta (position), y
-
-    jmp (save_cinv)
-}
-
 routine reset_position {
     copy #$0400 position
 }
@@ -77,6 +44,16 @@ routine install_new_position {
     copy new_position position
 }
 
+routine compare_new_pos {
+    lda >new_position
+    cmp >compare_target
+    if beq {
+        lda <new_position
+        cmp <compare_target
+    } else {
+    }
+}
+
 routine check_new_position_in_bounds {
     copy #$07e8 compare_target      ; just past bottom of screen
     jsr compare_new_pos
@@ -93,16 +70,6 @@ routine check_new_position_in_bounds {
         } else {
             sec
         }
-    }
-}
-
-routine compare_new_pos {
-    lda >new_position
-    cmp >compare_target
-    if beq {
-        lda <new_position
-        cmp <compare_target
-    } else {
     }
 }
 
@@ -162,4 +129,37 @@ routine read_stick {
             }
         }
     }
+}
+
+routine our_cinv {
+    lda #32
+    ldy #0
+    sta (position), y
+    jsr read_stick
+    jsr advance_pos
+    jsr check_new_position_in_bounds
+    if bcs {
+        jsr install_new_position
+    } else { }
+
+    lda #81
+    ldy #0
+    sta (position), y
+
+    jmp (save_cinv)
+}
+
+routine main {
+    lda #5
+    sta vic_border
+    lda #0
+    sta vic_bg
+    jsr reset_position
+    jsr clear_screen
+    sei {
+        copy cinv save_cinv
+        copy routine our_cinv to cinv
+    }
+    clc
+    repeat bcc { }
 }

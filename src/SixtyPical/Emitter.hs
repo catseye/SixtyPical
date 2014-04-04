@@ -7,6 +7,7 @@ import Data.Bits
 import SixtyPical.Model
 
 emitProgram p@(Program decls routines) =
+    "  jmp main\n" ++
     emitRoutines p routines ++
     emitDecls p decls
 

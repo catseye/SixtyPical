@@ -203,6 +203,7 @@ Big test for parsing and emitting instructions.
     |    ora #8
     |    ora vbyte
     | }
+    =   jmp main
     = main:
     =   lda #4
     =   ldx #0
@@ -276,6 +277,7 @@ Big test for parsing and emitting instructions.
     |    eor #5
     |    eor vbyte
     | }
+    =   jmp main
     = main:
     =   asl
     =   asl vbyte
@@ -305,6 +307,7 @@ Big test for parsing and emitting instructions.
     |        lda #2
     |    }
     | }
+    =   jmp main
     = main:
     =   pha
     =   sei

@@ -109,11 +109,9 @@ analyzeProgram program@(Program decls routines) =
       checkInstr NOP progCtx routCtx =
           routCtx
 
-      {-      
       checkInstr instr _ _ = error (
           "Internal error: sixtypical doesn't know how to " ++
           "analyze '" ++ (show instr) ++ "'")
-      -}
 
 --
 -- Utility function:
@@ -133,6 +131,8 @@ mergeRoutCtxs routCtx calledRoutCtx calledRout@(Routine name outputs _) =
                             Map.insert location usage routCtxAccum
                         False ->
                             Map.insert location (PoisonedWith ulocation) routCtxAccum
+                PoisonedWith ulocation ->
+                    Map.insert location usage routCtxAccum
     in
         Map.foldrWithKey (poison) routCtx calledRoutCtx
 

@@ -41,6 +41,7 @@ nspaces = do
 
 toplevel :: Parser Program
 toplevel = do
+    spaces
     decls <- many decl
     routines <- many routine
     return $ Program decls routines

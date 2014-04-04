@@ -21,40 +21,11 @@ reserve byte value
 reserve word m
 reserve word n
 
-routine main {
-    lda #5
-    sta vic_border
-    lda #0
-    sta vic_bg
-    jsr reset_position
-    jsr clear_screen
-    sei {
-        copy cinv save_cinv
-        copy routine our_cinv to cinv
-    }
-    clc
-    repeat bcc { }
-}
-
 routine reset_position {
     lda #$00
     sta <position
     lda #$04
     sta >position
-}
-
-routine our_cinv {
-    lda value
-    inc value
-    ldy #0
-    sta (position), y
-    jsr increment_pos
-    jsr compare_pos
-    if beq {
-        jsr reset_position
-    } else {
-    }
-    jmp (save_cinv)
 }
 
 routine increment_pos {
@@ -67,6 +38,16 @@ routine increment_pos {
     sta >position
 }
 
+routine compare_16_bit {
+    lda >m
+    cmp >n
+    if beq {
+        lda <m
+        cmp <n
+    } else {
+    }
+}
+
 routine compare_pos {
     lda <position
     sta <m
@@ -77,16 +58,6 @@ routine compare_pos {
     lda #$e8
     sta <n
     jsr compare_16_bit
-}
-
-routine compare_16_bit {
-    lda >m
-    cmp >n
-    if beq {
-        lda <m
-        cmp <n
-    } else {
-    }
 }
 
 routine clear_screen {
@@ -107,4 +78,33 @@ routine clear_screen {
         iny
         cpy #250
     }
+}
+
+routine our_cinv {
+    lda value
+    inc value
+    ldy #0
+    sta (position), y
+    jsr increment_pos
+    jsr compare_pos
+    if beq {
+        jsr reset_position
+    } else {
+    }
+    jmp (save_cinv)
+}
+
+routine main {
+    lda #5
+    sta vic_border
+    lda #0
+    sta vic_bg
+    jsr reset_position
+    jsr clear_screen
+    sei {
+        copy cinv save_cinv
+        copy routine our_cinv to cinv
+    }
+    clc
+    repeat bcc { }
 }
