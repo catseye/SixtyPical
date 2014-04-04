@@ -11,6 +11,9 @@ Checking SixtyPical Programs
     -> Functionality "Check SixtyPical program" is implemented by
     -> shell command "bin/sixtypical check %(test-file)"
 
+Some Basic Syntax
+-----------------
+
 `main` must be present.
 
     | routine main {
@@ -45,7 +48,52 @@ A comment may appear after each declaration.
     | }
     = True
 
-A program may `reserve` and `assign`.
+Addresses
+---------
+
+An address may be declared with `reserve`, which is like `.data` or `.bss`
+in an assembler.  This is an address into the program's data.  It is global
+to all routines.
+
+    | reserve byte lives
+    | routine main {
+    |    lda #3
+    |    sta lives
+    | }
+    | routine died {
+    |    dec lives
+    | }
+    = True
+
+An address may be declared with `locate`, which is like `.alias` in an
+assembler, with the understanding that the value will be treated "like an
+address."  This is generally an address into the operating system or hardware
+(e.g. kernal routine, I/O port, etc.)
+
+    | assign byte screen $0400
+    | routine main {
+    |    lda #0
+    |    sta screen
+    | }
+    = True
+
+The body of a routine may not refer to an address literally.  It must use
+a symbol that was declared previously with `reserve` or `assign`.
+
+    | routine main {
+    |    lda #0
+    |    sta $0400
+    | }
+    ? unexpected "$"
+
+    | assign byte screen $0400
+    | routine main {
+    |    lda #0
+    |    sta screen
+    | }
+    = True
+
+Test for many combinations of `reserve` and `assign`.
 
     | reserve byte lives
     | assign byte gdcol 647
@@ -214,3 +262,55 @@ We cannot absolute access a vector.
     |    lda screen
     | }
     ? incompatible types 'Vector' and 'Byte'
+
+### Addresses ###
+
+An address knows what kind of data is stored at the address:
+    
+*   `byte`: an 8-bit byte.  not part of a word.  not to be used as an address.
+    (could be an index though.)
+*   `word`: a 16-bit word.  not to be used as an address.
+*   `vector`: a 16-bit address of a routine.  Only a handful of operations
+    are supported on vectors:
+    
+    *   copying the contents of one vector to another
+    *   copying the address of a routine into a vector
+    *   jumping indirectly to a vector (i.e. to the code at the address
+        contained in the vector (and this can only happen at the end of a
+        routine (NYI))
+    *   `jsr`'ing indirectly to a vector (which is done with a fun
+        generated trick (NYI))
+    
+*   `byte table`: a series of `byte`s contiguous in memory starting from the
+    address.  This is the only kind of address that can be used in
+    indexed addressing.
+
+### Blocks ###
+
+Each routine is a block.  It may be composed of inner blocks, if those
+inner blocks are attached to certain instructions.
+
+SixtyPical does not have instructions that map literally to the 6502 branch
+instructions.  Instead, it has an `if` construct, with two blocks (for the
+"then" and `else` parts), and the branch instructions map to conditions for
+this construct.
+
+Similarly, there is a `repeat` construct.  The same branch instructions can
+be used in the condition to this construct.  In this case, they branch back
+to the top of the `repeat` loop.
+
+The abstract states of the machine at each of the different block exits are
+merged during analysis.  If any register or memory location is treated
+inconsistently (e.g. updated in one branch of the test, but not the other,)
+that register cannot subsequently be used without a declaration to the effect
+that we know what's going on.  (This is all a bit fuzzy right now.)
+
+There is also no `rts` instruction.  It is included at the end of a routine,
+but only when the routine is used as a subroutine.  Also, if the routine
+ends by `jsr`ing another routine, it reserves the right to do a tail-call
+or even a fallthrough.
+
+There are also _with_ instructions, which are associated with three opcodes
+that have natural symmetrical opcodes: `pha`, `php`, and `sei`.  These
+instructions take a block.  The natural symmetrical opcode is inserted at
+the end of the block.
