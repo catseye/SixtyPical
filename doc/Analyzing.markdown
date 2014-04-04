@@ -127,3 +127,72 @@ Routines can name registers as outputs.
     = 
     = update_score ([A])
     =   A: UpdatedWith (Immediate 8)
+
+If a location is poisoned in either branch of an `if`, it is poisoned
+after the `if`.
+
+    | reserve byte score
+    | routine update_score
+    | {
+    |   if beq {
+    |      lda #8
+    |   } else {
+    |      ldx #8
+    |   }
+    | }
+    | routine main {
+    |   lda #4
+    |   jsr update_score
+    |   sta score
+    | }
+    ? routine does not preserve 'A'
+
+    | reserve byte score
+    | routine update_score
+    | {
+    |   if beq {
+    |      ldx #8
+    |   } else {
+    |      lda #8
+    |   }
+    | }
+    | routine main {
+    |   lda #4
+    |   jsr update_score
+    |   sta score
+    | }
+    ? routine does not preserve 'A'
+
+    | reserve byte score
+    | routine update_score
+    | {
+    |   lda #4
+    |   sta score
+    | }
+    | routine main {
+    |   lda #4
+    |   if beq {
+    |      jsr update_score
+    |   } else {
+    |      ldx #3
+    |   }
+    |   sta score
+    | }
+    ? routine does not preserve 'A'
+
+    | reserve byte score
+    | routine update_score
+    | {
+    |   lda #4
+    |   sta score
+    | }
+    | routine main {
+    |   lda #4
+    |   if beq {
+    |      ldx #3
+    |   } else {
+    |      jsr update_score
+    |   }
+    |   sta score
+    | }
+    ? routine does not preserve 'A'

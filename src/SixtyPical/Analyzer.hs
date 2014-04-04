@@ -73,10 +73,11 @@ analyzeProgram program@(Program decls routines) =
           -- TODO: mark Carry bit as "touched" here
           routCtx
       checkInstr (IF _ branch b1 b2) progCtx routCtx =
-          -- TODO: oooh, this one's gonna be fun
-          --checkBlock b1 progCtx routCtx
-          --checkBlock b2 progCtx routCtx
-          routCtx
+          let
+              routCtx1 = checkBlock b1 progCtx routCtx
+              routCtx2 = checkBlock b2 progCtx routCtx
+          in
+              mergeAlternateRoutCtxs routCtx1 routCtx2
       checkInstr (REPEAT _ branch blk) progCtx routCtx =
           -- TODO: oooh, this one's gonna be fun too
           --checkBlock blk progCtx routCtx
@@ -140,3 +141,29 @@ untypedLocation (NamedLocation (Just _) name) =
     NamedLocation Nothing name
 untypedLocation x = x
 
+--
+-- Utility function:
+-- Take 2 routine contexts -- one from each branch of an `if` -- and merge
+-- them to create a new context for the remainder of the routine.
+--
+mergeAlternateRoutCtxs routCtx1 routCtx2 =
+    let
+        -- go through all the Usages in routCtx2
+        -- insert any that were updated, into routCtx1
+        poison location usage2 routCtxAccum =
+            case Map.lookup location routCtx1 of
+                Nothing ->
+                    Map.insert location usage2 routCtxAccum
+                Just usage1 ->
+                    -- it exists in both routCtxs.
+                    -- if it is poisoned in either, it's poisoned here.
+                    -- otherwise, it is OK to differ.
+                    let
+                        newUsage = case (usage1, usage2) of
+                            (PoisonedWith _, _) -> usage1
+                            (_, PoisonedWith _) -> usage2
+                            _ -> usage1  -- or 2.  doesn't matter.
+                    in
+                        Map.insert location newUsage routCtxAccum
+    in
+        Map.foldrWithKey (poison) routCtx1 routCtx2

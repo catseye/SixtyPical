@@ -83,6 +83,13 @@ Along with routines, you get `if`, `repeat`, and `with` constructs which take
 blocks.  The `with` construct takes an instruction like `sei` and implicitly
 (and unavoidably) inserts the corresponding `cli` at the end of the block.
 
+Abstract interpretation extends to `if` blocks.  The two incoming contexts are
+merged, and any storage locations poisoned in either context are considered
+poisoned in the result context.
+
+(Same should apply for `repeat` and `with` and, really, many other cases
+which there just aren't enough test cases for yet.)
+
 For More Information
 --------------------
 
@@ -94,11 +101,6 @@ Ideas
 -----
 
 These aren't implemented yet:
-    
-*   Abstract interpretation must extend to `if`, `repeat`, and `with`
-    blocks.  The two incoming contexts must be merged, and any storage
-    locations updated differently or poisoned in either context, will be
-    considered poisoned in the result context.
 
 *   Inside a routine, an address may be declared with `temporary`.  This is like
     `static` in C, except the value at that address is not guaranteed to be
