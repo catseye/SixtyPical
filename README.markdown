@@ -116,7 +116,8 @@ TODO
 *   Addressing modes — indexed mode on more instructions
 *   `jsr (vector)`
 *   `jmp routine`
-*   insist on EOL after each instruction.  need spacesWOEOL production
-*   asl .a
+*   comments in any spaces; forget the eol thing
 *   `outputs` on externals
 *   Routine is a kind of StorageLocation?  (Location)?
+*   remove DELTA -> ADD
+*   Poisoning the highbyte or lowbyte of a word should poison the word

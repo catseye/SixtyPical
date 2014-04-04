@@ -264,13 +264,13 @@ Big test for parsing and emitting instructions.
     | reserve byte vbyte
     | assign byte table table 1024
     | routine main {
-    |    asl @
+    |    asl .a
     |    asl vbyte
-    |    lsr @
+    |    lsr .a
     |    lsr vbyte
-    |    rol @
+    |    rol .a
     |    rol vbyte
-    |    ror @
+    |    ror .a
     |    ror vbyte
     |    bit vbyte
     |    eor #5

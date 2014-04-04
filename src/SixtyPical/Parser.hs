@@ -57,7 +57,7 @@ reserve = do
     string "reserve"
     spaces
     sz <- storage_type
-    name <- locationName
+    name <- location_name
     return $ Reserve name sz
 
 assign :: Parser Decl
@@ -65,7 +65,7 @@ assign = do
     string "assign"
     spaces
     sz <- storage_type
-    name <- locationName
+    name <- location_name
     addr <- address
     return $ Assign name sz addr
 
@@ -104,10 +104,12 @@ routine_outputs = do
     spaces
     string "("
     spaces
-    locations <- many locationName
+    locations <- many location
     string ")"
     spaces
-    return (map (\x -> NamedLocation Nothing x) locations)
+    return locations
+
+location = (try explicit_register <|> named_location)
 
 block :: Parser [Instruction]
 block = do
@@ -150,34 +152,45 @@ data AddressingModality = Directly LocationName
 low_byte_of_absolute :: Parser AddressingModality
 low_byte_of_absolute = do
     string "<"
-    l <- locationName
+    l <- location_name
     return $ LowBytely l
 
 high_byte_of_absolute :: Parser AddressingModality
 high_byte_of_absolute = do
     string ">"
-    l <- locationName
+    l <- location_name
     return $ HighBytely l
 
 indirect_location :: Parser AddressingModality
 indirect_location = do
     string "("
     spaces
-    l <- locationName
+    l <- location_name
     string ")"
     spaces
     return $ Indirectly l
 
 direct_location :: Parser AddressingModality
 direct_location = do
-    l <- locationName
+    l <- location_name
     return $ Directly l
+
+explicit_location :: String -> StorageLocation -> Parser StorageLocation
+explicit_location s l = do
+    string s
+    spaces
+    return $ l
+
+explicit_register :: Parser StorageLocation
+explicit_register = ((try $ explicit_location ".a" A) <|>
+                     (try $ explicit_location ".x" X) <|>
+                     (explicit_location ".y" Y))
 
 register_location :: Parser AddressingModality
 register_location = do
-    string "@"    --- ARGH
+    z <- explicit_register
     spaces
-    return $ Implicitly A
+    return $ Implicitly z
 
 immediate :: Parser AddressingModality
 immediate = do
@@ -312,15 +325,15 @@ inc :: Parser Instruction
 inc = do
     string "inc"
     spaces
-    l <- locationName
-    return (DELTA (NamedLocation Nothing l) 1)
+    l <- named_location
+    return (DELTA l 1)
 
 dec :: Parser Instruction
 dec = do
     string "dec"
     spaces
-    l <- locationName
-    return (DELTA (NamedLocation Nothing l) (-1))
+    l <- named_location
+    return (DELTA l (-1))
 
 cmp :: Parser Instruction
 cmp = do
@@ -429,15 +442,15 @@ stx :: Parser Instruction
 stx = do
     string "stx"
     spaces
-    l <- locationName
-    return (COPY X (NamedLocation Nothing l))
+    l <- named_location
+    return (COPY X l)
 
 sty :: Parser Instruction
 sty = do
     string "sty"
     spaces
-    l <- locationName
-    return (COPY Y (NamedLocation Nothing l))
+    l <- named_location
+    return (COPY Y l)
 
 txa :: Parser Instruction
 txa = do
@@ -490,10 +503,10 @@ jmp = do
     spaces
     string "("
     spaces
-    l <- locationName
+    l <- named_location
     string ")"
     spaces
-    return $ JMPVECTOR (NamedLocation Nothing l)
+    return $ JMPVECTOR l
 
 jsr :: Parser Instruction
 jsr = do
@@ -542,7 +555,7 @@ copy_routine_statement = do
     src <- routineName
     string "to"
     spaces
-    dst <- locationName
+    dst <- location_name
     return (COPYROUTINE src (NamedLocation Nothing dst))
 
 branch :: Parser Branch
@@ -563,12 +576,17 @@ routineName = do
     spaces
     return (c:cs)
 
-locationName :: Parser String
-locationName = do
+location_name :: Parser String
+location_name = do
     c <- letter
     cs <- many (alphaNum <|> char '_')
     spaces
     return (c:cs)
+
+named_location :: Parser StorageLocation
+named_location = do
+    name <- location_name
+    return (NamedLocation Nothing name)
 
 address = hex_address <|> decimal_address
 

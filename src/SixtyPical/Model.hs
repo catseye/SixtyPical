@@ -176,8 +176,3 @@ lookupRoutine' [] _ = Nothing
 lookupRoutine' (rout@(Routine rname _ _):routs) name
     | rname == name = Just rout
     | otherwise     = lookupRoutine' routs name
-
-findRoutines f [] = []
-findRoutines f (rout:routs)
-    | f rout    = (rout:findRoutines f routs)
-    | otherwise = findRoutines f routs

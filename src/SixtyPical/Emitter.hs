@@ -8,8 +8,8 @@ import SixtyPical.Model
 
 emitProgram p@(Program decls routines) =
     let
-        mains = findRoutines (\(Routine name _ _) -> name == "main") routines
-        allElse = findRoutines (\(Routine name _ _) -> name /= "main") routines
+        mains = filter (\(Routine name _ _) -> name == "main") routines
+        allElse = filter (\(Routine name _ _) -> name /= "main") routines
     in
         emitRoutines p mains ++
         emitRoutines p allElse ++
