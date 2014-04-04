@@ -32,8 +32,11 @@ checkBlock (instr:instrs) progCtx routCtx =
         checkBlock instrs progCtx routCtx'
 
 checkInstr (COPY src dst) progCtx routCtx =
-    -- TODO check that src is not poisoned
-    Map.insert dst (UpdatedWith src) routCtx
+    case Map.lookup src routCtx of
+        Just (PoisonedWith _) ->
+            error ("routine does not preserve '" ++ (show src) ++ "'")
+        _ ->
+            Map.insert dst (UpdatedWith src) routCtx
 checkInstr (DELTA dst val) progCtx routCtx =
     -- TODO check that dst is not poisoned
     Map.insert dst (UpdatedWith (Immediate val)) routCtx

@@ -6,6 +6,18 @@ Anayzling SixtyPical Programs
     -> Functionality "Analyze SixtyPical program" is implemented by
     -> shell command "bin/sixtypical analyze %(test-file)"
 
+Analysis determines what storage locations have been modified by a
+routine.
+
+    | reserve byte score
+    | routine main {
+    |   lda #4
+    |   sta score
+    | }
+    = main
+    =   A: UpdatedWith (Immediate 4)
+    =   NamedLocation (Just Byte) "score": UpdatedWith A
+
 A routine cannot expect registers which a called routine does not
 preserve, to be preserved.
 
@@ -21,7 +33,7 @@ preserve, to be preserved.
     |   jsr update_score
     |   sta border_colour
     | }
-    ? routine does not preserve register
+    ? routine does not preserve 'A'
 
 But if it does it can.
 
@@ -38,4 +50,12 @@ But if it does it can.
     |   jsr update_score
     |   sta border_colour
     | }
-    = True
+    = main
+    =   A: UpdatedWith (Immediate 4)
+    =   X: PoisonedWith (Immediate 1)
+    =   NamedLocation (Just Byte) "border_colour": UpdatedWith A
+    =   NamedLocation (Just Byte) "score": PoisonedWith X
+    = 
+    = update_score
+    =   X: UpdatedWith (Immediate 1)
+    =   NamedLocation (Just Byte) "score": UpdatedWith X
