@@ -26,19 +26,22 @@ type RoutineContext = Map.Map StorageLocation Usage
 
 type ProgramContext = Map.Map RoutineName RoutineContext
 
-ppAnalysis :: ProgramContext -> IO ()
-ppAnalysis progCtx =
+ppAnalysis :: Program -> ProgramContext -> IO ()
+ppAnalysis program progCtx =
     let
         li = Map.toList progCtx
     in do
-        ppRoutines li
+        ppRoutines program li
 
-ppRoutines [] = return ()
-ppRoutines ((name, routCtx):rest) = do
-    putStrLn $ name
-    ppRoutine routCtx
-    putStrLn ""
-    ppRoutines rest
+ppRoutines program [] = return ()
+ppRoutines program ((name, routCtx):rest) =
+    let
+        Just (Routine rname outputs _) = lookupRoutine program name
+    in do
+        putStrLn (rname ++ " (" ++ (show outputs) ++ ")")
+        ppRoutine routCtx
+        putStrLn ""
+        ppRoutines program rest
 
 ppRoutine routCtx =
     let

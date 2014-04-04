@@ -34,7 +34,7 @@ main = do
                 ("analyze", Right program) ->
                     case checkAndTransformProgram program of
                         Just newprog ->
-                            ppAnalysis $ analyzeProgram newprog
+                            ppAnalysis newprog (analyzeProgram newprog)
                 ("emit", Right program) ->
                     case checkAndTransformProgram program of
                         Just newprog ->

@@ -14,7 +14,7 @@ routine.
     |   lda #4
     |   sta score
     | }
-    = main
+    = main ([])
     =   A: UpdatedWith (Immediate 4)
     =   NamedLocation (Just Byte) "score": UpdatedWith A
 
@@ -50,13 +50,13 @@ But if it does it can.
     |   jsr update_score
     |   sta border_colour
     | }
-    = main
+    = main ([])
     =   A: UpdatedWith (Immediate 4)
     =   X: PoisonedWith (Immediate 1)
     =   NamedLocation (Just Byte) "border_colour": UpdatedWith A
     =   NamedLocation (Just Byte) "score": PoisonedWith X
     = 
-    = update_score
+    = update_score ([])
     =   X: UpdatedWith (Immediate 1)
     =   NamedLocation (Just Byte) "score": UpdatedWith X
 
@@ -90,12 +90,11 @@ modifying score, as an "output" of the routine.
     |   jsr update_score
     |   ldx score
     | }
-    = main
-    =   A: UpdatedWith (Immediate 4)
-    =   X: PoisonedWith (Immediate 1)
-    =   NamedLocation (Just Byte) "border_colour": UpdatedWith A
-    =   NamedLocation (Just Byte) "score": PoisonedWith X
+    = main ([])
+    =   A: PoisonedWith (Immediate 8)
+    =   X: UpdatedWith (NamedLocation (Just Byte) "score")
+    =   NamedLocation (Just Byte) "score": UpdatedWith A
     = 
-    = update_score
-    =   X: UpdatedWith (Immediate 1)
-    =   NamedLocation (Just Byte) "score": UpdatedWith X
+    = update_score ([NamedLocation Nothing "score"])
+    =   A: UpdatedWith (Immediate 8)
+    =   NamedLocation (Just Byte) "score": UpdatedWith A

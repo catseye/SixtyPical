@@ -81,6 +81,15 @@ mergeRoutCtxs routCtx calledRoutCtx calledRout@(Routine name outputs _) =
         poison location usage routCtxAccum =
             case usage of
                 UpdatedWith ulocation ->
-                    Map.insert location (PoisonedWith ulocation) routCtxAccum
+                    case (untypedLocation location) `elem` outputs of
+                        True ->
+                            Map.insert location usage routCtxAccum
+                        False ->
+                            Map.insert location (PoisonedWith ulocation) routCtxAccum
     in
         Map.foldrWithKey (poison) routCtx calledRoutCtx
+
+untypedLocation (NamedLocation (Just _) name) =
+    NamedLocation Nothing name
+untypedLocation x = x
+
