@@ -31,6 +31,8 @@ analyzeProgram program@(Program decls routines) =
           in
               checkBlock instrs progCtx routCtx'
       
+      -- -- -- -- -- -- -- -- -- -- -- --
+      
       checkInstr (COPY src dst) progCtx routCtx =
           case Map.lookup src routCtx of
               Just (PoisonedWith _) ->
@@ -40,6 +42,24 @@ analyzeProgram program@(Program decls routines) =
       checkInstr (DELTA dst val) progCtx routCtx =
           -- TODO check that dst is not poisoned
           Map.insert dst (UpdatedWith (Immediate val)) routCtx
+
+      checkInstr (ADD dst src) progCtx routCtx =
+          -- TODO check that dst is not poisoned
+          Map.insert dst (UpdatedWith src) routCtx
+      checkInstr (SUB dst src) progCtx routCtx =
+          -- TODO check that dst is not poisoned
+          Map.insert dst (UpdatedWith src) routCtx
+
+      checkInstr (AND dst src) progCtx routCtx =
+          -- TODO check that dst is not poisoned
+          Map.insert dst (UpdatedWith src) routCtx
+      checkInstr (OR dst src) progCtx routCtx =
+          -- TODO check that dst is not poisoned
+          Map.insert dst (UpdatedWith src) routCtx
+      checkInstr (XOR dst src) progCtx routCtx =
+          -- TODO check that dst is not poisoned
+          Map.insert dst (UpdatedWith src) routCtx
+
       checkInstr (JSR name) progCtx routCtx =
           let
               Just calledRout = lookupRoutine program name
@@ -61,12 +81,39 @@ analyzeProgram program@(Program decls routines) =
           -- TODO: oooh, this one's gonna be fun too
           --checkBlock blk progCtx routCtx
           routCtx
+
+      -- TODO -- THESE ARE WEAK --
+      checkInstr (SEI blk) progCtx routCtx =
+          checkBlock blk progCtx routCtx
+      checkInstr (PUSH _ blk) progCtx routCtx =
+          checkBlock blk progCtx routCtx
+
+      checkInstr (BIT dst) progCtx routCtx =
+          -- TODO check that dst is not poisoned
+          Map.insert dst (UpdatedWith (Immediate 0)) routCtx
+
+      checkInstr (SHR dst flg) progCtx routCtx =
+          -- TODO check that dst is not poisoned
+          Map.insert dst (UpdatedWith flg) routCtx
+      checkInstr (SHL dst flg) progCtx routCtx =
+          -- TODO check that dst is not poisoned
+          Map.insert dst (UpdatedWith flg) routCtx
+
+      checkInstr (COPYROUTINE name dst) progCtx routCtx =
+          -- TODO check that dst is not poisoned
+          Map.insert dst (UpdatedWith (Immediate 7)) routCtx
+
+      checkInstr (JMPVECTOR dst) progCtx routCtx =
+          routCtx
+
       checkInstr NOP progCtx routCtx =
           routCtx
-      
+
+      {-      
       checkInstr instr _ _ = error (
           "Internal error: sixtypical doesn't know how to " ++
           "analyze '" ++ (show instr) ++ "'")
+      -}
 
 --
 -- Utility function:

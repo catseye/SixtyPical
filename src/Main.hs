@@ -38,8 +38,8 @@ main = do
                 ("emit", Right program) ->
                     case checkAndTransformProgram program of
                         Just newprog ->
-                            case analyzeProgram newprog of
-                                _ ->
+                            case (length (show (analyzeProgram newprog)) < 9999999) of
+                                True ->
                                     putStr $ emitProgram newprog
                 (_, Left problem) -> do
                     hPutStrLn stderr (show problem)
