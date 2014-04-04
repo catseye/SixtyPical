@@ -7,9 +7,13 @@ import Data.Bits
 import SixtyPical.Model
 
 emitProgram p@(Program decls routines) =
-    "  jmp main\n" ++
-    emitRoutines p routines ++
-    emitDecls p decls
+    let
+        mains = findRoutines (\(Routine name _ _) -> name == "main") routines
+        allElse = findRoutines (\(Routine name _ _) -> name /= "main") routines
+    in
+        emitRoutines p mains ++
+        emitRoutines p allElse ++
+        emitDecls p decls
 
 emitDecls _ [] = ""
 emitDecls p (decl:decls) =

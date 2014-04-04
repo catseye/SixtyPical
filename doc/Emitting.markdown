@@ -19,7 +19,6 @@ Emitting an `if`.
     |    }
     |    sta screen
     | }
-    =   jmp main
     = main:
     =   lda screen
     =   cmp screen
@@ -47,7 +46,6 @@ Emitting a `repeat`.
     |    }
     |    sty screen
     | }
-    =   jmp main
     = main:
     =   ldy zero
     =   
@@ -79,7 +77,6 @@ Nested ifs.
     |     lda #3
     |   }
     | }
-    =   jmp main
     = main:
     =   BEQ _label_3
     =   lda #3
@@ -116,7 +113,6 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     |   inc screen
     |   jmp (save_cinv)
     | }
-    =   jmp main
     = main:
     =   sei
     =   lda cinv
@@ -145,7 +141,6 @@ Copy command: immediate -> byte
     | routine main {
     |     copy #23 position
     | }
-    =   jmp main
     = main:
     =   lda #23
     =   sta position
@@ -159,12 +154,32 @@ Copy command: immediate -> word
     | routine main {
     |     copy #$0400 position
     | }
-    =   jmp main
     = main:
     =   lda #0
     =   sta position
     =   lda #4
     =   sta position+1
+    =   rts
+    = 
+    = position: .word 0
+
+`main` is always emitted first.
+
+    | reserve word position 
+    | routine foo {
+    |     inx
+    | }
+    | routine main {
+    |     jsr foo
+    |     jsr foo
+    | }
+    = main:
+    =   jsr foo
+    =   jsr foo
+    =   rts
+    = 
+    = foo:
+    =   inx
     =   rts
     = 
     = position: .word 0
