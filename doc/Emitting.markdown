@@ -189,3 +189,25 @@ Copy command: immediate -> word
     = 
     = .data
     = .space position 2
+
+Reserving and assigning byte tables.
+
+    | reserve byte[16] frequencies
+    | assign byte[256] screen $0400
+    | routine main {
+    |     lda #0
+    |     ldy #0
+    |     sta frequencies, y
+    |     sta screen, y
+    | }
+    = main:
+    =   lda #0
+    =   ldy #0
+    =   sta frequencies, y
+    =   sta screen, y
+    =   rts
+    = 
+    = .data
+    = .space frequencies 16
+    = .alias screen 1024
+

@@ -116,8 +116,8 @@ Test for many combinations of `reserve` and `assign`.
     | assign word memstr 641
     | reserve vector v
     | assign vector cinv 788
-    | reserve byte table frequencies
-    | assign byte table screen 1024
+    | reserve byte[16] frequencies
+    | assign byte[256] screen 1024
     | routine main {
     |    nop
     | }
@@ -223,7 +223,7 @@ We can't jump indirectly through a byte.
 
 We can absolute-indexed a byte table.
 
-    | assign byte table screen 1024
+    | assign byte[256] screen 1024
     | routine main {
     |    sta screen, x
     | }
@@ -296,9 +296,9 @@ An address knows what kind of data is stored at the address:
     *   `jsr`'ing indirectly to a vector (which is done with a fun
         generated trick (NYI))
     
-*   `byte table`: a series of `byte`s contiguous in memory starting from the
-    address.  This is the only kind of address that can be used in
-    indexed addressing.
+*   `byte [SIZE]`: a series of `SIZE` `byte`s contiguous in memory starting
+    from the address.  This is the only kind of address that can be used in
+    indexed addressing.  `SIZE` has a minimum of 1 and a maximum of 256.
 
 ### Blocks ###
 

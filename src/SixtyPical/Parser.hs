@@ -14,7 +14,7 @@ Toplevel := {Decl} {Routine}.
 Decl     := "reserve" StorageType LocationName [":" Literal]
           | "assign" StorageType LocationName Literal
           | "external" RoutineName Address.
-StorageType := "byte" | "word" | "byte table" | "vector".
+StorageType := "byte" ["[" Literal "]"] | "word" | "vector".
 Routine  := "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
 Block    := "{" {Command} "}".
 Command  := "if" Branch Block "else" Block
@@ -91,17 +91,26 @@ external = do
     addr <- literal_address
     return $ External name addr
 
-get_storage "byte" = Byte
-get_storage "word" = Word
-get_storage "vector" = Vector
-get_storage "byte table" = ByteTable
+storage :: String -> StorageType -> Parser StorageType
+storage s t = do
+    string s
+    nspaces
+    return t
+
+byte_table :: Parser StorageType
+byte_table = do
+    string "byte"
+    nspaces
+    string "["
+    nspaces
+    size <- literal_data_value
+    string "]"
+    nspaces
+    return $ ByteTable size
 
 storage_type :: Parser StorageType
-storage_type = do
-    s <- (try $ string "byte table") <|> (string "byte") <|>
-         (string "word") <|> (string "vector")
-    nspaces
-    return $ get_storage s
+storage_type = (try $ byte_table) <|> (storage "byte" Byte) <|>
+               (storage "word" Word) <|> (storage "vector" Vector)
 
 routine :: Parser Routine
 routine = do

@@ -150,7 +150,7 @@ Big test for parsing and emitting instructions.
 
     | reserve word vword
     | reserve byte vbyte
-    | assign byte table table 1024
+    | assign byte[256] table 1024
     | routine main {
     |    lda #4
     |    ldx #0
@@ -263,7 +263,7 @@ Big test for parsing and emitting instructions.
 
     | reserve word vword
     | reserve byte vbyte
-    | assign byte table table 1024
+    | assign byte[256] table 1024
     | routine main {
     |    asl .a
     |    asl vbyte

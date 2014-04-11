@@ -30,8 +30,8 @@ noIndexedAccessOfNonTables p@(Program decls routines) =
     where
         checkInstr j@(COPY _ (Indexed (NamedLocation sz g) reg)) =
             case lookupDecl p g of
-                Just (Assign _ ByteTable _) -> j
-                Just (Reserve _ ByteTable _) -> j
+                Just (Assign _ (ByteTable _) _) -> j
+                Just (Reserve _ (ByteTable _) _) -> j
                 Just _ -> (COPY A A)
                 Nothing -> (COPY A A)
         checkInstr other = other
@@ -158,8 +158,8 @@ fillOutNamedLocationTypes p@(Program decls routines) =
             in
                 case (typeRx == typeRy, typeRx, typeRy) of
                     (True, _, _) -> constructor rx ry
-                    (_, Byte, ByteTable) -> constructor rx ry
-                    (_, ByteTable, Byte) -> constructor rx ry                    
+                    (_, Byte, (ByteTable _)) -> constructor rx ry
+                    (_, (ByteTable _), Byte) -> constructor rx ry                    
                     _ -> error ("incompatible types '" ++ (show typeRx) ++ "' and '" ++ (show typeRy) ++ "'")
         resolve (NamedLocation Nothing name) =
             case lookupDecl p name of

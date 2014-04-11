@@ -30,6 +30,9 @@ emitDecl p (Reserve name typ (Just val))
     | typ == Word = name ++ ": .word " ++ (show val)
     | typ == Vector = name ++ ": .word " ++ (show val)
 
+emitDecl p (Reserve name (ByteTable size) Nothing) =
+    ".space " ++ name ++ " " ++ (show size)
+
 emitDecl p (Reserve name typ Nothing)
     | typ == Byte = ".space " ++ name ++ " 1"
     | typ == Word = ".space " ++ name ++ " 2"
@@ -79,11 +82,11 @@ emitInstr p r (COPY A Y) = "tay"
 emitInstr p r (COPY X A) = "txa"
 emitInstr p r (COPY Y A) = "tya"
 
-emitInstr p r (COPY A (Indexed (NamedLocation (Just ByteTable) label) X)) = "sta " ++ label ++ ", x"
-emitInstr p r (COPY A (Indexed (NamedLocation (Just ByteTable) label) Y)) = "sta " ++ label ++ ", y"
+emitInstr p r (COPY A (Indexed (NamedLocation (Just (ByteTable _)) label) X)) = "sta " ++ label ++ ", x"
+emitInstr p r (COPY A (Indexed (NamedLocation (Just (ByteTable _)) label) Y)) = "sta " ++ label ++ ", y"
 
-emitInstr p r (COPY (Indexed (NamedLocation (Just ByteTable) label) X) A) = "lda " ++ label ++ ", x"
-emitInstr p r (COPY (Indexed (NamedLocation (Just ByteTable) label) Y) A) = "lda " ++ label ++ ", y"
+emitInstr p r (COPY (Indexed (NamedLocation (Just (ByteTable _)) label) X) A) = "lda " ++ label ++ ", x"
+emitInstr p r (COPY (Indexed (NamedLocation (Just (ByteTable _)) label) Y) A) = "lda " ++ label ++ ", y"
 
 emitInstr p r (COPY A (IndirectIndexed (NamedLocation st label) Y)) = "sta (" ++ label ++ "), y"
 emitInstr p r (COPY (IndirectIndexed (NamedLocation st label) Y) A) = "lda (" ++ label ++ "), y"

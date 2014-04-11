@@ -90,6 +90,30 @@ poisoned in the result context.
 (Same should apply for `repeat` and `with` and, really, many other cases
 which there just aren't enough test cases for yet.)
 
+### "It's a Partial Solution" ###
+
+SixtyPical does not attempt to force your typed, abstractly interpreted
+program to be absolutely watertight.  In assembly language on an 8-bit
+microprocessor, you will sometimes _need_ to do dangerous and tricky things,
+like self-modifying code and cycle-counting, in order to accomplish a
+sophisticated effect, like a raster interrupt trick.
+
+For that reason, `sixtypical` does not attempt to emit a fully-formed
+Ophis assembler source.  Instead, it expects you to mix its output with
+some raw Ophis assembler to make a complete program.  This "mixin" may contain
+as much unchecked assembler code as you like.  An example is provided in the
+`lib` directory which adds a prelude that makes the resulting program
+runnable from Commodore BASIC 2.0 and stores uninitialized data at `$C000`.
+
+In addition, various checks are not attempted (such as tracking the usage
+of an indirect indexed table) and other checks may be subverted (for example
+by `locate`ing two variables with two different types of storage at the same
+address.)
+
+In summary, SixtyPical helps you write a very-nearly-assembly-level program
+which is a bit more "solid" than raw assembly, but it still expects you to
+know what you're doing down there.
+
 For More Information
 --------------------
 
@@ -123,7 +147,6 @@ TODO
 ----
 
 *   Initial values for reserved tables
-*   give length for tables, must be there for reserved, if no init val
 *   Character tables ("strings" to everybody else)
 *   Addressing modes — indexed mode on more instructions
 *   `jsr (vector)`
