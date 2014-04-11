@@ -69,6 +69,17 @@ to all routines.
     | }
     = True
 
+An address declared with `reserve` may be given an initial value.
+
+    | reserve byte lives : 3
+    | routine main {
+    |    sta lives
+    | }
+    | routine died {
+    |    dec lives
+    | }
+    = True
+
 An address may be declared with `locate`, which is like `.alias` in an
 assembler, with the understanding that the value will be treated "like an
 address."  This is generally an address into the operating system or hardware

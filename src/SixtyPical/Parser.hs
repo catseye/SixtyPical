@@ -11,10 +11,10 @@ import SixtyPical.Model
 {-
 
 Toplevel := {Decl} {Routine}.
-Decl     := "reserve" StorageType LocationName
-          | "assign" StorageType LocationName Address
+Decl     := "reserve" StorageType LocationName [":" Literal]
+          | "assign" StorageType LocationName Literal
           | "external" RoutineName Address.
-StorageType := "byte" | "word" | "vector".
+StorageType := "byte" | "word" | "byte table" | "vector".
 Routine  := "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
 Block    := "{" {Command} "}".
 Command  := "if" Branch Block "else" Block
@@ -68,7 +68,11 @@ reserve = do
     nspaces
     sz <- storage_type
     name <- location_name
-    return $ Reserve name sz
+    value <- option Nothing (do{ string ":";
+                                 nspaces;
+                                 x <- literal_data_value;
+                                 return $ Just x })
+    return $ Reserve name sz value
 
 assign :: Parser Decl
 assign = do
@@ -76,7 +80,7 @@ assign = do
     nspaces
     sz <- storage_type
     name <- location_name
-    addr <- address
+    addr <- literal_address
     return $ Assign name sz addr
 
 external :: Parser Decl
@@ -84,7 +88,7 @@ external = do
     string "external"
     nspaces
     name <- routineName
-    addr <- address
+    addr <- literal_address
     return $ External name addr
 
 get_storage "byte" = Byte
@@ -196,7 +200,7 @@ register_location = do
 immediate :: Parser AddressingModality
 immediate = do
     string "#"
-    v <- data_value
+    v <- literal_data_value
     return $ Immediately v
 
 addressing_mode :: String -> (AddressingModality -> [StorageLocation] -> Instruction) -> Parser Instruction
@@ -585,37 +589,29 @@ named_location = do
     name <- location_name
     return (NamedLocation Nothing name)
 
-address = hex_address <|> decimal_address
+literal_address = do
+    a <- literal_value
+    return (a :: Address)
 
-hex_address :: Parser Address
-hex_address = do
+literal_data_value = do
+    a <- literal_value
+    return (a :: DataValue)
+
+literal_value = hex_literal <|> decimal_literal
+
+hex_literal :: Parser Int
+hex_literal = do
     char '$'
     digits <- many hexDigit
     nspaces
     let ((d, _):_) = readHex digits
-    return (d :: Address)
+    return d
 
-decimal_address :: Parser Address
-decimal_address = do
+decimal_literal :: Parser Int
+decimal_literal = do
     digits <- many digit
     nspaces
-    return (read digits :: Address)
-
-data_value = hex_data_value <|> decimal_data_value
-
-hex_data_value :: Parser DataValue
-hex_data_value = do
-    char '$'
-    digits <- many hexDigit
-    nspaces
-    let ((d, _):_) = readHex digits
-    return (d :: DataValue)
-
-decimal_data_value :: Parser DataValue
-decimal_data_value = do
-    digits <- many digit
-    nspaces
-    return (read digits :: DataValue)
+    return $ read digits
 
 -- -- -- driver -- -- --
 

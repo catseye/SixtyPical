@@ -20,9 +20,15 @@ emitDecls p (decl:decls) =
     emitDecl p decl ++ "\n" ++ emitDecls p decls
 
 emitDecl p (Assign name _ addr) = ".alias " ++ name ++ " " ++ (show addr)
-emitDecl p (Reserve name Byte) = name ++ ": .byte 0"
-emitDecl p (Reserve name Word) = name ++ ": .word 0"
-emitDecl p (Reserve name Vector) = name ++ ": .word 0"
+emitDecl p (Reserve name typ value)
+    | typ == Byte = name ++ ": .byte " ++ val
+    | typ == Word = name ++ ": .word " ++ val
+    | typ == Vector = name ++ ": .word " ++ val
+    where
+       val = case value of
+           (Just v) -> (show v)
+           Nothing -> "0"
+
 emitDecl p (External name addr) = ".alias " ++ name ++ " " ++ (show addr)
 emitDecl p d = error (
     "Internal error: sixtypical doesn't know how to " ++

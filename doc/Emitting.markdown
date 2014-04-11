@@ -36,29 +36,29 @@ Emitting an `if`.
 Emitting a `repeat`.
 
     | assign byte screen 1024
-    | reserve byte zero
+    | reserve byte four : $04
     | routine main {
-    |    ldy zero
+    |    ldy four
     |    repeat bne {
     |       inc screen
     |       dey
-    |       cpy zero
+    |       cpy four
     |    }
     |    sty screen
     | }
     = main:
-    =   ldy zero
+    =   ldy four
     =   
     = _repeat_1:
     =   inc screen
     =   dey
-    =   cpy zero
+    =   cpy four
     =   BNE _repeat_1
     =   sty screen
     =   rts
     = 
     = .alias screen 1024
-    = zero: .byte 0
+    = four: .byte 4
 
 Nested ifs.
 

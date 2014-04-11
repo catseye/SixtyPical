@@ -122,9 +122,10 @@ an added `foldr` or two would not be unwelcome...
 TODO
 ----
 
-*   Initial values for reserved, incl. tables
+*   Initial values for reserved tables
 *   give length for tables, must be there for reserved, if no init val
 *   Character tables ("strings" to everybody else)
+*   Put uninitialized `reserve`d data in uninitialized data segment
 *   Addressing modes — indexed mode on more instructions
 *   `jsr (vector)`
 *   `jmp routine`

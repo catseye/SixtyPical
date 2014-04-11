@@ -47,7 +47,7 @@ data StorageLocation = A
 -- -- -- -- program model -- -- -- --
 
 data Decl = Assign LocationName StorageType Address -- .alias
-          | Reserve LocationName StorageType -- .word, .byte
+          | Reserve LocationName StorageType (Maybe DataValue) -- .word, .byte
           | External RoutineName Address
     deriving (Show, Ord, Eq)
 
@@ -93,13 +93,13 @@ programSummary p@(Program decls routs) =
 getRoutineName (Routine name _ _) = name
 
 getDeclLocationName (Assign name _ _) = name
-getDeclLocationName (Reserve name _) = name
+getDeclLocationName (Reserve name _ _) = name
 
 getDeclLocationType (Assign _ t _) = t
-getDeclLocationType (Reserve _ t) = t
+getDeclLocationType (Reserve _ t _) = t
 
 isLocationDecl (Assign _ _ _) = True
-isLocationDecl (Reserve _ _) = True
+isLocationDecl (Reserve _ _ _) = True
 isLocationDecl _ = False
 
 declaredLocationNames (Program decls _) =
