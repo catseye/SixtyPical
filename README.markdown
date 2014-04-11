@@ -109,6 +109,16 @@ These aren't implemented yet:
     temporary addresses are never used simultaneously, they may be merged
     to the same address.
 
+Internals
+---------
+
+Some (OK, a lot) of the Haskell code is kind of gross and non-idiomatic.
+The parser, in particular, would not be described as "elegant".  There
+could definitely be more higher-order functions defined and used.  At the
+same time, I'm really not a fan of pointless style — I prefer it when things
+are written out explicitly and pedantically.  Still, there are places where
+an added `foldr` or two would not be unwelcome...
+
 TODO
 ----
 
@@ -118,7 +128,6 @@ TODO
 *   Addressing modes — indexed mode on more instructions
 *   `jsr (vector)`
 *   `jmp routine`
-*   comments in any spaces; forget the eol thing
 *   `outputs` on externals
 *   Routine is a kind of StorageLocation?  (Location)?
 *   remove DELTA -> ADD/SUB (requires carry be notated on ADD and SUB though)

@@ -26,25 +26,29 @@ Some Basic Syntax
     | }
     ? missing 'main' routine
 
-A comment may appear after each command.
+Each instruction need not appear on its own line.  (Although you probably
+still want to write in that style, for consistency with assembly code.)
 
     | routine main {
-    |    lda #1   ; we assemble the fnord using
-    |    ldx #1   ; multiple lorem ipsums which
-    |    ldy #1
-    |    lda #1   ; we
-    |    ldx #1   ; found under the bridge by the old mill yesterday
+    |    nop lda #1 ldx #1 nop
     | }
     = True
 
-A comment may appear after each declaration.
+Javascript-style block and line comments are both supported.
+They may appear anywhere whitespace may appear.
 
-    | reserve byte lives      ; fnord
-    | assign byte gdcol 647   ; fnord
-    | external blastoff 4     ; fnnnnnnnnnnnnnnnnfffffffff
+    | reserve byte lives      /* fnord */
+    | assign byte gdcol 647   // fnord
+    | external blastoff 4     // fnnnnnnnnnnnnnnnnfffffffff
     | 
-    | routine main {
-    |   nop
+    | routine /* hello */ main {
+    |    /* this routine does everything you need. */
+    |    lda #1   // we assemble the fnord using
+    |    ldx #1   // multiple lorem ipsums which
+    |    ldy #1
+    |    lda #1   /* we
+    |                found under the bridge by the old mill yesterday */
+    |    ldx #1
     | }
     = True
 

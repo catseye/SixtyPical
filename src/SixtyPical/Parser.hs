@@ -10,13 +10,13 @@ import SixtyPical.Model
 
 {-
 
-Toplevel := {Decl [Comment]} {Routine}.
+Toplevel := {Decl} {Routine}.
 Decl     := "reserve" StorageType LocationName
           | "assign" StorageType LocationName Address
           | "external" RoutineName Address.
 StorageType := "byte" | "word" | "vector".
 Routine  := "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
-Block    := "{" [Comment] {Command [Comment]} "}".
+Block    := "{" {Command} "}".
 Command  := "if" Branch Block "else" Block
           | "lda" (LocationName | Immediate)
           | "ldx" (LocationName | Immediate)
@@ -35,27 +35,37 @@ Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
 -}
 
-nspaces :: Parser [Char]
+nspaces :: Parser ()
 nspaces = do
-    many (char ' ' <|> char '\t')
+    many (space <|> try block_comment <|> line_comment)
+    return ()
+
+block_comment :: Parser Char
+block_comment = do
+    string "/*"
+    manyTill anyChar (try (string "*/"))
+    return ' '
+
+line_comment :: Parser Char
+line_comment = do
+    string "//"
+    manyTill anyChar (char '\n')
+    return ' '
 
 toplevel :: Parser Program
 toplevel = do
-    spaces
+    nspaces
     decls <- many decl
     routines <- many routine
     return $ Program decls routines
 
 decl :: Parser Decl
-decl = do
-    d <- (try assign <|> try reserve <|> try external)
-    optional_comment_before_eol
-    return d
+decl = try assign <|> try reserve <|> external
 
 reserve :: Parser Decl
 reserve = do
     string "reserve"
-    spaces
+    nspaces
     sz <- storage_type
     name <- location_name
     return $ Reserve name sz
@@ -63,7 +73,7 @@ reserve = do
 assign :: Parser Decl
 assign = do
     string "assign"
-    spaces
+    nspaces
     sz <- storage_type
     name <- location_name
     addr <- address
@@ -72,7 +82,7 @@ assign = do
 external :: Parser Decl
 external = do
     string "external"
-    spaces
+    nspaces
     name <- routineName
     addr <- address
     return $ External name addr
@@ -86,13 +96,13 @@ storage_type :: Parser StorageType
 storage_type = do
     s <- (try $ string "byte table") <|> (string "byte") <|>
          (string "word") <|> (string "vector")
-    spaces
+    nspaces
     return $ get_storage s
 
 routine :: Parser Routine
 routine = do
     string "routine"
-    spaces
+    nspaces
     name <- routineName
     outputs <- (try routine_outputs <|> return [])
     instrs <- block
@@ -101,12 +111,12 @@ routine = do
 routine_outputs :: Parser [StorageLocation]
 routine_outputs = do
     string "outputs"
-    spaces
+    nspaces
     string "("
-    spaces
+    nspaces
     locations <- many location
     string ")"
-    spaces
+    nspaces
     return locations
 
 location = (try explicit_register <|> named_location)
@@ -114,29 +124,20 @@ location = (try explicit_register <|> named_location)
 block :: Parser [Instruction]
 block = do
     string "{"
-    spaces
-    cs <- many commented_command
+    nspaces
+    cs <- many command
     string "}"
-    spaces
+    nspaces
     return cs
-
-optional_comment_before_eol = do
-    optional comment
-
-comment :: Parser ()
-comment = do
-    string ";"
-    manyTill anyChar (try (string "\n"))
-    spaces
 
 -- -- -- -- -- -- commands -- -- -- -- --
 
 index :: Parser StorageLocation
 index = do
     string ","
-    spaces
+    nspaces
     c <- (string "x" <|> string "y")
-    spaces
+    nspaces
     return $ case c of
         "x" -> X
         "y" -> Y
@@ -164,10 +165,10 @@ high_byte_of_absolute = do
 indirect_location :: Parser AddressingModality
 indirect_location = do
     string "("
-    spaces
+    nspaces
     l <- location_name
     string ")"
-    spaces
+    nspaces
     return $ Indirectly l
 
 direct_location :: Parser AddressingModality
@@ -178,7 +179,7 @@ direct_location = do
 explicit_location :: String -> StorageLocation -> Parser StorageLocation
 explicit_location s l = do
     string s
-    spaces
+    nspaces
     return $ l
 
 explicit_register :: Parser StorageLocation
@@ -189,8 +190,8 @@ explicit_register = ((try $ explicit_location ".a" A) <|>
 register_location :: Parser AddressingModality
 register_location = do
     z <- explicit_register
-    spaces
-    return $ Implicitly z
+    nspaces
+    return $ Implicitly z  -- ironic?
 
 immediate :: Parser AddressingModality
 immediate = do
@@ -201,18 +202,12 @@ immediate = do
 addressing_mode :: String -> (AddressingModality -> [StorageLocation] -> Instruction) -> Parser Instruction
 addressing_mode opcode f = do
     string opcode
-    spaces
+    nspaces
     d <- ((try immediate) <|> (try high_byte_of_absolute) <|>
           (try low_byte_of_absolute) <|> (try indirect_location) <|>
           (try register_location) <|> (try direct_location))
     indexes <- many index
     return $ f d indexes
-
-commented_command :: Parser Instruction
-commented_command = do
-    c <- command
-    optional_comment_before_eol
-    return c
 
 command :: Parser Instruction
 command = (try lda) <|>
@@ -236,7 +231,7 @@ command = (try lda) <|>
 nop :: Parser Instruction
 nop = do
     string "nop"
-    spaces
+    nspaces
     return NOP
 
 asl :: Parser Instruction
@@ -270,68 +265,68 @@ ror = do
 clc :: Parser Instruction
 clc = do
     string "clc"
-    spaces
+    nspaces
     return $ COPY (Immediate 0) FlagC
 
 cld :: Parser Instruction
 cld = do
     string "cld"
-    spaces
+    nspaces
     return $ COPY (Immediate 0) FlagD
 
 clv :: Parser Instruction
 clv = do
     string "clv"
-    spaces
+    nspaces
     return $ COPY (Immediate 0) FlagV
 
 sec :: Parser Instruction
 sec = do
     string "sec"
-    spaces
+    nspaces
     return $ COPY (Immediate 1) FlagC
 
 sed :: Parser Instruction
 sed = do
     string "sed"
-    spaces
+    nspaces
     return $ COPY (Immediate 1) FlagD
 
 inx :: Parser Instruction
 inx = do
     string "inx"
-    spaces
+    nspaces
     return $ DELTA X 1
 
 iny :: Parser Instruction
 iny = do
     string "iny"
-    spaces
+    nspaces
     return $ DELTA Y 1
 
 dex :: Parser Instruction
 dex = do
     string "dex"
-    spaces
+    nspaces
     return $ DELTA X (-1)
 
 dey :: Parser Instruction
 dey = do
     string "dey"
-    spaces
+    nspaces
     return $ DELTA Y (-1)
 
 inc :: Parser Instruction
 inc = do
     string "inc"
-    spaces
+    nspaces
     l <- named_location
     return (DELTA l 1)
 
 dec :: Parser Instruction
 dec = do
     string "dec"
-    spaces
+    nspaces
     l <- named_location
     return (DELTA l (-1))
 
@@ -457,81 +452,81 @@ sty = do
 txa :: Parser Instruction
 txa = do
     string "txa"
-    spaces
+    nspaces
     return (COPY X A)
 
 tax :: Parser Instruction
 tax = do
     string "tax"
-    spaces
+    nspaces
     return (COPY A X)
 
 tya :: Parser Instruction
 tya = do
     string "tya"
-    spaces
+    nspaces
     return (COPY Y A)
 
 tay :: Parser Instruction
 tay = do
     string "tay"
-    spaces
+    nspaces
     return (COPY A Y)
 
 sei :: Parser Instruction
 sei = do
     string "sei"
-    spaces
+    nspaces
     blk <- block
     return (SEI blk)
 
 pha :: Parser Instruction
 pha = do
     string "pha"
-    spaces
+    nspaces
     blk <- block
     return (PUSH A blk)
 
 php :: Parser Instruction
 php = do
     string "php"
-    spaces
+    nspaces
     blk <- block
     return (PUSH AllFlags blk)
 
 jmp :: Parser Instruction
 jmp = do
     string "jmp"
-    spaces
+    nspaces
     string "("
-    spaces
+    nspaces
     l <- named_location
     string ")"
-    spaces
+    nspaces
     return $ JMPVECTOR l
 
 jsr :: Parser Instruction
 jsr = do
     string "jsr"
-    spaces
+    nspaces
     l <- routineName
     return $ JSR l
 
 if_statement :: Parser Instruction
 if_statement = do
     string "if"
-    spaces
+    nspaces
     brch <- branch
     b1 <- block
     string "else"
-    spaces
+    nspaces
     b2 <- block
     return (IF 0 brch b1 b2)
 
 repeat_statement :: Parser Instruction
 repeat_statement = do
     string "repeat"
-    spaces
+    nspaces
     brch <- branch
     blk <- block
     return (REPEAT 0 brch blk)
@@ -539,7 +534,7 @@ repeat_statement = do
 copy_general_statement :: Parser Instruction
 copy_general_statement = do
     string "copy"
-    spaces
+    nspaces
     src <- (try immediate <|> try direct_location)
     dst <- direct_location
     return $ case (src, dst) of
@@ -551,12 +546,12 @@ copy_general_statement = do
 copy_routine_statement :: Parser Instruction
 copy_routine_statement = do
     string "copy"
-    spaces
+    nspaces
     string "routine"
-    spaces
+    nspaces
     src <- routineName
     string "to"
-    spaces
+    nspaces
     dst <- location_name
     return (COPYROUTINE src (NamedLocation Nothing dst))
 
@@ -568,21 +563,21 @@ branch = try (b "bcc" BCC) <|> try (b "bcs" BCS) <|> try (b "beq" BEQ) <|>
 b :: String -> Branch -> Parser Branch
 b s k = do
     string s
-    spaces
+    nspaces
     return k
 
 routineName :: Parser String
 routineName = do
     c <- letter
     cs <- many (alphaNum <|> char '_')
-    spaces
+    nspaces
     return (c:cs)
 
 location_name :: Parser String
 location_name = do
     c <- letter
     cs <- many (alphaNum <|> char '_')
-    spaces
+    nspaces
     return (c:cs)
 
 named_location :: Parser StorageLocation
@@ -596,14 +591,14 @@ hex_address :: Parser Address
 hex_address = do
     char '$'
     digits <- many hexDigit
-    spaces
+    nspaces
     let ((d, _):_) = readHex digits
     return (d :: Address)
 
 decimal_address :: Parser Address
 decimal_address = do
     digits <- many digit
-    spaces
+    nspaces
     return (read digits :: Address)
 
 data_value = hex_data_value <|> decimal_data_value
@@ -612,14 +607,14 @@ hex_data_value :: Parser DataValue
 hex_data_value = do
     char '$'
     digits <- many hexDigit
-    spaces
+    nspaces
     let ((d, _):_) = readHex digits
     return (d :: DataValue)
 
 decimal_data_value :: Parser DataValue
 decimal_data_value = do
     digits <- many digit
-    spaces
+    nspaces
     return (read digits :: DataValue)
 
 -- -- -- driver -- -- --

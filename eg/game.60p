@@ -15,7 +15,7 @@ assign byte joy2 $dc00
 
 assign vector cinv 788
 
-; ---------
+/* --------- */
 
 reserve vector save_cinv
 
@@ -55,7 +55,7 @@ routine compare_new_pos {
 }
 
 routine check_new_position_in_bounds {
-    copy #$07e8 compare_target      ; just past bottom of screen
+    copy #$07e8 compare_target      // just past bottom of screen
     jsr compare_new_pos
 
     if bcs {
@@ -99,29 +99,29 @@ routine read_stick {
     sta >delta
     ldx joy2
     txa
-    and #1                   ; up
+    and #1                   // up
     if beq {
-        lda #216             ; -40
+        lda #216             // -40
         sta <delta
         lda #255
         sta >delta
     } else {
         txa
-        and #2               ; down
+        and #2               // down
         if beq {
             lda #40
             sta <delta
         } else {
             txa
-            and #4           ; left
+            and #4           // left
             if beq {
-                lda #255     ; -1
+                lda #255     // -1
                 sta <delta
                 lda #255
                 sta >delta
             } else {
                 txa
-                and #8       ; right
+                and #8       // right
                 if beq {
                     lda #1
                     sta <delta
