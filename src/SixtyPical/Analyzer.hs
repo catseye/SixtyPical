@@ -63,18 +63,8 @@ analyzeProgram program@(Program decls routines) =
           routCtx
       checkInstr nm (IF _ branch b1 b2) progCtx routCtx =
           let
-              -- This works, but I worry about it.
-              -- It doesn't work if we pass routCtx to both blocks,
-              -- because when we go to merge them, there is apparently
-              -- too much information, and we end up checking things
-              -- we don't need to check.
-              -- Leaving the second one empty results in the right amount
-              -- of information.
-              -- But what are we depriving the else block context of?
-              -- More tests are needed.
-              -- Possibly the merge needs to be redone.
               routCtx1 = checkBlock nm b1 progCtx routCtx
-              routCtx2 = checkBlock nm b2 progCtx Map.empty
+              routCtx2 = checkBlock nm b2 progCtx routCtx
           in
               mergeAlternateRoutCtxs nm routCtx1 routCtx2
       checkInstr nm (REPEAT _ branch blk) progCtx routCtx =
@@ -136,6 +126,12 @@ mergeRoutCtxs nm routCtx calledRoutCtx calledRout@(Routine name outputs _) =
 -- Utility function:
 -- Take 2 routine contexts -- one from each branch of an `if` -- and merge
 -- them to create a new context for the remainder of the routine.
+--
+-- TODO: this merge is "too sensitive" in a way that needs to be better
+-- understood and documented.  It is that it is using updateRoutCtx to
+-- make the merged resultant context, but that routine raises an error
+-- if the new usage is replacing a poisoned entry.  It should be "more OK"
+-- with replacing a poisoned entry, here.
 --
 mergeAlternateRoutCtxs nm routCtx1 routCtx2 =
     let

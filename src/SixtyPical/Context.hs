@@ -44,7 +44,8 @@ updateRoutCtx nm dst (UpdatedWith src) routCtx =
     in
         case Map.lookup s routCtx of
             Just (PoisonedWith _) ->
-                error ("routine '" ++ nm ++ "' does not preserve '" ++ (show s) ++ "'")
+                error ("routine '" ++ nm ++ "' does not preserve '" ++
+                       (show s) ++ "' (in context: " ++ (show routCtx) ++ ")")
             _ ->
                 Map.insert d (UpdatedWith s) routCtx
 updateRoutCtx nm dst (PoisonedWith src) routCtx =
