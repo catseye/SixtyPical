@@ -19,7 +19,8 @@ routine.
     =   NamedLocation Nothing "score": UpdatedWith A
 
 A routine cannot expect registers which a called routine does not
-preserve, to be preserved.
+preserve, to be preserved.  We say the called routine "poisons" those
+registers.
 
     | assign byte border_colour 4000
     | reserve byte score
@@ -35,7 +36,8 @@ preserve, to be preserved.
     | }
     ? routine 'main' does not preserve 'A'
 
-But if it does it can.
+But if a called routine does preserve those registers, the caller can
+continue to use them after calling the routine.
 
     | assign byte border_colour 4000
     | reserve byte score
@@ -60,7 +62,8 @@ But if it does it can.
     =   X: UpdatedWith (Immediate 1)
     =   NamedLocation Nothing "score": UpdatedWith X
 
-We can't expect to stay named variables to stay unmodified either.
+Not only registers, but also named variables, can be poisoned by a called
+routine.
 
     | reserve byte score
     | routine update_score
@@ -74,8 +77,9 @@ We can't expect to stay named variables to stay unmodified either.
     | }
     ? routine 'main' does not preserve 'NamedLocation Nothing "score"'
 
-What the solution to the above is to notate `update_score` as intentionally
-modifying score, as an "output" of the routine.
+Of course, the difference between poisoning and intentionally modifying a
+storage location is a matter of intent.  The solution to the above is to
+explicitly notate `update_score` as an "output" of the routine.
 
     | assign byte border_colour 4000
     | reserve byte score
@@ -236,11 +240,9 @@ Poisoning a high byte or low byte of a word poisons the whole word.
     | }
     ? routine 'main' does not preserve 'NamedLocation Nothing "score"'
 
-    | assign vector cinv 788
-    | reserve vector save_cinv
-    | 
+Some more tests...
+
     | assign word position $fb
-    | 
     | reserve byte value
     | 
     | routine reset_position {
@@ -250,7 +252,7 @@ Poisoning a high byte or low byte of a word poisons the whole word.
     |     sta >position
     | }
     | 
-    | routine our_cinv {
+    | routine main {
     |     inc value
     |     lda value
     |     ldy #0
@@ -259,26 +261,8 @@ Poisoning a high byte or low byte of a word poisons the whole word.
     |         jsr reset_position
     |     } else {
     |     }
-    |     jmp (save_cinv)
-    | }
-    | 
-    | routine main {
-    |     jsr reset_position
-    |     sei {
-    |         copy cinv save_cinv
-    |         copy routine our_cinv to cinv
-    |     }
-    |     clc
-    |     repeat bcc { }
     | }
     = main ([])
-    =   A: PoisonedWith (Immediate 4)
-    =   FlagC: UpdatedWith (Immediate 0)
-    =   NamedLocation Nothing "cinv": UpdatedWith (Immediate 7)
-    =   NamedLocation Nothing "position": PoisonedWith A
-    =   NamedLocation Nothing "save_cinv": UpdatedWith (NamedLocation Nothing "cinv")
-    = 
-    = our_cinv ([])
     =   A: PoisonedWith (Immediate 4)
     =   Y: UpdatedWith (Immediate 0)
     =   IndirectIndexed (NamedLocation (Just Word) "position") Y: UpdatedWith A
@@ -288,3 +272,49 @@ Poisoning a high byte or low byte of a word poisons the whole word.
     = reset_position ([])
     =   A: UpdatedWith (Immediate 4)
     =   NamedLocation Nothing "position": UpdatedWith A
+
+    | assign word position $fb
+    | reserve byte value
+    | 
+    | routine reset_position {
+    |     lda #$00
+    |     sta <position
+    |     lda #$04
+    |     sta >position
+    | }
+    | 
+    | routine main {
+    |     inc value
+    |     lda value
+    |     ldy #0
+    |     sta (position), y
+    |     if beq {
+    |         jsr reset_position
+    |     } else {
+    |     }
+    |     sta value
+    | }
+    ? routine 'main' does not preserve 'A'
+
+    | assign word position $fb
+    | reserve byte value
+    | 
+    | routine reset_position {
+    |     lda #$00
+    |     sta <position
+    |     lda #$04
+    |     sta >position
+    | }
+    | 
+    | routine main {
+    |     inc value
+    |     lda value
+    |     ldy #0
+    |     sta (position), y
+    |     jsr reset_position
+    |     if beq {
+    |     } else {
+    |         sta value
+    |     }
+    | }
+    ? routine 'main' does not preserve 'A'
