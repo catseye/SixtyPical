@@ -32,6 +32,8 @@ untypedLocation (LowByteOf x) =
     untypedLocation x
 untypedLocation (Indexed table index) =
     untypedLocation table
+untypedLocation (IndirectIndexed word index) =
+    IndirectIndexed (untypedLocation word) index
 untypedLocation (NamedLocation _ name) =
     NamedLocation Nothing name
 untypedLocation x = x

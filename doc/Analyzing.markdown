@@ -265,7 +265,7 @@ Some more tests...
     = main ([])
     =   A: PoisonedWith (Immediate 4)
     =   Y: UpdatedWith (Immediate 0)
-    =   IndirectIndexed (NamedLocation (Just Word) "position") Y: UpdatedWith A
+    =   IndirectIndexed (NamedLocation Nothing "position") Y: UpdatedWith A
     =   NamedLocation Nothing "position": PoisonedWith A
     =   NamedLocation Nothing "value": UpdatedWith (Immediate 1)
     = 
