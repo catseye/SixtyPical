@@ -297,9 +297,9 @@ Big test for parsing and emitting instructions.
     = .alias table 1024
 
     | routine main {
-    |    pha {
-    |        sei {
-    |            php {
+    |    with pha {
+    |        with sei {
+    |            with php {
     |                lda #0
     |            }
     |            lda #1

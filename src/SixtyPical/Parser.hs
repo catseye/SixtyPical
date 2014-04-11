@@ -27,7 +27,7 @@ Command  := "if" Branch Block "else" Block
           | "cpy" (LocationName | Immediate)
           | "inx" | "iny" | "dex" | "dey" | "inc" Location | "dec" Location
           | "clc" | "cld" | "clv" | "sec" | "sed"
-          | "sei" Block | "pha" Block | "php" Block
+          | "with ("sei" | "pha" | "php") Block
           | "jmp" LocationName
           | "jsr" RoutineName
           | "nop".
@@ -226,8 +226,8 @@ command = (try lda) <|>
           (try sbc) <|> (try ora) <|>
           (try asl) <|> (try bit) <|> (try eor) <|> (try lsr) <|>
           (try rol) <|> (try ror) <|>
-          (try sei) <|> (try pha) <|> (try php) <|>
           (try jmp) <|> (try jsr) <|>
+          (try with_block) <|>
           (try copy_routine_statement) <|>
           (try copy_general_statement) <|>
           if_statement <|> repeat_statement <|> nop
@@ -477,26 +477,32 @@ tay = do
     nspaces
     return (COPY A Y)
 
-sei :: Parser Instruction
+with_block :: Parser Instruction
+with_block = do
+    string "with"
+    nspaces
+    instr <- (try sei) <|> (try pha) <|> php
+    blk <- block
+    return (WITH instr blk)
+
+
+sei :: Parser WithInstruction
 sei = do
     string "sei"
     nspaces
-    blk <- block
-    return (SEI blk)
+    return SEI
 
-pha :: Parser Instruction
+pha :: Parser WithInstruction
 pha = do
     string "pha"
     nspaces
-    blk <- block
-    return (PUSH A blk)
+    return (PUSH A)
 
-php :: Parser Instruction
+php :: Parser WithInstruction
 php = do
     string "php"
     nspaces
-    blk <- block
-    return (PUSH AllFlags blk)
+    return (PUSH AllFlags)
 
 jmp :: Parser Instruction
 jmp = do

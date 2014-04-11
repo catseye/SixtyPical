@@ -169,17 +169,17 @@ emitInstr p r (REPEAT iid branch blk) =
     emitInstrs p r blk ++
     "  " ++ (show branch) ++ " _repeat_" ++ (show iid)
 
-emitInstr p r (SEI blk) =
+emitInstr p r (WITH SEI blk) =
     "sei\n" ++
     emitInstrs p r blk ++
     "  cli"
 
-emitInstr p r (PUSH A blk) =
+emitInstr p r (WITH (PUSH A) blk) =
     "pha\n" ++
     emitInstrs p r blk ++
     "  pla"
 
-emitInstr p r (PUSH AllFlags blk) =
+emitInstr p r (WITH (PUSH AllFlags) blk) =
     "php\n" ++
     emitInstrs p r blk ++
     "  plp"

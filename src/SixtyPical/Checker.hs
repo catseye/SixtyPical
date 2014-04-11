@@ -134,10 +134,10 @@ fillOutNamedLocationTypes p@(Program decls routines) =
             REPEAT iid branch (mapBlock xform blk)
         xform (DELTA dest val) =
             DELTA (resolve dest) val
-        xform (SEI blk) =
-            SEI (mapBlock xform blk)
-        xform (PUSH val blk) =
-            PUSH (resolve val) (mapBlock xform blk)
+        xform (WITH SEI blk) =
+            WITH SEI (mapBlock xform blk)
+        xform (WITH (PUSH val) blk) =
+            WITH (PUSH (resolve val)) (mapBlock xform blk)
         xform (COPYROUTINE name dest) =
             COPYROUTINE name (resolve dest)
         xform other =

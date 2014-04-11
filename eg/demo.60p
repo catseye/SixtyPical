@@ -101,7 +101,7 @@ routine main {
     sta vic_bg
     jsr reset_position
     jsr clear_screen
-    sei {
+    with sei {
         copy cinv save_cinv
         copy routine our_cinv to cinv
     }

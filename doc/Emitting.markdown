@@ -105,7 +105,7 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     | reserve vector save_cinv
     | 
     | routine main {
-    |   sei {
+    |   with sei {
     |     copy cinv save_cinv
     |     copy routine our_cinv to cinv
     |   }

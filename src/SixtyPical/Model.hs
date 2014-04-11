@@ -56,6 +56,10 @@ type RoutineName = String
 data Branch = BCC | BCS | BEQ | BMI | BNE | BPL | BVC | BVS
     deriving (Show, Ord, Eq)
 
+data WithInstruction = SEI
+                     | PUSH StorageLocation
+    deriving (Show, Ord, Eq)
+
 data Instruction = COPY StorageLocation StorageLocation
                  | CMP StorageLocation StorageLocation
                  | ADD StorageLocation StorageLocation
@@ -72,8 +76,7 @@ data Instruction = COPY StorageLocation StorageLocation
                  | IF InternalID Branch [Instruction] [Instruction]
                  | REPEAT InternalID Branch [Instruction]
                  | DELTA StorageLocation DataValue
-                 | SEI [Instruction]
-                 | PUSH StorageLocation [Instruction]
+                 | WITH WithInstruction [Instruction]
                  | COPYROUTINE RoutineName StorageLocation
                  | NOP
     deriving (Show, Ord, Eq)

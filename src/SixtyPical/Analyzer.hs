@@ -73,9 +73,7 @@ analyzeProgram program@(Program decls routines) =
           routCtx
 
       -- TODO -- THESE ARE WEAK --
-      checkInstr nm (SEI blk) progCtx routCtx =
-          checkBlock nm blk progCtx routCtx
-      checkInstr nm (PUSH _ blk) progCtx routCtx =
+      checkInstr nm (WITH _ blk) progCtx routCtx =
           checkBlock nm blk progCtx routCtx
 
       checkInstr nm (BIT dst) progCtx routCtx =

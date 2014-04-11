@@ -131,4 +131,3 @@ TODO
 *   `outputs` on externals
 *   Routine is a kind of StorageLocation?  (Location)?
 *   remove DELTA -> ADD/SUB (requires carry be notated on ADD and SUB though)
-*   explicit `with` syntax
