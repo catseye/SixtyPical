@@ -10,14 +10,15 @@ import SixtyPical.Model
 
 {-
 
-Toplevel := {Decl} {Routine}.
-Decl     := "reserve" StorageType LocationName [":" Literal]
-          | "assign" StorageType LocationName Literal
-          | "external" RoutineName Address.
-StorageType := "byte" ["[" Literal "]"] | "word" | "vector".
-Routine  := "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
-Block    := "{" {Command} "}".
-Command  := "if" Branch Block "else" Block
+Toplevel  ::= {Decl} {Routine}.
+Decl      ::= "reserve" StorageType LocationName [":" Literal]
+            | "assign" StorageType LocationName Literal
+            | "external" RoutineName Address.
+StorageType ::= "byte" ["[" Literal "]"] | "word" | "vector".
+Routine   ::= "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
+Block     ::= "{" {Temporary} {Command} "}".
+Temporary ::= "temporary" StorageType LocationName
+Command   ::= "if" Branch Block "else" Block
           | "lda" (LocationName | Immediate)
           | "ldx" (LocationName | Immediate)
           | "ldy" (LocationName | Immediate)
@@ -78,10 +79,10 @@ assign :: Parser Decl
 assign = do
     string "assign"
     nspaces
-    sz <- storage_type
+    typ <- storage_type
     name <- location_name
     addr <- literal_address
-    return $ Assign name sz addr
+    return $ Assign name typ addr
 
 external :: Parser Decl
 external = do
@@ -90,6 +91,14 @@ external = do
     name <- routineName
     addr <- literal_address
     return $ External name addr
+
+temporary :: Parser Temporary
+temporary = do
+    string "temporary"
+    nspaces
+    typ <- storage_type
+    name <- location_name
+    return $ Temporary 0 name typ
 
 storage :: String -> StorageType -> Parser StorageType
 storage s t = do
@@ -118,8 +127,9 @@ routine = do
     nspaces
     name <- routineName
     outputs <- (try routine_outputs <|> return [])
+    temps <- many temporary
     instrs <- block
-    return (Routine name outputs instrs)
+    return (Routine name outputs temps instrs)
 
 routine_outputs :: Parser [StorageLocation]
 routine_outputs = do

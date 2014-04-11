@@ -65,7 +65,7 @@ ppAnalysis program progCtx =
 ppRoutines program [] = return ()
 ppRoutines program ((name, routCtx):rest) =
     let
-        Just (Routine rname outputs _) = lookupRoutine program name
+        Just (Routine rname outputs temps _) = lookupRoutine program name
     in do
         putStrLn (rname ++ " (" ++ (show outputs) ++ ")")
         ppRoutine routCtx

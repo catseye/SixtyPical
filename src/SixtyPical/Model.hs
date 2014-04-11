@@ -81,7 +81,11 @@ data Instruction = COPY StorageLocation StorageLocation
                  | NOP
     deriving (Show, Ord, Eq)
 
-data Routine = Routine RoutineName [StorageLocation] [Instruction]
+data Temporary = Temporary InternalID LocationName StorageType
+    deriving (Show, Ord, Eq)
+
+--                     name        outputs           temporaries  body
+data Routine = Routine RoutineName [StorageLocation] [Temporary]  [Instruction]
     deriving (Show, Ord, Eq)
 
 data Program = Program [Decl] [Routine]
@@ -93,7 +97,7 @@ data Program = Program [Decl] [Routine]
 programSummary p@(Program decls routs) =
     show ((length $ show p) < 99999)
 
-getRoutineName (Routine name _ _) = name
+getRoutineName (Routine name _ _ _) = name
 
 getDeclLocationName (Assign name _ _) = name
 getDeclLocationName (Reserve name _ _) = name
@@ -133,8 +137,8 @@ mapBlock :: (Instruction -> Instruction) -> [Instruction] -> [Instruction]
 mapBlock = map
 
 mapRoutine :: (Instruction -> Instruction) -> Routine -> Routine
-mapRoutine f (Routine name outputs instrs) =
-    Routine name outputs (mapBlock f instrs)
+mapRoutine f (Routine name outputs temps instrs) =
+    Routine name outputs temps (mapBlock f instrs)
 
 mapRoutines :: (Instruction -> Instruction) -> [Routine] -> [Routine]
 mapRoutines f [] = []
@@ -151,7 +155,7 @@ foldBlock :: (Instruction -> a -> a) -> a -> [Instruction] -> a
 foldBlock = foldr
 
 foldRoutine :: (Instruction -> a -> a) -> a -> Routine -> a
-foldRoutine f a (Routine name outputs instrs) =
+foldRoutine f a (Routine name outputs temps instrs) =
     foldBlock f a instrs
 
 foldRoutines :: (Instruction -> a -> a) -> a -> [Routine] -> a
@@ -180,6 +184,6 @@ lookupRoutine (Program _ routines) name =
     lookupRoutine' routines name
 
 lookupRoutine' [] _ = Nothing
-lookupRoutine' (rout@(Routine rname _ _):routs) name
+lookupRoutine' (rout@(Routine rname _ _ _):routs) name
     | rname == name = Just rout
     | otherwise     = lookupRoutine' routs name

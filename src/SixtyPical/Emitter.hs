@@ -8,8 +8,8 @@ import SixtyPical.Model
 
 emitProgram p@(Program decls routines) =
     let
-        mains = filter (\(Routine name _ _) -> name == "main") routines
-        allElse = filter (\(Routine name _ _) -> name /= "main") routines
+        mains = filter (\(Routine name _ _ _) -> name == "main") routines
+        allElse = filter (\(Routine name _ _ _) -> name /= "main") routines
         initializedDecls = filter (\d -> isInitializedDecl d) decls
         uninitializedDecls = filter (\d -> not $ isInitializedDecl d) decls
     in
@@ -47,7 +47,7 @@ emitRoutines _ [] = ""
 emitRoutines p (rout:routs) =
     emitRoutine p rout ++ "\n" ++ emitRoutines p routs
 
-emitRoutine p r@(Routine name _ instrs) =
+emitRoutine p r@(Routine name _ _ instrs) =
     name ++ ":\n" ++ emitInstrs p r instrs ++ "  rts\n"
 
 emitInstrs _ _ [] = ""
