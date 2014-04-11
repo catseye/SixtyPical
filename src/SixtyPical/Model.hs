@@ -60,6 +60,9 @@ data WithInstruction = SEI
                      | PUSH StorageLocation
     deriving (Show, Ord, Eq)
 
+data Block = Block [Decl] [Instruction]
+    deriving (Show, Ord, Eq)
+    
 data Instruction = COPY StorageLocation StorageLocation
                  | CMP StorageLocation StorageLocation
                  | ADD StorageLocation StorageLocation
@@ -73,15 +76,15 @@ data Instruction = COPY StorageLocation StorageLocation
                  | JSR RoutineName
               -- | JSRVECTOR StorageLocation
                  | JMPVECTOR StorageLocation
-                 | IF InternalID Branch [Instruction] [Instruction]
-                 | REPEAT InternalID Branch [Instruction]
+                 | IF InternalID Branch Block Block
+                 | REPEAT InternalID Branch Block
                  | DELTA StorageLocation DataValue
-                 | WITH WithInstruction [Instruction]
+                 | WITH WithInstruction Block
                  | COPYROUTINE RoutineName StorageLocation
                  | NOP
     deriving (Show, Ord, Eq)
 
-data Routine = Routine RoutineName [StorageLocation] [Instruction]
+data Routine = Routine RoutineName [StorageLocation] Block
     deriving (Show, Ord, Eq)
 
 data Program = Program [Decl] [Routine]
@@ -129,12 +132,16 @@ routineDeclared routName p =
 
 --
 
-mapBlock :: (Instruction -> Instruction) -> [Instruction] -> [Instruction]
-mapBlock = map
+mapInstrs :: (Instruction -> Instruction) -> [Instruction] -> [Instruction]
+mapInstrs = map
+
+mapBlock :: (Instruction -> Instruction) -> Block -> Block
+mapBlock f (Block decls instrs) =
+    Block decls (mapInstrs f instrs)
 
 mapRoutine :: (Instruction -> Instruction) -> Routine -> Routine
-mapRoutine f (Routine name outputs instrs) =
-    Routine name outputs (mapBlock f instrs)
+mapRoutine f (Routine name outputs block) =
+    Routine name outputs (mapBlock f block)
 
 mapRoutines :: (Instruction -> Instruction) -> [Routine] -> [Routine]
 mapRoutines f [] = []
@@ -147,8 +154,12 @@ mapProgramRoutines f (Program decls routs) =
 
 --
 
-foldBlock :: (Instruction -> a -> a) -> a -> [Instruction] -> a
-foldBlock = foldr
+foldInstrs :: (Instruction -> a -> a) -> a -> [Instruction] -> a
+foldInstrs = foldr
+
+foldBlock :: (Instruction -> a -> a) -> a -> Block -> a
+foldBlock f a (Block decls instrs) =
+    foldInstrs f a instrs
 
 foldRoutine :: (Instruction -> a -> a) -> a -> Routine -> a
 foldRoutine f a (Routine name outputs instrs) =

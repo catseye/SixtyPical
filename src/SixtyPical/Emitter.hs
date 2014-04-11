@@ -47,8 +47,11 @@ emitRoutines _ [] = ""
 emitRoutines p (rout:routs) =
     emitRoutine p rout ++ "\n" ++ emitRoutines p routs
 
-emitRoutine p r@(Routine name _ instrs) =
-    name ++ ":\n" ++ emitInstrs p r instrs ++ "  rts\n"
+emitRoutine p r@(Routine name _ block) =
+    name ++ ":\n" ++ emitBlock p r block ++ "  rts\n"
+
+emitBlock p r (Block decls instrs) =
+    emitInstrs p r instrs
 
 emitInstrs _ _ [] = ""
 emitInstrs p r (instr:instrs) =
@@ -161,30 +164,30 @@ emitInstr p r (DELTA (NamedLocation st label) (-1)) = "dec " ++ label
 
 emitInstr p r (IF iid branch b1 b2) =
     (show branch) ++ " _label_" ++ (show iid) ++ "\n" ++
-    emitInstrs p r b2 ++
+    emitBlock p r b2 ++
     "  jmp _past_" ++ (show iid) ++ "\n" ++
     "_label_" ++ (show iid) ++ ":\n" ++
-    emitInstrs p r b1 ++
+    emitBlock p r b1 ++
     "_past_" ++ (show iid) ++ ":"
 
 emitInstr p r (REPEAT iid branch blk) =
     "\n_repeat_" ++ (show iid) ++ ":\n" ++
-    emitInstrs p r blk ++
+    emitBlock p r blk ++
     "  " ++ (show branch) ++ " _repeat_" ++ (show iid)
 
 emitInstr p r (WITH SEI blk) =
     "sei\n" ++
-    emitInstrs p r blk ++
+    emitBlock p r blk ++
     "  cli"
 
 emitInstr p r (WITH (PUSH A) blk) =
     "pha\n" ++
-    emitInstrs p r blk ++
+    emitBlock p r blk ++
     "  pla"
 
 emitInstr p r (WITH (PUSH AllFlags) blk) =
     "php\n" ++
-    emitInstrs p r blk ++
+    emitBlock p r blk ++
     "  plp"
 
 emitInstr p r (COPYROUTINE src (NamedLocation (Just Vector) dst)) =

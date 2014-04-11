@@ -211,3 +211,40 @@ Reserving and assigning byte tables.
     = .space frequencies 16
     = .alias screen 1024
 
+Temporary storage, in the form of block-local declarations.  Note that these
+temporaries are not unioned yet, but they could be.
+
+    | routine a {
+    |     reserve byte foo
+    |     reserve word bar
+    |     lda foo
+    |     sta >bar
+    | }
+    | routine b {
+    |     reserve byte baz
+    |     reserve word quuz
+    |     lda baz
+    |     sta <quuz
+    | }
+    | routine main {
+    |     jsr a
+    |     jsr b
+    | }
+    = main:
+    =   jsr a
+    =   jsr b
+    =   rts
+    = a:
+    =   lda _temp_1
+    =   sta _temp_2+1
+    =   rts
+    = b:
+    =   lda _temp_3
+    =   sta _temp_4
+    =   rts
+    = 
+    = .data
+    = .space _temp_1 1
+    = .space _temp_2 2
+    = .space _temp_3 1
+    = .space _temp_4 2

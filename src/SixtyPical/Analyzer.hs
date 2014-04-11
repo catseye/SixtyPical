@@ -23,13 +23,16 @@ analyzeProgram program@(Program decls routines) =
       
       checkRoutine (Routine name outputs instrs) progCtx routCtx =
           checkBlock name instrs progCtx routCtx
+
+      checkBlock nm (Block decls instrs) progCtx routCtx =
+          checkInstrs nm instrs progCtx routCtx
       
-      checkBlock nm [] progCtx routCtx = routCtx
-      checkBlock nm (instr:instrs) progCtx routCtx =
+      checkInstrs nm [] progCtx routCtx = routCtx
+      checkInstrs nm (instr:instrs) progCtx routCtx =
           let
               routCtx' = checkInstr nm instr progCtx routCtx
           in
-              checkBlock nm instrs progCtx routCtx'
+              checkInstrs nm instrs progCtx routCtx'
       
       -- -- -- -- -- -- -- -- -- -- -- --
       

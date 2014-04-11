@@ -90,6 +90,16 @@ poisoned in the result context.
 (Same should apply for `repeat` and `with` and, really, many other cases
 which there just aren't enough test cases for yet.)
 
+Declarations can have block scope.  Such declarations may only be used within
+the block in which they are declared.  `reserve`d storage inside a block is not,
+however, like a local variable (or `auto` in C); rather, it is more like a
+`static` in C, except the value at that address is not guaranteed to be
+retained between invokations of the block.  This is intended to be used for
+temporary storage.  In addition, if analysis of the call graph indicates that
+two such temporary addresses are never used simultaneously, they may be merged
+to the same address.  (This is, however, not yet implemented, and may not be
+implemented for a while.)
+
 ### "It's a Partial Solution" ###
 
 SixtyPical does not attempt to force your typed, abstractly interpreted
@@ -120,18 +130,6 @@ For More Information
 For more information, see the docs (which are written in the form of
 Falderal literate test suites.  If you have Falderal installed, you can run
 the tests with `./test.sh`.)
-
-Ideas
------
-
-These aren't implemented yet:
-
-*   Inside a routine, an address may be declared with `temporary`.  This is like
-    `static` in C, except the value at that address is not guaranteed to be
-    retained between invokations of the routine.  Such addresses may only be used
-    within the routine where they are declared.  If analysis indicates that two
-    temporary addresses are never used simultaneously, they may be merged
-    to the same address.
 
 Internals
 ---------

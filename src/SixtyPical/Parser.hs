@@ -16,7 +16,7 @@ Decl     := "reserve" StorageType LocationName [":" Literal]
           | "external" RoutineName Address.
 StorageType := "byte" ["[" Literal "]"] | "word" | "vector".
 Routine  := "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
-Block    := "{" {Command} "}".
+Block    := "{" {Decl} {Command} "}".
 Command  := "if" Branch Block "else" Block
           | "lda" (LocationName | Immediate)
           | "ldx" (LocationName | Immediate)
@@ -134,14 +134,15 @@ routine_outputs = do
 
 location = (try explicit_register <|> named_location)
 
-block :: Parser [Instruction]
+block :: Parser Block
 block = do
     string "{"
     nspaces
+    ds <- many decl
     cs <- many command
     string "}"
     nspaces
-    return cs
+    return (Block ds cs)
 
 -- -- -- -- -- -- commands -- -- -- -- --
 
