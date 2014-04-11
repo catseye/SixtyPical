@@ -13,7 +13,7 @@ analyzeProgram program@(Program decls routines) =
     checkRoutines routines Map.empty
     where
       checkRoutines [] progCtx = progCtx
-      checkRoutines (rout@(Routine name outputs temps _) : routs) progCtx =
+      checkRoutines (rout@(Routine name outputs _) : routs) progCtx =
           let
               routCtx = Map.empty
               routAnalysis = checkRoutine rout progCtx routCtx
@@ -21,7 +21,7 @@ analyzeProgram program@(Program decls routines) =
           in
               checkRoutines routs progCtx'
       
-      checkRoutine (Routine name outputs temps instrs) progCtx routCtx =
+      checkRoutine (Routine name outputs instrs) progCtx routCtx =
           checkBlock name instrs progCtx routCtx
       
       checkBlock nm [] progCtx routCtx = routCtx
@@ -103,7 +103,7 @@ analyzeProgram program@(Program decls routines) =
 -- JSR'ed to (immediately previously) -- and merge them to create a new
 -- context for the current routine.
 --
-mergeRoutCtxs nm routCtx calledRoutCtx calledRout@(Routine name outputs temps _) =
+mergeRoutCtxs nm routCtx calledRoutCtx calledRout@(Routine name outputs _) =
     let
         -- go through all the Usages in the calledRoutCtx
         -- insert any that were updated, into routCtx
