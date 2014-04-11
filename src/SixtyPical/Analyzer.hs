@@ -127,11 +127,12 @@ mergeRoutCtxs nm routCtx calledRoutCtx calledRout@(Routine name outputs _) =
 -- Take 2 routine contexts -- one from each branch of an `if` -- and merge
 -- them to create a new context for the remainder of the routine.
 --
--- TODO: this merge is "too sensitive" in a way that needs to be better
--- understood and documented.  It is that it is using updateRoutCtx to
--- make the merged resultant context, but that routine raises an error
--- if the new usage is replacing a poisoned entry.  It should be "more OK"
--- with replacing a poisoned entry, here.
+-- We use a weaker version of updateRoutCtx to build the merged context.
+-- We do this because accessing a poisoned storage location from either
+-- of the branch contexts is not an error at the merge point -- we simply
+-- make the storage location poisoned in the resulting context.  (If the
+-- poisoned location is accessed subsequently to the merge point, that is
+-- of course still an error.)
 --
 mergeAlternateRoutCtxs nm routCtx1 routCtx2 =
     let
@@ -154,3 +155,14 @@ mergeAlternateRoutCtxs nm routCtx1 routCtx2 =
                         updateRoutCtx nm location newUsage routCtxAccum
     in
         Map.foldrWithKey (poison) routCtx1 routCtx2
+    where
+        -- a weaker version of updateRoutCtx, which does not error if
+        -- we access a poisoned source
+        updateRoutCtx nm dst (UpdatedWith src) routCtx =
+            let
+                s = untypedLocation src
+                d = untypedLocation dst
+            in
+                Map.insert d (UpdatedWith s) routCtx
+        updateRoutCtx nm dst (PoisonedWith src) routCtx =
+            Map.insert (untypedLocation dst) (PoisonedWith $ untypedLocation src) routCtx
