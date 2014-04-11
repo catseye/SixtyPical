@@ -10,24 +10,30 @@ emitProgram p@(Program decls routines) =
     let
         mains = filter (\(Routine name _ _) -> name == "main") routines
         allElse = filter (\(Routine name _ _) -> name /= "main") routines
+        initializedDecls = filter (\d -> isInitializedDecl d) decls
+        uninitializedDecls = filter (\d -> not $ isInitializedDecl d) decls
     in
         emitRoutines p mains ++
         emitRoutines p allElse ++
-        emitDecls p decls
+        emitDecls p initializedDecls ++
+        (case uninitializedDecls of
+            [] -> ""
+            _  -> ".data\n" ++ emitDecls p uninitializedDecls)
 
 emitDecls _ [] = ""
 emitDecls p (decl:decls) =
     emitDecl p decl ++ "\n" ++ emitDecls p decls
 
 emitDecl p (Assign name _ addr) = ".alias " ++ name ++ " " ++ (show addr)
-emitDecl p (Reserve name typ value)
-    | typ == Byte = name ++ ": .byte " ++ val
-    | typ == Word = name ++ ": .word " ++ val
-    | typ == Vector = name ++ ": .word " ++ val
-    where
-       val = case value of
-           (Just v) -> (show v)
-           Nothing -> "0"
+emitDecl p (Reserve name typ (Just val))
+    | typ == Byte = name ++ ": .byte " ++ (show val)
+    | typ == Word = name ++ ": .word " ++ (show val)
+    | typ == Vector = name ++ ": .word " ++ (show val)
+
+emitDecl p (Reserve name typ Nothing)
+    | typ == Byte = ".space " ++ name ++ " 1"
+    | typ == Word = ".space " ++ name ++ " 2"
+    | typ == Vector = ".space " ++ name ++ " 2"
 
 emitDecl p (External name addr) = ".alias " ++ name ++ " " ++ (show addr)
 emitDecl p d = error (

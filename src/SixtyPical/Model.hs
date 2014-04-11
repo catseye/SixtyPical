@@ -102,6 +102,10 @@ isLocationDecl (Assign _ _ _) = True
 isLocationDecl (Reserve _ _ _) = True
 isLocationDecl _ = False
 
+isInitializedDecl (Assign _ _ _) = False
+isInitializedDecl (Reserve _ _ (Just _)) = True
+isInitializedDecl (Reserve _ _ Nothing) = False
+
 declaredLocationNames (Program decls _) =
     map (getDeclLocationName) (filter (isLocationDecl) decls)
 

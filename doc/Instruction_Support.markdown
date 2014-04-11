@@ -256,8 +256,9 @@ Big test for parsing and emitting instructions.
     =   ora vbyte
     =   rts
     = 
-    = vword: .word 0
-    = vbyte: .byte 0
+    = .data
+    = .space vword 2
+    = .space vbyte 1
     = .alias table 1024
 
     | reserve word vword
@@ -290,8 +291,9 @@ Big test for parsing and emitting instructions.
     =   eor vbyte
     =   rts
     = 
-    = vword: .word 0
-    = vbyte: .byte 0
+    = .data
+    = .space vword 2
+    = .space vbyte 1
     = .alias table 1024
 
     | routine main {

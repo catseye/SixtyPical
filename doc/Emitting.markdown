@@ -31,6 +31,7 @@ Emitting an `if`.
     =   sta screen
     =   rts
     = 
+    = .data
     = .alias screen 1024
 
 Emitting a `repeat`.
@@ -57,8 +58,9 @@ Emitting a `repeat`.
     =   sty screen
     =   rts
     = 
-    = .alias screen 1024
     = four: .byte 4
+    = .data
+    = .alias screen 1024
 
 Nested ifs.
 
@@ -131,9 +133,10 @@ Installing an interrupt handler (at the Kernal level, i.e. with CINV)
     =   jmp (save_cinv)
     =   rts
     = 
+    = .data
     = .alias screen 1024
     = .alias cinv 788
-    = save_cinv: .word 0
+    = .space save_cinv 2
 
 Copy command: immediate -> byte
 
@@ -146,7 +149,8 @@ Copy command: immediate -> byte
     =   sta position
     =   rts
     = 
-    = position: .byte 0
+    = .data
+    = .space position 1
 
 Copy command: immediate -> word
 
@@ -161,7 +165,8 @@ Copy command: immediate -> word
     =   sta position+1
     =   rts
     = 
-    = position: .word 0
+    = .data
+    = .space position 2
 
 `main` is always emitted first.
 
@@ -182,4 +187,5 @@ Copy command: immediate -> word
     =   inx
     =   rts
     = 
-    = position: .word 0
+    = .data
+    = .space position 2
