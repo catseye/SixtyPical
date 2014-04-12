@@ -71,9 +71,13 @@ analyzeProgram program@(Program decls routines) =
           in
               mergeAlternateRoutCtxs nm routCtx1 routCtx2
       checkInstr nm (REPEAT _ branch blk) progCtx routCtx =
-          -- TODO: oooh, this one's gonna be fun too
-          --checkBlock blk progCtx routCtx
-          routCtx
+          -- we analyze the block twice, to simulate it being
+          -- repeated.  (see tests for a test case on this.
+          let
+              routCtx' = checkBlock nm blk progCtx routCtx
+              routCtx'' = checkBlock nm blk progCtx routCtx'
+          in
+              routCtx''
 
       -- TODO -- THESE ARE WEAK --
       checkInstr nm (WITH _ blk) progCtx routCtx =

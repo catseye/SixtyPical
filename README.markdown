@@ -87,10 +87,9 @@ blocks.  The `with` construct takes an instruction like `sei` and implicitly
 
 Abstract interpretation extends to `if` blocks.  The two incoming contexts are
 merged, and any storage locations poisoned in either context are considered
-poisoned in the result context.
-
-(Same should apply for `repeat` and `with` and, really, many other cases
-which there just aren't enough test cases for yet.)
+poisoned in the result context.  (A similar case applies to `repeat` and
+`with`, but these are different too as there is only one block and it is always
+executed at least once.)
 
 Declarations can have block scope.  Such declarations may only be used within
 the block in which they are declared.  `reserve`d storage inside a block is not,

@@ -132,7 +132,7 @@ Routines can name registers as outputs.
     =   A: UpdatedWith (Immediate 8)
 
 If a location is poisoned in either branch of an `if`, it is poisoned
-after the `if`.
+after the `if`.  Note there are several tests for this.
 
     | reserve byte score
     | routine update_score
@@ -224,24 +224,6 @@ after the `if`.
     =   X: UpdatedWith (Immediate 4)
     =   NamedLocation Nothing "score": UpdatedWith X
 
-Poisoning a high byte or low byte of a word poisons the whole word.
-
-    | reserve word score
-    | reserve byte temp
-    | routine update_score
-    | {
-    |   ldx #4
-    |   stx <score
-    | }
-    | routine main {
-    |   jsr update_score
-    |   lda >score
-    |   sta temp
-    | }
-    ? routine 'main' does not preserve 'NamedLocation Nothing "score"'
-
-Some more tests...
-
     | assign word position $fb
     | reserve byte value
     | 
@@ -318,3 +300,73 @@ Some more tests...
     |     }
     | }
     ? routine 'main' does not preserve 'A'
+
+A storage location poisoned in a `repeat` continues to be poisoned
+after the `repeat`.
+
+    | reserve byte value
+    | 
+    | routine blah {
+    |     lda #123
+    | }
+    | routine main {
+    |     lda #33
+    |     ldy #255
+    |     repeat bne {
+    |         jsr blah
+    |         dey
+    |     }
+    |     sta value
+    | }
+    ? routine 'main' does not preserve 'A'
+
+Oh, here's a tricky one.  The accumulator isn't poisoned on the first run
+through the `repeat`, but it **is** on the second run through.  We handle
+this simply by abstractly interpreting the `repeat`'s block twice — the
+second time in the context of having already interpreted it once.
+
+    | reserve byte value
+    | 
+    | routine blah {
+    |     lda #123
+    | }
+    | routine main {
+    |     lda #33
+    |     ldy #255
+    |     repeat bne {
+    |         sta value
+    |         jsr blah
+    |         dey
+    |     }
+    | }
+    ? routine 'main' does not preserve 'A'
+
+Poisoning a high byte or low byte of a word poisons the whole word.
+
+    | reserve word score
+    | reserve byte temp
+    | routine update_score
+    | {
+    |   ldx #4
+    |   stx <score
+    | }
+    | routine main {
+    |   jsr update_score
+    |   lda >score
+    |   sta temp
+    | }
+    ? routine 'main' does not preserve 'NamedLocation Nothing "score"'
+
+    | reserve word score
+    | reserve byte temp
+    | routine update_score
+    | {
+    |   ldx #4
+    |   stx >score
+    | }
+    | routine main {
+    |   jsr update_score
+    |   lda <score
+    |   sta temp
+    | }
+    ? routine 'main' does not preserve 'NamedLocation Nothing "score"'
