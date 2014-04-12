@@ -123,6 +123,35 @@ Test for many combinations of `reserve` and `assign`.
     | }
     = True
 
+`reserve` may be block-level.
+
+    | routine main {
+    |    reserve byte lives
+    |    lda lives
+    | }
+    = True
+
+Block-level declarations are only visible in the block in which they are
+declared.
+
+    | routine main {
+    |    reserve byte lives
+    |    lda #3
+    |    sta lives
+    | }
+    | routine died {
+    |    dec lives
+    | }
+    ? undeclared location 'lives'
+
+A block-level `reserve` may not supply an initial value.
+
+    | routine main {
+    |    reserve byte lives : 3
+    |    lda lives
+    | }
+    ? block-level 'lives' cannot supply initial value
+
 A program may declare an `external`.
 
     | external blastoff 49152

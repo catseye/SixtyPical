@@ -169,7 +169,8 @@ foldDeclsRenaming ((Reserve name typ Nothing):decls) id block =
         block'' = substDeclName name newName block'
     in
         foldDeclsRenaming decls id' block''
-
+foldDeclsRenaming ((Reserve name typ _):decls) id block =
+    error ("block-level '" ++ name ++ "' cannot supply initial value")
 
 -- this is kind of horrible.  that we do it this way, i mean
 substDeclName n1 n2 (Block decls instrs) =
@@ -198,16 +199,22 @@ mapInstrName n1 n2 (SUB sl1 sl2) =
    SUB (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
 mapInstrName n1 n2 (OR sl1 sl2) =
    OR (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+mapInstrName n1 n2 (XOR sl1 sl2) =
+   XOR (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+mapInstrName n1 n2 (SHL sl1 sl2) =
+   SHL (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+mapInstrName n1 n2 (SHR sl1 sl2) =
+   SHR (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+mapInstrName n1 n2 (BIT sl1) =
+   BIT (mapStorageLocationName n1 n2 sl1)
+mapInstrName n1 n2 (JMPVECTOR sl1) =
+   JMPVECTOR (mapStorageLocationName n1 n2 sl1)
+mapInstrName n1 n2 (DELTA sl1 v) =
+   DELTA (mapStorageLocationName n1 n2 sl1) v
 
 {-
-                 | XOR StorageLocation StorageLocation
-                 | SHL StorageLocation StorageLocation
-                 | SHR StorageLocation StorageLocation
-                 | BIT StorageLocation
-                 | JMPVECTOR StorageLocation
                  | IF InternalID Branch Block Block
                  | REPEAT InternalID Branch Block
-                 | DELTA StorageLocation DataValue
                  | WITH WithInstruction Block
                  | COPYROUTINE RoutineName StorageLocation
 -}
