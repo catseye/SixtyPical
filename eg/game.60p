@@ -30,8 +30,9 @@ reserve byte[16] actor_pos_hi
 reserve byte[16] actor_pos_lo
 
 reserve vector dispatch_state
+reserve vector dispatch_logic
 
-reserve byte[18] press_fire_msg: "PRESS FIRE TO PLAY"
+reserve byte[18] press_fire_msg: "PRESS`FIRE`TO`PLAY"
 
 routine calculate_new_position outputs (new_position) {
     clc
@@ -142,6 +143,9 @@ routine init_game {
         lda #$04
         sta actor_pos_hi, y
         tya
+        clc
+        asl .a
+        asl .a
         sta actor_pos_lo, y
         iny
         cpy #8
@@ -167,6 +171,43 @@ routine state_title_screen {
     jmp (save_cinv)
 }
 
+routine logic_player {
+    jsr read_stick
+    jsr calculate_new_position
+    jsr check_new_position_in_bounds
+    if bcs {
+        lda #32
+        ldy #0
+        sta (position), y
+        copy new_position position
+        lda #81
+        ldy #0
+        sta (position), y
+    } else { }
+}
+
+routine logic_obstacle {
+    lda #0
+    sta >delta
+    lda #1
+    sta <delta
+    jsr calculate_new_position
+    jsr check_new_position_in_bounds
+    if bcs {
+        lda #32
+        ldy #0
+        sta (position), y
+        copy new_position position
+        lda #82
+        ldy #0
+        sta (position), y
+    } else { }
+}
+
+routine indirect_jsr_logic {
+    jmp (dispatch_logic)
+}
+
 routine state_play_game {
     reserve byte save_x
     ldx #0
@@ -178,18 +219,13 @@ routine state_play_game {
         lda actor_pos_lo, x
         sta <position
 
-        jsr read_stick
-        jsr calculate_new_position
-        jsr check_new_position_in_bounds
-        if bcs {
-            lda #32
-            ldy #0
-            sta (position), y
-            copy new_position position
-            lda #81
-            ldy #0
-            sta (position), y
-        } else { }
+        cpx #0
+        if beq {
+            copy routine logic_player to dispatch_logic
+        } else {
+            copy routine logic_obstacle to dispatch_logic
+        }
+        jsr indirect_jsr_logic
 
         ldx save_x
         lda >position
