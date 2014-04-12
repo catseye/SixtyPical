@@ -29,6 +29,12 @@ reserve word compare_target
 reserve byte[16] actor_pos_hi
 reserve byte[16] actor_pos_lo
 
+reserve vector dispatch_state
+
+reserve byte[18] press_fire_msg: "PRESS FIRE TO PLAY"
+
+reserve byte save_x  // TODO: SHOULD BE BLOCK LOCAL!
+
 routine calculate_new_position outputs (new_position) {
     clc
     lda <position
@@ -125,33 +131,81 @@ routine read_stick {
     }
 }
 
-routine our_cinv {
-    ldy #0
-    lda actor_pos_hi, y
-    sta >position
-    lda actor_pos_lo, y
-    sta <position
+// output is .z flag
+routine check_fire {
+    ldx joy2
+    txa
+    and #16
+}
 
-    jsr read_stick
-    jsr calculate_new_position
-    jsr check_new_position_in_bounds
-    if bcs {
-        lda #32
-        ldy #0
-        sta (position), y
-        copy new_position position
-        lda #81
-        ldy #0
-        sta (position), y
+routine init_game {
+    ldy #0
+    repeat bne {
+        lda #$04
+        sta actor_pos_hi, y
+        tya
+        sta actor_pos_lo, y
+        iny
+        cpy #8
+    }
+}
+
+routine state_title_screen {
+    ldy #0
+    repeat bne {
+        lda press_fire_msg, y
+        sec
+        sbc #64   // yuck
+        sta screen, y
+        iny
+        cpy #18
+    }
+    jsr check_fire
+    if beq {
+        jsr clear_screen
+        jsr init_game
+        copy routine state_play_game to dispatch_state
     } else { }
-
-    ldy #0
-    lda >position
-    sta actor_pos_hi, y
-    lda <position
-    sta actor_pos_lo, y
-
     jmp (save_cinv)
+}
+
+routine state_play_game {
+    // reserve byte save_x
+    ldx #0
+    repeat bne {
+        stx save_x
+
+        lda actor_pos_hi, x
+        sta >position
+        lda actor_pos_lo, x
+        sta <position
+
+        jsr read_stick
+        jsr calculate_new_position
+        jsr check_new_position_in_bounds
+        if bcs {
+            lda #32
+            ldy #0
+            sta (position), y
+            copy new_position position
+            lda #81
+            ldy #0
+            sta (position), y
+        } else { }
+
+        ldx save_x
+        lda >position
+        sta actor_pos_hi, x
+        lda <position
+        sta actor_pos_lo, x
+        inx
+        cpx #8
+    }
+    jmp (save_cinv)
+}
+
+routine our_cinv {
+    jmp (dispatch_state)
 }
 
 routine main {
@@ -159,15 +213,10 @@ routine main {
     sta vic_border
     lda #0
     sta vic_bg
-    // copy #$0400 position
-
-    ldy #0
-    lda #$04
-    sta actor_pos_hi, y
-    lda #$00
-    sta actor_pos_lo, y
 
     jsr clear_screen
+    copy routine state_title_screen to dispatch_state
+
     with sei {
         copy cinv save_cinv
         copy routine our_cinv to cinv
