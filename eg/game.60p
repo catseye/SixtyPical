@@ -26,11 +26,10 @@ reserve word delta
 reserve byte value
 reserve word compare_target
 
-routine reset_position {
-    copy #$0400 position
-}
+reserve byte[16] actor_pos_hi
+reserve byte[16] actor_pos_lo
 
-routine advance_pos {
+routine calculate_new_position outputs (new_position) {
     clc
     lda <position
     adc <delta
@@ -38,10 +37,6 @@ routine advance_pos {
     lda >position
     adc >delta
     sta >new_position
-}
-
-routine install_new_position {
-    copy new_position position
 }
 
 routine compare_new_pos {
@@ -117,7 +112,6 @@ routine read_stick {
             if beq {
                 lda #255     // -1
                 sta <delta
-                lda #255
                 sta >delta
             } else {
                 txa
@@ -132,19 +126,30 @@ routine read_stick {
 }
 
 routine our_cinv {
-    lda #32
     ldy #0
-    sta (position), y
+    lda actor_pos_hi, y
+    sta >position
+    lda actor_pos_lo, y
+    sta <position
+
     jsr read_stick
-    jsr advance_pos
+    jsr calculate_new_position
     jsr check_new_position_in_bounds
     if bcs {
-        jsr install_new_position
+        lda #32
+        ldy #0
+        sta (position), y
+        copy new_position position
+        lda #81
+        ldy #0
+        sta (position), y
     } else { }
 
-    lda #81
     ldy #0
-    sta (position), y
+    lda >position
+    sta actor_pos_hi, y
+    lda <position
+    sta actor_pos_lo, y
 
     jmp (save_cinv)
 }
@@ -154,7 +159,14 @@ routine main {
     sta vic_border
     lda #0
     sta vic_bg
-    jsr reset_position
+    // copy #$0400 position
+
+    ldy #0
+    lda #$04
+    sta actor_pos_hi, y
+    lda #$00
+    sta actor_pos_lo, y
+
     jsr clear_screen
     with sei {
         copy cinv save_cinv

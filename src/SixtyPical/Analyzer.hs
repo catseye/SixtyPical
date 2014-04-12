@@ -37,20 +37,20 @@ analyzeProgram program@(Program decls routines) =
       -- -- -- -- -- -- -- -- -- -- -- --
       
       checkInstr nm (COPY src dst) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith src) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith src) routCtx
       checkInstr nm (DELTA dst val) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith (Immediate val)) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith (Immediate val)) routCtx
       checkInstr nm (ADD dst src) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith src) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith src) routCtx
       checkInstr nm (SUB dst src) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith src) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith src) routCtx
 
       checkInstr nm (AND dst src) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith src) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith src) routCtx
       checkInstr nm (OR dst src) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith src) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith src) routCtx
       checkInstr nm (XOR dst src) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith src) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith src) routCtx
 
       checkInstr nm (JSR name) progCtx routCtx =
           case lookupRoutine program name of
@@ -77,7 +77,7 @@ analyzeProgram program@(Program decls routines) =
               mergeAlternateRoutCtxs nm routCtx1 routCtx2
       checkInstr nm (REPEAT _ branch blk) progCtx routCtx =
           -- we analyze the block twice, to simulate it being
-          -- repeated.  (see tests for a test case on this.
+          -- repeated.  (see tests for a test case on this.)
           let
               routCtx' = checkBlock nm blk progCtx routCtx
               routCtx'' = checkBlock nm blk progCtx routCtx'
@@ -89,15 +89,15 @@ analyzeProgram program@(Program decls routines) =
           checkBlock nm blk progCtx routCtx
 
       checkInstr nm (BIT dst) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith (Immediate 0)) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith (Immediate 0)) routCtx
 
       checkInstr nm (SHR dst flg) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith flg) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith flg) routCtx
       checkInstr nm (SHL dst flg) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith flg) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith flg) routCtx
 
       checkInstr nm (COPYROUTINE name dst) progCtx routCtx =
-          updateRoutCtx nm dst (UpdatedWith (Immediate 7)) routCtx
+          updateRoutCtxPoison nm dst (UpdatedWith (Immediate 7)) routCtx
 
       checkInstr nm (JMPVECTOR dst) progCtx routCtx =
           routCtx
@@ -114,6 +114,9 @@ analyzeProgram program@(Program decls routines) =
 -- Take 2 routine contexts -- the current routine and a routine that was just
 -- JSR'ed to (immediately previously) -- and merge them to create a new
 -- context for the current routine.
+--
+-- This can't, by itself, cause a poisoning error.
+-- So we use a weaker version of updateRoutCtx to build the merged context.
 --
 mergeRoutCtxs nm routCtx calledRoutCtx calledRout@(Routine name outputs _) =
     let
@@ -165,14 +168,3 @@ mergeAlternateRoutCtxs nm routCtx1 routCtx2 =
                         updateRoutCtx nm location newUsage routCtxAccum
     in
         Map.foldrWithKey (poison) routCtx1 routCtx2
-    where
-        -- a weaker version of updateRoutCtx, which does not error if
-        -- we access a poisoned source
-        updateRoutCtx nm dst (UpdatedWith src) routCtx =
-            let
-                s = untypedLocation src
-                d = untypedLocation dst
-            in
-                Map.insert d (UpdatedWith s) routCtx
-        updateRoutCtx nm dst (PoisonedWith src) routCtx =
-            Map.insert (untypedLocation dst) (PoisonedWith $ untypedLocation src) routCtx

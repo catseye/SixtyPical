@@ -38,8 +38,8 @@ untypedLocation (NamedLocation _ name) =
     NamedLocation Nothing name
 untypedLocation x = x
 
-updateRoutCtx :: String -> StorageLocation -> Usage -> RoutineContext -> RoutineContext
-updateRoutCtx nm dst (UpdatedWith src) routCtx =
+updateRoutCtxPoison :: String -> StorageLocation -> Usage -> RoutineContext -> RoutineContext
+updateRoutCtxPoison nm dst (UpdatedWith src) routCtx =
     let
         s = untypedLocation src
         d = untypedLocation dst
@@ -50,9 +50,18 @@ updateRoutCtx nm dst (UpdatedWith src) routCtx =
                        (show s) ++ "' (in context: " ++ (show routCtx) ++ ")")
             _ ->
                 Map.insert d (UpdatedWith s) routCtx
-updateRoutCtx nm dst (PoisonedWith src) routCtx =
+updateRoutCtxPoison nm dst (PoisonedWith src) routCtx =
     Map.insert (untypedLocation dst) (PoisonedWith $ untypedLocation src) routCtx
                   
+updateRoutCtx nm dst (UpdatedWith src) routCtx =
+    let
+        s = untypedLocation src
+        d = untypedLocation dst
+    in
+        Map.insert d (UpdatedWith s) routCtx
+updateRoutCtx nm dst (PoisonedWith src) routCtx =
+    Map.insert (untypedLocation dst) (PoisonedWith $ untypedLocation src) routCtx
+
 -- pretty printing
 
 ppAnalysis :: Program -> ProgramContext -> IO ()
