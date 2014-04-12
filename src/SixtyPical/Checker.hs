@@ -65,7 +65,7 @@ checkAndTransformProgram program =
         let
             program' = numberProgramLoops program
             program'' = renameBlockDecls program'
-            program''' = liftBlockDecls program'
+            program''' = liftBlockDecls program''
             program'''' = fillOutNamedLocationTypes program'''
         in
             Just program''''

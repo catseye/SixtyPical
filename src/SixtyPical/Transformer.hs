@@ -150,30 +150,89 @@ renameBlockDecls (Program decls routines) =
         routines' = map renameRoutineDecls routines
     in
         Program decls routines'
-    where
-        renameRoutineDecls (Routine name outputs block) =
-            let
-                (Block decls _) = block
-                block' = foldDeclsRenaming decls block
-            in
-                (Routine name outputs block')
 
--- TODO will have to return new decls too
--- TODO will have to take accumulator too
--- TODO accumulator has to range across all routines too!
-foldDeclsRenaming [] block = block
-foldDeclsRenaming ((Reserve name typ Nothing):decls) block =
+renameRoutineDecls (Routine name outputs block) =
     let
-        newName = "_temp_1" -- TODO base this on accumulator
-        block' = mapBlockNames name newName block
+        (Block decls _) = block
+        (id', block') = foldDeclsRenaming decls 0 block
     in
-        foldDeclsRenaming decls block'
+        (Routine name outputs block')
+
+-- TODO accumulator has to range across all routines too!
+foldDeclsRenaming [] id block = (id, block)
+foldDeclsRenaming ((Reserve name typ Nothing):decls) id block =
+    let
+        newName = "_temp_" ++ (show id)
+        id' = id + 1
+        block' = mapBlockNames name newName block
+        block'' = substDeclName name newName block'
+    in
+        foldDeclsRenaming decls id' block''
+
+
+-- this is kind of horrible.  that we do it this way, i mean
+substDeclName n1 n2 (Block decls instrs) =
+    Block (map (s) decls) instrs
+    where
+        s d@(Reserve name typ Nothing)
+          | name == n1   = (Reserve n2 typ Nothing)
+          | otherwise    = d
+
 
 mapBlockNames n1 n2 (Block decls instrs) =
     (Block decls $ mapInstrsNames n1 n2 instrs)
 
--- TODO: write this
-mapInstrsNames n1 n2 instrs = instrs
+mapInstrsNames n1 n2 instrs =
+    map (mapInstrName n1 n2) instrs
+
+mapInstrName n1 n2 (COPY sl1 sl2) =
+   COPY (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+mapInstrName n1 n2 (CMP sl1 sl2) =
+   CMP (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+mapInstrName n1 n2 (ADD sl1 sl2) =
+   ADD (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+mapInstrName n1 n2 (AND sl1 sl2) =
+   AND (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+mapInstrName n1 n2 (SUB sl1 sl2) =
+   SUB (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+mapInstrName n1 n2 (OR sl1 sl2) =
+   OR (mapStorageLocationName n1 n2 sl1) (mapStorageLocationName n1 n2 sl2)
+
+{-
+                 | XOR StorageLocation StorageLocation
+                 | SHL StorageLocation StorageLocation
+                 | SHR StorageLocation StorageLocation
+                 | BIT StorageLocation
+                 | JMPVECTOR StorageLocation
+                 | IF InternalID Branch Block Block
+                 | REPEAT InternalID Branch Block
+                 | DELTA StorageLocation DataValue
+                 | WITH WithInstruction Block
+                 | COPYROUTINE RoutineName StorageLocation
+-}
+
+mapInstrName n1 n2 other =
+    other
+
+mapStorageLocationName n1 n2 (Indirect sl) =
+    Indirect $ mapStorageLocationName n1 n2 sl
+mapStorageLocationName n1 n2 (Indexed sl1 sl2) =
+    Indexed (mapStorageLocationName n1 n2 sl1) sl2
+mapStorageLocationName n1 n2 (IndirectIndexed sl1 sl2) =
+    IndirectIndexed (mapStorageLocationName n1 n2 sl1) sl2
+
+mapStorageLocationName n1 n2 sl@(NamedLocation typ name)
+    | name == n1   = NamedLocation typ n2
+    | otherwise    = sl
+
+mapStorageLocationName n1 n2 (LowByteOf sl) =
+    LowByteOf $ mapStorageLocationName n1 n2 sl
+
+mapStorageLocationName n1 n2 (HighByteOf sl) =
+    HighByteOf $ mapStorageLocationName n1 n2 sl
+
+mapStorageLocationName n1 n2 other =
+    other
 
 -- -- -- --
 
