@@ -1,4 +1,4 @@
-assign byte table screen 1024
+assign byte[256] screen 1024
 reserve byte value
 routine main {
     lda #0

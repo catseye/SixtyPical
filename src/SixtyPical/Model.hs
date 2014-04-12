@@ -111,6 +111,7 @@ isLocationDecl _ = False
 isInitializedDecl (Assign _ _ _) = False
 isInitializedDecl (Reserve _ _ (v:vs)) = True
 isInitializedDecl (Reserve _ _ []) = False
+isInitializedDecl _ = False
 
 declaredLocationNames (Program decls _) =
     map (getDeclLocationName) (filter (isLocationDecl) decls)

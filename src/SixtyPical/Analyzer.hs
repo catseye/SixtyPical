@@ -53,14 +53,19 @@ analyzeProgram program@(Program decls routines) =
           updateRoutCtx nm dst (UpdatedWith src) routCtx
 
       checkInstr nm (JSR name) progCtx routCtx =
-          let
-              Just calledRout = lookupRoutine program name
-          in
-              case Map.lookup name progCtx of
-                  Just calledRoutCtx ->
-                      mergeRoutCtxs nm routCtx calledRoutCtx calledRout
-                  Nothing ->
-                      error ("can't call routine '" ++ name ++ "' before it is defined")
+          case lookupRoutine program name of
+              Just calledRout ->
+                  case Map.lookup name progCtx of
+                      Just calledRoutCtx ->
+                          mergeRoutCtxs nm routCtx calledRoutCtx calledRout
+                      Nothing ->
+                          error ("can't call routine '" ++ name ++ "' before it is defined")
+              Nothing ->
+                  -- it must be an external.
+                  -- TODO: merge in any poisoning/outputs that are declared
+                  -- on the external.  for now,
+                  routCtx
+
       checkInstr nm (CMP reg addr) progCtx routCtx =
           -- TODO: mark Carry bit as "touched" here
           routCtx

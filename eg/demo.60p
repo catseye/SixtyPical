@@ -1,15 +1,15 @@
- assign byte table screen $0400
-assign byte table screen2 1274
-assign byte table screen3 1524
-assign byte table screen4 1774
+assign byte[256] screen $0400
+assign byte[256] screen2 1274
+assign byte[256] screen3 1524
+assign byte[256] screen4 1774
 
-assign byte table colormap 55296
-assign byte table colormap2 55546
-assign byte table colormap3 55796
-assign byte table colormap4 56046
+assign byte[256] colormap 55296
+assign byte[256] colormap2 55546
+assign byte[256] colormap3 55796
+assign byte[256] colormap4 56046
 
 assign byte vic_border 53280
-assign byte table vic_bg 53281
+assign byte[4] vic_bg 53281
 
 assign vector cinv 788
 reserve vector save_cinv

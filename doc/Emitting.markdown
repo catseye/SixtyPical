@@ -266,3 +266,27 @@ temporaries are not unioned yet, but they could be.
     = .space _temp_4 2
     = .space _temp_1 1
     = .space _temp_2 2
+
+Declaring and calling an external routine.
+
+    | external chrout 65490
+    | routine main {
+    |     lda #72
+    |     jsr chrout
+    |     lda #73
+    |     jsr chrout
+    |     lda #13
+    |     jsr chrout
+    | }
+    = main:
+    =   lda #72
+    =   jsr chrout
+    =   lda #73
+    =   jsr chrout
+    =   lda #13
+    =   jsr chrout
+    =   rts
+    = 
+    = .data
+    = .alias chrout 65490
+

@@ -69,7 +69,7 @@ consistentInitialTableSizes p@(Program decls routines) =
 checkAndTransformProgram :: Program -> Maybe Program
 checkAndTransformProgram program =
     if
-        trueOrDie "missing 'main' routine" (routineDeclared "main" program) &&
+        trueOrDie ("missing 'main' routine: " ++ show program) (routineDeclared "main" program) &&
         trueOrDie "duplicate location name" (noDuplicateDecls program) &&
         trueOrDie "duplicate routine name" (noDuplicateRoutines program) &&
         trueOrDie "undeclared routine" (noUseOfUndeclaredRoutines program) &&
