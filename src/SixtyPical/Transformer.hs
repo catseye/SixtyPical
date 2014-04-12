@@ -147,18 +147,19 @@ fillOutNamedLocationTypes p@(Program decls routines) =
 -- TODO: look at all blocks, not just routine's blocks
 renameBlockDecls (Program decls routines) =
     let
-        routines' = map renameRoutineDecls routines
+        routines' = renameRoutineDecls 1 routines
     in
         Program decls routines'
 
-renameRoutineDecls (Routine name outputs block) =
+renameRoutineDecls id [] = []
+renameRoutineDecls id ((Routine name outputs block):routs) =
     let
         (Block decls _) = block
-        (id', block') = foldDeclsRenaming decls 0 block
+        (id', block') = foldDeclsRenaming decls id block
+        rest = renameRoutineDecls id' routs
     in
-        (Routine name outputs block')
+        ((Routine name outputs block'):rest)
 
--- TODO accumulator has to range across all routines too!
 foldDeclsRenaming [] id block = (id, block)
 foldDeclsRenaming ((Reserve name typ Nothing):decls) id block =
     let
