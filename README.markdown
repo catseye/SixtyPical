@@ -211,7 +211,6 @@ it probably won't.)
 TODO
 ----
 
-*   Character tables ("strings" to everybody else)
 *   Addressing modes — indexed mode on more instructions
 *   Rename and lift temporaries in nested blocks
 *   Tail-recursion optimization

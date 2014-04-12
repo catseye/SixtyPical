@@ -37,7 +37,8 @@ emitDecl p (Reserve name (ByteTable size) vals) =
     name ++ ": .byte " ++ (showList vals)
     where
         showList [] = ""
-        showList (val:vals) = (show val) ++ " " ++ (showList vals)
+        showList [val] = show val
+        showList (val:vals) = (show val) ++ ", " ++ (showList vals)
 
 emitDecl p (Reserve name typ [])
     | typ == Byte = ".space " ++ name ++ " 1"

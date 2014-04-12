@@ -3,6 +3,7 @@
 module SixtyPical.Parser (parseProgram) where
 
 import Numeric (readHex)
+import Data.Char (ord)
 
 import Text.ParserCombinators.Parsec
 
@@ -115,7 +116,7 @@ storage_type = (try $ byte_table) <|> (storage "byte" Byte) <|>
 
 initial_value :: Parser [DataValue]
 initial_value =
-    data_value_list <|> single_literal_data_value
+    data_value_list <|> string_literal <|> single_literal_data_value
     where
        single_literal_data_value = do
            a <- literal_data_value
@@ -647,6 +648,13 @@ decimal_literal = do
     digits <- many1 digit
     nspaces
     return $ read digits
+
+string_literal :: Parser [DataValue]
+string_literal = do
+    char '"'
+    s <- manyTill anyChar (char '"')
+    nspaces
+    return $ map (\c -> ord c) s
 
 -- -- -- driver -- -- --
 

@@ -211,6 +211,22 @@ Reserving and assigning byte tables.
     = .space frequencies 16
     = .alias screen 1024
 
+Reserving things with initial values.
+
+    | reserve byte lives : 3
+    | reserve word screen : $0400
+    | reserve byte[8] frequencies : (0 1 2 4 5 8 9 10)
+    | reserve byte[13] message : "Hello, world!"
+    | routine main {
+    | }
+    = main:
+    =   rts
+    = 
+    = lives: .byte 3
+    = screen: .word 1024
+    = frequencies: .byte 0, 1, 2, 4, 5, 8, 9, 10
+    = message: .byte 72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33
+
 Temporary storage, in the form of block-local declarations.  Note that these
 temporaries are not unioned yet, but they could be.
 
