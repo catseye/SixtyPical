@@ -212,10 +212,16 @@ mapInstrName n1 n2 (JMPVECTOR sl1) =
 mapInstrName n1 n2 (DELTA sl1 v) =
    DELTA (mapStorageLocationName n1 n2 sl1) v
 
+mapInstrName n1 n2 (IF id branch b1 b2) =
+   IF id branch (mapBlockNames n1 n2 b1) (mapBlockNames n1 n2 b2)
+
+mapInstrName n1 n2 (REPEAT id branch b1) =
+   REPEAT id branch (mapBlockNames n1 n2 b1)
+
+mapInstrName n1 n2 (WITH instr b1) =
+   WITH instr (mapBlockNames n1 n2 b1)
+
 {-
-                 | IF InternalID Branch Block Block
-                 | REPEAT InternalID Branch Block
-                 | WITH WithInstruction Block
                  | COPYROUTINE RoutineName StorageLocation
 -}
 

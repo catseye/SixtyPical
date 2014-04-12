@@ -241,6 +241,31 @@ Even in inner blocks.
     | }
     ? undeclared location
 
+Block-level declarations are visible in inner blocks.
+
+    | routine main {
+    |   reserve byte lives
+    |   with sei {
+    |     if beq {
+    |       lda #3
+    |       repeat bne {
+    |         sta lives
+    |       }
+    |     } else {
+    |       sta lives
+    |     }
+    |   }
+    | }
+    = True
+
+A block-level `reserve` may not supply an initial value.
+
+    | routine main {
+    |    reserve byte lives : 3
+    |    lda lives
+    | }
+    ? block-level 'lives' cannot supply initial value
+
 All routines jsr'ed to must be defined, or external.
 
     | routine main {

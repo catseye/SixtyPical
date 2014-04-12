@@ -33,8 +33,6 @@ reserve vector dispatch_state
 
 reserve byte[18] press_fire_msg: "PRESS FIRE TO PLAY"
 
-reserve byte save_x  // TODO: SHOULD BE BLOCK LOCAL!
-
 routine calculate_new_position outputs (new_position) {
     clc
     lda <position
@@ -170,7 +168,7 @@ routine state_title_screen {
 }
 
 routine state_play_game {
-    // reserve byte save_x
+    reserve byte save_x
     ldx #0
     repeat bne {
         stx save_x
