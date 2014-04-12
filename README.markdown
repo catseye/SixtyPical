@@ -19,7 +19,9 @@ equivalent, while some have an equivalent that acts in a slightly different
 Haskell.  It can currently parse and check a SixtyPical program, and can
 emit an Ophis assembler listing for it.
 
-This distribution will soon be placed under an open-source license.
+SixtyPical itself is distributed under a BSD-style open-source license, while
+the example SixtyPical programs in the `eg` directory are in the public domain.
+See the file `LICENSE` for more information.
 
 Quick Start
 -----------
