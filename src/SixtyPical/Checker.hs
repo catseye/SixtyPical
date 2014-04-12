@@ -31,8 +31,8 @@ noIndexedAccessOfNonTables p@(Program decls routines) =
     where
         checkInstr j@(COPY _ (Indexed (NamedLocation sz g) reg)) =
             case lookupDecl p g of
-                Just (Assign _ (ByteTable _) _) -> j
-                Just (Reserve _ (ByteTable _) _) -> j
+                Just (Assign _ (Table Byte _) _) -> j
+                Just (Reserve _ (Table Byte _) _) -> j
                 Just _ -> (COPY A A)
                 Nothing -> (COPY A A)
         checkInstr other = other
@@ -57,8 +57,8 @@ consistentInitialTableSizes p@(Program decls routines) =
     in
         inconsistentTableSizes == 0
     where
-        checkDecl (Reserve _ (ByteTable sz) []) acc = acc
-        checkDecl (Reserve _ (ByteTable sz) vals) acc =
+        checkDecl (Reserve _ (Table _ sz) []) acc = acc
+        checkDecl (Reserve _ (Table _ sz) vals) acc =
             case sz == (length vals) of
                 True -> acc
                 False -> acc + 1

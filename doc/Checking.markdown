@@ -129,6 +129,22 @@ of a sequence of bytes, it must be the same length as the table is declared.
     | }
     ? initial table incorrect size
 
+We can also define word and vector tables.  These are each stored as two
+byte tables, one table of low bytes and one table of high bytes.
+
+    | reserve word[100] words
+    | reserve vector[100] vectors
+    | routine main {
+    |    lda #$04
+    |    sta <words
+    |    // sta <words, y
+    |    lda #$00
+    |    sta >words
+    |    // sta >words, y
+    |    // copy routine main to vectors, y
+    | }
+    = True
+
 An address may be declared with `locate`, which is like `.alias` in an
 assembler, with the understanding that the value will be treated "like an
 address."  This is generally an address into the operating system or hardware

@@ -16,7 +16,7 @@ Decl         ::= "reserve" StorageType LocationName [":" InitialValue]
                | "assign" StorageType LocationName Literal
                | "external" RoutineName Address.
 InitialValue ::= Literal | StringLiteral | "(" {Literal} ")".
-StorageType  ::= "byte" ["[" Literal "]"] | "word" | "vector".
+StorageType  ::= ("byte" | "word" | "vector") ["[" Literal "]"].
 Routine      ::= "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
 Block        ::= "{" {Decl} {Command} "}".
 Command ::= "if" Branch Block "else" Block
@@ -99,20 +99,20 @@ storage s t = do
     nspaces
     return t
 
-byte_table :: Parser StorageType
-byte_table = do
-    string "byte"
-    nspaces
+table :: StorageType -> Parser StorageType
+table typ = do
     string "["
     nspaces
     size <- literal_data_value
     string "]"
     nspaces
-    return $ ByteTable size
+    return $ Table typ size
 
 storage_type :: Parser StorageType
-storage_type = (try $ byte_table) <|> (storage "byte" Byte) <|>
-               (storage "word" Word) <|> (storage "vector" Vector)
+storage_type = do
+    typ <- (storage "byte" Byte) <|> (storage "word" Word) <|>
+           (storage "vector" Vector)
+    option typ (table typ)
 
 initial_value :: Parser [DataValue]
 initial_value =

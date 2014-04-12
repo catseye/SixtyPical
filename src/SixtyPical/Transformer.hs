@@ -124,8 +124,8 @@ fillOutNamedLocationTypes p@(Program decls routines) =
             in
                 case (typeRx == typeRy, typeRx, typeRy) of
                     (True, _, _) -> constructor rx ry
-                    (_, Byte, (ByteTable _)) -> constructor rx ry
-                    (_, (ByteTable _), Byte) -> constructor rx ry                    
+                    (_, Byte, (Table Byte _)) -> constructor rx ry
+                    (_, (Table Byte _), Byte) -> constructor rx ry                    
                     _ -> error ("incompatible types '" ++ (show typeRx) ++ "' and '" ++ (show typeRy) ++ "'")
         resolve (NamedLocation Nothing name) =
             case lookupDecl p name of

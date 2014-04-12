@@ -23,7 +23,7 @@ type LocationName = String
 data StorageType = Byte
                  | Word
                  | Vector
-                 | ByteTable DataValue
+                 | Table StorageType DataValue
     deriving (Show, Ord, Eq)
 
 data StorageLocation = A
