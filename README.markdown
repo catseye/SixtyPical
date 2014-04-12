@@ -102,6 +102,29 @@ two such temporary addresses are never used simultaneously, they may be merged
 to the same address.  (This is, however, not yet implemented, and may not be
 implemented for a while.)
 
+### Pseudo-Instructions ###
+
+Along with instructions which map to the 6502 instruction set, SixtyPical
+supplies some instructions which are slightly more abstract and powerful.
+For lack of a better term, I'm calling them "pseudo-instructions" here.
+(But I would really like a better term.)
+
+In a macro assembler, these pseudo-instructions would be implemented with
+macros.  However, macros, being textual-substitution-based, are a pain to
+analyze.  By providing the functions as built-in instructions, we can
+easily work them into the type system.  Also, there are some macros that are
+so common and useful that it makes sense for them to be built-ins, with
+standardized, prescriptive names.
+
+Such pseudo-instructions are:
+    
+*   `copy`, which copies a value from one storage location to another.
+    This is a typesafe way to copy 16-bit `word`s and `vector`s.
+    In the future, it may handle 8-bit values and immediate values too.
+*   `save`, which is not yet implemented.  Intended to be used in `with`
+    blocks when you want to save a value but you don't want to use the
+    stack.  Pairs well with block-level temporary `reserve`d addresses.
+
 ### "It's a Partial Solution" ###
 
 SixtyPical does not attempt to force your typed, abstractly interpreted
@@ -143,14 +166,56 @@ same time, I'm really not a fan of pointless style — I prefer it when things
 are written out explicitly and pedantically.  Still, there are places where
 an added `foldr` or two would not be unwelcome...
 
+The 6502 semantics, which are arguably RISC-like (load/store architecture)
+are translated into an intermediate representation which is arguably CISC-like.
+For example, `lda`, `sta`, `ldx`, and `tax` all become kinds of `COPY`
+internally.  This internal instruction set is much smaller than the 6502's,
+and thus is usually easier to analyze.
+
+Notes
+-----
+
+This is not quite the right place for this, but I need to write it down
+somewhere:
+
+6502 machine code supports an indirect `jmp`, but not an indirect `jsr`.
+But an indirect `jsr` is very easy to simulate with an indirect `jmp`.
+Instead of
+
+    launch:
+        copy whatever to vector
+        jsr (vector)
+        ...
+
+Just say
+
+    launch:
+        copy whatever to vector
+        jsr indirect_jsr
+        ...
+    
+    indirect_jsr:
+        jmp (vector)
+
+Then the `rts` at the end of your routine pointed to by `vector` will
+return you to where you `jsr`ed.
+
+Because the above is so easy to write, SixtyPical will probably not support
+a `jsr (vector)` form (unless it would somehow make analysis easier, but
+it probably won't.)
+
 TODO
 ----
 
 *   Initial values for reserved tables
 *   Character tables ("strings" to everybody else)
 *   Addressing modes — indexed mode on more instructions
-*   `jsr (vector)`
+*   Rename and lift temporaries in nested blocks
+*   Tail-recursion optimization
 *   `jmp routine`
+*   Enforce that `jmp`s come at ends of blocks(?)
 *   `outputs` on externals
 *   Routine is a kind of StorageLocation?  (Location)?
-*   remove DELTA -> ADD/SUB (requires carry be notated on ADD and SUB though)
+*   Test that `pha` restores the A register
+*   Test poisonining of flags
+*   Test output of flags
