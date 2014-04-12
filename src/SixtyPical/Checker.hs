@@ -51,6 +51,19 @@ noUseOfUndeclaredRoutines p@(Program decls routines) =
                 False -> error ("undeclared routine '" ++ routName ++ "'") -- acc + 1
         checkInstr other acc = acc
 
+consistentInitialTableSizes p@(Program decls routines) =
+    let
+        inconsistentTableSizes = foldProgramDecls (checkDecl) 0 p
+    in
+        inconsistentTableSizes == 0
+    where
+        checkDecl (Reserve _ (ByteTable sz) []) acc = acc
+        checkDecl (Reserve _ (ByteTable sz) vals) acc =
+            case sz == (length vals) of
+                True -> acc
+                False -> acc + 1
+        checkDecl _ acc = acc
+
 -- - - - - - -
 
 checkAndTransformProgram :: Program -> Maybe Program
@@ -60,7 +73,8 @@ checkAndTransformProgram program =
         trueOrDie "duplicate location name" (noDuplicateDecls program) &&
         trueOrDie "duplicate routine name" (noDuplicateRoutines program) &&
         trueOrDie "undeclared routine" (noUseOfUndeclaredRoutines program) &&
-        trueOrDie "indexed access of non-table" (noIndexedAccessOfNonTables program) 
+        trueOrDie "indexed access of non-table" (noIndexedAccessOfNonTables program)  &&
+        trueOrDie "initial table incorrect size" (consistentInitialTableSizes program) 
       then
         let
             program' = numberProgramLoops program

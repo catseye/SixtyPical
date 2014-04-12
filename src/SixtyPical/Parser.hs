@@ -10,14 +10,15 @@ import SixtyPical.Model
 
 {-
 
-Toplevel := {Decl} {Routine}.
-Decl     := "reserve" StorageType LocationName [":" Literal]
-          | "assign" StorageType LocationName Literal
-          | "external" RoutineName Address.
-StorageType := "byte" ["[" Literal "]"] | "word" | "vector".
-Routine  := "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
-Block    := "{" {Decl} {Command} "}".
-Command  := "if" Branch Block "else" Block
+Toplevel     ::= {Decl} {Routine}.
+Decl         ::= "reserve" StorageType LocationName [":" InitialValue]
+               | "assign" StorageType LocationName Literal
+               | "external" RoutineName Address.
+InitialValue ::= Literal | StringLiteral | "(" {Literal} ")".
+StorageType  ::= "byte" ["[" Literal "]"] | "word" | "vector".
+Routine      ::= "routine" RoutineName ["outputs" "(" {LocationName} ")"] Block.
+Block        ::= "{" {Decl} {Command} "}".
+Command ::= "if" Branch Block "else" Block
           | "lda" (LocationName | Immediate)
           | "ldx" (LocationName | Immediate)
           | "ldy" (LocationName | Immediate)
@@ -31,7 +32,7 @@ Command  := "if" Branch Block "else" Block
           | "jmp" LocationName
           | "jsr" RoutineName
           | "nop".
-Branch   := "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
+Branch ::= "bcc" | "bcs" | "beq" | "bmi" | "bne" | "bpl" | "bvc" | "bvs".
 
 -}
 
@@ -68,10 +69,10 @@ reserve = do
     nspaces
     sz <- storage_type
     name <- location_name
-    value <- option Nothing (do{ string ":";
-                                 nspaces;
-                                 x <- literal_data_value;
-                                 return $ Just x })
+    value <- option [] (do{ string ":";
+                            nspaces;
+                            x <- initial_value;
+                            return x })
     return $ Reserve name sz value
 
 assign :: Parser Decl
@@ -111,6 +112,24 @@ byte_table = do
 storage_type :: Parser StorageType
 storage_type = (try $ byte_table) <|> (storage "byte" Byte) <|>
                (storage "word" Word) <|> (storage "vector" Vector)
+
+initial_value :: Parser [DataValue]
+initial_value =
+    data_value_list <|> single_literal_data_value
+    where
+       single_literal_data_value = do
+           a <- literal_data_value
+           return [a]
+
+data_value_list = do
+    string "("
+    nspaces
+    a <- many literal_data_value
+    string ")"
+    nspaces
+    return a
+
+-- -- --
 
 routine :: Parser Routine
 routine = do
@@ -625,7 +644,7 @@ hex_literal = do
 
 decimal_literal :: Parser Int
 decimal_literal = do
-    digits <- many digit
+    digits <- many1 digit
     nspaces
     return $ read digits
 

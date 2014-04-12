@@ -161,7 +161,7 @@ renameRoutineDecls id ((Routine name outputs block):routs) =
         ((Routine name outputs block'):rest)
 
 foldDeclsRenaming [] id block = (id, block)
-foldDeclsRenaming ((Reserve name typ Nothing):decls) id block =
+foldDeclsRenaming ((Reserve name typ []):decls) id block =
     let
         newName = "_temp_" ++ (show id)
         id' = id + 1
@@ -176,8 +176,8 @@ foldDeclsRenaming ((Reserve name typ _):decls) id block =
 substDeclName n1 n2 (Block decls instrs) =
     Block (map (s) decls) instrs
     where
-        s d@(Reserve name typ Nothing)
-          | name == n1   = (Reserve n2 typ Nothing)
+        s d@(Reserve name typ [])
+          | name == n1   = (Reserve n2 typ [])
           | otherwise    = d
 
 

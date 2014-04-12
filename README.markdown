@@ -155,6 +155,11 @@ For more information, see the docs (which are written in the form of
 Falderal literate test suites.  If you have Falderal installed, you can run
 the tests with `./test.sh`.)
 
+*   [Checking](https://github.com/catseye/SixtyPical/blob/master/doc/Checking.markdown)
+*   [Analyzing](https://github.com/catseye/SixtyPical/blob/master/doc/Analyzing.markdown)
+*   [Emitting](https://github.com/catseye/SixtyPical/blob/master/doc/Emitting.markdown)
+*   [Instruction Support](https://github.com/catseye/SixtyPical/blob/master/doc/Instruction_Support.markdown)
+
 Internals
 ---------
 
@@ -206,7 +211,6 @@ it probably won't.)
 TODO
 ----
 
-*   Initial values for reserved tables
 *   Character tables ("strings" to everybody else)
 *   Addressing modes — indexed mode on more instructions
 *   Rename and lift temporaries in nested blocks

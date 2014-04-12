@@ -25,15 +25,21 @@ emitDecls p (decl:decls) =
     emitDecl p decl ++ "\n" ++ emitDecls p decls
 
 emitDecl p (Assign name _ addr) = ".alias " ++ name ++ " " ++ (show addr)
-emitDecl p (Reserve name typ (Just val))
+emitDecl p (Reserve name typ [val])
     | typ == Byte = name ++ ": .byte " ++ (show val)
     | typ == Word = name ++ ": .word " ++ (show val)
     | typ == Vector = name ++ ": .word " ++ (show val)
 
-emitDecl p (Reserve name (ByteTable size) Nothing) =
+emitDecl p (Reserve name (ByteTable size) []) =
     ".space " ++ name ++ " " ++ (show size)
 
-emitDecl p (Reserve name typ Nothing)
+emitDecl p (Reserve name (ByteTable size) vals) =
+    name ++ ": .byte " ++ (showList vals)
+    where
+        showList [] = ""
+        showList (val:vals) = (show val) ++ " " ++ (showList vals)
+
+emitDecl p (Reserve name typ [])
     | typ == Byte = ".space " ++ name ++ " 1"
     | typ == Word = ".space " ++ name ++ " 2"
     | typ == Vector = ".space " ++ name ++ " 2"

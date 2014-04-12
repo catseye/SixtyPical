@@ -47,7 +47,7 @@ data StorageLocation = A
 -- -- -- -- program model -- -- -- --
 
 data Decl = Assign LocationName StorageType Address -- .alias
-          | Reserve LocationName StorageType (Maybe DataValue) -- .word, .byte
+          | Reserve LocationName StorageType [DataValue] -- .word, .byte
           | External RoutineName Address
     deriving (Show, Ord, Eq)
 
@@ -109,8 +109,8 @@ isLocationDecl (Reserve _ _ _) = True
 isLocationDecl _ = False
 
 isInitializedDecl (Assign _ _ _) = False
-isInitializedDecl (Reserve _ _ (Just _)) = True
-isInitializedDecl (Reserve _ _ Nothing) = False
+isInitializedDecl (Reserve _ _ (v:vs)) = True
+isInitializedDecl (Reserve _ _ []) = False
 
 declaredLocationNames (Program decls _) =
     map (getDeclLocationName) (filter (isLocationDecl) decls)
@@ -176,6 +176,13 @@ foldRoutines f a (rout:routs) =
 foldProgramRoutines :: (Instruction -> a -> a) -> a -> Program -> a
 foldProgramRoutines f a (Program decls routs) =
     foldRoutines f a routs
+
+foldDecls :: (Decl -> a -> a) -> a -> [Decl] -> a
+foldDecls = foldr
+
+foldProgramDecls :: (Decl -> a -> a) -> a -> Program -> a
+foldProgramDecls f a (Program decls routs) =
+    foldDecls f a decls
 
 --
 

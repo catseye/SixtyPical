@@ -80,6 +80,55 @@ An address declared with `reserve` may be given an initial value.
     | }
     = True
 
+A byte table declared with `reserve` may be given an initial value consisting
+of a sequence of bytes.
+
+    | reserve byte[4] table : (0 $40 $10 20)
+    | routine main {
+    |    ldy #0
+    |    lda table, y
+    | }
+    | routine died {
+    |    sta table, y
+    | }
+    = True
+
+A byte table declared with `reserve` may be given an initial value consisting
+of a sequence of bytes represented as a character string.
+
+    | reserve byte[4] table : "What"
+    | routine main {
+    |    ldy #0
+    |    lda table, y
+    | }
+    | routine died {
+    |    sta table, y
+    | }
+    = True
+
+When a byte table declared with `reserve` is given an initial value consisting
+of a sequence of bytes, it must be the same length as the table is declared.
+
+    | reserve byte[4] table : (0 $40 $10 20 60 70 90)
+    | routine main {
+    |    ldy #0
+    |    lda table, y
+    | }
+    | routine died {
+    |    sta table, y
+    | }
+    ? initial table incorrect size
+
+    | reserve byte[4] table : "Hello, world!"
+    | routine main {
+    |    ldy #0
+    |    lda table, y
+    | }
+    | routine died {
+    |    sta table, y
+    | }
+    ? initial table incorrect size
+
 An address may be declared with `locate`, which is like `.alias` in an
 assembler, with the understanding that the value will be treated "like an
 address."  This is generally an address into the operating system or hardware
