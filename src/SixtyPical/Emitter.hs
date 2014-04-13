@@ -119,6 +119,24 @@ emitInstr p r (COPY (NamedLocation (Just Byte) src)
     "lda " ++ src ++ "\n" ++
     "  sta " ++ dst ++ "_hi, " ++ (regName reg)
 
+emitInstr p r (COPY (Immediate value)
+                    (LowByteOf (Indexed (NamedLocation (Just (Table Word _)) dst) reg))) =
+    "lda #" ++ (show value) ++ "\n" ++
+    "  sta " ++ dst ++ "_lo, " ++ (regName reg)
+
+emitInstr p r (COPY (Immediate value)
+                    (HighByteOf (Indexed (NamedLocation (Just (Table Word _)) dst) reg))) =
+    "lda #" ++ (show value) ++ "\n" ++
+    "  sta " ++ dst ++ "_hi, " ++ (regName reg)
+
+emitInstr p r (COPY A
+                    (LowByteOf (Indexed (NamedLocation (Just (Table Word _)) dst) reg))) =
+    "sta " ++ dst ++ "_lo, " ++ (regName reg)
+
+emitInstr p r (COPY A
+                    (HighByteOf (Indexed (NamedLocation (Just (Table Word _)) dst) reg))) =
+    "sta " ++ dst ++ "_hi, " ++ (regName reg)
+
 emitInstr p r (COPY (LowByteOf (Indexed (NamedLocation (Just (Table Word _)) src) reg))
                     (NamedLocation (Just Byte) dst)) =
     "lda " ++ src ++ "_lo, " ++ (regName reg) ++ "\n" ++

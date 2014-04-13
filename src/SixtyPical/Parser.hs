@@ -577,9 +577,11 @@ copy_general_statement = do
     nspaces
 
     src <- (immediate <|>
+            register_location <|>
             low_byte_of_absolute <|> high_byte_of_absolute <|> direct_location)
     srcI <- many index    
     lhs <- return $ case (src, srcI) of
+        ((Implicitly reg), []) -> reg
         ((Immediately s), []) -> (Immediate s)
         ((Directly s), []) -> (NamedLocation Nothing s)
         ((Directly s), [reg]) -> (Indexed (NamedLocation Nothing s) reg)
