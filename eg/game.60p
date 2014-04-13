@@ -19,6 +19,8 @@ assign vector cinv 788
 
 reserve vector save_cinv
 
+// these are zero-page so that we can use them as indirect addresses
+// through which we write to screen memory
 assign word position $fb
 assign word new_position $fd
 
@@ -27,6 +29,7 @@ reserve byte value
 reserve word compare_target
 
 reserve word[16] actor_pos
+reserve word[16] actor_delta
 
 reserve vector dispatch_state
 reserve vector dispatch_logic
@@ -43,6 +46,7 @@ routine calculate_new_position outputs (new_position) {
     sta >new_position
 }
 
+// output is carry
 routine compare_new_pos {
     lda >new_position
     cmp >compare_target
@@ -53,6 +57,7 @@ routine compare_new_pos {
     }
 }
 
+// output is carry
 routine check_new_position_in_bounds {
     copy #$07e8 compare_target      // just past bottom of screen
     jsr compare_new_pos
@@ -92,7 +97,7 @@ routine clear_screen {
     }
 }
 
-routine read_stick {
+routine read_stick outputs (delta) {
     lda #0
     sta <delta
     sta >delta
@@ -145,6 +150,12 @@ routine init_game {
         asl .a
         asl .a
         copy .a <actor_pos, y
+
+        // sigh
+        // copy #$0001 actor_delta, y
+        copy #00 >actor_delta, y
+        copy #40 <actor_delta, y
+
         iny
         cpy #8
     }
@@ -184,11 +195,25 @@ routine logic_player {
     } else { }
 }
 
+routine reverse_delta {
+    lda #40
+    cmp <delta
+    if beq {
+        // copy #-40 delta
+        lda #216
+        sta <delta
+        lda #255
+        sta >delta
+    } else {
+        // copy #40 delta
+        lda #40
+        sta <delta
+        lda #0
+        sta >delta
+    }
+}
+
 routine logic_obstacle {
-    lda #0
-    sta >delta
-    lda #1
-    sta <delta
     jsr calculate_new_position
     jsr check_new_position_in_bounds
     if bcs {
@@ -199,7 +224,9 @@ routine logic_obstacle {
         lda #82
         ldy #0
         sta (position), y
-    } else { }
+    } else {
+        jsr reverse_delta
+    }
 }
 
 routine indirect_jsr_logic {
@@ -213,6 +240,7 @@ routine state_play_game {
         stx save_x
 
         copy actor_pos, x position
+        copy actor_delta, x delta
 
         cpx #0
         if beq {
@@ -224,6 +252,7 @@ routine state_play_game {
 
         ldx save_x
         copy position actor_pos, x
+        copy delta actor_delta, x
 
         inx
         cpx #8
