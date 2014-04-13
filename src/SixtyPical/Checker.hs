@@ -31,8 +31,8 @@ noIndexedAccessOfNonTables p@(Program decls routines) =
     where
         checkInstr j@(COPY _ (Indexed (NamedLocation sz g) reg)) =
             case lookupDecl p g of
-                Just (Assign _ (Table Byte _) _) -> j
-                Just (Reserve _ (Table Byte _) _) -> j
+                Just (Assign _ (Table _ _) _) -> j
+                Just (Reserve _ (Table _ _) _) -> j
                 Just _ -> (COPY A A)
                 Nothing -> (COPY A A)
         checkInstr other = other

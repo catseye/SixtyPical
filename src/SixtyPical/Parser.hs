@@ -575,13 +575,21 @@ copy_general_statement :: Parser Instruction
 copy_general_statement = do
     string "copy"
     nspaces
+
     src <- (try immediate <|> try direct_location)
+    srcI <- many index    
+    lhs <- return $ case (src, srcI) of
+        ((Immediately s), []) -> (Immediate s)
+        ((Directly s), []) -> (NamedLocation Nothing s)
+        ((Directly s), [reg]) -> (Indexed (NamedLocation Nothing s) reg)
+
     dst <- direct_location
-    return $ case (src, dst) of
-        (Immediately s, Directly d) ->
-            (COPY (Immediate s) (NamedLocation Nothing d))
-        (Directly s, Directly d) ->
-            (COPY (NamedLocation Nothing s) (NamedLocation Nothing d))
+    dstI <- many index    
+    rhs <- return $ case (dst, dstI) of
+        ((Directly d), []) -> (NamedLocation Nothing d)
+        ((Directly d), [reg]) -> (Indexed (NamedLocation Nothing d) reg)
+
+    return $ COPY lhs rhs
 
 copy_routine_statement :: Parser Instruction
 copy_routine_statement = do

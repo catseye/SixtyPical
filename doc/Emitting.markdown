@@ -168,6 +168,66 @@ Copy command: immediate -> word
     = .data
     = .space position 2
 
+Copy command: word -> word
+
+    | reserve word position1
+    | reserve word position2
+    | routine main {
+    |     copy position1 position2
+    | }
+    = main:
+    =   lda position1
+    =   sta position2
+    =   lda position1+1
+    =   sta position2+1
+    =   rts
+    = 
+    = .data
+    = .space position1 2
+    = .space position2 2
+
+Copy command: word -> word indexed
+
+    | reserve word loc
+    | reserve word[4] locs
+    | routine main {
+    |     ldy #0
+    |     copy loc locs, y
+    | }
+    = main:
+    =   ldy #0
+    =   lda loc
+    =   sta locs_lo, y
+    =   lda loc+1
+    =   sta locs_hi, y
+    =   rts
+    = 
+    = .data
+    = .space loc 2
+    = .space locs_lo 4
+    = .space locs_hi 4
+
+Copy command: word INDEXED -> word
+
+    | reserve word loc
+    | reserve word[4] locs
+    | routine main {
+    |     ldx #0
+    |     copy locs, x loc
+    | }
+    = main:
+    =   ldx #0
+    =   lda locs_lo, x
+    =   sta loc
+    =   lda locs_hi, x
+    =   sta loc+1
+    =   rts
+    = 
+    = .data
+    = .space loc 2
+    = .space locs_lo 4
+    = .space locs_hi 4
+
 `main` is always emitted first.
 
     | reserve word position 

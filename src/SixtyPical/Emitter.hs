@@ -40,6 +40,10 @@ emitDecl p (Reserve name (Table Byte size) vals) =
         showList [val] = show val
         showList (val:vals) = (show val) ++ ", " ++ (showList vals)
 
+emitDecl p (Reserve name (Table Word size) []) =
+    ".space " ++ name ++ "_lo " ++ (show size) ++ "\n" ++
+    ".space " ++ name ++ "_hi " ++ (show size)
+
 emitDecl p (Reserve name typ [])
     | typ == Byte = ".space " ++ name ++ " 1"
     | typ == Word = ".space " ++ name ++ " 2"
@@ -97,6 +101,28 @@ emitInstr p r (COPY A (Indexed (NamedLocation (Just (Table Byte _)) label) Y)) =
 
 emitInstr p r (COPY (Indexed (NamedLocation (Just (Table Byte _)) label) X) A) = "lda " ++ label ++ ", x"
 emitInstr p r (COPY (Indexed (NamedLocation (Just (Table Byte _)) label) Y) A) = "lda " ++ label ++ ", y"
+
+emitInstr p r (COPY (NamedLocation (Just st1) src) (Indexed (NamedLocation (Just (Table st2 _)) dst) reg))
+  | (st1 == Vector && st2 == Vector) || (st1 == Word && st2 == Word) =
+    "lda " ++ src ++ "\n" ++
+    "  sta " ++ dst ++ "_lo, " ++ r ++ "\n" ++
+    "  lda " ++ src ++ "+1\n" ++
+    "  sta " ++ dst ++ "_hi, " ++ r
+  where
+    r = case reg of
+         X -> "x"
+         Y -> "y"
+
+emitInstr p r (COPY (Indexed (NamedLocation (Just (Table st1 _)) src) reg) (NamedLocation (Just st2) dst))
+  | (st1 == Vector && st2 == Vector) || (st1 == Word && st2 == Word) =
+    "lda " ++ src ++ "_lo, " ++ r ++ "\n" ++
+    "  sta " ++ dst ++ "\n" ++
+    "  lda " ++ src ++ "_hi, " ++ r ++ "\n" ++
+    "  sta " ++ dst ++ "+1"
+  where
+    r = case reg of
+         X -> "x"
+         Y -> "y"
 
 emitInstr p r (COPY A (IndirectIndexed (NamedLocation st label) Y)) = "sta (" ++ label ++ "), y"
 emitInstr p r (COPY (IndirectIndexed (NamedLocation st label) Y) A) = "lda (" ++ label ++ "), y"

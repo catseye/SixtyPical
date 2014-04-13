@@ -112,8 +112,10 @@ fillOutNamedLocationTypes p@(Program decls routines) =
         getType A = Byte
         getType X = Byte
         getType Y = Byte
-        getType (Immediate x) =
+        getType (Immediate x) =   -- TODO! allow promotion!
             if x > 255 then Word else Byte
+        getType (Indexed t _) =
+            getType t
         getType _ = Byte
         typeMatch x y constructor =
             let
@@ -126,7 +128,10 @@ fillOutNamedLocationTypes p@(Program decls routines) =
                     (True, _, _) -> constructor rx ry
                     (_, Byte, (Table Byte _)) -> constructor rx ry
                     (_, (Table Byte _), Byte) -> constructor rx ry                    
-                    _ -> error ("incompatible types '" ++ (show typeRx) ++ "' and '" ++ (show typeRy) ++ "'")
+                    (_, Word, (Table Word _)) -> constructor rx ry
+                    (_, (Table Word _), Word) -> constructor rx ry                    
+                    _ -> error ("incompatible types '" ++ (show typeRx) ++ "' and '" ++ (show typeRy) ++ "'" ++
+                                "  " ++ (show rx) ++ "," ++ (show ry))
         resolve (NamedLocation Nothing name) =
             case lookupDecl p name of
                 Just decl ->

@@ -26,8 +26,7 @@ reserve word delta
 reserve byte value
 reserve word compare_target
 
-reserve byte[16] actor_pos_hi
-reserve byte[16] actor_pos_lo
+reserve word[16] actor_pos
 
 reserve vector dispatch_state
 reserve vector dispatch_logic
@@ -141,12 +140,13 @@ routine init_game {
     ldy #0
     repeat bne {
         lda #$04
-        sta actor_pos_hi, y
+        // *** this is broken ***
+        sta >actor_pos, y
         tya
         clc
         asl .a
         asl .a
-        sta actor_pos_lo, y
+        sta <actor_pos, y
         iny
         cpy #8
     }
@@ -214,10 +214,7 @@ routine state_play_game {
     repeat bne {
         stx save_x
 
-        lda actor_pos_hi, x
-        sta >position
-        lda actor_pos_lo, x
-        sta <position
+        copy actor_pos, x position
 
         cpx #0
         if beq {
@@ -228,10 +225,8 @@ routine state_play_game {
         jsr indirect_jsr_logic
 
         ldx save_x
-        lda >position
-        sta actor_pos_hi, x
-        lda <position
-        sta actor_pos_lo, x
+        copy position actor_pos, x
+
         inx
         cpx #8
     }
