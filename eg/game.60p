@@ -37,6 +37,32 @@ reserve vector dispatch_logic
 
 reserve byte[18] press_fire_msg: "PRESS`FIRE`TO`PLAY"
 
+// could be routine-local, if they were truly static
+reserve byte button_down: 0
+
+/******************************************
+ * Utility routines for manipulating/checking the current actor's
+ * position and delta.
+ ******************************************/
+
+routine reverse_delta {
+    lda #40
+    cmp <delta
+    if beq {
+        // copy #-40 delta
+        lda #216
+        sta <delta
+        lda #255
+        sta >delta
+    } else {
+        // copy #40 delta
+        lda #40
+        sta <delta
+        lda #0
+        sta >delta
+    }
+}
+
 routine calculate_new_position outputs (new_position) {
     clc
     lda <position
@@ -47,8 +73,7 @@ routine calculate_new_position outputs (new_position) {
     sta >new_position
 }
 
-// output is carry
-routine compare_new_pos {
+routine compare_new_pos outputs (.c) {
     lda >new_position
     cmp >compare_target
     if beq {
@@ -58,8 +83,7 @@ routine compare_new_pos {
     }
 }
 
-// output is carry
-routine check_new_position_in_bounds {
+routine check_new_position_in_bounds outputs (.c) {
     copy #$07e8 compare_target      // just past bottom of screen
     jsr compare_new_pos
 
@@ -78,24 +102,12 @@ routine check_new_position_in_bounds {
     }
 }
 
-routine clear_screen {
-    ldy #0
-    repeat bne {
-        lda #1
-        sta colormap, y
-        sta colormap2, y
-        sta colormap3, y
-        sta colormap4, y
-        
-        lda #32
-        sta screen, y
-        sta screen2, y
-        sta screen3, y
-        sta screen4, y
+/******************************************
+ * Utility routines for dealing with the current actor's logic routine.
+ ******************************************/
 
-        iny
-        cpy #250
-    }
+routine indirect_jsr_logic {
+    jmp (dispatch_logic)
 }
 
 routine read_stick outputs (delta) {
@@ -135,11 +147,110 @@ routine read_stick outputs (delta) {
     }
 }
 
-// output is .z flag
-routine check_fire {
+routine check_fire outputs (.z) {
     ldx joy2
     txa
     and #16
+}
+
+/********************
+ *** Actor Logics ***
+ ********************/
+
+routine logic_player {
+    jsr read_stick
+    jsr calculate_new_position
+    jsr check_new_position_in_bounds
+    if bcs {
+        ldy #0
+        lda (new_position), y
+        cmp #32
+        if beq {
+            lda #32
+            ldy #0
+            sta (position), y
+            copy new_position position
+            lda #81
+            ldy #0
+            sta (position), y
+        } else {
+            // copy routine state_game_over to dispatch_state
+        }
+    } else { }
+}
+
+routine logic_obstacle {
+    jsr calculate_new_position
+    jsr check_new_position_in_bounds
+    if bcs {
+        ldy #0
+        lda (new_position), y
+        cmp #32
+        if beq {
+            lda #32
+            ldy #0
+            sta (position), y
+            copy new_position position
+            lda #82
+            ldy #0
+            sta (position), y
+        } else {
+            copy routine state_game_over to dispatch_state
+        }
+    } else {
+        jsr reverse_delta
+    }
+}
+
+/******************************************
+ * Utility routines used in dealing with the game state.
+ ******************************************/
+
+routine clear_screen {
+    ldy #0
+    repeat bne {
+        lda #1
+        sta colormap, y
+        sta colormap2, y
+        sta colormap3, y
+        sta colormap4, y
+        
+        lda #32
+        sta screen, y
+        sta screen2, y
+        sta screen3, y
+        sta screen4, y
+
+        iny
+        cpy #250
+    }
+}
+
+// You can repeatedly (i.e. as part of actor logic or an IRQ handler)
+// call this routine.
+// Upon return, if carry is set, the button was pressed then released.
+
+routine check_button outputs (.c) {
+    lda button_down
+    if beq {
+        lda joy2
+        and #$10
+        if beq {
+            lda #1
+            sta button_down
+        } else { }
+        clc
+    } else {
+        lda joy2
+        and #$10
+        if bne {
+            lda #0
+            sta button_down
+            sec
+        } else {
+            clc
+        }
+    }
 }
 
 routine init_game {
@@ -174,6 +285,10 @@ routine init_game {
     }
 }
 
+/*******************
+ *** Game States ***
+ *******************/
+
 routine state_title_screen {
     lda #5
     sta vic_border
@@ -188,8 +303,8 @@ routine state_title_screen {
         iny
         cpy #18
     }
-    jsr check_fire
-    if beq {
+    jsr check_button
+    if bcs {
         jsr clear_screen
         jsr init_game
         copy routine state_play_game to dispatch_state
@@ -199,78 +314,12 @@ routine state_title_screen {
 
 routine state_game_over {
     inc vic_border
-    jsr check_fire
-    if beq {
+    jsr check_button
+    if bcs {
+        jsr clear_screen
         copy routine state_title_screen to dispatch_state
     } else { }
     jmp (save_cinv)
-}
-
-routine logic_player {
-    jsr read_stick
-    jsr calculate_new_position
-    jsr check_new_position_in_bounds
-    if bcs {
-        ldy #0
-        lda (new_position), y
-        cmp #32
-        if beq {
-            lda #32
-            ldy #0
-            sta (position), y
-            copy new_position position
-            lda #81
-            ldy #0
-            sta (position), y
-        } else {
-            // copy routine state_game_over to dispatch_state
-        }
-    } else { }
-}
-
-routine reverse_delta {
-    lda #40
-    cmp <delta
-    if beq {
-        // copy #-40 delta
-        lda #216
-        sta <delta
-        lda #255
-        sta >delta
-    } else {
-        // copy #40 delta
-        lda #40
-        sta <delta
-        lda #0
-        sta >delta
-    }
-}
-
-routine logic_obstacle {
-    jsr calculate_new_position
-    jsr check_new_position_in_bounds
-    if bcs {
-        ldy #0
-        lda (new_position), y
-        cmp #32
-        if beq {
-            lda #32
-            ldy #0
-            sta (position), y
-            copy new_position position
-            lda #82
-            ldy #0
-            sta (position), y
-        } else {
-            copy routine state_game_over to dispatch_state
-        }
-    } else {
-        jsr reverse_delta
-    }
-}
-
-routine indirect_jsr_logic {
-    jmp (dispatch_logic)
 }
 
 routine state_play_game {
@@ -294,6 +343,10 @@ routine state_play_game {
     }
     jmp (save_cinv)
 }
+
+/*************************
+ * Main Game Loop Driver *
+ *************************/
 
 routine our_cinv {
     jmp (dispatch_state)

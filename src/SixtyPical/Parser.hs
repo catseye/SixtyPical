@@ -219,7 +219,12 @@ explicit_location s l = do
 explicit_register :: Parser StorageLocation
 explicit_register = ((try $ explicit_location ".a" A) <|>
                      (try $ explicit_location ".x" X) <|>
-                     (explicit_location ".y" Y))
+                     (try $ explicit_location ".y" Y) <|>
+                     (try $ explicit_location ".n" FlagN) <|>
+                     (try $ explicit_location ".v" FlagV) <|>
+                     (try $ explicit_location ".d" FlagD) <|>
+                     (try $ explicit_location ".z" FlagZ) <|>
+                     (explicit_location ".c" FlagC))
 
 register_location :: Parser AddressingModality
 register_location = do
