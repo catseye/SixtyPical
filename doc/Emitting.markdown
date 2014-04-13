@@ -228,6 +228,92 @@ Copy command: word INDEXED -> word
     = .space locs_lo 4
     = .space locs_hi 4
 
+Copy command: byte -> indexed word table -> error.
+
+    | reserve byte bbb
+    | reserve word[4] locs
+    | routine main {
+    |     ldx #0
+    |     copy bbb locs, x
+    | }
+    ? incompatible types 'Byte' and 'Table Word 4'
+
+Copy command: byte -> low byte of indexed word table
+
+    | reserve byte bbb
+    | reserve word[4] locs
+    | routine main {
+    |     ldx #0
+    |     copy bbb <locs, x
+    | }
+    = main:
+    =   ldx #0
+    =   lda bbb
+    =   sta locs_lo, x
+    =   rts
+    = 
+    = .data
+    = .space bbb 1
+    = .space locs_lo 4
+    = .space locs_hi 4
+
+Copy command: byte -> high byte of indexed word table
+
+    | reserve byte bbb
+    | reserve word[4] locs
+    | routine main {
+    |     ldx #0
+    |     copy bbb >locs, x
+    | }
+    = main:
+    =   ldx #0
+    =   lda bbb
+    =   sta locs_hi, x
+    =   rts
+    = 
+    = .data
+    = .space bbb 1
+    = .space locs_lo 4
+    = .space locs_hi 4
+
+Copy command: low byte of indexed word table -> byte
+
+    | reserve byte bbb
+    | reserve word[4] locs
+    | routine main {
+    |     ldx #0
+    |     copy <locs, x bbb
+    | }
+    = main:
+    =   ldx #0
+    =   lda locs_lo, x
+    =   sta bbb
+    =   rts
+    = 
+    = .data
+    = .space bbb 1
+    = .space locs_lo 4
+    = .space locs_hi 4
+
+Copy command: high byte of indexed word table -> byte
+
+    | reserve byte bbb
+    | reserve word[4] locs
+    | routine main {
+    |     ldx #0
+    |     copy >locs, x bbb
+    | }
+    = main:
+    =   ldx #0
+    =   lda locs_hi, x
+    =   sta bbb
+    =   rts
+    = 
+    = .data
+    = .space bbb 1
+    = .space locs_lo 4
+    = .space locs_hi 4
+
 `main` is always emitted first.
 
     | reserve word position 

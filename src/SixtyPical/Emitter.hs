@@ -105,24 +105,36 @@ emitInstr p r (COPY (Indexed (NamedLocation (Just (Table Byte _)) label) Y) A) =
 emitInstr p r (COPY (NamedLocation (Just st1) src) (Indexed (NamedLocation (Just (Table st2 _)) dst) reg))
   | (st1 == Vector && st2 == Vector) || (st1 == Word && st2 == Word) =
     "lda " ++ src ++ "\n" ++
-    "  sta " ++ dst ++ "_lo, " ++ r ++ "\n" ++
+    "  sta " ++ dst ++ "_lo, " ++ (regName reg) ++ "\n" ++
     "  lda " ++ src ++ "+1\n" ++
-    "  sta " ++ dst ++ "_hi, " ++ r
-  where
-    r = case reg of
-         X -> "x"
-         Y -> "y"
+    "  sta " ++ dst ++ "_hi, " ++ (regName reg)
+
+emitInstr p r (COPY (NamedLocation (Just Byte) src)
+                    (LowByteOf (Indexed (NamedLocation (Just (Table Word _)) dst) reg))) =
+    "lda " ++ src ++ "\n" ++
+    "  sta " ++ dst ++ "_lo, " ++ (regName reg)
+
+emitInstr p r (COPY (NamedLocation (Just Byte) src)
+                    (HighByteOf (Indexed (NamedLocation (Just (Table Word _)) dst) reg))) =
+    "lda " ++ src ++ "\n" ++
+    "  sta " ++ dst ++ "_hi, " ++ (regName reg)
+
+emitInstr p r (COPY (LowByteOf (Indexed (NamedLocation (Just (Table Word _)) src) reg))
+                    (NamedLocation (Just Byte) dst)) =
+    "lda " ++ src ++ "_lo, " ++ (regName reg) ++ "\n" ++
+    "  sta " ++ dst
+
+emitInstr p r (COPY (HighByteOf (Indexed (NamedLocation (Just (Table Word _)) src) reg))
+                    (NamedLocation (Just Byte) dst)) =
+    "lda " ++ src ++ "_hi, " ++ (regName reg) ++ "\n" ++
+    "  sta " ++ dst
 
 emitInstr p r (COPY (Indexed (NamedLocation (Just (Table st1 _)) src) reg) (NamedLocation (Just st2) dst))
   | (st1 == Vector && st2 == Vector) || (st1 == Word && st2 == Word) =
-    "lda " ++ src ++ "_lo, " ++ r ++ "\n" ++
+    "lda " ++ src ++ "_lo, " ++ (regName reg) ++ "\n" ++
     "  sta " ++ dst ++ "\n" ++
-    "  lda " ++ src ++ "_hi, " ++ r ++ "\n" ++
+    "  lda " ++ src ++ "_hi, " ++ (regName reg) ++ "\n" ++
     "  sta " ++ dst ++ "+1"
-  where
-    r = case reg of
-         X -> "x"
-         Y -> "y"
 
 emitInstr p r (COPY A (IndirectIndexed (NamedLocation st label) Y)) = "sta (" ++ label ++ "), y"
 emitInstr p r (COPY (IndirectIndexed (NamedLocation st label) Y) A) = "lda (" ++ label ++ "), y"
@@ -239,3 +251,6 @@ emitInstr p r i = error (
     "Internal error: sixtypical doesn't know how to " ++
     "emit assembler code for '" ++ (show i) ++ "'")
 
+
+regName X = "x"
+regName Y = "y"

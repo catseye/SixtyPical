@@ -144,6 +144,10 @@ fillOutNamedLocationTypes p@(Program decls routines) =
             (Indexed (resolve loc) (resolve reg))
         resolve (IndirectIndexed loc reg) =
             (IndirectIndexed (resolve loc) (resolve reg))
+        resolve (LowByteOf loc) =
+            (LowByteOf (resolve loc))
+        resolve (HighByteOf loc) =
+            (HighByteOf (resolve loc))
         resolve other =
             other
 

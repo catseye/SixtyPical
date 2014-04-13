@@ -137,16 +137,19 @@ routine check_fire {
 }
 
 routine init_game {
+    // this shouldn't be needed!
+    reserve byte temp_a
     ldy #0
     repeat bne {
         lda #$04
-        // *** this is broken ***
-        sta >actor_pos, y
+        sta temp_a
+        copy temp_a >actor_pos, y
         tya
         clc
         asl .a
         asl .a
-        sta <actor_pos, y
+        sta temp_a
+        copy temp_a <actor_pos, y
         iny
         cpy #8
     }

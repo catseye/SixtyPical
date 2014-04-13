@@ -576,18 +576,23 @@ copy_general_statement = do
     string "copy"
     nspaces
 
-    src <- (try immediate <|> try direct_location)
+    src <- (immediate <|>
+            low_byte_of_absolute <|> high_byte_of_absolute <|> direct_location)
     srcI <- many index    
     lhs <- return $ case (src, srcI) of
         ((Immediately s), []) -> (Immediate s)
         ((Directly s), []) -> (NamedLocation Nothing s)
         ((Directly s), [reg]) -> (Indexed (NamedLocation Nothing s) reg)
+        ((LowBytely s), [reg]) -> (LowByteOf (Indexed (NamedLocation Nothing s) reg))
+        ((HighBytely s), [reg]) -> (HighByteOf (Indexed (NamedLocation Nothing s) reg))
 
-    dst <- direct_location
+    dst <- (low_byte_of_absolute <|> high_byte_of_absolute <|> direct_location)
     dstI <- many index    
     rhs <- return $ case (dst, dstI) of
         ((Directly d), []) -> (NamedLocation Nothing d)
         ((Directly d), [reg]) -> (Indexed (NamedLocation Nothing d) reg)
+        ((LowBytely d), [reg]) -> (LowByteOf (Indexed (NamedLocation Nothing d) reg))
+        ((HighBytely d), [reg]) -> (HighByteOf (Indexed (NamedLocation Nothing d) reg))
 
     return $ COPY lhs rhs
 
