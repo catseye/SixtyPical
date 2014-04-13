@@ -30,6 +30,7 @@ reserve word compare_target
 
 reserve word[16] actor_pos
 reserve word[16] actor_delta
+reserve vector[16] actor_logic
 
 reserve vector dispatch_state
 reserve vector dispatch_logic
@@ -156,6 +157,13 @@ routine init_game {
         copy #00 >actor_delta, y
         copy #40 <actor_delta, y
 
+        cpy #0
+        if beq {
+            copy routine logic_player to actor_logic, y
+        } else {
+            copy routine logic_obstacle to actor_logic, y
+        }
+
         iny
         cpy #8
     }
@@ -241,13 +249,8 @@ routine state_play_game {
 
         copy actor_pos, x position
         copy actor_delta, x delta
+        copy actor_logic, x dispatch_logic
 
-        cpx #0
-        if beq {
-            copy routine logic_player to dispatch_logic
-        } else {
-            copy routine logic_obstacle to dispatch_logic
-        }
         jsr indirect_jsr_logic
 
         ldx save_x

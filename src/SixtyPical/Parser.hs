@@ -608,7 +608,10 @@ copy_routine_statement = do
     string "to"
     nspaces
     dst <- location_name
-    return (COPYROUTINE src (NamedLocation Nothing dst))
+    dstI <- many index
+    return $ case dstI of
+        [] -> COPYROUTINE src (NamedLocation Nothing dst)
+        [reg] -> COPYROUTINE src (Indexed (NamedLocation Nothing dst) reg)
 
 branch :: Parser Branch
 branch = try (b "bcc" BCC) <|> try (b "bcs" BCS) <|> try (b "beq" BEQ) <|>

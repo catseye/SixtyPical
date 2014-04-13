@@ -40,9 +40,10 @@ emitDecl p (Reserve name (Table Byte size) vals) =
         showList [val] = show val
         showList (val:vals) = (show val) ++ ", " ++ (showList vals)
 
-emitDecl p (Reserve name (Table Word size) []) =
-    ".space " ++ name ++ "_lo " ++ (show size) ++ "\n" ++
-    ".space " ++ name ++ "_hi " ++ (show size)
+emitDecl p (Reserve name (Table typ size) [])
+    | typ == Word || typ == Vector =
+      ".space " ++ name ++ "_lo " ++ (show size) ++ "\n" ++
+      ".space " ++ name ++ "_hi " ++ (show size)
 
 emitDecl p (Reserve name typ [])
     | typ == Byte = ".space " ++ name ++ " 1"
@@ -258,6 +259,12 @@ emitInstr p r (COPYROUTINE src (NamedLocation (Just Vector) dst)) =
     "  sta " ++ dst ++ "\n" ++
     "  lda #>" ++ src ++ "\n" ++
     "  sta " ++ dst ++ "+1"
+
+emitInstr p r (COPYROUTINE src (Indexed (NamedLocation (Just (Table Vector _)) dst) reg)) =
+    "lda #<" ++ src ++ "\n" ++
+    "  sta " ++ dst ++ "_lo, " ++ (regName reg) ++ "\n" ++
+    "  lda #>" ++ src ++ "\n" ++
+    "  sta " ++ dst ++ "_hi, " ++ (regName reg)
 
 emitInstr p r (JMPVECTOR (NamedLocation (Just Vector) dst)) =
     "jmp (" ++ dst ++ ")"

@@ -124,14 +124,21 @@ fillOutNamedLocationTypes p@(Program decls routines) =
                 typeRx = getType rx
                 typeRy = getType ry
             in
-                case (typeRx == typeRy, typeRx, typeRy) of
-                    (True, _, _) -> constructor rx ry
-                    (_, Byte, (Table Byte _)) -> constructor rx ry
-                    (_, (Table Byte _), Byte) -> constructor rx ry                    
-                    (_, Word, (Table Word _)) -> constructor rx ry
-                    (_, (Table Word _), Word) -> constructor rx ry                    
-                    _ -> error ("incompatible types '" ++ (show typeRx) ++ "' and '" ++ (show typeRy) ++ "'" ++
-                                "  " ++ (show rx) ++ "," ++ (show ry))
+                if
+                    typeRx == typeRy
+                  then
+                    constructor rx ry
+                  else
+                    case (typeRx, typeRy) of
+                      (Byte, (Table Byte _)) -> constructor rx ry
+                      ((Table Byte _), Byte) -> constructor rx ry                    
+                      (Word, (Table Word _)) -> constructor rx ry
+                      ((Table Word _), Word) -> constructor rx ry                    
+                      (Vector, (Table Vector _)) -> constructor rx ry
+                      ((Table Vector _), Vector) -> constructor rx ry                    
+                      _ -> error ("incompatible types '" ++ (show typeRx) ++
+                                  "' and '" ++ (show typeRy) ++ "'" ++
+                                  "  [" ++ (show rx) ++ "," ++ (show ry) ++ "]")
         resolve (NamedLocation Nothing name) =
             case lookupDecl p name of
                 Just decl ->
