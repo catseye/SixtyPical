@@ -144,13 +144,18 @@ routine check_fire {
 
 routine init_game {
     ldy #0
+    ldx #0
     repeat bne {
         copy #$04 >actor_pos, y
-        tya
-        clc
-        asl .a
-        asl .a
+        txa
         copy .a <actor_pos, y
+        inx
+        inx
+        inx
+        inx
+        inx
+        inx
+        inx
 
         // sigh
         // copy #$0001 actor_delta, y
@@ -165,11 +170,15 @@ routine init_game {
         }
 
         iny
-        cpy #8
+        cpy #16
     }
 }
 
 routine state_title_screen {
+    lda #5
+    sta vic_border
+    lda #0
+    sta vic_bg
     ldy #0
     repeat bne {
         lda press_fire_msg, y
@@ -188,18 +197,34 @@ routine state_title_screen {
     jmp (save_cinv)
 }
 
+routine state_game_over {
+    inc vic_border
+    jsr check_fire
+    if beq {
+        copy routine state_title_screen to dispatch_state
+    } else { }
+    jmp (save_cinv)
+}
+
 routine logic_player {
     jsr read_stick
     jsr calculate_new_position
     jsr check_new_position_in_bounds
     if bcs {
-        lda #32
         ldy #0
-        sta (position), y
-        copy new_position position
-        lda #81
-        ldy #0
-        sta (position), y
+        lda (new_position), y
+        cmp #32
+        if beq {
+            lda #32
+            ldy #0
+            sta (position), y
+            copy new_position position
+            lda #81
+            ldy #0
+            sta (position), y
+        } else {
+            // copy routine state_game_over to dispatch_state
+        }
     } else { }
 }
 
@@ -225,13 +250,20 @@ routine logic_obstacle {
     jsr calculate_new_position
     jsr check_new_position_in_bounds
     if bcs {
-        lda #32
         ldy #0
-        sta (position), y
-        copy new_position position
-        lda #82
-        ldy #0
-        sta (position), y
+        lda (new_position), y
+        cmp #32
+        if beq {
+            lda #32
+            ldy #0
+            sta (position), y
+            copy new_position position
+            lda #82
+            ldy #0
+            sta (position), y
+        } else {
+            copy routine state_game_over to dispatch_state
+        }
     } else {
         jsr reverse_delta
     }
@@ -258,7 +290,7 @@ routine state_play_game {
         copy delta actor_delta, x
 
         inx
-        cpx #8
+        cpx #16
     }
     jmp (save_cinv)
 }
@@ -268,11 +300,6 @@ routine our_cinv {
 }
 
 routine main {
-    lda #5
-    sta vic_border
-    lda #0
-    sta vic_bg
-
     jsr clear_screen
     copy routine state_title_screen to dispatch_state
 

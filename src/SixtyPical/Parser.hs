@@ -442,6 +442,7 @@ lda = do
        gen (Directly l) [] = COPY (NamedLocation Nothing l) A
        gen (Directly l) [reg] = COPY (Indexed (NamedLocation Nothing l) reg) A
        gen (Indirectly l) [reg] = COPY (IndirectIndexed (NamedLocation Nothing l) reg) A
+       gen x y = error ("Can't parse lda " ++ (show x) ++ (show y))
 
 ldx :: Parser Instruction
 ldx = do
