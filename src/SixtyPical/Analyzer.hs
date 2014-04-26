@@ -133,7 +133,10 @@ mergeRoutCtxs nm routCtx calledRoutCtx calledRout@(Routine name outputs _) =
                 PoisonedWith ulocation ->
                     updateRoutCtx nm location usage routCtxAccum
     in
-        Map.foldrWithKey (poison) routCtx calledRoutCtx
+        foldrWithKey (poison) routCtx calledRoutCtx
+    where
+        -- for Hugs Sep2006, which doesn't have Map.foldrWithKey
+        foldrWithKey f z = foldr (uncurry f) z . Map.toAscList
 
 --
 -- Utility function:
@@ -167,4 +170,7 @@ mergeAlternateRoutCtxs nm routCtx1 routCtx2 =
                     in
                         updateRoutCtx nm location newUsage routCtxAccum
     in
-        Map.foldrWithKey (poison) routCtx1 routCtx2
+        foldrWithKey (poison) routCtx1 routCtx2
+    where
+        -- for Hugs Sep2006, which doesn't have Map.foldrWithKey
+        foldrWithKey f z = foldr (uncurry f) z . Map.toAscList

@@ -170,19 +170,21 @@ Copy command: immediate -> word
 
 Copy command: byte-sized immediate -> word
 
-    | reserve word position
-    | routine main {
-    |     copy #1 position
-    | }
-    = main:
-    =   lda #1
-    =   sta position
-    =   lda #0
-    =   sta position+1
-    =   rts
-    = 
-    = .data
-    = .space position 2
+Disabled for now.
+
+        | reserve word position
+        | routine main {
+        |     copy #1 position
+        | }
+        = main:
+        =   lda #1
+        =   sta position
+        =   lda #0
+        =   sta position+1
+        =   rts
+        = 
+        = .data
+        = .space position 2
 
 Copy command: word -> word
 
