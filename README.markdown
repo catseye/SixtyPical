@@ -7,7 +7,8 @@ with static analysis through type-checking and abstract interpretation.
 It is a **work in progress**, currently at the **proof-of-concept** stage.
 
 It is expected that a common use case for SixtyPical would be retroprogramming
-for the Commodore 64 and other 6502-based computers such as the VIC-20.
+for the Commodore 64 and other 6502-based computers such as the VIC-20, the
+Apple ][+, and the NES.
 
 Many SixtyPical instructions map precisely to 6502 opcodes.  However, SixtyPical
 is not an assembly language: the programmer does not have total control over
@@ -29,7 +30,7 @@ Quick Start
 If you have `ghc`, Ophis, and VICE 2.4 installed, clone this repo, `cd` into it,
 and run
 
-    ./loadngo.sh eg/demo.60p
+    ./loadngo.sh eg/game.60p
 
 The Big Idea(s)
 ---------------
@@ -45,8 +46,8 @@ certain ways.  For example, these are illegal:
     reserve byte lives
     reserve word score
     routine do_it {
-        lda score        ; no! can't treat word as if it were a byte
-        lda lives, x     ; no! can't treat a byte as if it were a table
+        lda score        // no! can't treat word as if it were a byte
+        lda lives, x     // no! can't treat a byte as if it were a table
     }
 
 ### Abstract Interpretation ###
@@ -60,13 +61,14 @@ are *not* affected by the routine.  For example, the following:
     routine do_it {
         lda #0
         jsr update_score
-        sta vic_border_colour    ; uh... what do we know about reg A here?
+        sta vic_border_colour    // uh... what do we know about reg A here?
     }
 
 ...is illegal *unless* one of the following is true:
 
 *   the A register is declared to be a meaningful output of `update_score`
-*   `update_score` was determined to not change the value of the A register
+*   `update_score` was analyzed and determined to not change the value of the
+    A register
 
 The first case must be done with an explicit declaration on `update_score`.
 The second case will be be inferred using abstract interpretation of the code
@@ -152,8 +154,9 @@ For More Information
 --------------------
 
 For more information, see the docs (which are written in the form of
-Falderal literate test suites.  If you have Falderal installed, you can run
-the tests with `./test.sh`.)
+[Falderal](http://catseye.tc/node/Falderal) literate test suites.  If you
+have `falderal` on your executable search path, you can run the tests with
+`./test.sh`.)
 
 *   [Checking](https://github.com/catseye/SixtyPical/blob/master/doc/Checking.markdown)
 *   [Analyzing](https://github.com/catseye/SixtyPical/blob/master/doc/Analyzing.markdown)
@@ -164,7 +167,7 @@ Internals
 ---------
 
 Some (OK, a lot) of the Haskell code is kind of gross and non-idiomatic.
-The parser, in particular, would not be described as "elegant".  There
+The parser, in particular, could not be described as "elegant".  There
 could definitely be more higher-order functions defined and used.  At the
 same time, I'm really not a fan of pointless style — I prefer it when things
 are written out explicitly and pedantically.  Still, there are places where
@@ -174,7 +177,8 @@ The 6502 semantics, which are arguably RISC-like (load/store architecture)
 are translated into an intermediate representation which is arguably CISC-like.
 For example, `lda`, `sta`, `ldx`, and `tax` all become kinds of `COPY`
 internally.  This internal instruction set is much smaller than the 6502's,
-and thus is usually easier to analyze.
+and thus is usually easier to analyze.  It would also be easier to adapt to
+other instruction sets, such as the Z80 or the 8086.
 
 Notes
 -----
@@ -214,6 +218,7 @@ TODO
 *   Addressing modes — indexed mode on more instructions
 *   Rename and lift temporaries in nested blocks
 *   Tail-recursion optimization
+*   `word 100` to promote an otherwise 8-bit literal to a 16-bit value
 *   `jmp routine`
 *   Enforce that `jmp`s come at ends of blocks(?)
 *   `outputs` on externals
