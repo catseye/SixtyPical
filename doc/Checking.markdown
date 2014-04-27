@@ -164,7 +164,7 @@ a symbol that was declared previously with `reserve` or `assign`.
     |    lda #0
     |    sta $0400
     | }
-    ? unexpected "$"
+    ? unexpected
 
     | assign byte screen $0400
     | routine main {
