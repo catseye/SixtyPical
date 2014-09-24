@@ -4,7 +4,7 @@ Emitting Ophis from SixtyPical Programs
     -> Tests for functionality "Emit ASM for SixtyPical program"
     
     -> Functionality "Emit ASM for SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical emit %(test-file)"
+    -> shell command "bin/sixtypical emit %(test-body-file)"
 
 Emitting an `if`.
 

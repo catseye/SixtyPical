@@ -4,7 +4,7 @@ Anayzling SixtyPical Programs
     -> Tests for functionality "Analyze SixtyPical program"
     
     -> Functionality "Analyze SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical analyze %(test-file)"
+    -> shell command "bin/sixtypical analyze %(test-body-file)"
 
 Analysis determines what storage locations have been modified by a
 routine.

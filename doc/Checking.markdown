@@ -4,12 +4,12 @@ Checking SixtyPical Programs
     -> Tests for functionality "Parse SixtyPical program"
 
     -> Functionality "Parse SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical parse %(test-file)"
+    -> shell command "bin/sixtypical parse %(test-body-file)"
 
     -> Tests for functionality "Check SixtyPical program"
     
     -> Functionality "Check SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical check %(test-file)"
+    -> shell command "bin/sixtypical check %(test-body-file)"
 
 Some Basic Syntax
 -----------------
