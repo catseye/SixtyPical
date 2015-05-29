@@ -1,4 +1,4 @@
-Anayzling SixtyPical Programs
+Analyzing SixtyPical Programs
 =============================
 
     -> Tests for functionality "Analyze SixtyPical program"

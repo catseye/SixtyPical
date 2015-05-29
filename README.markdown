@@ -143,7 +143,7 @@ runnable from Commodore BASIC 2.0 and stores uninitialized data at `$C000`.
 
 In addition, various checks are not attempted (such as tracking the usage
 of an indirect indexed table) and other checks may be subverted (for example
-by `locate`ing two variables with two different types of storage at the same
+by `assign`ing two variables with two different types of storage at the same
 address.)
 
 In summary, SixtyPical helps you write a very-nearly-assembly-level program

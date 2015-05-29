@@ -18,7 +18,7 @@ A `X` indicates unsupported.
 
 Funny syntax indicates use of a special form.
 
-In these, `absolute` must be a `reserve`d or `locate`d address.
+In these, `absolute` must be a `reserve`d or `assign`d address.
 `immediate` must be a literal decimal or hexadecimal number
 (or in future, a declared constant.)
 

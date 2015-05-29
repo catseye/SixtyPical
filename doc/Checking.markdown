@@ -145,7 +145,7 @@ byte tables, one table of low bytes and one table of high bytes.
     | }
     = True
 
-An address may be declared with `locate`, which is like `.alias` in an
+An address may be declared with `assign`, which is like `.alias` in an
 assembler, with the understanding that the value will be treated "like an
 address."  This is generally an address into the operating system or hardware
 (e.g. kernal routine, I/O port, etc.)
