@@ -242,7 +242,134 @@ Can't `add` to a memory location that isn't writeable.
     | }
     ? IllegalWriteError: a
 
-### ... many missing tests ... ###
+### sub ###
+
+Can't `sub` from or to a memory location that isn't initialized.
+
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     sub a, 0
+    | }
+    = ok
+
+    | byte lives
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     sub a, lives
+    | }
+    ? UninitializedAccessError: lives
+
+    | byte lives
+    | routine main
+    |   inputs lives
+    |   outputs a
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     sub a, lives
+    | }
+    ? UninitializedAccessError: a
+
+Can't `sub` to a memory location that isn't writeable.
+
+    | routine main
+    |   inputs a
+    |   trashes c
+    | {
+    |     st off, c
+    |     sub a, 0
+    | }
+    ? IllegalWriteError: a
+
+### inc ###
+
+Location must be initialized and writeable.
+
+    | routine main
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    ? UninitializedAccessError: x
+
+    | routine main
+    |   inputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    ? IllegalWriteError: x
+
+    | routine main
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    = ok
+
+### dec ###
+
+Location must be initialized and writeable.
+
+    | routine main
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     dec x
+    | }
+    ? UninitializedAccessError: x
+
+    | routine main
+    |   inputs x
+    |   trashes z, n
+    | {
+    |     dec x
+    | }
+    ? IllegalWriteError: x
+
+    | routine main
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     dec x
+    | }
+    = ok
+
+### cmp ###
+
+TODO: write some tests
+
+### and ###
+
+TODO: write some tests
+
+### or ###
+
+TODO: write some tests
+
+### xor ###
+
+TODO: write some tests
+
+### shl ###
+
+TODO: write some tests
+
+### shr ###
+
+TODO: write some tests
 
 ### call ###
 

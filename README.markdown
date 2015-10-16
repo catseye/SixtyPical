@@ -25,13 +25,10 @@ Documentation
 *   [SixtyPical specification](doc/SixtyPical.md)
 *   [Literate test suite for SixtyPical execution](tests/SixtyPical Execution.md)
 *   [Literate test suite for SixtyPical analysis](tests/SixtyPical Analysis.md)
+*   [6502 Opcodes used/not used in SixtyPical](doc/6502 Opcodes.md)
 
 TODO
 ----
-
-For 0.2:
-
-*   write a few more tests and clean up spec a bit.
 
 For 0.3:
 

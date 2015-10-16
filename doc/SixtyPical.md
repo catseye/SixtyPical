@@ -8,6 +8,9 @@ these are, technically speaking, separate concepts.)
 This document is nominally normative, but the tests in the `tests` directory
 are even more normative.
 
+Refer to the bottom of this document for an EBNF grammar of the syntax of
+the language.
+
 Types
 -----
 
@@ -122,19 +125,6 @@ are considered initialized after it has executed.
 Some combinations, such as `ld x, y`, are illegal because they do not map to
 underlying opcodes.
 
-Notes:
-
-    ld a, 123     → LDA #123
-    ld a, lives   → LDA LIVES
-    ld x, 123     → LDX #123
-    ld x, lives   → LDX LIVES
-    ld y, 123     → LDY #123
-    ld y, lives   → LDY LIVES
-    ld x, a       → TAX
-    ld y, a       → TAY
-    ld a, x       → TXA
-    ld a, y       → TYA
-
 ### st ###
 
     st <src-memory-location>, <dest-memory-location>
@@ -149,14 +139,6 @@ Reads from src and writes to dest.
 
 After execution, dest is considered initialized.  No flags are
 changed by this instruction (unless of course dest is a flag.)
-
-Notes:
-
-    st a, lives    → STA LIVES
-    st x, lives    → STX LIVES
-    st y, lives    → STY LIVES
-    st on, c       → SEC
-    st off, c      → CLC
 
 ### add dest, src ###
 
@@ -174,11 +156,6 @@ and initializing them afterwards.
 
 dest and src continue to be initialized afterwards.
 
-Notes:
-
-    add a, delta   → ADC DELTA
-    add a, 1       → ADC #1
-
 ### inc ###
 
     inc <dest-memory-location>
@@ -192,12 +169,6 @@ Increments the value in dest.  Does not honour carry.
 
 Affects n and z flags, requiring that they be in the WRITES lists,
 and initializing them afterwards.
-
-Notes:
-
-    inc x          → INX
-    inc y          → INY
-    inc lives      → INC LIVES
 
 ### sub ###
 
@@ -215,14 +186,9 @@ and initializing them afterwards.
 
 dest and src continue to be initialized afterwards.
 
-Notes:
-
-    sub a, delta   → SBC DELTA
-    sub a, 1       → SBC #1
-
 ### dec ###
 
-    inc <dest-memory-location>
+    dec <dest-memory-location>
 
 Decrements the value in dest.  Does not honour carry.
 
@@ -234,29 +200,17 @@ Decrements the value in dest.  Does not honour carry.
 Affects n and z flags, requiring that they be in the WRITES lists,
 and initializing them afterwards.
 
-Notes:
-
-    dec x          → DEX
-    dec y          → DEY
-    dec lives      → DEC LIVES
-
 ### cmp ###
 
     cmp <dest-memory-location>, <src-memory-location>
 
-Subtracts the contents of src from dest, but does not store the result.
+Subtracts the contents of src from dest (without considering carry) but
+does not store the result anywhere, only sets the resulting flags.
 
 *   It is illegal if src OR dest is uninitialized.
 
 Affects n, z, and c flags, requiring that they be in the WRITES lists,
 and initializing them afterwards.
-
-Notes:
-
-    cmp a, delta   → CMP DELTA
-    cmp a, 1       → CMP #1
-    cmp x, 1       → CPX #1
-    cmp y, 1       → CPY #1
 
 ### and, or, xor ###
 
@@ -276,12 +230,6 @@ Affects n and z flags, requiring that they be in the WRITES lists of the
 current routine, and sets them as initialized afterwards.
 
 dest and src continue to be initialized afterwards.
-
-Notes:
-
-    and a, 8       → AND #8
-    or a, 8        → ORA #8
-    xor a, 8       → EOR #8
 
 ### shl, shr ###
 
@@ -303,13 +251,6 @@ and `c` becomes the bit that was shifted off the right.
 Affects the c flag, requiring that it be in the WRITES lists of the
 current routine, and it continues to be initialized afterwards.
 
-Notes:
-
-    shl a          → ROL A
-    shl lives      → ROL LIVES
-    shr a          → ROR A
-    shr lives      → ROR LIVES
-
 ### call ###
 
     call <routine-name>
@@ -326,35 +267,22 @@ Just after the call,
 *   All memory locations listed as TRASHED in the called routine's OUTPUTS
     list are considered initialized.
 
-Notes:
-
-    call routine    → JSR ROUTINE
-
-- - - -
-
 ### if ###
 
-    if (bit) {
-        true-branch
+    if <src-memory-location> {
+        <true-branch>
     } else {
-        false-branch
+        <false-branch>
     }
 
-_bit_ is usually one of the flags, z or c.
+Executes the true-branch if the value in src is nonzero, otherwise executes
+the false-branch.  The false-branch is optional may be omitted; in this case
+it is treated like an empty block.
 
-Notes:
-
-        BEQ   Branch on Result Zero
-        BMI   Branch on Result Minus
-        BNE   Branch on Result not Zero
-        BPL   Branch on Result Plus
-        BCC   Branch on Carry Clear
-        BCS   Branch on Carry Set
-        BVC   Branch on Overflow Clear
-        BVS   Branch on Overflow Set
-
-
-- - - -
+*   It is illegal if src is not z, c, n, or v.
+*   It is illegal if src is not initialized.
+*   It is illegal if any location initialized at the end of the true-branch
+    is not initialized at the end of the false-branch, and vice versa.
 
 Grammar
 -------
@@ -384,34 +312,3 @@ Grammar
               | "dec" LocExpr
               | "call" RoutineIdent
               | "if" LocExpr Block ["else" Block].
-
-
-### 6502 instructions unsupported ###
-
-        ASL   Shift Left One Bit (Memory or Accumulator)
-        LSR   Shift Right One Bit (Memory or Accumulator)
-
-        BIT   Test Bits in Memory with Accumulator
-        BRK   Force Break
-
-        CLD   Clear Decimal Mode
-        CLI   Clear interrupt Disable Bit
-        CLV   Clear Overflow Flag
-
-        NOP   No Operation
-
-        JMP   Jump to New Location   // but may be generated as part of `if`
-
-        PHA   Push Accumulator on Stack
-        PHP   Push Processor Status on Stack
-        PLA   Pull Accumulator from Stack
-        PLP   Pull Processor Status from Stack
-
-        RTI   Return from Interrupt
-        RTS   Return from Subroutine
-
-        SED   Set Decimal Mode
-        SEI   Set Interrupt Disable Status
-
-        TSX   Transfer Stack Pointer to Index X
-        TXS   Transfer Index X to Stack Pointer
