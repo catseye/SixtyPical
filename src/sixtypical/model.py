@@ -7,6 +7,9 @@ class LocationRef(object):
     def __repr__(self):
         return 'LocationRef(%r)' % self.name
 
+    def __eq__(self, other):
+        return isinstance(other, LocationRef) and other.name == self.name
+
 
 class ConstantRef(object):
     def __init__(self, value):
@@ -14,6 +17,9 @@ class ConstantRef(object):
 
     def __repr__(self):
         return 'ConstantRef(%r)' % self.value
+
+    def __eq__(self, other):
+        return isinstance(other, ConstantRef) and other.value == self.value
 
 
 # TODO type=byte
