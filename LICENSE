@@ -1,13 +1,13 @@
 The contents of the SixtyPical distribution are distributed under the
 following three licenses.
 
-The documentation and tests (in the `doc` directory) is covered by the
-following BSD-compatible license, modelled after the "Report on the
-Programming Language Haskell 98" license:
+The documentation and tests (in the `doc` and `tests` directories) is
+covered by the following BSD-compatible license, modelled after the
+"Report on the Programming Language Haskell 98" license:
 
 -----------------------------------------------------------------------------
 
-  Copyright (c)2014 Chris Pressey, Cat's Eye Technologies.
+  Copyright (c)2014-2015 Chris Pressey, Cat's Eye Technologies.
 
   The authors intend this Report to belong to the entire SixtyPical
   community, and so we grant permission to copy and distribute it for
@@ -24,7 +24,7 @@ The source code for the reference implementation and supporting tools (in the
 
 -----------------------------------------------------------------------------
 
-   Copyright (c)2014, Chris Pressey, Cat's Eye Technologies.
+   Copyright (c)2014-2015, Chris Pressey, Cat's Eye Technologies.
    All rights reserved.
  
    Redistribution and use in source and binary forms, with or without
