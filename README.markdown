@@ -22,11 +22,9 @@ Documentation
 -------------
 
 *   Design Goals — coming soon.
-*   [doc/SixtyPical.md](SixtyPical.md) — the spec
-*   [tests/SixtyPical Execution.md](SixtyPical Execution.md) —
-    literate test suite for running SixtyPical programs
-*   [tests/SixtyPical Analysis.md](SixtyPical Analysis.md) —
-    literate test suite for statically analyzing SixtyPical programs
+*   [SixtyPical specification](doc/SixtyPical.md)
+*   [Literate test suite for SixtyPical execution](tests/SixtyPical Execution.md)
+*   [Literate test suite for SixtyPical analysis](tests/SixtyPical Analysis.md)
 
 TODO
 ----

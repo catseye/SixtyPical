@@ -48,6 +48,12 @@ class Context():
             self._store.setdefault(ref.name, UNINITIALIZED)
             self._writeables.add(ref.name)
 
+    def clone(self):
+        c = Context([], [], [])
+        c._store = dict(self._store)
+        c._writeables = set(self._writeables)
+        return c
+
     def assertInitialized(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', UninitializedAccessError)
         for ref in refs:
