@@ -22,6 +22,10 @@ class UninitializedOutputError(StaticAnalysisError):
     pass
 
 
+class InconsistentInitializationError(StaticAnalysisError):
+    pass
+
+
 class IllegalWriteError(StaticAnalysisError):
     pass
 
@@ -173,9 +177,9 @@ def analyze_instr(instr, context, routines):
         analyze_block(instr.block1, context1, routines)
         analyze_block(instr.block2, context2, routines)
         for ref in context1.each_initialized():
-            context2.assert_initialized(ref)
+            context2.assert_initialized(ref, exception_class=InconsistentInitializationError)
         for ref in context2.each_initialized():
-            context1.assert_initialized(ref)
+            context1.assert_initialized(ref, exception_class=InconsistentInitializationError)
         context.set_from(context1)
     else:
         raise NotImplementedError(opcode)

@@ -31,7 +31,7 @@ TODO
 
 For 0.2:
 
-*   analyze `if` correctly.
+*   write a few more tests and clean up spec a bit.
 
 For 0.3:
 

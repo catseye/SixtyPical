@@ -165,6 +165,8 @@ class Parser(object):
             block2 = None
             if self.scanner.consume('else'):
                 block2 = self.block()
+            else:
+                block2 = Block(instrs=[])
             return Instr(opcode='if', dest=None, src=src, block1=block1, block2=block2)
         elif self.scanner.token in ("ld", "add", "sub", "cmp", "and", "or", "xor"):
             opcode = self.scanner.token

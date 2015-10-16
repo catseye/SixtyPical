@@ -413,3 +413,60 @@ Both blocks of an `if` are analyzed.
     |     }
     | }
     = ok
+
+If a location is initialized in one block, is must be initialized in the other as well.
+
+    | routine foo
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     cmp a, 42
+    |     if z {
+    |         ld x, 7
+    |     } else {
+    |         ld a, 23
+    |     }
+    | }
+    ? InconsistentInitializationError: x
+
+    | routine foo
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     cmp a, 42
+    |     if z {
+    |         ld a, 6
+    |     } else {
+    |         ld x, 7
+    |     }
+    | }
+    ? InconsistentInitializationError: x
+
+An `if` with a single block is analyzed as if it had an empty `else` block.
+
+    | routine foo
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     cmp a, 42
+    |     if z {
+    |         ld x, 7
+    |     }
+    | }
+    ? InconsistentInitializationError: x
+
+    | routine foo
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     ld x, 0
+    |     cmp a, 42
+    |     if z {
+    |         ld x, 7
+    |     }
+    | }
+    = ok
