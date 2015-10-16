@@ -1,0 +1,11 @@
+routine foo
+  inputs a
+  outputs a
+{
+    cmp a, 42
+    if z {
+        ld a, 7
+    } else {
+        ld a, 23
+    }
+}

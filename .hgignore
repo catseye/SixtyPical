@@ -2,4 +2,4 @@ syntax: glob
 
 *.o
 *.hi
-bin/*
+*.pyc

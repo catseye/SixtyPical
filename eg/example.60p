@@ -1,0 +1,14 @@
+byte lives
+
+routine main
+  inputs lives
+  outputs lives
+  trashes a, x
+  {
+      ld a, 0
+      st a, lives
+      ld x, lives
+      st off, c
+      add x, 1
+      st x, lives
+  }

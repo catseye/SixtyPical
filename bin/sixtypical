@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+
+"""Usage: sixtypical [OPTIONS] FILES
+
+Analyzes and/or executes and/or compiles a Sixtypical program.
+"""
+
+from os.path import realpath, dirname, join
+import sys
+
+sys.path.insert(0, join(dirname(realpath(sys.argv[0])), '..', 'src'))
+
+# ----------------------------------------------------------------- #
+
+import codecs
+from optparse import OptionParser
+import sys
+import traceback
+
+from sixtypical.parser import Parser
+from sixtypical.evaluator import eval_program
+from sixtypical.analyzer import analyze_program
+
+
+if __name__ == '__main__':
+    optparser = OptionParser(__doc__.strip())
+
+    optparser.add_option("--analyze",
+                         action="store_true", dest="analyze", default=False,
+                         help="")
+    optparser.add_option("--compile",
+                         action="store_true", dest="compile", default=False,
+                         help="")
+    optparser.add_option("--traceback",
+                         action="store_true", dest="traceback", default=False,
+                         help="")
+    optparser.add_option("--execute",
+                         action="store_true", dest="execute", default=False,
+                         help="")
+
+    (options, args) = optparser.parse_args(sys.argv[1:])
+
+    for filename in args:
+        text = open(filename).read()
+        p = Parser(text)
+        program = p.program()
+
+        if options.analyze:
+            try:
+                analyze_program(program)
+            except Exception as e:
+                if options.traceback:
+                    raise
+                else:
+                    traceback.print_exception(e.__class__, e, None)
+                    sys.exit(1)
+            print 'ok'
+
+        if options.execute:
+            context = eval_program(program)
+            for key, value in sorted(context.iteritems()):
+                print "%s: %s" % (key, value)
