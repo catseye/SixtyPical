@@ -3,7 +3,7 @@
 import sys
 
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
-from sixtypical.parser import ConstantRef, LocationRef
+from sixtypical.model import ConstantRef, LocationRef
 
 
 UNINITIALIZED = 'UNINITIALIZED'

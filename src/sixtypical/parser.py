@@ -3,6 +3,7 @@
 import re
 
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
+from sixtypical.model import LocationRef, ConstantRef
 
 
 class Scanner(object):
@@ -67,28 +68,6 @@ class Scanner(object):
             return True
         else:
             return False
-
-
-# - - - -
-
-
-class LocationRef(object):
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return 'LocationRef(%r)' % self.name
-
-
-class ConstantRef(object):
-    def __init__(self, value):
-        self.value = value
-
-    def __repr__(self):
-        return 'ConstantRef(%r)' % self.value
-
-
-# - - - -
 
 
 class Parser(object):

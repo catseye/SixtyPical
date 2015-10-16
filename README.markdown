@@ -40,6 +40,7 @@ For 0.3:
 *   explicitly-addressed memory locations.
 *   generate 6502 code (either Ophis assembler or machine code `PRG` files.)
 *   `while` loops.
+*   `repeat` loops.
 *   a little demo that actually compiles and runs on a C64 emulator.
 
 For 0.4 and/or beyond:

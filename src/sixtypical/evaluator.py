@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
-from sixtypical.parser import ConstantRef, LocationRef
+from sixtypical.model import ConstantRef, LocationRef
 
 
 # TODO: should not inherit from dict
