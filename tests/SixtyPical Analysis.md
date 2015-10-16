@@ -349,27 +349,167 @@ Location must be initialized and writeable.
 
 ### cmp ###
 
-TODO: write some tests
+Some rudimentary tests for cmp.
+
+    | routine main
+    |   inputs a
+    |   trashes z, c, n
+    | {
+    |     cmp a, 4
+    | }
+    = ok
+
+    | routine main
+    |   inputs a
+    |   trashes z, n
+    | {
+    |     cmp a, 4
+    | }
+    ? IllegalWriteError: c
+
+    | routine main
+    |   trashes z, c, n
+    | {
+    |     cmp a, 4
+    | }
+    ? UninitializedAccessError: a
 
 ### and ###
 
-TODO: write some tests
+Some rudimentary tests for and.
+
+    | routine main
+    |   inputs a
+    |   outputs a, z, n
+    | {
+    |     and a, 4
+    | }
+    = ok
+
+    | routine main
+    |   inputs a
+    |   trashes z, n
+    | {
+    |     and a, 4
+    | }
+    ? IllegalWriteError: a
+
+    | routine main
+    |   trashes z, n
+    | {
+    |     and a, 4
+    | }
+    ? UninitializedAccessError: a
 
 ### or ###
 
-TODO: write some tests
+Writing unit tests on a train.  Wow.
+
+    | routine main
+    |   inputs a
+    |   outputs a, z, n
+    | {
+    |     or a, 4
+    | }
+    = ok
+
+    | routine main
+    |   inputs a
+    |   trashes z, n
+    | {
+    |     or a, 4
+    | }
+    ? IllegalWriteError: a
+
+    | routine main
+    |   trashes z, n
+    | {
+    |     or a, 4
+    | }
+    ? UninitializedAccessError: a
 
 ### xor ###
 
-TODO: write some tests
+Writing unit tests on a train.  Wow.
+
+    | routine main
+    |   inputs a
+    |   outputs a, z, n
+    | {
+    |     xor a, 4
+    | }
+    = ok
+
+    | routine main
+    |   inputs a
+    |   trashes z, n
+    | {
+    |     xor a, 4
+    | }
+    ? IllegalWriteError: a
+
+    | routine main
+    |   trashes z, n
+    | {
+    |     xor a, 4
+    | }
+    ? UninitializedAccessError: a
 
 ### shl ###
 
-TODO: write some tests
+Some rudimentary tests for shl.
+
+    | routine main
+    |   inputs a, c
+    |   outputs a, c, z, n
+    | {
+    |     shl a
+    | }
+    = ok
+
+    | routine main
+    |   inputs a, c
+    |   outputs c, z, n
+    | {
+    |     shl a
+    | }
+    ? IllegalWriteError: a
+
+    | routine main
+    |   inputs a
+    |   outputs a, c, z, n
+    | {
+    |     shl a
+    | }
+    ? UninitializedAccessError: c
 
 ### shr ###
 
-TODO: write some tests
+Some rudimentary tests for shr.
+
+    | routine main
+    |   inputs a, c
+    |   outputs a, c, z, n
+    | {
+    |     shr a
+    | }
+    = ok
+
+    | routine main
+    |   inputs a, c
+    |   outputs c, z, n
+    | {
+    |     shr a
+    | }
+    ? IllegalWriteError: a
+
+    | routine main
+    |   inputs a
+    |   outputs a, c, z, n
+    | {
+    |     shr a
+    | }
+    ? UninitializedAccessError: c
 
 ### call ###
 

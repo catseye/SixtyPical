@@ -158,7 +158,7 @@ def analyze_instr(instr, context, routines):
         context.assert_writeable(dest, FLAG_Z, FLAG_N)
         context.set_initialized(dest, FLAG_Z, FLAG_N)
     elif opcode in ('shl', 'shr'):
-        context.assert_initialized(dest)
+        context.assert_initialized(dest, FLAG_C)
         context.assert_writeable(dest, FLAG_Z, FLAG_N, FLAG_C)
         context.set_initialized(dest, FLAG_Z, FLAG_N, FLAG_C)
     elif opcode == 'call':
