@@ -258,74 +258,55 @@ Notes:
     cmp x, 1       → CPX #1
     cmp y, 1       → CPY #1
 
-- - - -
-
-### and ###
+### and, or, xor ###
 
     and <dest-memory-location>, <src-memory-location>
+    or <dest-memory-location>, <src-memory-location>
+    xor <dest-memory-location>, <src-memory-location>
 
-"AND"s the contents of src with dest and stores the result in dest.
+Applies the given bitwise Boolean operation to src and dest and stores
+the result in dest.
 
-The constraints are the same as for `cmp`, except that the `c` flag
-is not affected.  i.e. only `n` and `z` flags are affected.
+*   It is illegal if src OR dest OR is uninitialized.
+*   It is illegal if dest is read-only.
+*   It is illegal if dest does not occur in the WRITES lists
+    of the current routine.
+
+Affects n and z flags, requiring that they be in the WRITES lists of the
+current routine, and sets them as initialized afterwards.
+
+dest and src continue to be initialized afterwards.
 
 Notes:
 
     and a, 8       → AND #8
-
-### or ###
-
-    or <dest-memory-location>, <src-memory-location>
-
-"OR"s the contents of src with dest and stores the result in dest.
-
-The constraints and effects are exactly the same as for `and`.
-
-Notes:
-    
     or a, 8        → ORA #8
-
-### xor ###
-
-    xor <dest-memory-location>, <src-memory-location>
-
-"XOR"s the contents of src with dest and stores the result in dest.
-
-The constraints and effects are exactly the same as for `and`.
-
-Notes:
-    
     xor a, 8       → EOR #8
 
-### shl ###
+### shl, shr ###
 
     shl <dest-memory-location>
+    shr <dest-memory-location>
 
-Shifts the dest left one bit position.  The rightmost position becomes `c`,
+`shl` shifts the dest left one bit position.  The rightmost position becomes `c`,
 and `c` becomes the bit that was shifted off the left.
+
+`shr` shifts the dest right one bit position.  The leftmost position becomes `c`,
+and `c` becomes the bit that was shifted off the right.
 
 *   It is illegal if dest is a register besides `a`.
 *   It is illegal if dest is read-only.
 *   It is illegal if dest OR c is uninitialized.
-*   It is illegal if dest does not occur in the WRITES AND READS lists
+*   It is illegal if dest does not occur in the WRITES lists
     of the current routine.
+
+Affects the c flag, requiring that it be in the WRITES lists of the
+current routine, and it continues to be initialized afterwards.
 
 Notes:
 
     shl a          → ROL A
     shl lives      → ROL LIVES
-
-### shr ###
-
-    shr <dest-memory-location>
-
-Shifts the dest right one bit position.  The leftmost position becomes `c`,
-and `c` becomes the bit that was shifted off the right.
-
-Constraints are exactly the same as for `shl`.
-
-Notes:
-
     shr a          → ROR A
     shr lives      → ROR LIVES
 
@@ -335,17 +316,21 @@ Notes:
 
 Just before the call,
 
-*   It is illegal if any of the memory locations in the routine's READS list is
-    uninitialized.
+*   It is illegal if any of the memory locations in the called routine's
+    READS list is uninitialized.
 
 Just after the call,
 
-*   All memory locations listed as TRASHED in the routine's WRITES list are
-    considered uninitialized.
+*   All memory locations listed as TRASHED in the called routine's WRITES
+    list are considered uninitialized.
+*   All memory locations listed as TRASHED in the called routine's OUTPUTS
+    list are considered initialized.
 
 Notes:
 
     call routine    → JSR ROUTINE
+
+- - - -
 
 ### if ###
 

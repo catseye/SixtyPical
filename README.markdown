@@ -35,15 +35,16 @@ For 0.2:
 
 For 0.3:
 
-*   explicitly-addressed memory locations.
+*   extern routines.
 *   generate 6502 code (either Ophis assembler or machine code `PRG` files.)
 *   `while` loops.
-*   `repeat` loops.
 *   a little demo that actually compiles and runs on a C64 emulator.
-*   add line number (or at least routine name) to error messages.
 
 For 0.4 and/or beyond:
 
+*   explicitly-addressed memory locations
+*   `repeat` loops.
+*   add line number (or at least routine name) to error messages.
 *   hexadecimal literals.
 *   `word` type.
 *   `table` type constructor and indirect addressing.
