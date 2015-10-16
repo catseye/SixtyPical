@@ -1,17 +1,17 @@
-Sixtypical
+SixtyPical
 ==========
 
-Sixtypical is a simplified version of [Sixtypical][].
+This document describes the SixtyPical programming language version 0.2,
+both its execution aspect and its static analysis aspect (even though
+these are, technically speaking, separate concepts.)
 
-This is a complete reboot of the previous design and implementation, which
-was semantically a mess due to the way it was built.
-This aims to be a simpler design which gets the static semantics right first,
-and only then is extended to be more practical.
+This document is nominally normative, but the tests in the `tests` directory
+are even more normative.
 
 Types
 -----
 
-There are two TYPES in Sixtypical:
+There are two TYPES in SixtyPical:
 
 *   bit (2 possible values)
 *   byte (256 possible values)
@@ -19,16 +19,12 @@ There are two TYPES in Sixtypical:
 Memory locations
 ----------------
 
-The primary concept in Sixtypical is the MEMORY LOCATION.  At any given point
+A primary concept in SixtyPical is the MEMORY LOCATION.  At any given point
 in time during execution, each memory location is either UNINITIALIZED or
 INITIALIZED.  At any given point in the program text, too, each memory
 location is either uninitialized or initialized.  Where-ever it is one or
 the other during execution, it is the same in the corresponding place in
 the program text; thus, it is a static property.
-
-(There is actually a third state, WRITTEN, which indicates that the memory
-location is not only initialized, but also that it has been written to in
-the current routine.)
 
 There are four general kinds of memory location.  The first three are
 pre-defined and built-in.
@@ -53,9 +49,9 @@ Each of these hold a bit.  They are initially uninitialized.
 ### Constants ###
 
 It may be strange to think of constants as memory locations, but keep in mind
-that a memory location in Sixtypical need not map to a memory location in the
-underlying hardware.  All constants are read-only.  Each is
-initially initialized with the value that corresponds with its name.
+that a memory location in SixtyPical need not map to a memory location in the
+underlying hardware.  All constants are read-only.  Each is initially
+initialized with the value that corresponds with its name.
 
 They come in bit and byte types.  There are two bit constants,
 
@@ -81,7 +77,8 @@ Routines
 
 Every routine must list all the memory locations it READS from, i.e. its
 INPUTS, and all the memory locations it WRITES to, whether they are OUTPUTS
-or merely TRASHED.  Every memory location that is not written to is PRESERVED.
+or merely TRASHED.  Every memory location that is not written to by the
+routine (or any routines that the routine calls) is PRESERVED by the routine.
 
     routine foo
       inputs a, score
@@ -93,8 +90,15 @@ or merely TRASHED.  Every memory location that is not written to is PRESERVED.
 Routines may call only routines previously defined in the program source.
 Thus, recursive routines are not allowed.
 
-There must be one routine called `main`.  This routine is executed when
-the program is run.
+For a SixtyPical program to be run, there must be one routine called `main`.
+This routine is executed when the program is run.
+
+The memory locations given given as inputs are considered to be initialized
+at the beginning of the routine.  Various instructions cause memory locations
+to be initialized after they are executed.  Calling a routine which trashes
+some memory locations causes those memory locations to be uninitialized after
+that routine is called.  At the end of a routine, all memory locations listed
+as outputs must be initialised.
 
 Instructions
 ------------
@@ -106,19 +110,14 @@ Instructions
 Reads from src and writes to dest.
 
 *   It is illegal if dest is not a register.
-*   It is illegal if dest does not occur in the WRITES list of the current
+*   It is illegal if dest does not occur in the WRITES lists of the current
     routine.
 *   It is illegal if src is not of same type as dest (i.e., is not a byte.)
 *   It is illegal if src is uninitialized.
-*   It is illegal if src does not either:
-    *   be a constant, or
-    *   occur in the READS list of the current routine, or
-    *   occur in the WRITES list of the current routine AND
-        that location has previously been written inside this routine.
 
 After execution, dest is considered initialized.  The flags `z` and `n` may be
-changed by this instruction, and they are considered initialized after it has
-executed.
+changed by this instruction; they must be named in the WRITES lists, and they
+are considered initialized after it has executed.
 
 Some combinations, such as `ld x, y`, are illegal because they do not map to
 underlying opcodes.
@@ -143,15 +142,10 @@ Notes:
 Reads from src and writes to dest.
 
 *   It is illegal if dest is a register or if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES list of the current
+*   It is illegal if dest does not occur in the WRITES lists of the current
     routine.
 *   It is illegal if src is not of same type as dest.
 *   It is illegal if src is uninitialized.
-*   It is illegal if src does not either:
-    *   be a constant, or
-    *   occur in the READS list of the current routine, or
-    *   occur in the WRITES list of the current routine AND
-        that location has previously been written inside this routine.
 
 After execution, dest is considered initialized.  No flags are
 changed by this instruction (unless of course dest is a flag.)
@@ -172,17 +166,13 @@ Adds the contents of src to dest and stores the result in dest.
 
 *   It is illegal if src OR dest OR c is uninitialized.
 *   It is illegal if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES AND READS lists
+*   It is illegal if dest does not occur in the WRITES lists
     of the current routine.
-*   It is illegal if src does not either:
-    *   be a constant, or
-    *   occur in the READS list of the current routine, or
-    *   occur in the WRITES list of the current routine AND
-        that location has previously been written inside this routine.
 
-Affects n, z, c, and v flags.
+Affects n, z, c, and v flags, requiring that they be in the WRITES lists,
+and initializing them afterwards.
 
-dest continues to be initialized afterwards.
+dest and src continue to be initialized afterwards.
 
 Notes:
 
@@ -191,7 +181,19 @@ Notes:
 
 ### inc ###
 
-TODO: these do not honour carry!
+    inc <dest-memory-location>
+
+Increments the value in dest.  Does not honour carry.
+
+*   It is illegal if dest is uninitialized.
+*   It is illegal if dest is read-only.
+*   It is illegal if dest does not occur in the WRITES lists
+    of the current routine.
+
+Affects n and z flags, requiring that they be in the WRITES lists,
+and initializing them afterwards.
+
+Notes:
 
     inc x          → INX
     inc y          → INY
@@ -203,7 +205,15 @@ TODO: these do not honour carry!
 
 Subtracts the contents of src from dest and stores the result in dest.
 
-The constraints and effects are exactly the same as for `add`.
+*   It is illegal if src OR dest OR c is uninitialized.
+*   It is illegal if dest is read-only.
+*   It is illegal if dest does not occur in the WRITES lists
+    of the current routine.
+
+Affects n, z, c, and v flags, requiring that they be in the WRITES lists,
+and initializing them afterwards.
+
+dest and src continue to be initialized afterwards.
 
 Notes:
 
@@ -212,7 +222,19 @@ Notes:
 
 ### dec ###
 
-TODO: these do not honour carry!
+    inc <dest-memory-location>
+
+Decrements the value in dest.  Does not honour carry.
+
+*   It is illegal if dest is uninitialized.
+*   It is illegal if dest is read-only.
+*   It is illegal if dest does not occur in the WRITES lists
+    of the current routine.
+
+Affects n and z flags, requiring that they be in the WRITES lists,
+and initializing them afterwards.
+
+Notes:
 
     dec x          → DEX
     dec y          → DEY
@@ -224,9 +246,10 @@ TODO: these do not honour carry!
 
 Subtracts the contents of src from dest, but does not store the result.
 
-The constraints and effects are the same as for `sub`, except that `c`
-need not be initialized before executing `cmp`, and the `v` flag is
-unaffected.
+*   It is illegal if src OR dest is uninitialized.
+
+Affects n, z, and c flags, requiring that they be in the WRITES lists,
+and initializing them afterwards.
 
 Notes:
 
@@ -234,6 +257,8 @@ Notes:
     cmp a, 1       → CMP #1
     cmp x, 1       → CPX #1
     cmp y, 1       → CPY #1
+
+- - - -
 
 ### and ###
 
