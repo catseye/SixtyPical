@@ -1,9 +1,9 @@
 # encoding: UTF-8
 
-import sys
-
-from sixtypical.ast import Program, Defn, Routine, Block, Instr
-from sixtypical.model import ConstantRef, LocationRef
+from sixtypical.ast import Program, Routine, Block, Instr
+from sixtypical.model import (
+    ConstantRef, LocationRef, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
+)
 
 
 UNINITIALIZED = 'UNINITIALIZED'
@@ -54,7 +54,16 @@ class Context():
         c._writeables = set(self._writeables)
         return c
 
-    def assertInitialized(self, *refs, **kwargs):
+    def set_from(self, c):
+        self._store = dict(c._store)
+        self._writeables = set(c._writeables)
+
+    def each_initialized(self):
+        for key, value in self._store.iteritems():
+            if value == INITIALIZED:
+                yield LocationRef(key)
+
+    def assert_initialized(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', UninitializedAccessError)
         for ref in refs:
             if isinstance(ref, ConstantRef):
@@ -65,16 +74,16 @@ class Context():
             else:
                 raise ValueError(ref)
 
-    def assertWriteable(self, *refs):
+    def assert_writeable(self, *refs):
         for ref in refs:
             if ref.name not in self._writeables:
                 raise IllegalWriteError(ref.name)
 
-    def setInitialized(self, *refs):
+    def set_initialized(self, *refs):
         for ref in refs:
             self.set(ref, INITIALIZED)
 
-    def setUninitialized(self, *refs):
+    def set_uninitialized(self, *refs):
         for ref in refs:
             self.set(ref, UNINITIALIZED)
 
@@ -105,7 +114,7 @@ def analyze_routine(routine, routines):
     context = Context(routine.inputs, routine.outputs, routine.trashes)
     analyze_block(routine.block, context, routines)
     for ref in routine.outputs:
-        context.assertInitialized(ref, exception_class=UninitializedOutputError)
+        context.assert_initialized(ref, exception_class=UninitializedOutputError)
 
 
 def analyze_block(block, context, routines):
@@ -121,54 +130,52 @@ def analyze_instr(instr, context, routines):
     src = instr.src
 
     if opcode == 'ld':
-        context.assertInitialized(src)
-        context.assertWriteable(dest, LocationRef('z'), LocationRef('n'))
-        context.setInitialized(dest, LocationRef('z'), LocationRef('n'))
+        context.assert_initialized(src)
+        context.assert_writeable(dest, FLAG_Z, FLAG_N)
+        context.set_initialized(dest, FLAG_Z, FLAG_N)
     elif opcode == 'st':
-        context.assertInitialized(src)
-        context.assertWriteable(dest)
-        context.setInitialized(dest)
+        context.assert_initialized(src)
+        context.assert_writeable(dest)
+        context.set_initialized(dest)
     elif opcode in ('add', 'sub'):
-        context.assertInitialized(src, dest, LocationRef('c'))
-        context.assertWriteable(dest,
-            LocationRef('z'), LocationRef('n'),
-            LocationRef('c'), LocationRef('v'),
-        )
-        context.setInitialized(dest,
-            LocationRef('z'), LocationRef('n'),
-            LocationRef('c'), LocationRef('v'),
-        )
+        context.assert_initialized(src, dest, FLAG_C)
+        context.assert_writeable(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+        context.set_initialized(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
     elif opcode in ('inc', 'dec'):
-        context.assertInitialized(dest)
-        context.assertWriteable(dest, LocationRef('z'), LocationRef('n'))
-        context.setInitialized(dest, LocationRef('z'), LocationRef('n'))
+        context.assert_initialized(dest)
+        context.assert_writeable(dest, FLAG_Z, FLAG_N)
+        context.set_initialized(dest, FLAG_Z, FLAG_N)
     elif opcode == 'cmp':
-        context.assertInitialized(src, dest)
-        context.assertWriteable(LocationRef('z'), LocationRef('n'), LocationRef('c'))
-        context.setInitialized(LocationRef('z'), LocationRef('n'), LocationRef('c'))
+        context.assert_initialized(src, dest)
+        context.assert_writeable(FLAG_Z, FLAG_N, FLAG_C)
+        context.set_initialized(FLAG_Z, FLAG_N, FLAG_C)
     elif opcode in ('and', 'or', 'xor'):
-        context.assertInitialized(sec, dest)
-        context.assertWriteable(dest, LocationRef('z'), LocationRef('n'))
-        context.setInitialized(dest, LocationRef('z'), LocationRef('n'))
+        context.assert_initialized(src, dest)
+        context.assert_writeable(dest, FLAG_Z, FLAG_N)
+        context.set_initialized(dest, FLAG_Z, FLAG_N)
     elif opcode in ('shl', 'shr'):
-        context.assertInitialized(dest)
-        context.assertWriteable(dest, LocationRef('z'), LocationRef('n'), LocationRef('c'))
-        context.setInitialized(dest, LocationRef('z'), LocationRef('n'), LocationRef('c'))
+        context.assert_initialized(dest)
+        context.assert_writeable(dest, FLAG_Z, FLAG_N, FLAG_C)
+        context.set_initialized(dest, FLAG_Z, FLAG_N, FLAG_C)
     elif opcode == 'call':
         routine = routines[instr.name]
         for ref in routine.inputs:
-            context.assertInitialized(ref)
+            context.assert_initialized(ref)
         for ref in routine.outputs:
-            context.assertWriteable(ref)
-            context.setInitialized(ref)
+            context.assert_writeable(ref)
+            context.set_initialized(ref)
         for ref in routine.trashes:
-            context.assertWriteable(ref)
-            context.setUninitialized(ref)
+            context.assert_writeable(ref)
+            context.set_uninitialized(ref)
     elif opcode == 'if':
         context1 = context.clone()
         context2 = context.clone()
         analyze_block(instr.block1, context1, routines)
         analyze_block(instr.block2, context2, routines)
-        reconcile_contexts(context1, context2, output=context)
+        for ref in context1.each_initialized():
+            context2.assert_initialized(ref)
+        for ref in context2.each_initialized():
+            context1.assert_initialized(ref)
+        context.set_from(context1)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(opcode)

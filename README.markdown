@@ -40,6 +40,7 @@ For 0.3:
 *   `while` loops.
 *   `repeat` loops.
 *   a little demo that actually compiles and runs on a C64 emulator.
+*   add line number (or at least routine name) to error messages.
 
 For 0.4 and/or beyond:
 
