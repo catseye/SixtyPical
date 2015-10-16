@@ -18,6 +18,10 @@ class UninitializedAccessError(StaticAnalysisError):
     pass
 
 
+class UninitializedOutputError(StaticAnalysisError):
+    pass
+
+
 class IllegalWriteError(StaticAnalysisError):
     pass
 
@@ -44,13 +48,14 @@ class Context():
             self._store.setdefault(ref.name, UNINITIALIZED)
             self._writeables.add(ref.name)
 
-    def assertInitialized(self, *refs):
+    def assertInitialized(self, *refs, **kwargs):
+        exception_class = kwargs.get('exception_class', UninitializedAccessError)
         for ref in refs:
             if isinstance(ref, ConstantRef):
                 pass
             elif isinstance(ref, LocationRef):
                 if self.get(ref) != INITIALIZED:
-                    raise UninitializedAccessError(ref.name)
+                    raise exception_class(ref.name)
             else:
                 raise ValueError(ref)
 
@@ -94,7 +99,7 @@ def analyze_routine(routine, routines):
     context = Context(routine.inputs, routine.outputs, routine.trashes)
     analyze_block(routine.block, context, routines)
     for ref in routine.outputs:
-        context.assertInitialized(ref)
+        context.assertInitialized(ref, exception_class=UninitializedOutputError)
 
 
 def analyze_block(block, context, routines):
@@ -154,6 +159,10 @@ def analyze_instr(instr, context, routines):
             context.assertWriteable(ref)
             context.setUninitialized(ref)
     elif opcode == 'if':
-        pass
+        context1 = context.clone()
+        context2 = context.clone()
+        analyze_block(instr.block1, context1, routines)
+        analyze_block(instr.block2, context2, routines)
+        reconcile_contexts(context1, context2, output=context)
     else:
         raise NotImplementedError

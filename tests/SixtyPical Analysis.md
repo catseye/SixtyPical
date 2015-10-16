@@ -1,15 +1,15 @@
-Sixtypical Analysis
+SixtyPical Analysis
 ===================
 
-This is a test suite, written in [Falderal][] format, for the Sixtypical
+This is a test suite, written in [Falderal][] format, for the SixtyPical
 static analysis rules.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Analyze Sixtypical program" is implemented by
+    -> Functionality "Analyze SixtyPical program" is implemented by
     -> shell command "bin/sixtypical --analyze %(test-body-file)"
 
-    -> Tests for functionality "Analyze Sixtypical program"
+    -> Tests for functionality "Analyze SixtyPical program"
 
 ### Rudiments ###
 
@@ -42,7 +42,7 @@ If a routine declares it outputs a location, that location should be initialized
     | {
     |     ld x, 0
     | }
-    ? UninitializedAccessError: a
+    ? UninitializedOutputError: a
 
     | routine main
     |   inputs a
@@ -318,7 +318,7 @@ You can't output a value that the thing you called trashed.
     |     ld x, 0
     |     call foo
     | }
-    ? UninitializedAccessError: lives
+    ? UninitializedOutputError: lives
 
 ...unless you write to it yourself afterwards.
 
@@ -402,14 +402,14 @@ Both blocks of an `if` are analyzed.
 
     | routine foo
     |   inputs a
-    |   outputs a
-    |   trashes z, n, c
+    |   outputs x
+    |   trashes a, z, n, c
     | {
     |     cmp a, 42
     |     if z {
-    |         ld a, 7
+    |         ld x, 7
     |     } else {
-    |         ld a, 23
+    |         ld x, 23
     |     }
     | }
     = ok
