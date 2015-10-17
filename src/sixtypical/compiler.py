@@ -30,12 +30,16 @@ class Compiler(object):
             if routine.addr is not None:
                 label.set_addr(routine.addr)
             self.labels[routine.name] = label
+
+        self.compile_routine(self.routines['main'])
         for routine in program.routines:
-            self.compile_routine(routine)
+            if routine.name != 'main':
+                self.compile_routine(routine)
 
     def compile_routine(self, routine):
         assert isinstance(routine, Routine)
         if routine.block:
+            self.emitter.resolve_label(self.labels[routine.name])
             self.compile_block(routine.block)
             self.emitter.emit(RTS())
 
@@ -57,11 +61,17 @@ class Compiler(object):
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(LDA(Immediate(Byte(src.value))))
                 else:
-                    self.emitter.emit(LDA(Absolute(src.label)))
+                    self.emitter.emit(LDA(Absolute(self.labels[src.name])))
             elif dest == REG_X:
-                pass
+                if isinstance(src, ConstantRef):
+                    self.emitter.emit(LDX(Immediate(Byte(src.value))))
+                else:
+                    self.emitter.emit(LDX(Absolute(self.labels[src.name])))
             elif dest == REG_Y:
-                pass
+                if isinstance(src, ConstantRef):
+                    self.emitter.emit(LDY(Immediate(Byte(src.value))))
+                else:
+                    self.emitter.emit(LDY(Absolute(self.labels[src.name])))
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'st':
@@ -70,11 +80,11 @@ class Compiler(object):
             elif dest == FLAG_C and src == ConstantRef(1):
                 self.emitter.emit(SEC())
             elif src == REG_A:
-                self.emitter.emit(STA(Absolute(dest.label)))
+                self.emitter.emit(STA(Absolute(self.labels[dest.name])))
             elif src == REG_X:
-                self.emitter.emit(STX(Absolute(dest.label)))
+                self.emitter.emit(STX(Absolute(self.labels[dest.name])))
             elif src == REG_Y:
-                self.emitter.emit(STY(Absolute(dest.label)))
+                self.emitter.emit(STY(Absolute(self.labels[dest.name])))
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'add':

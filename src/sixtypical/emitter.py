@@ -76,6 +76,13 @@ class Emitter(object):
             self.accum.append(thing)
             self.addr += thing.size()
 
+    def emit_header(self, *things):
+        """Does not advance the address counter"""
+        for thing in things:
+            if isinstance(thing, int):
+                thing = Byte(thing)
+            self.accum.append(thing)
+
     def serialize(self, stream):
         for emittable in self.accum:
             stream.write(emittable.serialize())

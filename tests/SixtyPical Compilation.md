@@ -45,3 +45,21 @@ Call extern.
     |     call chrout
     | }
     = 00c0a94120d2ff60
+
+Call defined routine.
+
+    | routine foo
+    |   outputs a, x, y
+    |   trashes z, n
+    | {
+    |   ld a, 0
+    |   ld x, 0
+    |   ld y, 0
+    | }
+    | 
+    | routine main
+    |   trashes a, x, y, z, n
+    | {
+    |     call foo
+    | }
+    = 00c02004c060a900a200a00060
