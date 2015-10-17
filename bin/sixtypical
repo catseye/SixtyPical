@@ -20,7 +20,7 @@ import traceback
 from sixtypical.parser import Parser
 from sixtypical.evaluator import eval_program
 from sixtypical.analyzer import analyze_program
-from sixtypical.emitter import Emitter
+from sixtypical.emitter import Emitter, Byte, Word
 from sixtypical.compiler import compile_program
 
 
@@ -29,6 +29,9 @@ if __name__ == '__main__':
 
     optparser.add_option("--analyze",
                          action="store_true", dest="analyze", default=False,
+                         help="")
+    optparser.add_option("--basic-header",
+                         action="store_true", dest="basic_header", default=False,
                          help="")
     optparser.add_option("--compile",
                          action="store_true", dest="compile", default=False,
@@ -59,10 +62,19 @@ if __name__ == '__main__':
                 else:
                     traceback.print_exception(e.__class__, e, None)
                     sys.exit(1)
-            print 'ok'
 
         if options.compile:
-            emitter = Emitter(41952)
+            start_addr = 0xc000
+            header = []
+            if options.basic_header:
+                start_addr = 0x0801
+                header = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
+                          0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
+            emitter = Emitter(start_addr)
+            # we are outputting a .PRG, so output the load address first
+            emitter.emit(Word(start_addr))
+            for byte in header:
+                emitter.emit(Byte(byte))
             compile_program(program, emitter)
             if options.debug:
                 print repr(emitter.accum)
