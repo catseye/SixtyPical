@@ -59,9 +59,7 @@ class Relative(AddressingMode):
         return 1
 
     def serialize(self, addr):
-        # XXX serialize value relatively
-        return chr(0xff)
-        return self.value.serialize(addr)
+        return self.value.serialize_relative_to(addr)
 
 
 class Opcode(Emittable):

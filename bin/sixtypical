@@ -64,15 +64,19 @@ if __name__ == '__main__':
                     sys.exit(1)
 
         if options.compile:
+            fh = sys.stdout
             start_addr = 0xc000
             prelude = []
             if options.basic_prelude:
                 start_addr = 0x0801
                 prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
                            0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
+
+            # we are outputting a .PRG, so we output the load address first
+            # we don't use the Emitter for this b/c not part of addr space
+            fh.write(Word(start_addr).serialize(0))
+
             emitter = Emitter(start_addr)
-            # we are outputting a .PRG, so output the load address first
-            emitter.emit_header(Word(start_addr))
             for byte in prelude:
                 emitter.emit(Byte(byte))
             compiler = Compiler(emitter)
@@ -80,7 +84,7 @@ if __name__ == '__main__':
             if options.debug:
                 print repr(emitter.accum)
             else:
-                emitter.serialize(sys.stdout)
+                emitter.serialize(fh)
 
         if options.execute:
             context = eval_program(program)

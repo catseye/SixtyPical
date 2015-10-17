@@ -131,4 +131,16 @@ Compiling `if`.
     |         ld y, 2
     |     }
     | }
-    = 00c0
+    = 00c0a900d005a0014c0bc0a00260
+
+Compiling `if` without `else`.
+
+    | routine main
+    |   trashes a, x, y, z, n, c, v
+    | {
+    |     ld a, 0
+    |     if z {
+    |         ld y, 1
+    |     }
+    | }
+    = 00c0a900d005a0014c0bc0a00260

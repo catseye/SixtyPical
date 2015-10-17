@@ -57,6 +57,10 @@ class Label(Emittable):
         assert self.addr is not None, "unresolved label: %s" % self.name
         return Word(self.addr).serialize(addr)
 
+    def serialize_relative_to(self, addr):
+        assert self.addr is not None, "unresolved label: %s" % self.name
+        return Byte(self.addr - (addr + 2)).serialize(addr)
+
     def __repr__(self):
         addrs = ', addr=%r' % self.addr if self.addr is not None else ''
         return "%s(%r%s)" % (self.__class__.__name__, self.name, addrs)
@@ -71,17 +75,8 @@ class Emitter(object):
 
     def emit(self, *things):
         for thing in things:
-            if isinstance(thing, int):
-                thing = Byte(thing)
             self.accum.append(thing)
             self.addr += thing.size()
-
-    def emit_header(self, *things):
-        """Does not advance the address counter"""
-        for thing in things:
-            if isinstance(thing, int):
-                thing = Byte(thing)
-            self.accum.append(thing)
 
     def serialize(self, stream):
         addr = self.start_addr

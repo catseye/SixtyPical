@@ -1,0 +1,18 @@
+routine chrout
+  inputs a
+  trashes a
+  @ 65490
+
+routine print
+  trashes a, z, n
+{
+    ld a, 65
+    call chrout
+}
+
+routine main
+  trashes a, z, n
+{
+    call print
+    call print
+}

@@ -1,0 +1,25 @@
+routine chrout
+  inputs a
+  trashes a
+  @ 65490
+
+routine main
+  trashes a, x, y, z, n, c, v
+{
+    ld a, 0
+    if z {
+        ld a, 89
+        call chrout
+        ld a, 1
+    }
+
+    ld a, 65
+    call chrout
+
+    ld a, 1
+    if z {
+        ld a, 89
+        call chrout
+        ld a, 1
+    }
+}

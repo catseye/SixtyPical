@@ -1,0 +1,24 @@
+byte foo
+
+routine chrout
+  inputs a
+  trashes a
+  @ 65490
+
+routine print
+  inputs foo
+  trashes a, z, n
+{
+    ld a, foo
+    call chrout
+}
+
+routine main
+  trashes a, y, z, n, foo
+{
+    ld y, 65
+    st y, foo
+    call print
+    inc foo
+    call print
+}
