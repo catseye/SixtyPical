@@ -118,3 +118,17 @@ Some instructions.
     |     shr a
     | }
     = 00c0a900a200a0008d46c08e46c08c46c0381869016d46c0e901ed46c0ee46c0e8c8ce46c0ca8829ff2d46c009ff0d46c049ff4d46c0c901cd46c0e001ec46c0c001cc46c02a6a60
+
+Compiling `if`.
+
+    | routine main
+    |   trashes a, x, y, z, n, c, v
+    | {
+    |     ld a, 0
+    |     if z {
+    |         ld y, 1
+    |     } else {
+    |         ld y, 2
+    |     }
+    | }
+    = 00c0

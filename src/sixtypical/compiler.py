@@ -7,12 +7,13 @@ from sixtypical.model import (
 )
 from sixtypical.emitter import Label, Byte
 from sixtypical.gen6502 import (
-    Immediate, Absolute,
+    Immediate, Absolute, Relative,
     LDA, LDX, LDY, STA, STX, STY,
     CLC, SEC, ADC, SBC, ROL, ROR,
-    RTS, JSR,
     INC, INX, INY, DEC, DEX, DEY,
     CMP, CPX, CPY, AND, ORA, EOR,
+    BCC, BNE,
+    JMP, JSR, RTS,
 )
 
 
@@ -58,10 +59,8 @@ class Compiler(object):
 
     def compile_block(self, block):
         assert isinstance(block, Block)
-        label = self.emitter.make_label()
         for instr in block.instrs:
             self.compile_instr(instr)
-        return label
 
     def compile_instr(self, instr):
         assert isinstance(instr, Instr)
@@ -168,6 +167,22 @@ class Compiler(object):
             label = self.labels[instr.name]
             self.emitter.emit(JSR(Absolute(label)))
         elif opcode == 'if':
-            raise NotImplementedError
+            cls = {
+                'c': BCC,
+                'z': BNE,
+            }.get(src.name)
+            if cls is None:
+                raise UnsupportedOpcodeError(instr)
+            else_label = Label('else_label')
+            self.emitter.emit(cls(Relative(else_label)))
+            self.compile_block(instr.block1)
+            if instr.block2:
+                end_label = Label('end_label')
+                self.emitter.emit(JMP(Absolute(end_label)))
+                self.emitter.resolve_label(else_label)
+                self.compile_block(instr.block2)
+                self.emitter.resolve_label(end_label)
+            else:
+                self.emitter.resolve_label(else_label)
         else:
             raise NotImplementedError

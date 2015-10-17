@@ -8,6 +8,9 @@ class AddressingMode(object):
         """Size of the operand for the mode (not including the opcode)"""
         raise NotImplementedError
 
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.value)
+
 
 class Implied(AddressingMode):
     def size(self):
@@ -31,9 +34,6 @@ class Immediate(AddressingMode):
     def serialize(self):
         return self.value.serialize()
 
-    def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.value)
-
 
 class Absolute(AddressingMode):
     def __init__(self, value):
@@ -46,8 +46,18 @@ class Absolute(AddressingMode):
     def serialize(self):
         return self.value.serialize()
 
-    def __repr__(self):
-        return "%s(%r)" % (self.__class__.__name__, self.value)
+
+class Relative(AddressingMode):
+    def __init__(self, value):
+        assert isinstance(value, (Byte, Label))
+        self.value = value
+
+    def size(self):
+        return 1
+
+    def serialize(self):
+        # HA
+        return chr(0xff)
 
 
 class Opcode(Emittable):
@@ -78,6 +88,18 @@ class AND(Opcode):
     opcodes = {
         Immediate: 0x29,
         Absolute:  0x2d,
+    }
+
+
+class BCC(Opcode):
+    opcodes = {
+        Relative:  0x90,
+    }
+
+
+class BNE(Opcode):
+    opcodes = {
+        Relative:  0xd0,
     }
 
 
@@ -148,6 +170,12 @@ class INX(Opcode):
 class INY(Opcode):
     opcodes = {
         Implied:   0xc8,
+    }
+
+
+class JMP(Opcode):
+    opcodes = {
+        Absolute:  0x4c,
     }
 
 
