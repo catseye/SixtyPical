@@ -1,9 +1,8 @@
 class Emittable(object):
     def size(self):
-        """Default implementation may not be very efficient."""
-        return len(self.serialize())
+        raise NotImplementedError
 
-    def serialize(self):
+    def serialize(self, addr):
         raise NotImplementedError
 
 
@@ -18,7 +17,7 @@ class Byte(Emittable):
     def size(self):
         return 1
 
-    def serialize(self):
+    def serialize(self, addr):
         return chr(self.value)
 
     def __repr__(self):
@@ -33,7 +32,7 @@ class Word(Emittable):
     def size(self):
         return 2
 
-    def serialize(self):
+    def serialize(self, addr):
         word = self.value
         low = word & 255
         high = (word >> 8) & 255
@@ -54,9 +53,9 @@ class Label(Emittable):
     def size(self):
         return 2
 
-    def serialize(self):
+    def serialize(self, addr):
         assert self.addr is not None, "unresolved label: %s" % self.name
-        return Word(self.addr).serialize()
+        return Word(self.addr).serialize(addr)
 
     def __repr__(self):
         addrs = ', addr=%r' % self.addr if self.addr is not None else ''
@@ -66,6 +65,7 @@ class Label(Emittable):
 class Emitter(object):
     def __init__(self, addr):
         self.accum = []
+        self.start_addr = addr
         self.addr = addr
         self.name_counter = 0
 
@@ -84,8 +84,11 @@ class Emitter(object):
             self.accum.append(thing)
 
     def serialize(self, stream):
+        addr = self.start_addr
         for emittable in self.accum:
-            stream.write(emittable.serialize())
+            chunk = emittable.serialize(addr)
+            stream.write(chunk)
+            addr += len(chunk)
 
     def make_label(self, name=None):
         if name is None:

@@ -8,6 +8,9 @@ class AddressingMode(object):
         """Size of the operand for the mode (not including the opcode)"""
         raise NotImplementedError
 
+    def serialize(self, addr):
+        raise NotImplementedError
+
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.value)
 
@@ -16,7 +19,7 @@ class Implied(AddressingMode):
     def size(self):
         return 0
 
-    def serialize(self):
+    def serialize(self, addr):
         return ''
 
     def __repr__(self):
@@ -31,8 +34,8 @@ class Immediate(AddressingMode):
     def size(self):
         return 1
 
-    def serialize(self):
-        return self.value.serialize()
+    def serialize(self, addr):
+        return self.value.serialize(addr)
 
 
 class Absolute(AddressingMode):
@@ -43,21 +46,22 @@ class Absolute(AddressingMode):
     def size(self):
         return 2
 
-    def serialize(self):
-        return self.value.serialize()
+    def serialize(self, addr):
+        return self.value.serialize(addr)
 
 
 class Relative(AddressingMode):
     def __init__(self, value):
-        assert isinstance(value, (Byte, Label))
+        assert isinstance(value, Label)
         self.value = value
 
     def size(self):
         return 1
 
-    def serialize(self):
-        # HA
+    def serialize(self, addr):
+        # XXX serialize value relatively
         return chr(0xff)
+        return self.value.serialize(addr)
 
 
 class Opcode(Emittable):
@@ -67,10 +71,10 @@ class Opcode(Emittable):
     def size(self):
         return 1 + self.operand.size() if self.operand else 0
 
-    def serialize(self):
+    def serialize(self, addr):
         return (
             chr(self.opcodes[self.operand.__class__]) +
-            self.operand.serialize()
+            self.operand.serialize(addr)
         )
 
     def __repr__(self):
