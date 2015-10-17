@@ -115,6 +115,9 @@ def analyze_program(program):
 
 def analyze_routine(routine, routines):
     assert isinstance(routine, Routine)
+    if routine.block is None:
+        # it's an extern, that's fine
+        return
     context = Context(routine.inputs, routine.outputs, routine.trashes)
     analyze_block(routine.block, context, routines)
     for ref in routine.outputs:

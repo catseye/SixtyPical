@@ -663,6 +663,48 @@ calling it.
     | }
     ? UninitializedAccessError: x
 
+Calling an extern is just the same as calling a defined routine with the
+same constraints.
+
+    | routine chrout
+    |   inputs a
+    |   trashes a
+    |   @ 65490
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     ld a, 65
+    |     call chrout
+    | }
+    = ok
+
+    | routine chrout
+    |   inputs a
+    |   trashes a
+    |   @ 65490
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     call chrout
+    | }
+    ? UninitializedAccessError: a
+
+    | routine chrout
+    |   inputs a
+    |   trashes a
+    |   @ 65490
+    | 
+    | routine main
+    |   trashes a, x, z, n
+    | {
+    |     ld a, 65
+    |     call chrout
+    |     ld x, a
+    | }
+    ? UninitializedAccessError: a
+
 ### if ###
 
 Both blocks of an `if` are analyzed.

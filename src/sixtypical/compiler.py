@@ -26,8 +26,9 @@ def compile_program(program, emitter):
 def compile_routine(routine, emitter, routines):
     assert isinstance(routine, Routine)
     label = emitter.make_label(routine.name)
-    compile_block(routine.block, emitter, routines)
-    emitter.emit(RTS())
+    if routine.block:
+        compile_block(routine.block, emitter, routines)
+        emitter.emit(RTS())
     return label
 
 
@@ -97,7 +98,7 @@ def compile_instr(instr, emitter, routines):
     elif opcode == 'shr':
         raise NotImplementedError
     elif opcode == 'call':
-        raise NotImplementedError
+        raise NotImplementedError(instr.name)
     elif opcode == 'if':
         raise NotImplementedError
     else:

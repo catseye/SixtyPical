@@ -39,8 +39,7 @@ Call extern.
     | 
     | routine main
     |   inputs a
-    |   outputs a
-    |   trashes c, z, n, v
+    |   trashes a, z, n
     | {
     |     ld a, 65
     |     call chrout
