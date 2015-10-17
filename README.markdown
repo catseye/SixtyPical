@@ -13,11 +13,7 @@ and suchlike.
 
 It is a **work in progress**, currently at the **proof-of-concept** stage.
 
-The current released version of SixtyPical is 0.2.  It is a complete reboot
-of SixtyPical 0.1.  The reference implementation is written in Python instead
-of Haskell.  The language is much simpler — we're going to try to get the
-analysis completely right before adding more sophisticated and useful features
-in future versions.
+The current released version of SixtyPical is 0.3.
 
 Documentation
 -------------
@@ -31,13 +27,11 @@ Documentation
 TODO
 ----
 
-For 0.3:
-
-*   generate 6502 code for all SixtyPical instructions.
-
 For 0.4:
 
 *   `while` loops.
+*   `repeat` loops.
+*   explicitly-addressed memory locations
 
 For 0.5:
 
@@ -50,10 +44,5 @@ For 0.5:
 
 For 0.6:
 
-*   `repeat` loops.
 *   `word` type.
 *   `table` type constructor and indirect addressing.
-
-For 0.7:
-
-*   explicitly-addressed memory locations
