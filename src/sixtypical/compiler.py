@@ -8,9 +8,9 @@ from sixtypical.model import (
 from sixtypical.gen6502 import Generator
 
 
-def compile_program(program):
+def compile_program(program, emitter):
     assert isinstance(program, Program)
-    generator = Generator(49152)
+    generator = Generator(emitter)
     routines = {r.name: r for r in program.routines}
     for routine in program.routines:
         compile_routine(routine, generator, routines)
@@ -42,17 +42,20 @@ def compile_instr(instr, generator, routines):
             if isinstance(src, ConstantRef):
                 # LDA #...
                 pass
-            elif:
+            else:
                 # LDA abs
                 pass
         elif dest == REG_X:
+            pass
         elif dest == REG_Y:
+            pass
         else:
             raise KeyError
     elif opcode == 'st':
         if src == REG_A:
             # assert isinstance(dest, MemoryRef)
             # generate STA
+            pass
         else:
             raise KeyError
     elif opcode == 'add':

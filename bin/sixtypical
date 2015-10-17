@@ -20,6 +20,8 @@ import traceback
 from sixtypical.parser import Parser
 from sixtypical.evaluator import eval_program
 from sixtypical.analyzer import analyze_program
+from sixtypical.emitter import Emitter
+from sixtypical.compiler import compile_program
 
 
 if __name__ == '__main__':
@@ -55,6 +57,11 @@ if __name__ == '__main__':
                     traceback.print_exception(e.__class__, e, None)
                     sys.exit(1)
             print 'ok'
+
+        if options.compile:
+            emitter = Emitter(41952)
+            compile_program(program, emitter)
+            emitter.serialize(sys.stdout)
 
         if options.execute:
             context = eval_program(program)

@@ -57,7 +57,7 @@ class Emitter(object):
 
     def make_label(self, name=None):
         if name is None:
-            name = 'label' + self.name_counter
+            name = 'label' + str(self.name_counter)
             self.name_counter += 1
         return Label(name, addr=self.addr)
 

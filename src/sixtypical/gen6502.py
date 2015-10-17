@@ -4,8 +4,8 @@ from sixtypical.emitter import Emitter, Word, Label
 
 
 class Generator(object):
-    def __init__(self, addr):
-        self.emitter = Emitter(addr)
+    def __init__(self, emitter):
+        self.emitter = emitter
 
     ### ld ###
 
