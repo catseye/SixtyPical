@@ -33,9 +33,7 @@ TODO
 
 For 0.3:
 
-*   extern routines.
 *   generate 6502 code for all SixtyPical instructions.
-*   a little demo that actually compiles and does something on a C64 emulator.
 
 For 0.4:
 

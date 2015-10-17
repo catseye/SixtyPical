@@ -1,0 +1,12 @@
+routine chrout
+  inputs a
+  trashes a
+  @ 65490
+
+routine main
+  inputs a
+  trashes a, z, n
+{
+    ld a, 65
+    call chrout
+}

@@ -58,6 +58,10 @@ class Label(Emittable):
         assert self.addr is not None, "unresolved label: %s" % self.name
         return Word(self.addr).serialize()
 
+    def __repr__(self):
+        addrs = ', addr=%r' % self.addr if self.addr is not None else ''
+        return "%s(%r%s)" % (self.__class__.__name__, self.name, addrs)
+
 
 class Emitter(object):
     def __init__(self, addr):

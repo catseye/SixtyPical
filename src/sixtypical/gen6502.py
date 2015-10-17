@@ -123,6 +123,12 @@ class INY(Opcode):
     }
 
 
+class JSR(Opcode):
+    opcodes = {
+        Absolute:  0x20,
+    }
+
+
 class LDA(Opcode):
     opcodes = {
         Immediate: 0xa9,

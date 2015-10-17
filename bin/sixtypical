@@ -21,7 +21,7 @@ from sixtypical.parser import Parser
 from sixtypical.evaluator import eval_program
 from sixtypical.analyzer import analyze_program
 from sixtypical.emitter import Emitter, Byte, Word
-from sixtypical.compiler import compile_program
+from sixtypical.compiler import Compiler
 
 
 if __name__ == '__main__':
@@ -75,7 +75,8 @@ if __name__ == '__main__':
             emitter.emit(Word(start_addr))
             for byte in header:
                 emitter.emit(Byte(byte))
-            compile_program(program, emitter)
+            compiler = Compiler(emitter)
+            compiler.compile_program(program)
             if options.debug:
                 print repr(emitter.accum)
             else:

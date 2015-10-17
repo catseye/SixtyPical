@@ -44,4 +44,4 @@ Call extern.
     |     ld a, 65
     |     call chrout
     | }
-    = 00c018690460
+    = 00c0a94120d2ff60
