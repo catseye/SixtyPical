@@ -13,15 +13,18 @@ and suchlike.
 
 It is a **work in progress**, currently at the **proof-of-concept** stage.
 
-The current released version of SixtyPical is 0.3.
+The current released version of SixtyPical is 0.3.  The current development
+version of SixtyPical, unreleased as of this writing, is 0.4-PRE.
 
 Documentation
 -------------
 
 *   Design Goals — coming soon.
 *   [SixtyPical specification](doc/SixtyPical.md)
+*   [Literate test suite for SixtyPical syntax](tests/SixtyPical Syntax.md)
 *   [Literate test suite for SixtyPical execution](tests/SixtyPical Execution.md)
 *   [Literate test suite for SixtyPical analysis](tests/SixtyPical Analysis.md)
+*   [Literate test suite for SixtyPical compilation](tests/SixtyPical Compilation.md)
 *   [6502 Opcodes used/not used in SixtyPical](doc/6502 Opcodes.md)
 
 TODO
