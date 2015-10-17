@@ -1,5 +1,33 @@
-class Word(object):
+class Emittable(object):
+    def size(self):
+        """Default implementation may not be very efficient."""
+        return len(self.serialize())
+
+    def serialize(self):
+        raise NotImplementedError
+
+
+class Byte(Emittable):
     def __init__(self, value):
+        if value < -127 or value > 255:
+            raise IndexError(thing)
+        if value < 0:
+            value += 256
+        self.value = value
+
+    def size(self):
+        return 1
+
+    def serialize(self):
+        return chr(self.value)
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.value)
+
+
+class Word(Emittable):
+    def __init__(self, value):
+        # TODO: range-checking
         self.value = value
 
     def size(self):
@@ -11,8 +39,11 @@ class Word(object):
         high = (word >> 8) & 255
         return chr(low) + chr(high)
 
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.value)
 
-class Label(object):
+
+class Label(Emittable):
     def __init__(self, name, addr=None):
         self.name = name
         self.addr = addr
@@ -24,8 +55,7 @@ class Label(object):
         return 2
 
     def serialize(self):
-        if self.addr is None:
-            raise ValueError(self.addr)
+        assert self.addr is not None, "unresolved label: %s" % self.name
         return Word(self.addr).serialize()
 
 
@@ -35,25 +65,16 @@ class Emitter(object):
         self.addr = addr
         self.name_counter = 0
 
-    def gen(self, *things):
+    def emit(self, *things):
         for thing in things:
             if isinstance(thing, int):
-                if thing < -127 or thing > 255:
-                    raise ValueError(thing)
-                if thing < 0:
-                    thing += 256
-                self.accum.append(thing)
-                self.addr += 1
-            else:
-                self.accum.append(thing)
-                self.addr += thing.size()
+                thing = Byte(thing)
+            self.accum.append(thing)
+            self.addr += thing.size()
 
     def serialize(self, stream):
-        for thing in self.accum:
-            if isintance(thing, int):
-                stream.write(chr(thing))
-            else:
-                stream.write(thing.serialize())
+        for emittable in self.accum:
+            stream.write(emittable.serialize())
 
     def make_label(self, name=None):
         if name is None:

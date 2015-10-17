@@ -1,91 +1,212 @@
 """This is just a sketch for now."""
 
-from sixtypical.emitter import Emitter, Word, Label
+from sixtypical.emitter import Emittable, Byte, Word, Label
 
 
-class Generator(object):
-    def __init__(self, emitter):
-        self.emitter = emitter
+class AddressingMode(object):
+    def size(self):
+        """Size of the operand for the mode (not including the opcode)"""
+        raise NotImplementedError
 
-    ### ld ###
 
-    def gen_lda_imm(self, b):
-        self.emitter.emit(0xa9, b)
+class Implied(AddressingMode):
+    def size(self):
+        return 0
 
-    def gen_lda_abs(self, addr):
-        self.emitter.emit(0xad, addr)
+    def serialize(self):
+        return ''
 
-    def gen_ldx_imm(self, b):
-        self.emitter.emit(0xa2, b)
+    def __repr__(self):
+        return "%s()" % (self.__class__.__name__)
 
-    def gen_ldx_abs(self, addr):
-        self.emitter.emit(0xae, addr)
 
-    def gen_tax(self):
-        self.emitter.emit(0xaa)
+class Immediate(AddressingMode):
+    def __init__(self, value):
+        assert isinstance(value, Byte)
+        self.value = value
 
-    def gen_tay(self):
-        self.emitter.emit(0xa8)
+    def size(self):
+        return 1
 
-    def gen_txa(self):
-        self.emitter.emit(0x8a)
+    def serialize(self):
+        return self.value.serialize()
 
-    def gen_tya(self):
-        self.emitter.emit(0x98)
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.value)
 
-    ### st ###
 
-    def gen_sta_abs(self, addr):
-        self.emitter.emit(0x8d, addr)
+class Absolute(AddressingMode):
+    def __init__(self, value):
+        assert isinstance(value, (Word, Label))
+        self.value = value
 
-    def gen_stx_abs(self, addr):
-        self.emitter.emit(0x8e, addr)
+    def size(self):
+        return 2
 
-    def gen_sty_abs(self, addr):
-        self.emitter.emit(0x8c, addr)
+    def serialize(self):
+        return self.value.serialize()
 
-    ### add ###
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.value)
 
-    def gen_adc_imm(self, b):
-        self.emitter.emit(0x69, b)
 
-    def gen_adc_abs(self, addr):
-        self.emitter.emit(0x6d, addr)
+class Opcode(Emittable):
+    def __init__(self, operand=None):
+        self.operand = operand or Implied()
 
-    ### sub ###
+    def size(self):
+        return 1 + self.operand.size() if self.operand else 0
 
-    def gen_sbc_imm(self, b):
-        self.emitter.emit(0xe9, b)
+    def serialize(self):
+        return (
+            chr(self.opcodes[self.operand.__class__]) +
+            self.operand.serialize()
+        )
 
-    def gen_sbc_abs(self, addr):
-        self.emitter.emit(0xed, addr)
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.operand)
 
-    ### inc ###
 
-    def gen_inc_abs(self, addr):
-        self.emitter.emit(0xee, addr)
+class ADC(Opcode):
+    opcodes = {
+        Immediate: 0x69,
+        Absolute:  0x6d,
+    }
 
-    def gen_inx(self):
-        self.emitter.emit(0xe8)
 
-    def gen_iny(self):
-        self.emitter.emit(0xc8)
+class ADD(Opcode):
+    opcodes = {
+        Immediate: 0x29,
+        Absolute:  0x2d,
+    }
 
-    ### dec ###
 
-    def gen_dec_abs(self, addr):
-        self.emitter.emit(0xce, addr)
+class CLC(Opcode):
+    opcodes = {
+        Implied:   0x18
+    }
 
-    def gen_dex(self):
-        self.emitter.emit(0xca)
 
-    def gen_dey(self):
-        self.emitter.emit(0x88)
+class DEC(Opcode):
+    opcodes = {
+        Absolute:  0xce,
+    }
 
-    ### and ###
 
-    def gen_and_imm(self, b):
-        self.emitter.emit(0x29, b)
+class DEX(Opcode):
+    opcodes = {
+        Implied:   0xca,
+    }
 
-    def gen_and_abs(self, addr):
-        self.emitter.emit(0x2d, addr)
+
+class DEY(Opcode):
+    opcodes = {
+        Implied:   0x88,
+    }
+
+
+class INC(Opcode):
+    opcodes = {
+        Absolute:  0xee,
+    }
+
+
+class INX(Opcode):
+    opcodes = {
+        Implied:   0xe8,
+    }
+
+
+class INY(Opcode):
+    opcodes = {
+        Implied:   0xc8,
+    }
+
+
+class LDA(Opcode):
+    opcodes = {
+        Immediate: 0xa9,
+        Absolute:  0xad,
+    }
+
+
+class LDX(Opcode):
+    opcodes = {
+        Immediate: 0xa2,
+        Absolute:  0xae,
+    }
+
+
+class LDY(Opcode):
+    opcodes = {
+        Immediate: 0xa0,
+        Absolute:  0xac,
+    }
+
+
+class ORA(Opcode):
+    opcodes = {
+        Immediate: 0x09,
+        Absolute:  0x0d,
+    }
+
+
+class RTS(Opcode):
+    opcodes = {
+        Implied:   0x60,
+    }
+
+
+class SBC(Opcode):
+    opcodes = {
+        Immediate: 0xe9,
+        Absolute:  0xed,
+    }
+
+
+class SEC(Opcode):
+    opcodes = {
+        Implied:   0x38,
+    }
+
+
+class STA(Opcode):
+    opcodes = {
+        Absolute:  0x8d,
+    }
+
+
+class STX(Opcode):
+    opcodes = {
+        Absolute:  0x8e,
+    }
+
+
+class STY(Opcode):
+    opcodes = {
+        Absolute:  0x8c,
+    }
+
+
+class TAX(Opcode):
+    opcodes = {
+        Implied:   0xaa,
+    }
+
+
+class TAY(Opcode):
+    opcodes = {
+        Implied:   0xa8,
+    }
+
+
+class TXA(Opcode):
+    opcodes = {
+        Implied:   0x8a,
+    }
+
+
+class TYA(Opcode):
+    opcodes = {
+        Implied:   0x98,
+    }
