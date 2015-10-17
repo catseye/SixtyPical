@@ -103,6 +103,15 @@ some memory locations causes those memory locations to be uninitialized after
 that routine is called.  At the end of a routine, all memory locations listed
 as outputs must be initialised.
 
+A routine can also be declared as "external", in which case its body need
+not be defined but an absolute address must be given for where the routine
+is located in memory.
+
+    routine chrout
+      inputs a
+      trashes a
+      @ 65490
+
 Instructions
 ------------
 
@@ -291,12 +300,13 @@ Grammar
     Defn    ::= "byte" NewIdent.
     Routine ::= "routine" NewIdent
                 ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs]
-                Block.
+                (Block | "@" WordConst).
     LocExprs::= LocExpr {"," LocExpr}.
-    LocExpr ::= Register | Flag | Const | DefnIdent.
+    LocExpr ::= Register | Flag | LitByte | DefnIdent.
     Register::= "a" | "x" | "y".
     Flag    ::= "c" | "z" | "n" | "v".
-    Const   ::= "0" ... "255".
+    LitByte ::= "0" ... "255".
+    LitWord ::= "0" ... "65535".
     Block   ::= "{" {Instr} "}".
     Instr   ::= "ld" LocExpr "," LocExpr
               | "st" LocExpr "," LocExpr

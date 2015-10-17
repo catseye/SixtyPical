@@ -30,7 +30,7 @@ class Scanner(object):
             self.token = None
             self.type = 'EOF'
             return
-        if self.scan_pattern(r'\,|\/|\{|\}', 'operator'):
+        if self.scan_pattern(r'\,|\@|\{|\}', 'operator'):
             return
         if self.scan_pattern(r'\d+', 'integer literal'):
             return
@@ -119,10 +119,17 @@ class Parser(object):
             outputs = self.locexprs()
         if self.scanner.consume('trashes'):
             trashes = self.locexprs()
-        block = self.block()
+        if self.scanner.consume('@'):
+            self.scanner.check_type('integer literal')
+            block = None
+            addr = int(self.scanner.token)
+            self.scanner.scan()
+        else:
+            block = self.block()
+            addr = None
         return Routine(
             name=name, inputs=inputs, outputs=outputs, trashes=trashes,
-            block=block
+            block=block, addr=addr
         )
 
     def locexprs(self):

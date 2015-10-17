@@ -29,3 +29,20 @@ Rudimentary program.
     |     add a, 4
     | }
     = 00c018690460
+
+Call extern.
+
+    | routine chrout
+    |   inputs a
+    |   trashes a
+    |   @ 65490
+    | 
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes c, z, n, v
+    | {
+    |     ld a, 65
+    |     call chrout
+    | }
+    = 00c018690460
