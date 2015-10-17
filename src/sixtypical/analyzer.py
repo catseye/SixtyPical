@@ -178,7 +178,8 @@ def analyze_instr(instr, context, routines):
         context1 = context.clone()
         context2 = context.clone()
         analyze_block(instr.block1, context1, routines)
-        analyze_block(instr.block2, context2, routines)
+        if instr.block2 is not None:
+            analyze_block(instr.block2, context2, routines)
         for ref in context1.each_initialized():
             context2.assert_initialized(ref, exception_class=InconsistentInitializationError)
         for ref in context2.each_initialized():

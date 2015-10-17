@@ -176,7 +176,7 @@ class Compiler(object):
             else_label = Label('else_label')
             self.emitter.emit(cls(Relative(else_label)))
             self.compile_block(instr.block1)
-            if instr.block2:
+            if instr.block2 is not None:
                 end_label = Label('end_label')
                 self.emitter.emit(JMP(Absolute(end_label)))
                 self.emitter.resolve_label(else_label)

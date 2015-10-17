@@ -143,4 +143,4 @@ Compiling `if` without `else`.
     |         ld y, 1
     |     }
     | }
-    = 00c0a900d005a0014c0bc0a00260
+    = 00c0a900d002a00160
