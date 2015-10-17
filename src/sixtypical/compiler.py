@@ -8,7 +8,8 @@ from sixtypical.model import (
 from sixtypical.emitter import Label, Byte
 from sixtypical.gen6502 import (
     Immediate, Absolute,
-    LDA, LDX, LDY, STA, STX, STY, CLC, SEC, ADC, RTS, JSR
+    LDA, LDX, LDY, STA, STX, STY, CLC, SEC, ADC, RTS, JSR,
+    INC, INX, INY, DEC, DEX, DEY,
 )
 
 
@@ -24,6 +25,11 @@ class Compiler(object):
 
     def compile_program(self, program):
         assert isinstance(program, Program)
+
+        for defn in program.defns:
+            label = Label(defn.name)
+            self.labels[defn.name] = label
+
         for routine in program.routines:
             self.routines[routine.name] = routine
             label = Label(routine.name)
@@ -35,6 +41,10 @@ class Compiler(object):
         for routine in program.routines:
             if routine.name != 'main':
                 self.compile_routine(routine)
+
+        for defn in program.defns:
+            label = self.labels[defn.name]
+            self.emitter.resolve_bss_label(label)
 
     def compile_routine(self, routine):
         assert isinstance(routine, Routine)
@@ -92,15 +102,31 @@ class Compiler(object):
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(ADC(Immediate(Byte(src.value))))
                 else:
-                    self.emitter.emit(ADC(Absolute(src.label)))
+                    self.emitter.emit(ADC(Absolute(self.labels[src.name])))
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'sub':
-            raise NotImplementedError
+            if dest == REG_A:
+                if isinstance(src, ConstantRef):
+                    self.emitter.emit(SBC(Immediate(Byte(src.value))))
+                else:
+                    self.emitter.emit(SBC(Absolute(self.labels[src.name])))
+            else:
+                raise UnsupportedOpcodeError(instr)
         elif opcode == 'inc':
-            raise NotImplementedError
+            if dest == REG_X:
+                self.emitter.emit(INX())
+            elif dest == REG_Y:
+                self.emitter.emit(INY())
+            else:
+                self.emitter.emit(INC(Absolute(self.labels[dest.name])))
         elif opcode == 'dec':
-            raise NotImplementedError
+            if dest == REG_X:
+                self.emitter.emit(DEX())
+            elif dest == REG_Y:
+                self.emitter.emit(DEY())
+            else:
+                self.emitter.emit(DEC(Absolute(self.labels[dest.name])))
         elif opcode == 'cmp':
             raise NotImplementedError
         elif opcode == 'and':

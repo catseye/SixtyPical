@@ -95,3 +95,9 @@ class Emitter(object):
 
     def resolve_label(self, label):
         label.set_addr(self.addr)
+
+    def resolve_bss_label(self, label):
+        """Set the given label to be at the current address and
+        advance the address for the next label, but don't emit anything."""
+        self.resolve_label(label)
+        self.addr += label.size()

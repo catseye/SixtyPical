@@ -63,3 +63,16 @@ Call defined routine.
     |     call foo
     | }
     = 00c02004c060a900a200a00060
+
+Access a defined memory location.
+
+    | byte foo
+    | 
+    | routine main
+    |   trashes a, y, z, n, foo
+    | {
+    |     ld y, 0
+    |     st y, foo
+    |     ld a, foo
+    | }
+    = 00c0a0008c09c0ad09c060

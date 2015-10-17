@@ -1,4 +1,4 @@
-routine add_four
+routine main
   inputs a
   outputs a
   trashes c, z, n, v
