@@ -34,18 +34,28 @@ TODO
 For 0.3:
 
 *   extern routines.
-*   generate 6502 code (either Ophis assembler or machine code `PRG` files.)
+*   generate 6502 code for all SixtyPical instructions.
+*   a little demo that actually compiles and does something on a C64 emulator.
+
+For 0.4:
+
 *   `while` loops.
-*   a little demo that actually compiles and runs on a C64 emulator.
 
-For 0.4 and/or beyond:
+For 0.5:
 
-*   explicitly-addressed memory locations
-*   `repeat` loops.
 *   add line number (or at least routine name) to error messages.
 *   hexadecimal literals.
-*   `word` type.
-*   `table` type constructor and indirect addressing.
 *   `if not`.
 *   6502-mnemonic aliases (`sec`, `clc`)
 *   other handy aliases (`eq` for `z`, etc.)
+*   source code comments.
+
+For 0.6:
+
+*   `repeat` loops.
+*   `word` type.
+*   `table` type constructor and indirect addressing.
+
+For 0.7:
+
+*   explicitly-addressed memory locations
