@@ -8,8 +8,11 @@ from sixtypical.model import (
 from sixtypical.emitter import Label, Byte
 from sixtypical.gen6502 import (
     Immediate, Absolute,
-    LDA, LDX, LDY, STA, STX, STY, CLC, SEC, ADC, RTS, JSR,
+    LDA, LDX, LDY, STA, STX, STY,
+    CLC, SEC, ADC, SBC, ROL, ROR,
+    RTS, JSR,
     INC, INX, INY, DEC, DEX, DEY,
+    CMP, CPX, CPY, AND, ORA, EOR,
 )
 
 
@@ -128,17 +131,39 @@ class Compiler(object):
             else:
                 self.emitter.emit(DEC(Absolute(self.labels[dest.name])))
         elif opcode == 'cmp':
-            raise NotImplementedError
-        elif opcode == 'and':
-            raise NotImplementedError
-        elif opcode == 'or':
-            raise NotImplementedError
-        elif opcode == 'xor':
-            raise NotImplementedError
-        elif opcode == 'shl':
-            raise NotImplementedError
-        elif opcode == 'shr':
-            raise NotImplementedError
+            cls = {
+                'a': CMP,
+                'x': CPX,
+                'y': CPY,
+            }.get(dest.name)
+            if cls is None:
+                raise UnsupportedOpcodeError(instr)
+            if isinstance(src, ConstantRef):
+                self.emitter.emit(cls(Immediate(Byte(src.value))))
+            else:
+                self.emitter.emit(cls(Absolute(self.labels[src.name])))
+        elif opcode in ('and', 'or', 'xor',):
+            cls = {
+                'and': AND,
+                'or':  ORA,
+                'xor': EOR,
+            }[opcode]
+            if dest == REG_A:
+                if isinstance(src, ConstantRef):
+                    self.emitter.emit(cls(Immediate(Byte(src.value))))
+                else:
+                    self.emitter.emit(cls(Absolute(self.labels[src.name])))
+            else:
+                raise UnsupportedOpcodeError(instr)
+        elif opcode in ('shl', 'shr'):
+            cls = {
+                'shl': ROL,
+                'shr': ROR,
+            }[opcode]
+            if dest == REG_A:
+                self.emitter.emit(cls())
+            else:
+                raise UnsupportedOpcodeError(instr)
         elif opcode == 'call':
             label = self.labels[instr.name]
             self.emitter.emit(JSR(Absolute(label)))

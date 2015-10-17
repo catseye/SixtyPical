@@ -76,3 +76,45 @@ Access a defined memory location.
     |     ld a, foo
     | }
     = 00c0a0008c09c0ad09c060
+
+Some instructions.
+
+    | byte foo
+    | 
+    | routine main
+    |   trashes a, x, y, z, n, c, v, foo
+    | {
+    |     ld a, 0
+    |     ld x, 0
+    |     ld y, 0
+    |     st a, foo
+    |     st x, foo
+    |     st y, foo
+    |     st on, c
+    |     st off, c
+    |     add a, 1
+    |     add a, foo
+    |     sub a, 1
+    |     sub a, foo
+    |     inc foo
+    |     inc x
+    |     inc y
+    |     dec foo
+    |     dec x
+    |     dec y
+    |     and a, 255
+    |     and a, foo
+    |     or a, 255
+    |     or a, foo
+    |     xor a, 255
+    |     xor a, foo
+    |     cmp a, 1
+    |     cmp a, foo
+    |     cmp x, 1
+    |     cmp x, foo
+    |     cmp y, 1
+    |     cmp y, foo
+    |     shl a
+    |     shr a
+    | }
+    = 00c0a900a200a0008d46c08e46c08c46c0381869016d46c0e901ed46c0ee46c0e8c8ce46c0ca8829ff2d46c009ff0d46c049ff4d46c0c901cd46c0e001ec46c0c001cc46c02a6a60

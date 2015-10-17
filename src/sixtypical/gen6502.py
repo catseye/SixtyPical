@@ -74,7 +74,7 @@ class ADC(Opcode):
     }
 
 
-class ADD(Opcode):
+class AND(Opcode):
     opcodes = {
         Immediate: 0x29,
         Absolute:  0x2d,
@@ -84,6 +84,27 @@ class ADD(Opcode):
 class CLC(Opcode):
     opcodes = {
         Implied:   0x18
+    }
+
+
+class CMP(Opcode):
+    opcodes = {
+        Immediate: 0xc9,
+        Absolute:  0xcd,
+    }
+
+
+class CPX(Opcode):
+    opcodes = {
+        Immediate: 0xe0,
+        Absolute:  0xec,
+    }
+
+
+class CPY(Opcode):
+    opcodes = {
+        Immediate: 0xc0,
+        Absolute:  0xcc,
     }
 
 
@@ -102,6 +123,13 @@ class DEX(Opcode):
 class DEY(Opcode):
     opcodes = {
         Implied:   0x88,
+    }
+
+
+class EOR(Opcode):
+    opcodes = {
+        Immediate: 0x49,
+        Absolute:  0x4d,
     }
 
 
@@ -154,6 +182,18 @@ class ORA(Opcode):
     opcodes = {
         Immediate: 0x09,
         Absolute:  0x0d,
+    }
+
+
+class ROL(Opcode):
+    opcodes = {
+        Implied:   0x2a,    # Accumulator
+    }
+
+
+class ROR(Opcode):
+    opcodes = {
+        Implied:   0x6a,    # Accumulator
     }
 
 
