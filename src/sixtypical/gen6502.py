@@ -1,4 +1,4 @@
-"""This is just a sketch for now."""
+"""Emittables for 6502 machine code."""
 
 from sixtypical.emitter import Emittable, Byte, Word, Label
 
@@ -40,7 +40,7 @@ class Immediate(AddressingMode):
 
 class Absolute(AddressingMode):
     def __init__(self, value):
-        assert isinstance(value, (Word, Label))
+        assert isinstance(value, Label)
         self.value = value
 
     def size(self):
@@ -48,6 +48,14 @@ class Absolute(AddressingMode):
 
     def serialize(self, addr):
         return self.value.serialize(addr)
+
+
+class AbsoluteX(Absolute):
+    pass
+
+
+class AbsoluteY(Absolute):
+    pass
 
 
 class Relative(AddressingMode):
@@ -83,6 +91,8 @@ class ADC(Opcode):
     opcodes = {
         Immediate: 0x69,
         Absolute:  0x6d,
+        AbsoluteX: 0x7d,
+        AbsoluteY: 0x79,
     }
 
 
@@ -90,6 +100,8 @@ class AND(Opcode):
     opcodes = {
         Immediate: 0x29,
         Absolute:  0x2d,
+        AbsoluteX: 0x3d,
+        AbsoluteY: 0x39,
     }
 
 
@@ -127,6 +139,8 @@ class CMP(Opcode):
     opcodes = {
         Immediate: 0xc9,
         Absolute:  0xcd,
+        AbsoluteX: 0xdd,
+        AbsoluteY: 0xd9,
     }
 
 
@@ -166,12 +180,15 @@ class EOR(Opcode):
     opcodes = {
         Immediate: 0x49,
         Absolute:  0x4d,
+        AbsoluteX: 0x5d,
+        AbsoluteY: 0x59,
     }
 
 
 class INC(Opcode):
     opcodes = {
         Absolute:  0xee,
+        AbsoluteX: 0xfe,
     }
 
 
@@ -203,6 +220,8 @@ class LDA(Opcode):
     opcodes = {
         Immediate: 0xa9,
         Absolute:  0xad,
+        AbsoluteX: 0xbd,
+        AbsoluteY: 0xb9,
     }
 
 
@@ -210,6 +229,7 @@ class LDX(Opcode):
     opcodes = {
         Immediate: 0xa2,
         Absolute:  0xae,
+        AbsoluteY: 0xbe,
     }
 
 
@@ -217,6 +237,7 @@ class LDY(Opcode):
     opcodes = {
         Immediate: 0xa0,
         Absolute:  0xac,
+        AbsoluteX: 0xbc,
     }
 
 
@@ -224,18 +245,24 @@ class ORA(Opcode):
     opcodes = {
         Immediate: 0x09,
         Absolute:  0x0d,
+        AbsoluteX: 0x1d,
+        AbsoluteY: 0x19,
     }
 
 
 class ROL(Opcode):
     opcodes = {
         Implied:   0x2a,    # Accumulator
+        Absolute:  0x2e,
+        AbsoluteX: 0x3e,
     }
 
 
 class ROR(Opcode):
     opcodes = {
         Implied:   0x6a,    # Accumulator
+        Absolute:  0x6e,
+        AbsoluteX: 0x7e,
     }
 
 
@@ -249,6 +276,8 @@ class SBC(Opcode):
     opcodes = {
         Immediate: 0xe9,
         Absolute:  0xed,
+        AbsoluteX: 0xfd,
+        AbsoluteY: 0xf9,
     }
 
 
@@ -261,6 +290,8 @@ class SEC(Opcode):
 class STA(Opcode):
     opcodes = {
         Absolute:  0x8d,
+        AbsoluteX: 0x9d,
+        AbsoluteY: 0x99,
     }
 
 
