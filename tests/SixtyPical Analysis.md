@@ -195,6 +195,116 @@ Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
     | }
     ? IllegalWriteError: lives
 
+Storing to a table, you must use an index, and vice-versa.
+
+    | byte one
+    | byte table many
+    | 
+    | routine main
+    |   outputs one
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st a, one
+    | }
+    = ok
+
+    | byte one
+    | byte table many
+    | 
+    | routine main
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st a, many
+    | }
+    ? TypeMismatchError
+
+    | byte one
+    | byte table many
+    | 
+    | routine main
+    |   outputs one
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st a, one + x
+    | }
+    ? TypeMismatchError
+
+    | byte one
+    | byte table many
+    | 
+    | routine main
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st a, many + x
+    | }
+    = ok
+
+Reading from a table, you must use an index, and vice-versa.
+
+    | byte one
+    | byte table many
+    | 
+    | routine main
+    |   outputs one
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     st x, one
+    |     ld a, one
+    | }
+    = ok
+
+    | byte one
+    | byte table many
+    | 
+    | routine main
+    |   outputs one
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     st x, one
+    |     ld a, one + x
+    | }
+    ? TypeMismatchError
+
+    | byte one
+    | byte table many
+    | 
+    | routine main
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st a, many + x
+    |     ld a, many
+    | }
+    ? TypeMismatchError
+
+    | byte one
+    | byte table many
+    | 
+    | routine main
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st a, many + x
+    |     ld a, many + x
+    | }
+    = ok
+
 ### add ###
 
 Can't `add` from or to a memory location that isn't initialized.

@@ -2,6 +2,7 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
+    TYPE_BYTE, TYPE_BYTE_TABLE,
     ConstantRef, LocationRef, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
@@ -31,6 +32,10 @@ class IllegalWriteError(StaticAnalysisError):
 
 
 class UsageClashError(StaticAnalysisError):
+    pass
+
+
+class TypeMismatchError(StaticAnalysisError):
     pass
 
 
@@ -137,10 +142,24 @@ def analyze_instr(instr, context, routines):
     src = instr.src
 
     if opcode == 'ld':
+        if instr.index:
+            if src.type == TYPE_BYTE_TABLE and dest.type == TYPE_BYTE:
+                pass
+            else:
+                raise TypeMismatchError((src, dest))
+        elif src.type != dest.type:
+            raise TypeMismatchError((src, dest))
         context.assert_initialized(src)
         context.assert_writeable(dest, FLAG_Z, FLAG_N)
         context.set_initialized(dest, FLAG_Z, FLAG_N)
     elif opcode == 'st':
+        if instr.index:
+            if src.type == TYPE_BYTE and dest.type == TYPE_BYTE_TABLE:
+                pass
+            else:
+                raise TypeMismatchError((src, dest))
+        elif src.type != dest.type:
+            raise TypeMismatchError((src, dest))
         context.assert_initialized(src)
         context.assert_writeable(dest)
         context.set_initialized(dest)
