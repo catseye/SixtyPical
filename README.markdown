@@ -13,8 +13,8 @@ and suchlike.
 
 It is a **work in progress**, currently at the **proof-of-concept** stage.
 
-The current released version of SixtyPical is 0.3.  The current development
-version of SixtyPical, unreleased as of this writing, is 0.4-PRE.
+The current released version of SixtyPical is 0.4.  The current development
+version of SixtyPical, unreleased as of this writing, is 0.5-PRE.
 
 Documentation
 -------------

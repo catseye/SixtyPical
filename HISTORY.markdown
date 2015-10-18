@@ -1,10 +1,19 @@
 History of SixtyPical
 =====================
 
-0.1
+0.4
 ---
 
-Initial inspired-but-messy version implemented in Haskell.
+*   Added `repeat` loops to the language, which can repeat until a flag
+    is set (or `not` set), or which can repeat `forever`.
+*   `if not` inverts the sense of the test.
+*   Added explicitly-addressed memory locations.
+
+0.3
+---
+
+*   Added external routine declarations.
+*   Added ability to compile to 6502 machine code and output a `PRG` file.
 
 0.2
 ---
@@ -14,16 +23,7 @@ rewritten in Python.  The language was much simplified.  The aim was to get the
 analysis completely right before adding more sophisticated and useful features
 in future versions.
 
-0.3
+0.1
 ---
 
-*   Added external routine declarations.
-*   Added ability to compile to 6502 machine code and output a `PRG` file.
-
-0.4
----
-
-*   Added `repeat` loops to the language, which can repeat until a flag
-    is set (or `not` set), or which can repeat `forever`.
-*   `if not` inverts the sense of the test.
-*   Added explicitly-addressed memory locations.
+Initial inspired-but-messy version implemented in Haskell.
