@@ -232,5 +232,7 @@ def analyze_instr(instr, context, routines):
         context.set_written(dest)
         context.set_touched(REG_A, FLAG_Z, FLAG_N)
         context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
+    elif opcode == 'with-sei':
+        analyze_block(instr.block, context, routines)
     else:
         raise NotImplementedError(opcode)

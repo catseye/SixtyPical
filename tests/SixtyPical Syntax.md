@@ -205,6 +205,8 @@ Declaring a vector.
     |     ld a, 0
     | }
     | routine main {
-    |     copy foo, cinv
+    |     with interrupts off {
+    |         copy foo, cinv
+    |     }
     | }
     = ok

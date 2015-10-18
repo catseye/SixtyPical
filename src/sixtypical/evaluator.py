@@ -160,5 +160,7 @@ def eval_instr(instr, context, routines):
         context.set(REG_A, 0)
         context.set(FLAG_Z, 0)
         context.set(FLAG_N, 0)
+    elif opcode == 'with-sei':
+        eval_block(instr.block)
     else:
         raise NotImplementedError

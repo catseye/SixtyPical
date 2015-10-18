@@ -16,6 +16,7 @@ from sixtypical.gen6502 import (
     CMP, CPX, CPY, AND, ORA, EOR,
     BCC, BCS, BNE, BEQ,
     JMP, JSR, RTS,
+    SEI, CLI,
 )
 
 
@@ -236,5 +237,9 @@ class Compiler(object):
                 if cls is None:
                     raise UnsupportedOpcodeError(instr)
                 self.emitter.emit(cls(Relative(top_label)))
+        elif opcode == 'with-sei':
+            self.emitter.emit(SEI())
+            self.compile_block(instr.block)
+            self.emitter.emit(CLI())
         else:
             raise NotImplementedError

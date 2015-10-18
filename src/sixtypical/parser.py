@@ -257,5 +257,10 @@ class Parser(object):
             self.scanner.expect(',')
             dest = self.locexpr()
             return Instr(opcode=opcode, dest=dest, src=src)
+        elif self.scanner.consume("with"):
+            self.scanner.expect("interrupts")
+            self.scanner.expect("off")
+            block = self.block()
+            return Instr(opcode='with-sei', dest=None, src=None, block=block)
         else:
             raise ValueError('bad opcode "%s"' % self.scanner.token)

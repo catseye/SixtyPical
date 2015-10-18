@@ -135,6 +135,12 @@ class CLC(Opcode):
     }
 
 
+class CLI(Opcode):
+    opcodes = {
+        Implied:   0x58,
+    }
+
+
 class CMP(Opcode):
     opcodes = {
         Immediate: 0xc9,
@@ -284,6 +290,12 @@ class SBC(Opcode):
 class SEC(Opcode):
     opcodes = {
         Implied:   0x38,
+    }
+
+
+class SEI(Opcode):
+    opcodes = {
+        Implied:   0x78,
     }
 
 
