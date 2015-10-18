@@ -61,7 +61,7 @@ Add honours carry.
     = z: 1
 
     | routine main {
-    |     ld a, 255
+    |     ld a, $ff
     |     st off, c
     |     add a, 1
     |   }

@@ -19,7 +19,15 @@ Rudimentary program.
     | }
     = ok
 
-Syntax error
+Hex literals.
+
+    | routine main {
+    |     ld a, $ff
+    |     add a, $01
+    | }
+    = ok
+
+Syntax error.
 
     | routine foo (
     |     ld a, 0
@@ -27,7 +35,7 @@ Syntax error
     | )
     ? SyntaxError
 
-Another syntax error
+Another syntax error.
 
     | byte glee
     | {

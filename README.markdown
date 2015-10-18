@@ -33,7 +33,6 @@ TODO
 
 For 0.5:
 
-*   hexadecimal literals.
 *   source code comments.
 
 For 0.6:
