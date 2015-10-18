@@ -34,8 +34,6 @@ TODO
 For 0.4:
 
 *   `if not`.
-*   `while` loops.
-*   `repeat` loops.
 *   explicitly-addressed memory locations
 
 For 0.5:

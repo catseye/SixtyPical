@@ -18,3 +18,8 @@ in future versions.
 ---
 
 Added ability to compile to 6502 machine code and output a `PRG` file.
+
+0.4
+---
+
+Added `repeat` loops to the language.

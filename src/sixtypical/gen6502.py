@@ -99,6 +99,18 @@ class BCC(Opcode):
     }
 
 
+class BCS(Opcode):
+    opcodes = {
+        Relative:  0xb0,
+    }
+
+
+class BEQ(Opcode):
+    opcodes = {
+        Relative:  0xf0,
+    }
+
+
 class BNE(Opcode):
     opcodes = {
         Relative:  0xd0,

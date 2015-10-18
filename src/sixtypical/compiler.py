@@ -9,10 +9,11 @@ from sixtypical.emitter import Label, Byte
 from sixtypical.gen6502 import (
     Immediate, Absolute, Relative,
     LDA, LDX, LDY, STA, STX, STY,
+    TAX, TAY, TXA, TYA,
     CLC, SEC, ADC, SBC, ROL, ROR,
     INC, INX, INY, DEC, DEX, DEY,
     CMP, CPX, CPY, AND, ORA, EOR,
-    BCC, BNE,
+    BCC, BCS, BNE, BEQ,
     JMP, JSR, RTS,
 )
 
@@ -70,17 +71,25 @@ class Compiler(object):
     
         if opcode == 'ld':
             if dest == REG_A:
-                if isinstance(src, ConstantRef):
+                if src == REG_X:
+                    self.emitter.emit(TXA())
+                elif src == REG_Y:
+                    self.emitter.emit(TYA())
+                elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDA(Immediate(Byte(src.value))))
                 else:
                     self.emitter.emit(LDA(Absolute(self.labels[src.name])))
             elif dest == REG_X:
-                if isinstance(src, ConstantRef):
+                if src == REG_A:
+                    self.emitter.emit(TAX())
+                elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDX(Immediate(Byte(src.value))))
                 else:
                     self.emitter.emit(LDX(Absolute(self.labels[src.name])))
             elif dest == REG_Y:
-                if isinstance(src, ConstantRef):
+                if src == REG_A:
+                    self.emitter.emit(TAY())
+                elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDY(Immediate(Byte(src.value))))
                 else:
                     self.emitter.emit(LDY(Absolute(self.labels[src.name])))
@@ -184,5 +193,15 @@ class Compiler(object):
                 self.emitter.resolve_label(end_label)
             else:
                 self.emitter.resolve_label(else_label)
+        elif opcode == 'repeat':
+            cls = {
+                'c': BCC,
+                'z': BNE,
+            }.get(src.name)
+            if cls is None:
+                raise UnsupportedOpcodeError(instr)
+            top_label = self.emitter.make_label()
+            self.compile_block(instr.block)
+            self.emitter.emit(cls(Relative(top_label)))
         else:
             raise NotImplementedError

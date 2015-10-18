@@ -74,7 +74,8 @@ if __name__ == '__main__':
 
             # we are outputting a .PRG, so we output the load address first
             # we don't use the Emitter for this b/c not part of addr space
-            fh.write(Word(start_addr).serialize(0))
+            if not options.debug:
+                fh.write(Word(start_addr).serialize(0))
 
             emitter = Emitter(start_addr)
             for byte in prelude:

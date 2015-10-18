@@ -1,0 +1,16 @@
+routine chrout
+  inputs a
+  trashes a
+  @ 65490
+
+routine main
+  trashes a, y, z, n, c
+{
+    ld y, 65
+    repeat {
+        ld a, y
+        call chrout
+        inc y
+        cmp y, 91
+    } until z
+}

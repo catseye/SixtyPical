@@ -144,3 +144,17 @@ Compiling `if` without `else`.
     |     }
     | }
     = 00c0a900d002a00160
+
+Compiling `repeat`.
+
+    | routine main
+    |   trashes a, y, z, n, c
+    | {
+    |     ld y, 65
+    |     repeat {
+    |         ld a, y
+    |         inc y
+    |         cmp y, 91
+    |     } until z
+    | }
+    = 00c0a04198c8c05bd0fa60
