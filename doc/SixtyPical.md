@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.5-PRE,
+This document describes the SixtyPical programming language version 0.5,
 both its execution aspect and its static analysis aspect (even though
 these are, technically speaking, separate concepts.)
 
@@ -14,10 +14,11 @@ the language.
 Types
 -----
 
-There are two TYPES in SixtyPical:
+There are three TYPES in SixtyPical:
 
 *   bit (2 possible values)
 *   byte (256 possible values)
+*   byte table (256 entries, each holding a byte)
 
 Memory locations
 ----------------
@@ -121,7 +122,7 @@ Instructions
 
 ### ld ###
 
-    ld <dest-memory-location>, <src-memory-location>
+    ld <dest-memory-location>, <src-memory-location> [+ <index-memory-location>]
 
 Reads from src and writes to dest.
 
@@ -135,12 +136,14 @@ After execution, dest is considered initialized.  The flags `z` and `n` may be
 changed by this instruction; they must be named in the WRITES lists, and they
 are considered initialized after it has executed.
 
+If and only if src is a byte table, the index-memory-location must be given.
+
 Some combinations, such as `ld x, y`, are illegal because they do not map to
 underlying opcodes.
 
 ### st ###
 
-    st <src-memory-location>, <dest-memory-location>
+    st <src-memory-location>, <dest-memory-location> [+ <index-memory-location>]
 
 Reads from src and writes to dest.
 
@@ -152,6 +155,8 @@ Reads from src and writes to dest.
 
 After execution, dest is considered initialized.  No flags are
 changed by this instruction (unless of course dest is a flag.)
+
+If and only if dest is a byte table, the index-memory-location must be given.
 
 ### add dest, src ###
 

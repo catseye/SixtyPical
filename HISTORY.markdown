@@ -1,8 +1,8 @@
 History of SixtyPical
 =====================
 
-0.5-PRE
--------
+0.5
+---
 
 *   Added `byte table` type locations and indexed addressing (`+ x`, `+ y`).
 *   Integer literals may be given in hexadecimal.
