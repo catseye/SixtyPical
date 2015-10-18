@@ -98,13 +98,19 @@ class Parser(object):
                 raise KeyError(name)
             self.symbols[name] = routine
             routines.append(routine)
+        self.scanner.check_type('EOF')
         return Program(defns=defns, routines=routines)
 
     def defn(self):
         self.scanner.expect('byte')
         name = self.scanner.token
         self.scanner.scan()
-        return Defn(name=name)
+        addr = None
+        if self.scanner.consume('@'):
+            self.scanner.check_type('integer literal')
+            addr = int(self.scanner.token)
+            self.scanner.scan()            
+        return Defn(name=name, addr=addr)
 
     def routine(self):
         self.scanner.expect('routine')

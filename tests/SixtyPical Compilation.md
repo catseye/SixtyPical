@@ -77,6 +77,16 @@ Access a defined memory location.
     | }
     = 00c0a0008c09c0ad09c060
 
+    | byte screen @ 1024
+    | 
+    | routine main
+    |   trashes a, z, n, screen
+    | {
+    |   ld a, 100
+    |   st a, screen
+    | }
+    = 00c0a9648d000460
+
 Some instructions.
 
     | byte foo

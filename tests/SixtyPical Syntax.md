@@ -27,6 +27,15 @@ Syntax error
     | )
     ? SyntaxError
 
+Another syntax error
+
+    | byte glee
+    | {
+    |     ld a, 0
+    |     add a, 1
+    | }
+    ? SyntaxError
+
 Extern routines
 
     | routine chrout
@@ -90,5 +99,15 @@ Repeat with not
     |     repeat {
     |         inc y
     |     } until not z
+    | }
+    = ok
+
+Extern memory locations
+
+    | byte screen @ 1024
+    | 
+    | routine main {
+    |   ld a, 100
+    |   st a, screen
     | }
     = ok

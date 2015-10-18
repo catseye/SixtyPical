@@ -1,0 +1,8 @@
+byte screen @ 1024
+
+routine main
+  trashes a, z, n, screen
+{
+  ld a, 100
+  st a, screen
+}

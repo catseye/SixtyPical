@@ -31,19 +31,25 @@ Documentation
 TODO
 ----
 
-For 0.4:
-
-*   explicitly-addressed memory locations
-
 For 0.5:
 
-*   add line number (or at least routine name) to error messages.
-*   hexadecimal literals.
-*   6502-mnemonic aliases (`sec`, `clc`)
-*   other handy aliases (`eq` for `z`, etc.)
-*   source code comments.
+*   `table` type constructor and indirect addressing.
 
 For 0.6:
 
+*   hexadecimal literals.
+*   source code comments.
+
+For 0.7:
+
 *   `word` type.
-*   `table` type constructor and indirect addressing.
+
+For 0.8:
+
+*   `vector` type.
+
+For 0.9:
+
+*   add line number (or at least routine name) to error messages.
+*   6502-mnemonic aliases (`sec`, `clc`)
+*   other handy aliases (`eq` for `z`, etc.)

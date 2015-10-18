@@ -33,6 +33,8 @@ class Compiler(object):
 
         for defn in program.defns:
             label = Label(defn.name)
+            if defn.addr is not None:
+                label.set_addr(defn.addr)
             self.labels[defn.name] = label
 
         for routine in program.routines:
@@ -48,8 +50,9 @@ class Compiler(object):
                 self.compile_routine(routine)
 
         for defn in program.defns:
-            label = self.labels[defn.name]
-            self.emitter.resolve_bss_label(label)
+            if defn.addr is None:
+                label = self.labels[defn.name]
+                self.emitter.resolve_bss_label(label)
 
     def compile_routine(self, routine):
         assert isinstance(routine, Routine)

@@ -26,3 +26,4 @@ in future versions.
 *   Added `repeat` loops to the language, which can repeat until a flag
     is set (or `not` set), or which can repeat `forever`.
 *   `if not` inverts the sense of the test.
+*   Added explicitly-addressed memory locations.

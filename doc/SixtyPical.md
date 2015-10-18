@@ -75,6 +75,10 @@ by giving the type, which must be `byte`, and the name.
 
     byte pos
 
+A location in memory may be given explicitly on a user-defined memory location.
+
+    byte screen @ 1024
+
 Routines
 --------
 
