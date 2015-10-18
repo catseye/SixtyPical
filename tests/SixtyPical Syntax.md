@@ -196,3 +196,15 @@ Declaring a byte table memory location.
     |     st a, tab + y
     | }
     = ok
+
+Declaring a vector.
+
+    | vector cinv
+    | 
+    | routine foo {
+    |     ld a, 0
+    | }
+    | routine main {
+    |     copy foo, cinv
+    | }
+    = ok

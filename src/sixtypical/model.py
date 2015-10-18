@@ -17,6 +17,8 @@ class Type(object):
 TYPE_BIT = Type('bit')
 TYPE_BYTE = Type('byte')
 TYPE_BYTE_TABLE = Type('byte table')
+TYPE_ROUTINE = Type('routine')
+TYPE_VECTOR = Type('vector')      # the mem loc contains an address of a routine
 
 
 class Ref(object):

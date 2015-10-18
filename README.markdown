@@ -51,3 +51,4 @@ At some point...
 *   6502-mnemonic aliases (`sec`, `clc`)
 *   other handy aliases (`eq` for `z`, etc.)
 *   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
+*   check and disallow recursion.

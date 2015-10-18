@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.5,
+This document describes the SixtyPical programming language version 0.6-PRE,
 both its execution aspect and its static analysis aspect (even though
 these are, technically speaking, separate concepts.)
 
@@ -14,11 +14,13 @@ the language.
 Types
 -----
 
-There are three TYPES in SixtyPical:
+There are five TYPES in SixtyPical:
 
 *   bit (2 possible values)
 *   byte (256 possible values)
 *   byte table (256 entries, each holding a byte)
+*   routine (code stored somewhere in memory, read-only)
+*   vector (address of a routine)
 
 Memory locations
 ----------------
@@ -72,13 +74,14 @@ and two-hundred and fifty-six byte constants,
 ### User-defined ###
 
 There may be any number of user-defined memory locations.  They are defined
-by giving the type, which must be `byte`, and the name.
+by giving the type, which must be `byte`, `byte table`, or `vector`, and the
+name.
 
     byte pos
 
 A location in memory may be given explicitly on a user-defined memory location.
 
-    byte screen @ 1024
+    byte table screen @ 1024
 
 Routines
 --------
@@ -326,6 +329,23 @@ To simulate a "while" loop, use an `if` internal to the block, like
 
 "until" is optional, but if omitted, must be replaced with "forever".
 
+### copy ###
+
+    copy <src-memory-location>, <dest-memory-location>
+
+Reads from src and writes to dest.  Differs from `st` in that is able to
+copy more general types of data (for example, vectors,) and it sets the
+`z` and `n` flags and trashes the `a` register.
+
+*   It is illegal if dest is read-only.
+*   It is illegal if dest does not occur in the WRITES lists of the current
+    routine.
+*   It is illegal if src is not of same type as dest.
+*   It is illegal if src is uninitialized.
+
+After execution, dest is considered initialized, as are `z` and `n`, while
+`a` is considered uninitialized.
+
 Grammar
 -------
 
@@ -356,4 +376,5 @@ Grammar
               | "call" RoutineIdent
               | "if" ["not"] LocExpr Block ["else" Block]
               | "repeat" Block ("until" ["not"] LocExpr | "forever")
+              | "copy" LocExpr "," LocExpr ["+" LocExpr]
               .

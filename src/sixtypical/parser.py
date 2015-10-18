@@ -4,7 +4,7 @@ import re
 
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE,
+    TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_ROUTINE, TYPE_VECTOR,
     LocationRef, ConstantRef
 )
 
@@ -103,7 +103,7 @@ class Parser(object):
     def program(self):
         defns = []
         routines = []
-        while self.scanner.on('byte'):
+        while self.scanner.on('byte') or self.scanner.on('vector'):
             defn = self.defn()
             name = defn.name
             if name in self.symbols:
@@ -115,16 +115,20 @@ class Parser(object):
             name = routine.name
             if name in self.symbols:
                 raise SyntaxError(name)
-            self.symbols[name] = SymEntry(routine, None)
+            self.symbols[name] = SymEntry(routine, LocationRef(TYPE_ROUTINE, name))
             routines.append(routine)
         self.scanner.check_type('EOF')
         return Program(defns=defns, routines=routines)
 
     def defn(self):
         type = TYPE_BYTE
-        self.scanner.expect('byte')
-        if self.scanner.consume('table'):
-            type = TYPE_BYTE_TABLE
+        if self.scanner.consume('byte'):
+            type = TYPE_BYTE
+            if self.scanner.consume('table'):
+                type = TYPE_BYTE_TABLE
+        else:
+            self.scanner.expect('vector')
+            type = TYPE_VECTOR
         self.scanner.check_type('identifier')
         name = self.scanner.token
         self.scanner.scan()
@@ -246,5 +250,12 @@ class Parser(object):
             self.scanner.scan()
             # TODO: check that is has been defined
             return Instr(opcode=opcode, name=name, dest=None, src=None)
+        elif self.scanner.token in ("copy",):
+            opcode = self.scanner.token
+            self.scanner.scan()
+            src = self.locexpr()
+            self.scanner.expect(',')
+            dest = self.locexpr()
+            return Instr(opcode=opcode, dest=dest, src=src)
         else:
             raise ValueError('bad opcode "%s"' % self.scanner.token)
