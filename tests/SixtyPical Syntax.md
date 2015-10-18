@@ -166,3 +166,15 @@ Can't define two routines with the same name.
     |     ld y, 1
     | }
     ? SyntaxError
+
+Declaring a byte table memory location.
+
+    | byte table tab
+    | 
+    | routine main {
+    |     ld x, 0
+    |     ld y, 0
+    |     ld a, tab + x
+    |     st a, tab + y
+    | }
+    = ok

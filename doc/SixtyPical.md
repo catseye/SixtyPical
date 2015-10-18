@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.4,
+This document describes the SixtyPical programming language version 0.5-PRE,
 both its execution aspect and its static analysis aspect (even though
 these are, technically speaking, separate concepts.)
 
@@ -325,7 +325,7 @@ Grammar
 -------
 
     Program ::= {Defn} {Routine}.
-    Defn    ::= "byte" NewIdent.
+    Defn    ::= "byte" ["table"] NewIdent ["@" WordConst].
     Routine ::= "routine" NewIdent
                 ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs]
                 (Block | "@" WordConst).
@@ -336,8 +336,8 @@ Grammar
     LitByte ::= "0" ... "255".
     LitWord ::= "0" ... "65535".
     Block   ::= "{" {Instr} "}".
-    Instr   ::= "ld" LocExpr "," LocExpr
-              | "st" LocExpr "," LocExpr
+    Instr   ::= "ld" LocExpr "," LocExpr ["+" LocExpr]
+              | "st" LocExpr "," LocExpr ["+" LocExpr]
               | "add" LocExpr "," LocExpr
               | "sub" LocExpr "," LocExpr
               | "cmp" LocExpr "," LocExpr

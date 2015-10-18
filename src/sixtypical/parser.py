@@ -4,7 +4,8 @@ import re
 
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BIT, TYPE_BYTE, LocationRef, ConstantRef
+    TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE,
+    LocationRef, ConstantRef
 )
 
 
@@ -32,7 +33,7 @@ class Scanner(object):
             self.token = None
             self.type = 'EOF'
             return
-        if self.scan_pattern(r'\,|\@|\{|\}', 'operator'):
+        if self.scan_pattern(r'\,|\@|\+|\{|\}', 'operator'):
             return
         if self.scan_pattern(r'\d+', 'integer literal'):
             return
@@ -99,8 +100,8 @@ class Parser(object):
             defn = self.defn()
             name = defn.name
             if name in self.symbols:
-                raise SyntaxError(name)
-            self.symbols[name] = SymEntry(defn, LocationRef(TYPE_BYTE, name))
+                raise SyntaxError('Symbol "%s" already declared' % name)
+            self.symbols[name] = SymEntry(defn, LocationRef(defn.type, name))
             defns.append(defn)
         while self.scanner.on('routine'):
             routine = self.routine()
@@ -113,7 +114,11 @@ class Parser(object):
         return Program(defns=defns, routines=routines)
 
     def defn(self):
+        type = TYPE_BYTE
         self.scanner.expect('byte')
+        if self.scanner.consume('table'):
+            type = TYPE_BYTE_TABLE
+        self.scanner.check_type('identifier')
         name = self.scanner.token
         self.scanner.scan()
         addr = None
@@ -121,7 +126,7 @@ class Parser(object):
             self.scanner.check_type('integer literal')
             addr = int(self.scanner.token)
             self.scanner.scan()            
-        return Defn(name=name, addr=addr)
+        return Defn(name=name, type=type, addr=addr)
 
     def routine(self):
         self.scanner.expect('routine')
@@ -208,14 +213,20 @@ class Parser(object):
             dest = self.locexpr()
             self.scanner.expect(',')
             src = self.locexpr()
-            return Instr(opcode=opcode, dest=dest, src=src)
+            index = None
+            if self.scanner.consume('+'):
+                index = self.locexpr()
+            return Instr(opcode=opcode, dest=dest, src=src, index=index)
         elif self.scanner.token in ("st",):
             opcode = self.scanner.token
             self.scanner.scan()
             src = self.locexpr()
             self.scanner.expect(',')
             dest = self.locexpr()
-            return Instr(opcode=opcode, dest=dest, src=src)
+            index = None
+            if self.scanner.consume('+'):
+                index = self.locexpr()
+            return Instr(opcode=opcode, dest=dest, src=src, index=index)
         elif self.scanner.token in ("shl", "shr", "inc", "dec"):
             opcode = self.scanner.token
             self.scanner.scan()
@@ -229,4 +240,4 @@ class Parser(object):
             # TODO: check that is has been defined
             return Instr(opcode=opcode, name=name, dest=None, src=None)
         else:
-            raise ValueError('bad opcode')
+            raise ValueError('bad opcode "%s"' % self.scanner.token)
