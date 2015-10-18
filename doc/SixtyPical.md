@@ -334,8 +334,8 @@ To simulate a "while" loop, use an `if` internal to the block, like
     copy <src-memory-location>, <dest-memory-location>
 
 Reads from src and writes to dest.  Differs from `st` in that is able to
-copy more general types of data (for example, vectors,) and it sets the
-`z` and `n` flags and trashes the `a` register.
+copy more general types of data (for example, vectors,) and it trashes the
+`z` and `n` flags and the `a` register.
 
 *   It is illegal if dest is read-only.
 *   It is illegal if dest does not occur in the WRITES lists of the current
@@ -343,8 +343,8 @@ copy more general types of data (for example, vectors,) and it sets the
 *   It is illegal if src is not of same type as dest.
 *   It is illegal if src is uninitialized.
 
-After execution, dest is considered initialized, as are `z` and `n`, while
-`a` is considered uninitialized.
+After execution, dest is considered initialized, and `z` and `n`, and
+`a` are considered uninitialized.
 
 Grammar
 -------

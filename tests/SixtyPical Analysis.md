@@ -965,3 +965,74 @@ initialized at the start.
     |     } until z
     | }
     ? UninitializedAccessError: y
+
+### copy ###
+
+Can't `copy` from a memory location that isn't initialized.
+
+    | byte lives
+    | routine main
+    |   inputs x
+    |   outputs lives
+    |   trashes a, z, n
+    | {
+    |     copy x, lives
+    | }
+    = ok
+
+    | byte lives
+    | routine main
+    |   outputs lives
+    |   trashes x, a, z, n
+    | {
+    |     copy x, lives
+    | }
+    ? UninitializedAccessError: x
+
+Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
+
+    | byte lives
+    | routine main
+    |   trashes lives, a, z, n
+    | {
+    |     copy 0, lives
+    | }
+    = ok
+
+    | byte lives
+    | routine main
+    |   outputs lives
+    |   trashes a, z, n
+    | {
+    |     copy 0, lives
+    | }
+    = ok
+
+    | byte lives
+    | routine main
+    |   inputs lives
+    |   trashes a, z, n
+    | {
+    |     copy 0, lives
+    | }
+    ? IllegalWriteError: lives
+
+a, z, and n are trashed, and must be declared as such
+
+    | byte lives
+    | routine main
+    |   outputs lives
+    | {
+    |     copy 0, lives
+    | }
+    ? IllegalWriteError: a
+
+a, z, and n are trashed, and must not be declared as outputs.
+
+    | byte lives
+    | routine main
+    |   outputs lives, a, z, n
+    | {
+    |     copy 0, lives
+    | }
+    ? UninitializedOutputError: a

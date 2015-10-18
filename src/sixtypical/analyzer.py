@@ -2,8 +2,9 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BYTE, TYPE_BYTE_TABLE,
-    ConstantRef, LocationRef, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
+    TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_ROUTINE, TYPE_VECTOR,
+    ConstantRef, LocationRef,
+    REG_A, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
 
@@ -214,5 +215,16 @@ def analyze_instr(instr, context, routines):
         analyze_block(instr.block, context, routines)
 
         # NB I *think* that's enough... but it might not be?
+    elif opcode == 'copy':
+        if src.type == dest.type:
+            pass
+        elif src.type == TYPE_ROUTINE and dest.type == TYPE_VECTOR:
+            pass
+        else:
+            raise TypeMismatchError((src, dest))
+        context.assert_initialized(src)
+        context.assert_writeable(dest)
+        context.set_initialized(dest)
+        context.set_uninitialized(REG_A, FLAG_Z, FLAG_N)
     else:
         raise NotImplementedError(opcode)

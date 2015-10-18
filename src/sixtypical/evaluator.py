@@ -154,5 +154,11 @@ def eval_instr(instr, context, routines):
         eval_block(instr.block, context, routines)
         while context.get(src) == 0:
             eval_block(instr.block, context, routines)
+    elif opcode == 'copy':
+        context.set(dest, context.get(src))
+        # these are trashed; so could be anything really
+        context.set(REG_A, 0)
+        context.set(FLAG_Z, 0)
+        context.set(FLAG_N, 0)
     else:
         raise NotImplementedError

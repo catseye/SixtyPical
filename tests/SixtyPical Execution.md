@@ -385,3 +385,18 @@ Repeat loop.
     = x: 10
     = y: 25
     = z: 1
+
+Copy instruction.  Note that the state of a, z, and n are not defined
+after copy executes.
+
+    | routine main {
+    |     ld x, 5
+    |     copy x, y
+    | }
+    = a: 0
+    = c: 0
+    = n: 0
+    = v: 0
+    = x: 5
+    = y: 5
+    = z: 0
