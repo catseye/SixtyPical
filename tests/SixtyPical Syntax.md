@@ -111,3 +111,58 @@ Extern memory locations
     |   st a, screen
     | }
     = ok
+
+Can't access an undeclared memory location.
+
+    | routine main {
+    |     ld a, 0
+    |     st a, lives
+    | }
+    ? SyntaxError
+
+Can't define two memory locations with the same name.
+
+    | byte lives
+    | byte lives
+    | 
+    | routine main {
+    |     ld a, 0
+    |     st a, lives
+    | }
+    ? SyntaxError
+
+Can't shadow the name of a register or a flag.
+
+    | byte a
+    | 
+    | routine main {
+    | }
+    ? SyntaxError
+
+    | byte z
+    | 
+    | routine main {
+    | }
+    ? SyntaxError
+
+> Can't call routine that hasn;t been defined.
+> 
+>     | routine main {
+>     |     ld x, 0
+>     |     ld y, 1
+>     |     call up
+>     |     call up
+>     | }
+>     ? SyntaxError
+
+Can't define two routines with the same name.
+
+    | routine main {
+    |     inc x
+    |     inc y
+    | }
+    | routine main {
+    |     ld x, 0
+    |     ld y, 1
+    | }
+    ? SyntaxError

@@ -82,8 +82,14 @@ class Parser(object):
     def __init__(self, text):
         self.scanner = Scanner(text)
         self.symbols = {}  # token -> SymEntry
+        for token in ('a', 'x', 'y'):
+            self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
+        for token in ('c', 'z', 'n', 'v'):
+            self.symbols[token] = SymEntry(None, LocationRef(TYPE_BIT, token))
 
     def lookup(self, name):
+        if name not in self.symbols:
+            raise SyntaxError('Undefined symbol "%s"' % name)
         return self.symbols[name].model
 
     def program(self):
@@ -93,14 +99,14 @@ class Parser(object):
             defn = self.defn()
             name = defn.name
             if name in self.symbols:
-                raise KeyError(name)
+                raise SyntaxError(name)
             self.symbols[name] = SymEntry(defn, LocationRef(TYPE_BYTE, name))
             defns.append(defn)
         while self.scanner.on('routine'):
             routine = self.routine()
             name = routine.name
             if name in self.symbols:
-                raise KeyError(name)
+                raise SyntaxError(name)
             self.symbols[name] = SymEntry(routine, None)
             routines.append(routine)
         self.scanner.check_type('EOF')
@@ -151,15 +157,7 @@ class Parser(object):
         return accum
 
     def locexpr(self):
-        if self.scanner.token in ('a', 'x', 'y'):
-            loc = LocationRef(TYPE_BYTE, self.scanner.token)
-            self.scanner.scan()
-            return loc
-        elif self.scanner.token in ('c', 'z', 'n', 'v'):
-            loc = LocationRef(TYPE_BIT, self.scanner.token)
-            self.scanner.scan()
-            return loc
-        elif self.scanner.token in ('on', 'off'):
+        if self.scanner.token in ('on', 'off'):
             loc = ConstantRef(TYPE_BIT, 1 if self.scanner.token == 'on' else 0)
             self.scanner.scan()
             return loc
