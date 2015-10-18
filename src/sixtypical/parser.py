@@ -3,7 +3,9 @@
 import re
 
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
-from sixtypical.model import LocationRef, ConstantRef
+from sixtypical.model import (
+    TYPE_BIT, TYPE_BYTE, LocationRef, ConstantRef
+)
 
 
 class Scanner(object):
@@ -70,16 +72,19 @@ class Scanner(object):
             return False
 
 
+class SymEntry(object):
+    def __init__(self, ast_node, model):
+        self.ast_node = ast_node
+        self.model = model
+
+
 class Parser(object):
     def __init__(self, text):
         self.scanner = Scanner(text)
-        self.symbols = {}
+        self.symbols = {}  # token -> SymEntry
 
     def lookup(self, name):
-        if name in self.symbols:
-            return LocationRef(name)
-        else:
-            raise KeyError(name)
+        return self.symbols[name].model
 
     def program(self):
         defns = []
@@ -89,14 +94,14 @@ class Parser(object):
             name = defn.name
             if name in self.symbols:
                 raise KeyError(name)
-            self.symbols[name] = defn
+            self.symbols[name] = SymEntry(defn, LocationRef(TYPE_BYTE, name))
             defns.append(defn)
         while self.scanner.on('routine'):
             routine = self.routine()
             name = routine.name
             if name in self.symbols:
                 raise KeyError(name)
-            self.symbols[name] = routine
+            self.symbols[name] = SymEntry(routine, None)
             routines.append(routine)
         self.scanner.check_type('EOF')
         return Program(defns=defns, routines=routines)
@@ -146,16 +151,20 @@ class Parser(object):
         return accum
 
     def locexpr(self):
-        if self.scanner.token in ('a', 'x', 'y', 'c', 'z', 'n', 'v'):
-            loc = LocationRef(self.scanner.token)
+        if self.scanner.token in ('a', 'x', 'y'):
+            loc = LocationRef(TYPE_BYTE, self.scanner.token)
+            self.scanner.scan()
+            return loc
+        elif self.scanner.token in ('c', 'z', 'n', 'v'):
+            loc = LocationRef(TYPE_BIT, self.scanner.token)
             self.scanner.scan()
             return loc
         elif self.scanner.token in ('on', 'off'):
-            loc = ConstantRef(1 if self.scanner.token == 'on' else 0)
+            loc = ConstantRef(TYPE_BIT, 1 if self.scanner.token == 'on' else 0)
             self.scanner.scan()
             return loc
         elif self.scanner.on_type('integer literal'):
-            loc = ConstantRef(int(self.scanner.token))
+            loc = ConstantRef(TYPE_BYTE, int(self.scanner.token))
             self.scanner.scan()
             return loc
         else:

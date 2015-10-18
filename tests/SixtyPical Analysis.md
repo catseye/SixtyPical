@@ -7,7 +7,7 @@ static analysis rules.
 [Falderal]:     http://catseye.tc/node/Falderal
 
     -> Functionality "Analyze SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --analyze %(test-body-file) && echo ok"
+    -> shell command "bin/sixtypical --analyze --traceback %(test-body-file) && echo ok"
 
     -> Tests for functionality "Analyze SixtyPical program"
 

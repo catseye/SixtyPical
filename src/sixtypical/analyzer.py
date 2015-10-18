@@ -36,20 +36,20 @@ class UsageClashError(StaticAnalysisError):
 
 class Context():
     def __init__(self, inputs, outputs, trashes):
-        self._store = {}
+        self._store = {}  # Ref -> INITALIZED/UNINITIALIZED
         self._writeables = set()
 
         for ref in inputs:
-            self._store.setdefault(ref.name, INITIALIZED)
+            self._store.setdefault(ref, INITIALIZED)
         output_names = set()
         for ref in outputs:
             output_names.add(ref.name)
-            self._store.setdefault(ref.name, UNINITIALIZED)
+            self._store.setdefault(ref, UNINITIALIZED)
             self._writeables.add(ref.name)
         for ref in trashes:
             if ref.name in output_names:
                 raise UsageClashError(ref.name)
-            self._store.setdefault(ref.name, UNINITIALIZED)
+            self._store.setdefault(ref, UNINITIALIZED)
             self._writeables.add(ref.name)
 
     def clone(self):
@@ -65,7 +65,7 @@ class Context():
     def each_initialized(self):
         for key, value in self._store.iteritems():
             if value == INITIALIZED:
-                yield LocationRef(key)
+                yield key
 
     def assert_initialized(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', UninitializedAccessError)
@@ -95,15 +95,15 @@ class Context():
         if isinstance(ref, ConstantRef):
             return INITIALIZED
         elif isinstance(ref, LocationRef):
-            if ref.name not in self._store:
+            if ref not in self._store:
                 return UNINITIALIZED
-            return self._store[ref.name]
+            return self._store[ref]
         else:
             raise ValueError(ref)
 
     def set(self, ref, value):
         assert isinstance(ref, LocationRef)
-        self._store[ref.name] = value
+        self._store[ref] = value
 
 
 def analyze_program(program):

@@ -3,6 +3,7 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     ConstantRef, LocationRef,
+    TYPE_BIT,
     REG_A, REG_X, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 from sixtypical.emitter import Label, Byte
@@ -99,9 +100,9 @@ class Compiler(object):
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'st':
-            if dest == FLAG_C and src == ConstantRef(0):
+            if dest == FLAG_C and src == ConstantRef(TYPE_BIT, 0):
                 self.emitter.emit(CLC())
-            elif dest == FLAG_C and src == ConstantRef(1):
+            elif dest == FLAG_C and src == ConstantRef(TYPE_BIT, 1):
                 self.emitter.emit(SEC())
             elif src == REG_A:
                 self.emitter.emit(STA(Absolute(self.labels[dest.name])))
