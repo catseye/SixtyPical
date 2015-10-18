@@ -33,22 +33,21 @@ TODO
 
 For 0.5:
 
-*   `table` type constructor and indirect addressing.
+*   hexadecimal literals.
+*   source code comments.
 
 For 0.6:
 
-*   hexadecimal literals.
-*   source code comments.
+*   `interrupt` routines.
+*   `vector` type.
 
 For 0.7:
 
 *   `word` type.
+*   `copy` instruction.
+*   `trash` instruction.
 
 For 0.8:
-
-*   `vector` type.
-
-For 0.9:
 
 *   add line number (or at least routine name) to error messages.
 *   6502-mnemonic aliases (`sec`, `clc`)

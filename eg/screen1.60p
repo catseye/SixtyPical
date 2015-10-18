@@ -3,6 +3,6 @@ byte screen @ 1024
 routine main
   trashes a, z, n, screen
 {
-  ld a, 100
+  ld a, 83
   st a, screen
 }

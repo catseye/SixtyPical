@@ -8,7 +8,7 @@ from sixtypical.model import (
 )
 from sixtypical.emitter import Label, Byte
 from sixtypical.gen6502 import (
-    Immediate, Absolute, Relative,
+    Immediate, Absolute, AbsoluteX, AbsoluteY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
     TAX, TAY, TXA, TYA,
     CLC, SEC, ADC, SBC, ROL, ROR,
@@ -81,6 +81,10 @@ class Compiler(object):
                     self.emitter.emit(TYA())
                 elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDA(Immediate(Byte(src.value))))
+                elif instr.index == REG_X:
+                    self.emitter.emit(LDA(AbsoluteX(self.labels[src.name])))
+                elif instr.index == REG_Y:
+                    self.emitter.emit(LDA(AbsoluteY(self.labels[src.name])))
                 else:
                     self.emitter.emit(LDA(Absolute(self.labels[src.name])))
             elif dest == REG_X:
@@ -88,6 +92,8 @@ class Compiler(object):
                     self.emitter.emit(TAX())
                 elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDX(Immediate(Byte(src.value))))
+                elif instr.index == REG_Y:
+                    self.emitter.emit(LDX(AbsoluteY(self.labels[src.name])))
                 else:
                     self.emitter.emit(LDX(Absolute(self.labels[src.name])))
             elif dest == REG_Y:
@@ -95,6 +101,8 @@ class Compiler(object):
                     self.emitter.emit(TAY())
                 elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDY(Immediate(Byte(src.value))))
+                elif instr.index == REG_X:
+                    self.emitter.emit(LDY(AbsoluteX(self.labels[src.name])))
                 else:
                     self.emitter.emit(LDY(Absolute(self.labels[src.name])))
             else:
@@ -104,14 +112,20 @@ class Compiler(object):
                 self.emitter.emit(CLC())
             elif dest == FLAG_C and src == ConstantRef(TYPE_BIT, 1):
                 self.emitter.emit(SEC())
-            elif src == REG_A:
-                self.emitter.emit(STA(Absolute(self.labels[dest.name])))
-            elif src == REG_X:
-                self.emitter.emit(STX(Absolute(self.labels[dest.name])))
-            elif src == REG_Y:
-                self.emitter.emit(STY(Absolute(self.labels[dest.name])))
             else:
-                raise UnsupportedOpcodeError(instr)
+                op_cls = {
+                    REG_A: STA,
+                    REG_X: STX,
+                    REG_Y: STY
+                }.get(src, None)
+                mode_cls = {
+                    REG_X: AbsoluteX,
+                    REG_Y: AbsoluteY,
+                    None: Absolute
+                }.get(instr.index, None)
+                if op_cls is None or mode_cls is None:
+                    raise UnsupportedOpcodeError(instr)
+                self.emitter.emit(op_cls(mode_cls(self.labels[dest.name])))
         elif opcode == 'add':
             if dest == REG_A:
                 if isinstance(src, ConstantRef):

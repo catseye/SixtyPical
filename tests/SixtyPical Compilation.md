@@ -208,3 +208,19 @@ Compiling `repeat forever`.
     |     } forever
     | }
     = 00c0a041c84c02c060
+
+Indexed access.
+
+    | byte one
+    | byte table many
+    | 
+    | routine main
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st a, many + x
+    |     ld a, many + x
+    | }
+    = 00c0a200a9009d0dc0bd0dc060

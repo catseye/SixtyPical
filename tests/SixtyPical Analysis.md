@@ -252,7 +252,6 @@ Storing to a table, you must use an index, and vice-versa.
 Reading from a table, you must use an index, and vice-versa.
 
     | byte one
-    | byte table many
     | 
     | routine main
     |   outputs one
@@ -265,7 +264,6 @@ Reading from a table, you must use an index, and vice-versa.
     = ok
 
     | byte one
-    | byte table many
     | 
     | routine main
     |   outputs one
@@ -277,7 +275,6 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     ? TypeMismatchError
 
-    | byte one
     | byte table many
     | 
     | routine main
@@ -291,7 +288,6 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     ? TypeMismatchError
 
-    | byte one
     | byte table many
     | 
     | routine main

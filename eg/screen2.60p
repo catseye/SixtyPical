@@ -1,0 +1,12 @@
+byte table screen @ 1024
+
+routine main
+  trashes a, x, z, n, screen
+{
+    ld x, 0
+    ld a, 83
+    repeat {
+        st a, screen + x
+        inc x
+    } until z
+}
