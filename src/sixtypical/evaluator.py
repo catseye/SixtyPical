@@ -145,7 +145,8 @@ def eval_instr(instr, context, routines):
         eval_routine(routines[instr.name], context, routines)
     elif opcode == 'if':
         val = context.get(src)
-        if val != 0:
+        test = (val != 0) if not instr.inverted else (val == 0)
+        if test:
             eval_block(instr.block1, context, routines)
         elif instr.block2:
             eval_block(instr.block2, context, routines)

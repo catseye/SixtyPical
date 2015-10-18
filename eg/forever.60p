@@ -1,0 +1,8 @@
+routine main
+  trashes a, y, z, n, c
+{
+    ld y, 65
+    repeat {
+        inc y
+    } forever
+}

@@ -33,7 +33,6 @@ TODO
 
 For 0.4:
 
-*   `if not`.
 *   explicitly-addressed memory locations
 
 For 0.5:

@@ -185,6 +185,8 @@ class Parser(object):
                 if self.scanner.consume('not'):
                     inverted = True
                 src = self.locexpr()
+            else:
+                self.scanner.expect('forever')
             return Instr(opcode='repeat', dest=None, src=src,
                          block=block, inverted=inverted)
         elif self.scanner.token in ("ld", "add", "sub", "cmp", "and", "or", "xor"):

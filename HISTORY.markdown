@@ -17,9 +17,12 @@ in future versions.
 0.3
 ---
 
-Added ability to compile to 6502 machine code and output a `PRG` file.
+*   Added external routine declarations.
+*   Added ability to compile to 6502 machine code and output a `PRG` file.
 
 0.4
 ---
 
-Added `repeat` loops to the language.
+*   Added `repeat` loops to the language, which can repeat until a flag
+    is set (or `not` set), or which can repeat `forever`.
+*   `if not` inverts the sense of the test.

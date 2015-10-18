@@ -354,6 +354,8 @@ If.
     = y: 0
     = z: 0
 
+If without else.
+
     | routine main {
     |     ld x, 39
     |     cmp x, 40
@@ -363,6 +365,42 @@ If.
     |     ld x, 2
     |   }
     = a: 0
+    = c: 1
+    = n: 0
+    = v: 0
+    = x: 2
+    = y: 0
+    = z: 0
+
+`not` inverts the sense of the test.
+
+    | routine main {
+    |     ld x, 40
+    |     cmp x, 40
+    |     if not z {
+    |         ld a, 1
+    |     } else {
+    |         ld a, 8
+    |     }
+    |     ld x, 2
+    |   }
+    = a: 8
+    = c: 0
+    = n: 0
+    = v: 0
+    = x: 2
+    = y: 0
+    = z: 0
+
+    | routine main {
+    |     ld x, 39
+    |     cmp x, 40
+    |     if not z {
+    |         ld a, 1
+    |     }
+    |     ld x, 2
+    |   }
+    = a: 1
     = c: 1
     = n: 0
     = v: 0

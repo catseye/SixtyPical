@@ -133,6 +133,20 @@ Compiling `if`.
     | }
     = 00c0a900d005a0014c0bc0a00260
 
+Compiling `if not`.
+
+    | routine main
+    |   trashes a, x, y, z, n, c, v
+    | {
+    |     ld a, 0
+    |     if not z {
+    |         ld y, 1
+    |     } else {
+    |         ld y, 2
+    |     }
+    | }
+    = 00c0a900f005a0014c0bc0a00260
+
 Compiling `if` without `else`.
 
     | routine main
@@ -158,3 +172,29 @@ Compiling `repeat`.
     |     } until z
     | }
     = 00c0a04198c8c05bd0fa60
+
+Compiling `repeat until not`.
+
+    | routine main
+    |   trashes a, y, z, n, c
+    | {
+    |     ld y, 65
+    |     repeat {
+    |         ld a, y
+    |         inc y
+    |         cmp y, 91
+    |     } until not z
+    | }
+    = 00c0a04198c8c05bf0fa60
+
+Compiling `repeat forever`.
+
+    | routine main
+    |   trashes a, y, z, n, c
+    | {
+    |     ld y, 65
+    |     repeat {
+    |         inc y
+    |     } forever
+    | }
+    = 00c0a041c84c02c060

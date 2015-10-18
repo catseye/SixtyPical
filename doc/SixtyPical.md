@@ -315,6 +315,8 @@ To simulate a "while" loop, use an `if` internal to the block, like
         }
     } until z
 
+"until" is optional, but if omitted, must be replaced with "forever".
+
 Grammar
 -------
 
@@ -344,5 +346,5 @@ Grammar
               | "dec" LocExpr
               | "call" RoutineIdent
               | "if" ["not"] LocExpr Block ["else" Block]
-              | "repeat" Block "until" ["not"] LocExpr
+              | "repeat" Block ("until" ["not"] LocExpr | "forever")
               .

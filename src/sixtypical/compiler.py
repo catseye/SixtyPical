@@ -177,9 +177,15 @@ class Compiler(object):
             self.emitter.emit(JSR(Absolute(label)))
         elif opcode == 'if':
             cls = {
-                'c': BCC,
-                'z': BNE,
-            }.get(src.name)
+                False: {
+                    'c': BCC,
+                    'z': BNE,
+                },
+                True: {
+                    'c': BCS,
+                    'z': BEQ,
+                },
+            }[instr.inverted].get(src.name)
             if cls is None:
                 raise UnsupportedOpcodeError(instr)
             else_label = Label('else_label')
@@ -194,14 +200,23 @@ class Compiler(object):
             else:
                 self.emitter.resolve_label(else_label)
         elif opcode == 'repeat':
-            cls = {
-                'c': BCC,
-                'z': BNE,
-            }.get(src.name)
-            if cls is None:
-                raise UnsupportedOpcodeError(instr)
             top_label = self.emitter.make_label()
             self.compile_block(instr.block)
-            self.emitter.emit(cls(Relative(top_label)))
+            if src is None:
+                self.emitter.emit(JMP(Absolute(top_label)))
+            else:
+                cls = {
+                    False: {
+                        'c': BCC,
+                        'z': BNE,
+                    },
+                    True: {
+                        'c': BCS,
+                        'z': BEQ,
+                    },
+                }[instr.inverted].get(src.name)
+                if cls is None:
+                    raise UnsupportedOpcodeError(instr)
+                self.emitter.emit(cls(Relative(top_label)))
         else:
             raise NotImplementedError

@@ -71,6 +71,24 @@ Repeat loop
     |         if not z {
     |             inc y
     |         }
-    |     }
+    |     } until z
+    | }
+    = ok
+
+Repeat forever
+
+    | routine foo inputs y {
+    |     repeat {
+    |         inc y
+    |     } forever
+    | }
+    = ok
+
+Repeat with not
+
+    | routine foo inputs y {
+    |     repeat {
+    |         inc y
+    |     } until not z
     | }
     = ok
