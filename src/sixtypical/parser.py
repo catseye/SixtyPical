@@ -29,6 +29,8 @@ class Scanner(object):
 
     def scan(self):
         self.scan_pattern(r'[ \t\n\r]*', 'whitespace')
+        while self.scan_pattern(r'\/\/.*?[\n\r]', 'comment'):
+            self.scan_pattern(r'[ \t\n\r]*', 'whitespace')
         if not self.text:
             self.token = None
             self.type = 'EOF'

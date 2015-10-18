@@ -6,6 +6,7 @@ History of SixtyPical
 
 *   Added `byte table` type locations and indexed addressing (`+ x`, `+ y`).
 *   Integer literals may be given in hexadecimal.
+*   Line comments may be included in source code by prefixing them with `//`.
 
 0.4
 ---

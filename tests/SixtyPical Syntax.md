@@ -19,6 +19,16 @@ Rudimentary program.
     | }
     = ok
 
+Program with comments.
+
+    | // Welcome to my program.
+    | 
+    | routine main {
+    |     ld a, 0
+    |     add a, 1    // We are adding the thing.
+    | }
+    = ok
+
 Hex literals.
 
     | routine main {

@@ -33,8 +33,6 @@ TODO
 
 For 0.5:
 
-*   source code comments.
-
 For 0.6:
 
 *   `interrupt` routines.
