@@ -185,5 +185,15 @@ def analyze_instr(instr, context, routines):
         for ref in context2.each_initialized():
             context1.assert_initialized(ref, exception_class=InconsistentInitializationError)
         context.set_from(context1)
+    elif opcode == 'repeat':
+        # it will always be executed at least once, so analyze it having
+        # been executed the first time.
+        analyze_block(instr.block, context, routines)
+
+        # now analyze it having been executed a second time, with the context
+        # of it having already been executed.
+        analyze_block(instr.block, context, routines)
+
+        # NB I *think* that's enough... but it might not be?
     else:
         raise NotImplementedError(opcode)

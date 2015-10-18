@@ -167,12 +167,26 @@ class Parser(object):
 
     def instr(self):
         if self.scanner.consume('if'):
+            inverted = False
+            if self.scanner.consume('not'):
+                inverted = True
             src = self.locexpr()
             block1 = self.block()
             block2 = None
             if self.scanner.consume('else'):
                 block2 = self.block()
-            return Instr(opcode='if', dest=None, src=src, block1=block1, block2=block2)
+            return Instr(opcode='if', dest=None, src=src,
+                         block1=block1, block2=block2, inverted=inverted)
+        elif self.scanner.consume('repeat'):
+            inverted = False
+            src = None
+            block = self.block()
+            if self.scanner.consume('until'):
+                if self.scanner.consume('not'):
+                    inverted = True
+                src = self.locexpr()
+            return Instr(opcode='repeat', dest=None, src=src,
+                         block=block, inverted=inverted)
         elif self.scanner.token in ("ld", "add", "sub", "cmp", "and", "or", "xor"):
             opcode = self.scanner.token
             self.scanner.scan()

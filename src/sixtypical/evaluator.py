@@ -149,5 +149,9 @@ def eval_instr(instr, context, routines):
             eval_block(instr.block1, context, routines)
         elif instr.block2:
             eval_block(instr.block2, context, routines)
+    elif opcode == 'repeat':
+        eval_block(instr.block, context, routines)
+        while context.get(src) == 0:
+            eval_block(instr.block, context, routines)
     else:
         raise NotImplementedError

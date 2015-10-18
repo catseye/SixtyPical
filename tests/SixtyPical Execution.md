@@ -369,3 +369,22 @@ If.
     = x: 2
     = y: 0
     = z: 0
+
+Repeat loop.
+
+    | routine main {
+    |     ld x, 0
+    |     ld y, 15
+    |     repeat {
+    |         inc x
+    |         inc y
+    |         cmp x, 10
+    |     } until z
+    | }
+    = a: 0
+    = c: 0
+    = n: 0
+    = v: 0
+    = x: 10
+    = y: 25
+    = z: 1

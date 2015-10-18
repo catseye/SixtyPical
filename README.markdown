@@ -21,6 +21,7 @@ Documentation
 
 *   Design Goals — coming soon.
 *   [SixtyPical specification](doc/SixtyPical.md)
+*   [SixtyPical history](HISTORY.md)
 *   [Literate test suite for SixtyPical syntax](tests/SixtyPical Syntax.md)
 *   [Literate test suite for SixtyPical execution](tests/SixtyPical Execution.md)
 *   [Literate test suite for SixtyPical analysis](tests/SixtyPical Analysis.md)
@@ -32,6 +33,7 @@ TODO
 
 For 0.4:
 
+*   `if not`.
 *   `while` loops.
 *   `repeat` loops.
 *   explicitly-addressed memory locations
@@ -40,7 +42,6 @@ For 0.5:
 
 *   add line number (or at least routine name) to error messages.
 *   hexadecimal literals.
-*   `if not`.
 *   6502-mnemonic aliases (`sec`, `clc`)
 *   other handy aliases (`eq` for `z`, etc.)
 *   source code comments.

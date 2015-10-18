@@ -39,3 +39,38 @@ Extern routines
     |   trashes x
     |   @ 65487
     = ok
+
+If with not
+
+    | routine foo {
+    |     ld y, 0
+    |     cmp y, 10
+    |     if not z {
+    |         inc y
+    |         cmp y, 10
+    |     }
+    | }
+    = ok
+
+Repeat loop
+
+    | routine foo {
+    |     ld y, 0
+    |     repeat {
+    |         inc y
+    |         cmp y, 10
+    |     } until z
+    | }
+    = ok
+
+"While" loop
+
+    | routine foo inputs y {
+    |     repeat {
+    |         cmp y, 10
+    |         if not z {
+    |             inc y
+    |         }
+    |     }
+    | }
+    = ok

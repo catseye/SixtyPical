@@ -293,6 +293,28 @@ it is treated like an empty block.
 *   It is illegal if any location initialized at the end of the true-branch
     is not initialized at the end of the false-branch, and vice versa.
 
+### repeat ###
+
+    repeat {
+        <block>
+    } until <src-memory-location>
+
+Executes the block repeatedly until the src (observed at the end of the
+execution of the block) is non-zero.  The block is always executed as least
+once.
+
+*   It is illegal if any memory location is uninitialized at the exit of
+    the loop when that memory location is initialized at the start of
+    the loop.
+
+To simulate a "while" loop, use an `if` internal to the block, like
+
+    repeat {
+        cmp y, 25
+        if z {
+        }
+    } until z
+
 Grammar
 -------
 
@@ -321,4 +343,6 @@ Grammar
               | "inc" LocExpr
               | "dec" LocExpr
               | "call" RoutineIdent
-              | "if" LocExpr Block ["else" Block].
+              | "if" ["not"] LocExpr Block ["else" Block]
+              | "repeat" Block "until" ["not"] LocExpr
+              .

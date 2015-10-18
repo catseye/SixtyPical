@@ -779,3 +779,56 @@ An `if` with a single block is analyzed as if it had an empty `else` block.
     |     }
     | }
     = ok
+
+### repeat ###
+
+Repeat loop.
+
+    | routine main
+    |   outputs x, y, n, z, c
+    | {
+    |     ld x, 0
+    |     ld y, 15
+    |     repeat {
+    |         inc x
+    |         inc y
+    |         cmp x, 10
+    |     } until z
+    | }
+    = ok
+
+You can initialize something inside the loop that was uninitialized outside.
+
+    | routine main
+    |   outputs x, y, n, z, c
+    | {
+    |     ld x, 0
+    |     repeat {
+    |         ld y, 15
+    |         inc x
+    |         cmp x, 10
+    |     } until z
+    | }
+    = ok
+
+But you can't UNinitialize something at the end of the loop that you need
+initialized at the start.
+
+    | routine foo
+    |   trashes y
+    | {
+    | }
+    | 
+    | routine main
+    |   outputs x, y, n, z, c
+    | {
+    |     ld x, 0
+    |     ld y, 15
+    |     repeat {
+    |         inc x
+    |         inc y
+    |         call foo
+    |         cmp x, 10
+    |     } until z
+    | }
+    ? UninitializedAccessError: y
