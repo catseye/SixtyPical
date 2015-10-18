@@ -1,0 +1,23 @@
+byte vic_border @ 53280
+
+vector cinv @ 788
+vector save_cinv
+
+routine our_cinv
+  inputs vic_border
+  outputs vic_border
+  trashes z, n
+{
+    inc vic_border
+}
+
+routine main
+  inputs cinv, our_cinv
+  outputs cinv, save_cinv
+  trashes a, n, z
+{
+    with interrupts off {
+        copy cinv, save_cinv
+        copy our_cinv, cinv
+    }
+}
