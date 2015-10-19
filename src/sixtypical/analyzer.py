@@ -134,12 +134,13 @@ def analyze_routine(routine, routines):
     if routine.block is None:
         # it's an extern, that's fine
         return
-    context = Context(routine.inputs, routine.outputs, routine.trashes)
+    type = routine.location.type
+    context = Context(type.inputs, type.outputs, type.trashes)
     analyze_block(routine.block, context, routines)
-    for ref in routine.outputs:
+    for ref in type.outputs:
         context.assert_meaningful(ref, exception_class=UninitializedOutputError)
     for ref in context.each_touched():
-        if ref not in routine.outputs and ref not in routine.trashes:
+        if ref not in type.outputs and ref not in type.trashes:
             raise IllegalWriteError(ref.name)
 
 
@@ -192,11 +193,12 @@ def analyze_instr(instr, context, routines):
         context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
     elif opcode == 'call':
         routine = routines[instr.name]
-        for ref in routine.inputs:
+        type = routine.location.type
+        for ref in type.inputs:
             context.assert_meaningful(ref)
-        for ref in routine.outputs:
+        for ref in type.outputs:
             context.set_written(ref)
-        for ref in routine.trashes:
+        for ref in type.trashes:
             context.assert_writeable(ref)
             context.set_touched(ref)
             context.set_unmeaningful(ref)

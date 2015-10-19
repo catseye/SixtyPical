@@ -109,20 +109,14 @@ class Parser(object):
             name = defn.name
             if name in self.symbols:
                 raise SyntaxError('Symbol "%s" already declared' % name)
-            self.symbols[name] = SymEntry(defn, LocationRef(defn.type, name))
+            self.symbols[name] = SymEntry(defn, defn.location)
             defns.append(defn)
         while self.scanner.on('routine'):
             routine = self.routine()
             name = routine.name
             if name in self.symbols:
-                raise SyntaxError(name)
-            ref = LocationRef(
-                RoutineType(inputs=routine.inputs,
-                            outputs=routine.outputs,
-                            trashes=routine.trashes
-                ), name
-            )
-            self.symbols[name] = SymEntry(routine, ref)
+                raise SyntaxError('Symbol "%s" already declared' % name)
+            self.symbols[name] = SymEntry(routine, routine.location)
             routines.append(routine)
         self.scanner.check_type('EOF')
         return Program(defns=defns, routines=routines)
@@ -150,9 +144,9 @@ class Parser(object):
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
             addr = int(self.scanner.token)
-            self.scanner.scan()            
-        return Defn(name=name, type=type, addr=addr,
-                    inputs=inputs, outputs=outputs, trashes=trashes)
+            self.scanner.scan()
+        location = LocationRef(type, name)
+        return Defn(name=name, addr=addr, location=location)
 
     def constraints(self):
         inputs = []
@@ -179,9 +173,13 @@ class Parser(object):
         else:
             block = self.block()
             addr = None
+        location = LocationRef(
+            RoutineType(inputs=inputs, outputs=outputs, trashes=trashes),
+            name
+        )
         return Routine(
-            name=name, inputs=inputs, outputs=outputs, trashes=trashes,
-            block=block, addr=addr
+            name=name, block=block, addr=addr,
+            location=location
         )
 
     def locexprs(self):
