@@ -248,7 +248,10 @@ class Parser(object):
             self.scanner.scan()
             name = self.scanner.token
             self.scanner.scan()
-            # TODO: check that is has been defined
+            if name not in self.symbols:
+                raise SyntaxError('Undefined routine "%s"' % name)
+            if self.symbols[name].model.type != TYPE_ROUTINE:
+                raise SyntaxError('Illegal call of non-routine "%s"' % name)
             return Instr(opcode=opcode, name=name, dest=None, src=None)
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token

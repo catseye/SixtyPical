@@ -163,15 +163,33 @@ Can't shadow the name of a register or a flag.
     | }
     ? SyntaxError
 
-> Can't call routine that hasn;t been defined.
-> 
->     | routine main {
->     |     ld x, 0
->     |     ld y, 1
->     |     call up
->     |     call up
->     | }
->     ? SyntaxError
+Can't call routine that hasn't been defined.
+
+    | routine main {
+    |     ld x, 0
+    |     ld y, 1
+    |     call up
+    |     call up
+    | }
+    ? SyntaxError
+
+And you can't call a non-routine.
+
+    | byte up
+    | 
+    | routine main {
+    |     ld x, 0
+    |     ld y, 1
+    |     call up
+    | }
+    ? SyntaxError
+
+    | routine main {
+    |     ld x, 0
+    |     ld y, 1
+    |     call x
+    | }
+    ? SyntaxError
 
 Can't define two routines with the same name.
 

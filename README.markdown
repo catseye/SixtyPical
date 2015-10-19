@@ -34,15 +34,16 @@ TODO
 For 0.6:
 
 *   `interrupt` routines.
-*   `vector` type.
-*   `with sei` blocks.
-*   `copy` instruction.
+*   `goto` (tail call).
+*   `vector` type... with declared `inputs` `outputs` `trashes`?
+*   `copy` instruction... that can copy a constant to a user-def mem loc.
 *   A more involved demo for the C64 — one that sets up an interrupt.
 
 For 0.7:
 
 *   `word` type.
 *   `trash` instruction.
+*   zero-page memory locations.
 *   indirect addressing.
 
 At some point...

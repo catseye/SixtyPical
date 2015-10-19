@@ -1,6 +1,11 @@
 History of SixtyPical
 =====================
 
+0.6-PRE
+-------
+
+*   Added `routine` and `vector` types, and `copy` instruction.
+
 0.5
 ---
 
