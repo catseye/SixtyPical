@@ -33,10 +33,8 @@ TODO
 
 For 0.6:
 
-*   `interrupt` routines.
-*   `goto` (tail call).
-*   `vector` type... with declared `inputs` `outputs` `trashes`?
-*   `copy` instruction... that can copy a constant to a user-def mem loc.
+*   declared `inputs` `outputs` `trashes` on the `vector` type.
+*   `goto` (tail call) a routine or a vector.
 *   A more involved demo for the C64 — one that sets up an interrupt.
 
 For 0.7:
@@ -48,8 +46,10 @@ For 0.7:
 
 At some point...
 
+*   `interrupt` routines.
 *   add line number (or at least routine name) to error messages.
 *   6502-mnemonic aliases (`sec`, `clc`)
 *   other handy aliases (`eq` for `z`, etc.)
+*   have `copy` instruction able to copy a constant to a user-def mem loc, etc.
 *   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
 *   check and disallow recursion.

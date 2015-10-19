@@ -218,6 +218,10 @@ Declaring a byte table memory location.
 Declaring a vector.
 
     | vector cinv
+    |   inputs a
+    |   outputs x
+    |   trashes a, x, z, n
+    |   @ 788
     | 
     | routine foo {
     |     ld a, 0
@@ -228,3 +232,15 @@ Declaring a vector.
     |     }
     | }
     = ok
+
+Only vectors can be decorated with constraints like that.
+
+    | byte cinv
+    |   inputs a
+    |   outputs x
+    |   trashes a, x, z, n
+    |   @ 788
+    | 
+    | routine main {
+    | }
+    ? SyntaxError

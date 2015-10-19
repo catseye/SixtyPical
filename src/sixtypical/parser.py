@@ -132,17 +132,20 @@ class Parser(object):
         self.scanner.check_type('identifier')
         name = self.scanner.token
         self.scanner.scan()
+
+        (inputs, outputs, trashes) = self.constraints()
+        if type != TYPE_VECTOR and (inputs or outputs or trashes):
+            raise SyntaxError("Cannot apply constraints to non-vector type")
+
         addr = None
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
             addr = int(self.scanner.token)
             self.scanner.scan()            
-        return Defn(name=name, type=type, addr=addr)
+        return Defn(name=name, type=type, addr=addr,
+                    inputs=inputs, outputs=outputs, trashes=trashes)
 
-    def routine(self):
-        self.scanner.expect('routine')
-        name = self.scanner.token
-        self.scanner.scan()
+    def constraints(self):
         inputs = []
         outputs = []
         trashes = []
@@ -152,6 +155,13 @@ class Parser(object):
             outputs = self.locexprs()
         if self.scanner.consume('trashes'):
             trashes = self.locexprs()
+        return (inputs, outputs, trashes)
+
+    def routine(self):
+        self.scanner.expect('routine')
+        name = self.scanner.token
+        self.scanner.scan()
+        (inputs, outputs, trashes) = self.constraints()
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
             block = None

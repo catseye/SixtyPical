@@ -83,6 +83,17 @@ A location in memory may be given explicitly on a user-defined memory location.
 
     byte table screen @ 1024
 
+A user-defined vector memory location is decorated with READS and WRITES lists
+like a routine (see below), and it may only hold addresses of routines which
+are compatible.  (Meaning, the routine's inputs (resp. outputs, trashes)
+must be a subset of the vector's inputs (resp. outputs, trashes.))
+
+    vector actor_logic
+      inputs a, score
+      outputs x
+      trashes y
+      @ $c000
+
 Routines
 --------
 
@@ -350,10 +361,10 @@ Grammar
 -------
 
     Program ::= {Defn} {Routine}.
-    Defn    ::= "byte" ["table"] NewIdent ["@" WordConst].
-    Routine ::= "routine" NewIdent
-                ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs]
-                (Block | "@" WordConst).
+    Defn    ::= Type NewIdent [Constraints] ["@" WordConst].
+    Type    ::= "byte" ["table"] | "vector"
+    Constrnt::= ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs].
+    Routine ::= "routine" NewIdent Constraints (Block | "@" WordConst).
     LocExprs::= LocExpr {"," LocExpr}.
     LocExpr ::= Register | Flag | LitByte | DefnIdent.
     Register::= "a" | "x" | "y".

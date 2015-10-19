@@ -989,7 +989,7 @@ Can't `copy` from a memory location that isn't initialized.
     | }
     ? UninitializedAccessError: x
 
-Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
+Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
 
     | byte lives
     | routine main
@@ -1036,3 +1036,62 @@ a, z, and n are trashed, and must not be declared as outputs.
     |     copy 0, lives
     | }
     ? UninitializedOutputError: a
+
+Unless of course you subsequently initialize them.
+
+    | byte lives
+    | routine main
+    |   outputs lives, a, z, n
+    | {
+    |     copy 0, lives
+    |     ld a, 0
+    | }
+    = ok
+
+You can copy the address of a routine into a vector, if that vector is declared appropriately.
+
+    | vector vec
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   inputs foo
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+But not if the vector is declared inappropriately.
+
+    | vector vec
+    |   inputs y
+    |   outputs y
+    |   trashes z, n
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   inputs foo
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    ? IllegalWriteError
