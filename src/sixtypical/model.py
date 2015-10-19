@@ -17,8 +17,43 @@ class Type(object):
 TYPE_BIT = Type('bit')
 TYPE_BYTE = Type('byte')
 TYPE_BYTE_TABLE = Type('byte table')
-TYPE_ROUTINE = Type('routine')
-TYPE_VECTOR = Type('vector')      # the mem loc contains an address of a routine
+
+
+class InteractionConstrainedType(Type):
+    """Used for routines and vectors."""
+    def __init__(self, name, inputs=None, outputs=None, trashes=None):
+        self.name = name
+        self.inputs = inputs or []
+        self.outputs = outputs or []
+        self.trashes = trashes or []
+
+    def __repr__(self):
+        return 'RoutineType(%r, inputs=%r, outputs=%r, trashes=%r)' % (
+            self.name, self.inputs, self.outputs, self.trashes
+        )
+
+    def __eq__(self, other):
+        return isinstance(other, RoutineType) and (
+            other.name == self.name and
+            other.inputs == self.inputs and
+            other.outputs == self.outputs and
+            other.trashes == self.trashes
+        )
+
+    def __hash__(self):
+        return hash(self.name) ^ hash(self.inputs) ^ hash(self.outputs) ^ hash(self.trashes)
+
+
+class RoutineType(InteractionConstrainedType):
+    """This memory location contains the code for a routine."""
+    def __init__(self, **kwargs):
+        super(RoutineType, self).__init__('routine', **kwargs)
+
+
+class VectorType(InteractionConstrainedType):
+    """This memory location contains the address of a routine."""
+    def __init__(self, **kwargs):
+        super(VectorType, self).__init__('vector', **kwargs)
 
 
 class Ref(object):

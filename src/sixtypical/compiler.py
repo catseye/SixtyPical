@@ -3,7 +3,8 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     ConstantRef, LocationRef,
-    TYPE_BIT, TYPE_ROUTINE, TYPE_VECTOR,
+    TYPE_BIT,
+    RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 from sixtypical.emitter import Byte, Label, Offset
@@ -242,7 +243,8 @@ class Compiler(object):
             self.compile_block(instr.block)
             self.emitter.emit(CLI())
         elif opcode == 'copy':
-            if src.type in (TYPE_ROUTINE, TYPE_VECTOR) and dest.type == TYPE_VECTOR:
+            if isinstance(src.type, (RoutineType, VectorType)) and \
+               isinstance(dest.type, VectorType):
                 src_label = self.labels[src.name]
                 dest_label = self.labels[dest.name]
                 self.emitter.emit(LDA(Absolute(src_label)))

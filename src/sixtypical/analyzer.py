@@ -2,7 +2,8 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_ROUTINE, TYPE_VECTOR,
+    TYPE_BYTE, TYPE_BYTE_TABLE,
+    RoutineType, VectorType,
     ConstantRef, LocationRef,
     REG_A, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
@@ -224,7 +225,7 @@ def analyze_instr(instr, context, routines):
     elif opcode == 'copy':
         if src.type == dest.type:
             pass
-        elif src.type == TYPE_ROUTINE and dest.type == TYPE_VECTOR:
+        elif isinstance(src.type, RoutineType) and isinstance(dest.type, VectorType):
             pass
         else:
             raise TypeMismatchError((src, dest))

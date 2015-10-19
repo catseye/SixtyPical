@@ -4,7 +4,8 @@ import re
 
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_ROUTINE, TYPE_VECTOR,
+    TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE,
+    RoutineType, VectorType,
     LocationRef, ConstantRef
 )
 
@@ -115,7 +116,13 @@ class Parser(object):
             name = routine.name
             if name in self.symbols:
                 raise SyntaxError(name)
-            self.symbols[name] = SymEntry(routine, LocationRef(TYPE_ROUTINE, name))
+            ref = LocationRef(
+                RoutineType(inputs=routine.inputs,
+                            outputs=routine.outputs,
+                            trashes=routine.trashes
+                ), name
+            )
+            self.symbols[name] = SymEntry(routine, ref)
             routines.append(routine)
         self.scanner.check_type('EOF')
         return Program(defns=defns, routines=routines)
@@ -128,13 +135,15 @@ class Parser(object):
                 type = TYPE_BYTE_TABLE
         else:
             self.scanner.expect('vector')
-            type = TYPE_VECTOR
+            type = 'vector'
         self.scanner.check_type('identifier')
         name = self.scanner.token
         self.scanner.scan()
 
         (inputs, outputs, trashes) = self.constraints()
-        if type != TYPE_VECTOR and (inputs or outputs or trashes):
+        if type == 'vector':
+            type = VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
+        elif inputs or outputs or trashes:
             raise SyntaxError("Cannot apply constraints to non-vector type")
 
         addr = None
@@ -260,7 +269,7 @@ class Parser(object):
             self.scanner.scan()
             if name not in self.symbols:
                 raise SyntaxError('Undefined routine "%s"' % name)
-            if self.symbols[name].model.type != TYPE_ROUTINE:
+            if not isinstance(self.symbols[name].model.type, RoutineType):
                 raise SyntaxError('Illegal call of non-routine "%s"' % name)
             return Instr(opcode=opcode, name=name, dest=None, src=None)
         elif self.scanner.token in ("copy",):
