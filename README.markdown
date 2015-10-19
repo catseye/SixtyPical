@@ -33,10 +33,9 @@ TODO
 
 For 0.6:
 
-*   declared `inputs` `outputs` `trashes` on the `vector` type...
-    *   we need to get these 3 things onto the type, and also onto routine types
+*   `call` vector (generates an indirect JMP.)
 *   `goto` (tail call) a routine or a vector.
-*   A more involved demo for the C64 — one that sets up an interrupt.
+*   A more involved demo for the C64 — one that sets up an interrupt?
 
 For 0.7:
 

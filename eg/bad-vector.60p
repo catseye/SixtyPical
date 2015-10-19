@@ -1,0 +1,20 @@
+vector vec
+  inputs y
+  outputs y
+  trashes z, n
+
+routine foo
+  inputs x
+  outputs x
+  trashes z, n
+{
+  inc x
+}
+
+routine main
+  inputs foo
+  outputs vec
+  trashes a, z, n
+{
+    copy foo, vec
+}

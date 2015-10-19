@@ -5,6 +5,8 @@ History of SixtyPical
 -------
 
 *   Added `routine` and `vector` types, and `copy` instruction.
+*   Both routines and vectors can declare `inputs`, `outputs`, and `trashes`,
+    and these must be compatible to assign a routine or vector to a vector.
 
 0.5
 ---

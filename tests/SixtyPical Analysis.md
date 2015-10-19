@@ -1094,4 +1094,28 @@ But not if the vector is declared inappropriately.
     | {
     |     copy foo, vec
     | }
-    ? IllegalWriteError
+    ? IncompatibleConstraintsError
+
+Routines are read-only.
+
+    | vector vec
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   inputs foo
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy vec, foo
+    | }
+    ? TypeMismatchError

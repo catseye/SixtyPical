@@ -149,15 +149,15 @@ class Parser(object):
         return Defn(name=name, addr=addr, location=location)
 
     def constraints(self):
-        inputs = []
-        outputs = []
-        trashes = []
+        inputs = set()
+        outputs = set()
+        trashes = set()
         if self.scanner.consume('inputs'):
-            inputs = self.locexprs()
+            inputs = set(self.locexprs())
         if self.scanner.consume('outputs'):
-            outputs = self.locexprs()
+            outputs = set(self.locexprs())
         if self.scanner.consume('trashes'):
-            trashes = self.locexprs()
+            trashes = set(self.locexprs())
         return (inputs, outputs, trashes)
 
     def routine(self):

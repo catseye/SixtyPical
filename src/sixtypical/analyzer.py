@@ -3,7 +3,7 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BYTE, TYPE_BYTE_TABLE,
-    RoutineType, VectorType,
+    RoutineType, VectorType, ExecutableType,
     ConstantRef, LocationRef,
     REG_A, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
@@ -34,6 +34,10 @@ class UsageClashError(StaticAnalysisError):
 
 
 class TypeMismatchError(StaticAnalysisError):
+    pass
+
+
+class IncompatibleConstraintsError(StaticAnalysisError):
     pass
 
 
@@ -209,6 +213,8 @@ def analyze_instr(instr, context, routines):
         if instr.block2 is not None:
             analyze_block(instr.block2, context2, routines)
         # TODO may we need to deal with touched separately here too?
+        # probably not; if it wasn't meaningful in the first place, it
+        # doesn't really matter if you modified it or not, coming out.
         for ref in context1.each_meaningful():
             context2.assert_meaningful(ref, exception_class=InconsistentInitializationError)
         for ref in context2.each_meaningful():
@@ -225,12 +231,26 @@ def analyze_instr(instr, context, routines):
 
         # NB I *think* that's enough... but it might not be?
     elif opcode == 'copy':
+        # check that their types are basically compatible
         if src.type == dest.type:
             pass
-        elif isinstance(src.type, RoutineType) and isinstance(dest.type, VectorType):
+        elif isinstance(src.type, ExecutableType) and \
+             isinstance(dest.type, VectorType):
             pass
         else:
             raise TypeMismatchError((src, dest))
+
+        # if dealing with routines and vectors,
+        # check that they're not incompatible
+        if isinstance(src.type, ExecutableType) and \
+           isinstance(dest.type, VectorType):
+            if not (src.type.inputs <= dest.type.inputs):
+                raise IncompatibleConstraintsError(src.type.inputs - dest.type.inputs)
+            if not (src.type.outputs <= dest.type.outputs):
+                raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
+            if not (src.type.trashes <= dest.type.trashes):
+                raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
+                
         context.assert_meaningful(src)
         context.set_written(dest)
         context.set_touched(REG_A, FLAG_Z, FLAG_N)
