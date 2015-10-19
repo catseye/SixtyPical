@@ -1,14 +1,14 @@
 """Emittables for 6502 machine code."""
 
-from sixtypical.emitter import Emittable, Byte, Word, Label
+from sixtypical.emitter import Emittable, Byte, Word, Label, Offset
 
 
-class AddressingMode(object):
+class AddressingMode(Emittable):
     def size(self):
         """Size of the operand for the mode (not including the opcode)"""
         raise NotImplementedError
 
-    def serialize(self, addr):
+    def serialize(self, addr=None):
         raise NotImplementedError
 
     def __repr__(self):
@@ -19,7 +19,7 @@ class Implied(AddressingMode):
     def size(self):
         return 0
 
-    def serialize(self, addr):
+    def serialize(self, addr=None):
         return ''
 
     def __repr__(self):
@@ -34,20 +34,20 @@ class Immediate(AddressingMode):
     def size(self):
         return 1
 
-    def serialize(self, addr):
-        return self.value.serialize(addr)
+    def serialize(self, addr=None):
+        return self.value.serialize()
 
 
 class Absolute(AddressingMode):
     def __init__(self, value):
-        assert isinstance(value, Label)
+        assert isinstance(value, (Label, Offset))
         self.value = value
 
     def size(self):
         return 2
 
-    def serialize(self, addr):
-        return self.value.serialize(addr)
+    def serialize(self, addr=None):
+        return self.value.serialize()
 
 
 class AbsoluteX(Absolute):
@@ -66,7 +66,7 @@ class Relative(AddressingMode):
     def size(self):
         return 1
 
-    def serialize(self, addr):
+    def serialize(self, addr=None):
         return self.value.serialize_relative_to(addr)
 
 
@@ -77,7 +77,7 @@ class Opcode(Emittable):
     def size(self):
         return 1 + self.operand.size() if self.operand else 0
 
-    def serialize(self, addr):
+    def serialize(self, addr=None):
         return (
             chr(self.opcodes[self.operand.__class__]) +
             self.operand.serialize(addr)

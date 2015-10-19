@@ -224,3 +224,40 @@ Indexed access.
     |     ld a, many + x
     | }
     = 00c0a200a9009d0dc0bd0dc060
+
+Copy instruction..
+
+    | vector bar
+    | vector baz
+    | 
+    | routine main
+    |   inputs baz
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |   copy baz, bar
+    | }
+    = 00c0ad0fc08d0dc0ad10c08d0ec060
+
+Copy instruction inside interrupts off block.
+
+    | vector bar
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    | 
+    | routine main
+    |   inputs foo
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |   with interrupts off {
+    |     copy foo, bar
+    |   }
+    | }
+    = 00c078ad0fc08d11c0ad10c08d12c05860e860

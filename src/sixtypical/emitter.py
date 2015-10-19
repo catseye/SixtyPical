@@ -17,7 +17,7 @@ class Byte(Emittable):
     def size(self):
         return 1
 
-    def serialize(self, addr):
+    def serialize(self, addr=None):
         return chr(self.value)
 
     def __repr__(self):
@@ -32,7 +32,7 @@ class Word(Emittable):
     def size(self):
         return 2
 
-    def serialize(self, addr):
+    def serialize(self, addr=None):
         word = self.value
         low = word & 255
         high = (word >> 8) & 255
@@ -53,17 +53,33 @@ class Label(Emittable):
     def size(self):
         return 2
 
-    def serialize(self, addr):
+    def serialize(self, addr=None, offset=0):
         assert self.addr is not None, "unresolved label: %s" % self.name
-        return Word(self.addr).serialize(addr)
+        return Word(self.addr + offset).serialize()
 
     def serialize_relative_to(self, addr):
         assert self.addr is not None, "unresolved label: %s" % self.name
-        return Byte(self.addr - (addr + 2)).serialize(addr)
+        return Byte(self.addr - (addr + 2)).serialize()
 
     def __repr__(self):
         addrs = ', addr=%r' % self.addr if self.addr is not None else ''
         return "%s(%r%s)" % (self.__class__.__name__, self.name, addrs)
+
+
+class Offset(Emittable):
+    def __init__(self, label, offset):
+        assert isinstance(label, Label)
+        self.label = label
+        self.offset = offset
+
+    def size(self):
+        self.label.size()
+
+    def serialize(self, addr=None):
+        return self.label.serialize(offset=self.offset)
+
+    def __repr__(self):
+        return "%s(%r, %r)" % (self.__class__.__name__, self.label, self.offset)
 
 
 class Emitter(object):
