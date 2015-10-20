@@ -1148,3 +1148,25 @@ Calling the vector has indeed trashed stuff etc,
     |     call foo
     | }
     ? UninitializedOutputError: x
+
+A goto, if present, must appear at the end of the routine.
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     goto bar
+    | }
+    = ok
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     goto bar
+    |     ld x, 0
+    | }
+    ? IllegalGotoError
