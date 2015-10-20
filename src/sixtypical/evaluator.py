@@ -12,7 +12,9 @@ class Context(object):
         self._store = {}
 
     def __str__(self):
-        return '\n'.join("%s: %s" % p for p in sorted(self._store.iteritems()))
+        return '\n'.join("%s: %s" % (name, value)
+                         for (name, value) in sorted(self._store.iteritems())
+                         if not isinstance(value, Routine))
 
     def get(self, ref):
         if isinstance(ref, ConstantRef):
@@ -23,11 +25,8 @@ class Context(object):
             raise ValueError(ref)
 
     def set(self, ref, value):
-        # bleah
-        if isinstance(ref, LocationRef):
-            self._store[ref.name] = value
-        else:
-            self._store[ref] = value
+        assert isinstance(ref, LocationRef)
+        self._store[ref.name] = value
 
 
 def eval_program(program):
@@ -35,9 +34,12 @@ def eval_program(program):
     context = Context()
     for ref in (REG_A, REG_X, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C):
         context.set(ref, 0)
+    main = None
     for routine in program.routines:
-        context.set(routine.name, routine)
-    eval_routine(context['main'], context)
+        context.set(routine.location, routine)
+        if routine.name == 'main':
+            main = routine
+    eval_routine(main, context)
     return context
 
 
@@ -146,7 +148,7 @@ def eval_instr(instr, context):
         context.set(FLAG_N, 1 if result & 128 else 0)
         context.set(dest, result)
     elif opcode == 'call':
-        eval_routine(context[instr.name], context)
+        eval_routine(context.get(instr.location), context)
     elif opcode == 'if':
         val = context.get(src)
         test = (val != 0) if not instr.inverted else (val == 0)

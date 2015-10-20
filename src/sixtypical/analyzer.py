@@ -196,8 +196,7 @@ def analyze_instr(instr, context, routines):
         context.assert_meaningful(dest, FLAG_C)
         context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
     elif opcode == 'call':
-        routine = routines[instr.name]
-        type = routine.location.type
+        type = instr.location.type
         for ref in type.inputs:
             context.assert_meaningful(ref)
         for ref in type.outputs:

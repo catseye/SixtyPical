@@ -269,7 +269,7 @@ class Parser(object):
                 raise SyntaxError('Undefined routine "%s"' % name)
             if not isinstance(self.symbols[name].model.type, ExecutableType):
                 raise SyntaxError('Illegal call of non-executable "%s"' % name)
-            return Instr(opcode=opcode, name=name, dest=None, src=None)
+            return Instr(opcode=opcode, location=self.symbols[name].model, dest=None, src=None)
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token
             self.scanner.scan()
