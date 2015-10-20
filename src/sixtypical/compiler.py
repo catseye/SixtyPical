@@ -9,7 +9,7 @@ from sixtypical.model import (
 )
 from sixtypical.emitter import Byte, Label, Offset
 from sixtypical.gen6502 import (
-    Immediate, Absolute, AbsoluteX, AbsoluteY, Relative,
+    Immediate, Absolute, AbsoluteX, AbsoluteY, Indirect, Relative,
     LDA, LDX, LDY, STA, STX, STY,
     TAX, TAY, TXA, TYA,
     CLC, SEC, ADC, SBC, ROL, ROR,
@@ -193,8 +193,16 @@ class Compiler(object):
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'call':
+            location = instr.location
             label = self.labels[instr.location.name]
-            self.emitter.emit(JSR(Absolute(label)))
+            if isinstance(location.type, RoutineType):
+                self.emitter.emit(JSR(Absolute(label)))
+            elif isinstance(location.type, VectorType):
+                # XXX NOT QUITE RIGHT, IS IT?
+                # We need to simulate an indirect JSR!
+                self.emitter.emit(JMP(Indirect(label)))
+            else:
+                raise NotImplementedError
         elif opcode == 'if':
             cls = {
                 False: {

@@ -409,7 +409,7 @@ Indirect call.
     |     ld x, 200
     | }
     | 
-    | routine main {
+    | routine main inputs bar outputs x, foo trashes a, z, n {
     |     copy bar, foo
     |     call foo
     | }

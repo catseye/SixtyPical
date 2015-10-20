@@ -261,3 +261,17 @@ Copy instruction inside interrupts off block.
     |   }
     | }
     = 00c078ad0fc08d11c0ad10c08d12c05860e860
+
+Indirect call.
+
+    | vector foo outputs x trashes z, n
+    | 
+    | routine bar outputs x trashes z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main inputs bar outputs x, foo trashes a, z, n {
+    |     copy bar, foo
+    |     call foo
+    | }
+    = 00c0

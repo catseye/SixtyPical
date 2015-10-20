@@ -1119,3 +1119,32 @@ Routines are read-only.
     |     copy vec, foo
     | }
     ? TypeMismatchError
+
+Indirect call.
+
+    | vector foo outputs x trashes z, n
+    | 
+    | routine bar outputs x trashes z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main inputs bar outputs x, foo trashes a, z, n {
+    |     copy bar, foo
+    |     call foo
+    | }
+    = ok
+
+Calling the vector has indeed trashed stuff etc,
+
+    | vector foo trashes x, z, n
+    | 
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main inputs bar outputs x, foo trashes z, n {
+    |     ld x, 0
+    |     copy bar, foo
+    |     call foo
+    | }
+    ? UninitializedOutputError: x
