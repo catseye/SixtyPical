@@ -363,16 +363,20 @@ copy more general types of data (for example, vectors,) and it trashes the
 After execution, dest is considered initialized, and `z` and `n`, and
 `a` are considered uninitialized.
 
+### goto ###
+
+TBW
+
 Grammar
 -------
 
     Program ::= {Defn} {Routine}.
-    Defn    ::= Type NewIdent [Constraints] ["@" WordConst].
+    Defn    ::= Type Ident<new> [Constraints] ["@" WordConst].
     Type    ::= "byte" ["table"] | "vector"
     Constrnt::= ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs].
-    Routine ::= "routine" NewIdent Constraints (Block | "@" WordConst).
+    Routine ::= "routine" Ident<new> Constraints (Block | "@" WordConst).
     LocExprs::= LocExpr {"," LocExpr}.
-    LocExpr ::= Register | Flag | LitByte | DefnIdent.
+    LocExpr ::= Register | Flag | LitByte | Ident.
     Register::= "a" | "x" | "y".
     Flag    ::= "c" | "z" | "n" | "v".
     LitByte ::= "0" ... "255".
@@ -390,7 +394,8 @@ Grammar
               | "shr" LocExpr
               | "inc" LocExpr
               | "dec" LocExpr
-              | "call" RoutineIdent
+              | "call" Ident<routine>
+              | "goto" Ident<executable>
               | "if" ["not"] LocExpr Block ["else" Block]
               | "repeat" Block ("until" ["not"] LocExpr | "forever")
               | "copy" LocExpr "," LocExpr ["+" LocExpr]

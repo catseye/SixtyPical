@@ -260,7 +260,7 @@ class Parser(object):
             self.scanner.scan()
             dest = self.locexpr()
             return Instr(opcode=opcode, dest=dest, src=None)
-        elif self.scanner.token in ("call",):
+        elif self.scanner.token in ("call", "goto"):
             opcode = self.scanner.token
             self.scanner.scan()
             name = self.scanner.token

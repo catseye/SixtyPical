@@ -248,3 +248,32 @@ Only vectors can be decorated with constraints like that.
     | routine main {
     | }
     ? SyntaxError
+
+goto.
+
+    | routine foo {
+    |     ld a, 0
+    | }
+    | routine main {
+    |     goto foo
+    | }
+    = ok
+
+    | vector foo
+    | 
+    | routine main {
+    |     goto foo
+    | }
+    = ok
+
+    | routine main {
+    |     goto foo
+    | }
+    ? SyntaxError
+
+    | byte foo
+    | 
+    | routine main {
+    |     goto foo
+    | }
+    ? SyntaxError

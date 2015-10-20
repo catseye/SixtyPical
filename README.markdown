@@ -33,7 +33,7 @@ TODO
 
 For 0.6:
 
-*   `call` vector (generates an indirect JMP.)
+*   `call` vector (generates an JSR to a trampoline that does indirect JMP.)
 *   `goto` (tail call) a routine or a vector.
 *   A more involved demo for the C64 — one that sets up an interrupt?
 
