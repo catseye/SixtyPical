@@ -2,10 +2,10 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    ConstantRef, LocationRef,
+    ConstantRef,
     TYPE_BIT,
     RoutineType, VectorType,
-    REG_A, REG_X, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
+    REG_A, REG_X, REG_Y, FLAG_C
 )
 from sixtypical.emitter import Byte, Label, Offset
 from sixtypical.gen6502 import (

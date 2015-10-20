@@ -400,3 +400,23 @@ after copy executes.
     = x: 5
     = y: 5
     = z: 0
+
+Indirect call.
+
+    | vector foo outputs x trashes z, n
+    | 
+    | routine bar outputs x trashes z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main {
+    |     copy bar, foo
+    |     call foo
+    | }
+    = a: 0
+    = c: 0
+    = n: 1
+    = v: 0
+    = x: 200
+    = y: 0
+    = z: 0

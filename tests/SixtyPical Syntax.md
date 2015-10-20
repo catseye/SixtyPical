@@ -4,6 +4,9 @@ Sixtypical Execution
 This is a test suite, written in [Falderal][] format, for the syntax of
 the Sixtypical language, disgregarding execution, static analysis, etc.
 
+Note that these example programs are intended to be syntactically correct,
+but not necessarily sensible programs.
+
 [Falderal]:     http://catseye.tc/node/Falderal
 
     -> Functionality "Check syntax of Sixtypical program" is implemented by
@@ -215,7 +218,7 @@ Declaring a byte table memory location.
     | }
     = ok
 
-Declaring a vector.
+Declaring and calling a vector.
 
     | vector cinv
     |   inputs a
@@ -230,6 +233,7 @@ Declaring a vector.
     |     with interrupts off {
     |         copy foo, cinv
     |     }
+    |     call cinv
     | }
     = ok
 

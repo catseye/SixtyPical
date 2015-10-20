@@ -23,32 +23,36 @@ class Context(object):
             raise ValueError(ref)
 
     def set(self, ref, value):
-        assert isinstance(ref, LocationRef)
-        self._store[ref.name] = value
+        # bleah
+        if isinstance(ref, LocationRef):
+            self._store[ref.name] = value
+        else:
+            self._store[ref] = value
 
 
 def eval_program(program):
     assert isinstance(program, Program)
-    routines = {r.name: r for r in program.routines}
     context = Context()
     for ref in (REG_A, REG_X, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C):
         context.set(ref, 0)
-    eval_routine(routines['main'], context, routines)
+    for routine in program.routines:
+        context.set(routine.name, routine)
+    eval_routine(context['main'], context)
     return context
 
 
-def eval_routine(routine, context, routines):
+def eval_routine(routine, context):
     assert isinstance(routine, Routine)
-    eval_block(routine.block, context, routines)
+    eval_block(routine.block, context)
 
 
-def eval_block(block, context, routines):
+def eval_block(block, context):
     assert isinstance(block, Block)
     for i in block.instrs:
-        eval_instr(i, context, routines)
+        eval_instr(i, context)
 
 
-def eval_instr(instr, context, routines):
+def eval_instr(instr, context):
     assert isinstance(instr, Instr)
     opcode = instr.opcode
     dest = instr.dest
@@ -142,18 +146,18 @@ def eval_instr(instr, context, routines):
         context.set(FLAG_N, 1 if result & 128 else 0)
         context.set(dest, result)
     elif opcode == 'call':
-        eval_routine(routines[instr.name], context, routines)
+        eval_routine(context[instr.name], context)
     elif opcode == 'if':
         val = context.get(src)
         test = (val != 0) if not instr.inverted else (val == 0)
         if test:
-            eval_block(instr.block1, context, routines)
+            eval_block(instr.block1, context)
         elif instr.block2:
-            eval_block(instr.block2, context, routines)
+            eval_block(instr.block2, context)
     elif opcode == 'repeat':
-        eval_block(instr.block, context, routines)
+        eval_block(instr.block, context)
         while context.get(src) == 0:
-            eval_block(instr.block, context, routines)
+            eval_block(instr.block, context)
     elif opcode == 'copy':
         context.set(dest, context.get(src))
         # these are trashed; so could be anything really

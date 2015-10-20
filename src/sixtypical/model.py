@@ -86,9 +86,6 @@ class ConstantRef(Ref):
         self.type = type
         self.value = value
 
-    def __repr__(self):
-        return 'ConstantRef(%r)' % self.value
-
     def __eq__(self, other):
         return isinstance(other, ConstantRef) and (
             other.type == self.type and other.value == self.value

@@ -1,6 +1,6 @@
 """Emittables for 6502 machine code."""
 
-from sixtypical.emitter import Emittable, Byte, Word, Label, Offset
+from sixtypical.emitter import Emittable, Byte, Label, Offset
 
 
 class AddressingMode(Emittable):
@@ -58,6 +58,18 @@ class AbsoluteY(Absolute):
     pass
 
 
+class Indirect(AddressingMode):
+    def __init__(self, value):
+        assert isinstance(value, Label)
+        self.value = value
+
+    def size(self):
+        return 2
+
+    def serialize(self, addr=None):
+        return self.value.serialize()
+
+
 class Relative(AddressingMode):
     def __init__(self, value):
         assert isinstance(value, Label)
@@ -70,7 +82,7 @@ class Relative(AddressingMode):
         return self.value.serialize_relative_to(addr)
 
 
-class Opcode(Emittable):
+class Instruction(Emittable):
     def __init__(self, operand=None):
         self.operand = operand or Implied()
 
@@ -87,7 +99,7 @@ class Opcode(Emittable):
         return "%s(%r)" % (self.__class__.__name__, self.operand)
 
 
-class ADC(Opcode):
+class ADC(Instruction):
     opcodes = {
         Immediate: 0x69,
         Absolute:  0x6d,
@@ -96,7 +108,7 @@ class ADC(Opcode):
     }
 
 
-class AND(Opcode):
+class AND(Instruction):
     opcodes = {
         Immediate: 0x29,
         Absolute:  0x2d,
@@ -105,43 +117,43 @@ class AND(Opcode):
     }
 
 
-class BCC(Opcode):
+class BCC(Instruction):
     opcodes = {
         Relative:  0x90,
     }
 
 
-class BCS(Opcode):
+class BCS(Instruction):
     opcodes = {
         Relative:  0xb0,
     }
 
 
-class BEQ(Opcode):
+class BEQ(Instruction):
     opcodes = {
         Relative:  0xf0,
     }
 
 
-class BNE(Opcode):
+class BNE(Instruction):
     opcodes = {
         Relative:  0xd0,
     }
 
 
-class CLC(Opcode):
+class CLC(Instruction):
     opcodes = {
         Implied:   0x18
     }
 
 
-class CLI(Opcode):
+class CLI(Instruction):
     opcodes = {
         Implied:   0x58,
     }
 
 
-class CMP(Opcode):
+class CMP(Instruction):
     opcodes = {
         Immediate: 0xc9,
         Absolute:  0xcd,
@@ -150,39 +162,39 @@ class CMP(Opcode):
     }
 
 
-class CPX(Opcode):
+class CPX(Instruction):
     opcodes = {
         Immediate: 0xe0,
         Absolute:  0xec,
     }
 
 
-class CPY(Opcode):
+class CPY(Instruction):
     opcodes = {
         Immediate: 0xc0,
         Absolute:  0xcc,
     }
 
 
-class DEC(Opcode):
+class DEC(Instruction):
     opcodes = {
         Absolute:  0xce,
     }
 
 
-class DEX(Opcode):
+class DEX(Instruction):
     opcodes = {
         Implied:   0xca,
     }
 
 
-class DEY(Opcode):
+class DEY(Instruction):
     opcodes = {
         Implied:   0x88,
     }
 
 
-class EOR(Opcode):
+class EOR(Instruction):
     opcodes = {
         Immediate: 0x49,
         Absolute:  0x4d,
@@ -191,38 +203,39 @@ class EOR(Opcode):
     }
 
 
-class INC(Opcode):
+class INC(Instruction):
     opcodes = {
         Absolute:  0xee,
         AbsoluteX: 0xfe,
     }
 
 
-class INX(Opcode):
+class INX(Instruction):
     opcodes = {
         Implied:   0xe8,
     }
 
 
-class INY(Opcode):
+class INY(Instruction):
     opcodes = {
         Implied:   0xc8,
     }
 
 
-class JMP(Opcode):
+class JMP(Instruction):
     opcodes = {
         Absolute:  0x4c,
+        Indirect:  0x6c,
     }
 
 
-class JSR(Opcode):
+class JSR(Instruction):
     opcodes = {
         Absolute:  0x20,
     }
 
 
-class LDA(Opcode):
+class LDA(Instruction):
     opcodes = {
         Immediate: 0xa9,
         Absolute:  0xad,
@@ -231,7 +244,7 @@ class LDA(Opcode):
     }
 
 
-class LDX(Opcode):
+class LDX(Instruction):
     opcodes = {
         Immediate: 0xa2,
         Absolute:  0xae,
@@ -239,7 +252,7 @@ class LDX(Opcode):
     }
 
 
-class LDY(Opcode):
+class LDY(Instruction):
     opcodes = {
         Immediate: 0xa0,
         Absolute:  0xac,
@@ -247,7 +260,7 @@ class LDY(Opcode):
     }
 
 
-class ORA(Opcode):
+class ORA(Instruction):
     opcodes = {
         Immediate: 0x09,
         Absolute:  0x0d,
@@ -256,7 +269,7 @@ class ORA(Opcode):
     }
 
 
-class ROL(Opcode):
+class ROL(Instruction):
     opcodes = {
         Implied:   0x2a,    # Accumulator
         Absolute:  0x2e,
@@ -264,7 +277,7 @@ class ROL(Opcode):
     }
 
 
-class ROR(Opcode):
+class ROR(Instruction):
     opcodes = {
         Implied:   0x6a,    # Accumulator
         Absolute:  0x6e,
@@ -272,13 +285,13 @@ class ROR(Opcode):
     }
 
 
-class RTS(Opcode):
+class RTS(Instruction):
     opcodes = {
         Implied:   0x60,
     }
 
 
-class SBC(Opcode):
+class SBC(Instruction):
     opcodes = {
         Immediate: 0xe9,
         Absolute:  0xed,
@@ -287,19 +300,19 @@ class SBC(Opcode):
     }
 
 
-class SEC(Opcode):
+class SEC(Instruction):
     opcodes = {
         Implied:   0x38,
     }
 
 
-class SEI(Opcode):
+class SEI(Instruction):
     opcodes = {
         Implied:   0x78,
     }
 
 
-class STA(Opcode):
+class STA(Instruction):
     opcodes = {
         Absolute:  0x8d,
         AbsoluteX: 0x9d,
@@ -307,37 +320,37 @@ class STA(Opcode):
     }
 
 
-class STX(Opcode):
+class STX(Instruction):
     opcodes = {
         Absolute:  0x8e,
     }
 
 
-class STY(Opcode):
+class STY(Instruction):
     opcodes = {
         Absolute:  0x8c,
     }
 
 
-class TAX(Opcode):
+class TAX(Instruction):
     opcodes = {
         Implied:   0xaa,
     }
 
 
-class TAY(Opcode):
+class TAY(Instruction):
     opcodes = {
         Implied:   0xa8,
     }
 
 
-class TXA(Opcode):
+class TXA(Instruction):
     opcodes = {
         Implied:   0x8a,
     }
 
 
-class TYA(Opcode):
+class TYA(Instruction):
     opcodes = {
         Implied:   0x98,
     }

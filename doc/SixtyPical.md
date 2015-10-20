@@ -110,7 +110,9 @@ routine (or any routines that the routine calls) is PRESERVED by the routine.
     }
 
 Routines may call only routines previously defined in the program source.
-Thus, recursive routines are not allowed.
+Thus, directly recursive routines are not allowed.  (However, routines may
+also call routines via vectors, which are dynamically assigned.  In this
+case, there is, for the time being, no check for recursive calls.)
 
 For a SixtyPical program to be run, there must be one routine called `main`.
 This routine is executed when the program is run.
@@ -285,7 +287,11 @@ current routine, and it continues to be initialized afterwards.
 
 ### call ###
 
-    call <routine-name>
+    call <executable-name>
+
+Transfers execution to the given executable, whether that is a previously-
+defined routine, or a vector location which contains the address of a routine
+which will be called indirectly.
 
 Just before the call,
 

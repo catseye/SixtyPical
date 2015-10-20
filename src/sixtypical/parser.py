@@ -5,7 +5,7 @@ import re
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE,
-    RoutineType, VectorType,
+    RoutineType, VectorType, ExecutableType,
     LocationRef, ConstantRef
 )
 
@@ -267,8 +267,8 @@ class Parser(object):
             self.scanner.scan()
             if name not in self.symbols:
                 raise SyntaxError('Undefined routine "%s"' % name)
-            if not isinstance(self.symbols[name].model.type, RoutineType):
-                raise SyntaxError('Illegal call of non-routine "%s"' % name)
+            if not isinstance(self.symbols[name].model.type, ExecutableType):
+                raise SyntaxError('Illegal call of non-executable "%s"' % name)
             return Instr(opcode=opcode, name=name, dest=None, src=None)
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token

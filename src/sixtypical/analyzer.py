@@ -3,7 +3,7 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BYTE, TYPE_BYTE_TABLE,
-    RoutineType, VectorType, ExecutableType,
+    VectorType, ExecutableType,
     ConstantRef, LocationRef,
     REG_A, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )

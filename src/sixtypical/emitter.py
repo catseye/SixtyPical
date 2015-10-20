@@ -9,7 +9,7 @@ class Emittable(object):
 class Byte(Emittable):
     def __init__(self, value):
         if value < -127 or value > 255:
-            raise IndexError(thing)
+            raise IndexError(value)
         if value < 0:
             value += 256
         self.value = value
