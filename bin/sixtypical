@@ -18,7 +18,7 @@ import sys
 import traceback
 
 from sixtypical.parser import Parser
-from sixtypical.evaluator import eval_program
+from sixtypical.evaluator import Evaluator
 from sixtypical.analyzer import analyze_program
 from sixtypical.emitter import Emitter, Byte, Word
 from sixtypical.compiler import Compiler
@@ -88,5 +88,5 @@ if __name__ == '__main__':
                 emitter.serialize(fh)
 
         if options.execute:
-            context = eval_program(program)
+            context = Evaluator().eval_program(program)
             print str(context)

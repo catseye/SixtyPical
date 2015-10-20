@@ -420,3 +420,21 @@ Indirect call.
     = x: 200
     = y: 0
     = z: 0
+
+goto.
+
+    | routine bar outputs x trashes z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main outputs x trashes a, z, n {
+    |     ld y, 200
+    |     goto bar
+    | }
+    = a: 0
+    = c: 0
+    = n: 1
+    = v: 0
+    = x: 200
+    = y: 200
+    = z: 0
