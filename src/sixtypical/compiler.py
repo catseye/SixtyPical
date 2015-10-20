@@ -193,7 +193,7 @@ class Compiler(object):
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'call':
-            label = self.labels[instr.name]
+            label = self.labels[instr.location.name]
             self.emitter.emit(JSR(Absolute(label)))
         elif opcode == 'if':
             cls = {
