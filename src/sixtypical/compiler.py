@@ -203,6 +203,15 @@ class Compiler(object):
                 self.emitter.emit(JMP(Indirect(label)))
             else:
                 raise NotImplementedError
+        elif opcode == 'goto':
+            location = instr.location
+            label = self.labels[instr.location.name]
+            if isinstance(location.type, RoutineType):
+                self.emitter.emit(JMP(Absolute(label)))
+            elif isinstance(location.type, VectorType):
+                self.emitter.emit(JMP(Indirect(label)))
+            else:
+                raise NotImplementedError
         elif opcode == 'if':
             cls = {
                 False: {

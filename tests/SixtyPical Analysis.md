@@ -1134,7 +1134,7 @@ Indirect call.
     | }
     = ok
 
-Calling the vector has indeed trashed stuff etc,
+Calling the vector does indeed trash the things the vector says it does.
 
     | vector foo trashes x, z, n
     | 
@@ -1149,7 +1149,7 @@ Calling the vector has indeed trashed stuff etc,
     | }
     ? UninitializedOutputError: x
 
-A goto, if present, must appear at the end of the routine.
+`goto`, if present, must be in tail position (the final instruction in a routine.)
 
     | routine bar trashes x, z, n {
     |     ld x, 200
@@ -1169,4 +1169,103 @@ A goto, if present, must appear at the end of the routine.
     |     goto bar
     |     ld x, 0
     | }
-    ? IllegalGotoError
+    ? IllegalJumpError
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    | }
+    = ok
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    |     ld x, 0
+    | }
+    ? IllegalJumpError
+
+Can't `goto` a routine that outputs or trashes more than the current routine.
+
+    | routine bar trashes x, y, z, n {
+    |     ld x, 200
+    |     ld y, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     goto bar
+    | }
+    ? IncompatibleConstraintsError
+
+    | routine bar outputs y trashes z, n {
+    |     ld y, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     goto bar
+    | }
+    ? IncompatibleConstraintsError
+
+Can `goto` a routine that outputs or trashes less than the current routine.
+
+    | routine bar trashes x, z, n {
+    |     ld x, 1
+    | }
+    | 
+    | routine main trashes a, x, z, n {
+    |     ld a, 0
+    |     ld x, 0
+    |     goto bar
+    | }
+    = ok
+
+Indirect goto.
+
+    | vector foo outputs x trashes a, z, n
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main inputs bar outputs x trashes foo, a, z, n {
+    |     copy bar, foo
+    |     goto foo
+    | }
+    = ok
+
+Jumping through the vector does indeed output the things the vector says it does.
+
+    | vector foo trashes a, x, z, n
+    | 
+    | routine bar trashes a, x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine sub inputs bar trashes foo, a, x, z, n {
+    |     ld x, 0
+    |     copy bar, foo
+    |     goto foo
+    | }
+    | 
+    | routine main inputs bar outputs a trashes z, n {
+    |     call sub
+    |     ld a, x
+    | }
+    ? UninitializedOutputError: x
+
+Ack, I have become a bit confused...

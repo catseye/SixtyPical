@@ -41,6 +41,10 @@ class IncompatibleConstraintsError(StaticAnalysisError):
     pass
 
 
+class IllegalJumpError(StaticAnalysisError):
+    pass
+
+
 class Context():
     """
     A location is touched if it was changed (or even potentially
@@ -126,135 +130,164 @@ class Context():
         self.set_touched(*refs)
         self.set_meaningful(*refs)
 
-def analyze_program(program):
-    assert isinstance(program, Program)
-    routines = {r.name: r for r in program.routines}
-    for routine in program.routines:
-        analyze_routine(routine, routines)
 
+class Analyzer(object):
 
-def analyze_routine(routine, routines):
-    assert isinstance(routine, Routine)
-    if routine.block is None:
-        # it's an extern, that's fine
-        return
-    type = routine.location.type
-    context = Context(type.inputs, type.outputs, type.trashes)
-    analyze_block(routine.block, context, routines)
-    for ref in type.outputs:
-        context.assert_meaningful(ref, exception_class=UninitializedOutputError)
-    for ref in context.each_touched():
-        if ref not in type.outputs and ref not in type.trashes:
-            raise IllegalWriteError(ref.name)
+    def __init__(self):
+        self.current_routine = None
+        self.has_encountered_goto = False
 
+    def analyze_program(self, program):
+        assert isinstance(program, Program)
+        routines = {r.name: r for r in program.routines}
+        for routine in program.routines:
+            self.analyze_routine(routine, routines)
 
-def analyze_block(block, context, routines):
-    assert isinstance(block, Block)
-    for i in block.instrs:
-        analyze_instr(i, context, routines)
+    def analyze_routine(self, routine, routines):
+        assert isinstance(routine, Routine)
+        self.current_routine = routine
+        self.has_encountered_goto = False
+        if routine.block is None:
+            # it's an extern, that's fine
+            return
+        type = routine.location.type
+        context = Context(type.inputs, type.outputs, type.trashes)
+        self.analyze_block(routine.block, context, routines)
+        if not self.has_encountered_goto:
+            for ref in type.outputs:
+                context.assert_meaningful(ref, exception_class=UninitializedOutputError)
+            for ref in context.each_touched():
+                if ref not in type.outputs and ref not in type.trashes:
+                    raise IllegalWriteError(ref.name)
+        self.current_routine = None
 
+    def analyze_block(self, block, context, routines):
+        assert isinstance(block, Block)
+        for i in block.instrs:
+            if self.has_encountered_goto:
+                raise IllegalJumpError(i)
+            self.analyze_instr(i, context, routines)
 
-def analyze_instr(instr, context, routines):
-    assert isinstance(instr, Instr)
-    opcode = instr.opcode
-    dest = instr.dest
-    src = instr.src
-
-    if opcode == 'ld':
-        if instr.index:
-            if src.type == TYPE_BYTE_TABLE and dest.type == TYPE_BYTE:
+    def analyze_instr(self, instr, context, routines):
+        assert isinstance(instr, Instr)
+        opcode = instr.opcode
+        dest = instr.dest
+        src = instr.src
+    
+        if opcode == 'ld':
+            if instr.index:
+                if src.type == TYPE_BYTE_TABLE and dest.type == TYPE_BYTE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+            elif src.type != dest.type:
+                raise TypeMismatchError((src, dest))
+            context.assert_meaningful(src)
+            context.set_written(dest, FLAG_Z, FLAG_N)
+        elif opcode == 'st':
+            if instr.index:
+                if src.type == TYPE_BYTE and dest.type == TYPE_BYTE_TABLE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+            elif src.type != dest.type:
+                raise TypeMismatchError((src, dest))
+            context.assert_meaningful(src)
+            context.set_written(dest)
+        elif opcode in ('add', 'sub'):
+            context.assert_meaningful(src, dest, FLAG_C)
+            context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+        elif opcode in ('inc', 'dec'):
+            context.assert_meaningful(dest)
+            context.set_written(dest, FLAG_Z, FLAG_N)
+        elif opcode == 'cmp':
+            context.assert_meaningful(src, dest)
+            context.set_written(FLAG_Z, FLAG_N, FLAG_C)
+        elif opcode in ('and', 'or', 'xor'):
+            context.assert_meaningful(src, dest)
+            context.set_written(dest, FLAG_Z, FLAG_N)
+        elif opcode in ('shl', 'shr'):
+            context.assert_meaningful(dest, FLAG_C)
+            context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
+        elif opcode == 'call':
+            type = instr.location.type
+            for ref in type.inputs:
+                context.assert_meaningful(ref)
+            for ref in type.outputs:
+                context.set_written(ref)
+            for ref in type.trashes:
+                context.assert_writeable(ref)
+                context.set_touched(ref)
+                context.set_unmeaningful(ref)
+        elif opcode == 'if':
+            context1 = context.clone()
+            context2 = context.clone()
+            self.analyze_block(instr.block1, context1, routines)
+            if instr.block2 is not None:
+                self.analyze_block(instr.block2, context2, routines)
+            # TODO may we need to deal with touched separately here too?
+            # probably not; if it wasn't meaningful in the first place, it
+            # doesn't really matter if you modified it or not, coming out.
+            for ref in context1.each_meaningful():
+                context2.assert_meaningful(ref, exception_class=InconsistentInitializationError)
+            for ref in context2.each_meaningful():
+                context1.assert_meaningful(ref, exception_class=InconsistentInitializationError)
+            context.set_from(context1)
+        elif opcode == 'repeat':
+            # it will always be executed at least once, so analyze it having
+            # been executed the first time.
+            self.analyze_block(instr.block, context, routines)
+    
+            # now analyze it having been executed a second time, with the context
+            # of it having already been executed.
+            self.analyze_block(instr.block, context, routines)
+    
+            # NB I *think* that's enough... but it might not be?
+        elif opcode == 'copy':
+            # check that their types are basically compatible
+            if src.type == dest.type:
+                pass
+            elif isinstance(src.type, ExecutableType) and \
+                 isinstance(dest.type, VectorType):
                 pass
             else:
                 raise TypeMismatchError((src, dest))
-        elif src.type != dest.type:
-            raise TypeMismatchError((src, dest))
-        context.assert_meaningful(src)
-        context.set_written(dest, FLAG_Z, FLAG_N)
-    elif opcode == 'st':
-        if instr.index:
-            if src.type == TYPE_BYTE and dest.type == TYPE_BYTE_TABLE:
-                pass
-            else:
-                raise TypeMismatchError((src, dest))
-        elif src.type != dest.type:
-            raise TypeMismatchError((src, dest))
-        context.assert_meaningful(src)
-        context.set_written(dest)
-    elif opcode in ('add', 'sub'):
-        context.assert_meaningful(src, dest, FLAG_C)
-        context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
-    elif opcode in ('inc', 'dec'):
-        context.assert_meaningful(dest)
-        context.set_written(dest, FLAG_Z, FLAG_N)
-    elif opcode == 'cmp':
-        context.assert_meaningful(src, dest)
-        context.set_written(FLAG_Z, FLAG_N, FLAG_C)
-    elif opcode in ('and', 'or', 'xor'):
-        context.assert_meaningful(src, dest)
-        context.set_written(dest, FLAG_Z, FLAG_N)
-    elif opcode in ('shl', 'shr'):
-        context.assert_meaningful(dest, FLAG_C)
-        context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
-    elif opcode == 'call':
-        type = instr.location.type
-        for ref in type.inputs:
-            context.assert_meaningful(ref)
-        for ref in type.outputs:
-            context.set_written(ref)
-        for ref in type.trashes:
-            context.assert_writeable(ref)
-            context.set_touched(ref)
-            context.set_unmeaningful(ref)
-    elif opcode == 'if':
-        context1 = context.clone()
-        context2 = context.clone()
-        analyze_block(instr.block1, context1, routines)
-        if instr.block2 is not None:
-            analyze_block(instr.block2, context2, routines)
-        # TODO may we need to deal with touched separately here too?
-        # probably not; if it wasn't meaningful in the first place, it
-        # doesn't really matter if you modified it or not, coming out.
-        for ref in context1.each_meaningful():
-            context2.assert_meaningful(ref, exception_class=InconsistentInitializationError)
-        for ref in context2.each_meaningful():
-            context1.assert_meaningful(ref, exception_class=InconsistentInitializationError)
-        context.set_from(context1)
-    elif opcode == 'repeat':
-        # it will always be executed at least once, so analyze it having
-        # been executed the first time.
-        analyze_block(instr.block, context, routines)
-
-        # now analyze it having been executed a second time, with the context
-        # of it having already been executed.
-        analyze_block(instr.block, context, routines)
-
-        # NB I *think* that's enough... but it might not be?
-    elif opcode == 'copy':
-        # check that their types are basically compatible
-        if src.type == dest.type:
-            pass
-        elif isinstance(src.type, ExecutableType) and \
-             isinstance(dest.type, VectorType):
-            pass
+    
+            # if dealing with routines and vectors,
+            # check that they're not incompatible
+            if isinstance(src.type, ExecutableType) and \
+               isinstance(dest.type, VectorType):
+                if not (src.type.inputs <= dest.type.inputs):
+                    raise IncompatibleConstraintsError(src.type.inputs - dest.type.inputs)
+                if not (src.type.outputs <= dest.type.outputs):
+                    raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
+                if not (src.type.trashes <= dest.type.trashes):
+                    raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
+                    
+            context.assert_meaningful(src)
+            context.set_written(dest)
+            context.set_touched(REG_A, FLAG_Z, FLAG_N)
+            context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
+        elif opcode == 'with-sei':
+            self.analyze_block(instr.block, context, routines)
+        elif opcode == 'goto':
+            location = instr.location
+            type = location.type
+    
+            if not isinstance(type, ExecutableType):
+                raise TypeMismatchError(location)
+    
+            # assert that the dest routine's inputs are all initialized
+            for ref in type.inputs:
+                context.assert_meaningful(ref)
+    
+            # and that this routine's trashes and output constraints are a
+            # superset of the called routine's
+            current_type = self.current_routine.location.type
+            if not (type.outputs <= current_type.outputs):
+                raise IncompatibleConstraintsError(type.outputs - current_type.outputs)
+            if not (type.trashes <= current_type.trashes):
+                raise IncompatibleConstraintsError(type.trashes - current_type.trashes)
+            self.has_encountered_goto = True
         else:
-            raise TypeMismatchError((src, dest))
-
-        # if dealing with routines and vectors,
-        # check that they're not incompatible
-        if isinstance(src.type, ExecutableType) and \
-           isinstance(dest.type, VectorType):
-            if not (src.type.inputs <= dest.type.inputs):
-                raise IncompatibleConstraintsError(src.type.inputs - dest.type.inputs)
-            if not (src.type.outputs <= dest.type.outputs):
-                raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
-            if not (src.type.trashes <= dest.type.trashes):
-                raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
-                
-        context.assert_meaningful(src)
-        context.set_written(dest)
-        context.set_touched(REG_A, FLAG_Z, FLAG_N)
-        context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
-    elif opcode == 'with-sei':
-        analyze_block(instr.block, context, routines)
-    else:
-        raise NotImplementedError(opcode)
+            raise NotImplementedError(opcode)

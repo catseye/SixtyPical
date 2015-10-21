@@ -33,11 +33,16 @@ TODO
 
 For 0.6:
 
-*   `call` vector (generates an indirect JMP.)
-*   `goto` (tail call) a routine or a vector.
-*   A more involved demo for the C64 — one that sets up an interrupt?
+*   `call` vector (generates an JSR to a trampoline that does indirect JMP.)
+*   `goto` (tail call) a a vector.
+*   add routine name to error messages.
+*   routines shouldn't need to be listed as inputs.
 
 For 0.7:
+
+*   A more involved demo for the C64 — one that sets up an interrupt?
+
+For 0.8:
 
 *   `word` type.
 *   `trash` instruction.
@@ -47,7 +52,6 @@ For 0.7:
 At some point...
 
 *   `interrupt` routines.
-*   add line number (or at least routine name) to error messages.
 *   6502-mnemonic aliases (`sec`, `clc`)
 *   other handy aliases (`eq` for `z`, etc.)
 *   have `copy` instruction able to copy a constant to a user-def mem loc, etc.
