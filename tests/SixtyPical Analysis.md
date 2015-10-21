@@ -73,7 +73,7 @@ If a routine modifies a location, it needs to either output it or trash it.
     | {
     |     ld x, 0
     | }
-    ? IllegalWriteError: x
+    ? ForbiddenWriteError: x in main
 
     | routine main
     |   outputs x, z, n
@@ -324,7 +324,7 @@ Can't `add` from or to a memory location that isn't initialized.
     |     st off, c
     |     add a, lives
     | }
-    ? UninitializedAccessError: lives
+    ? UnmeaningfulReadError: lives in main
 
     | byte lives
     | routine main
@@ -335,7 +335,7 @@ Can't `add` from or to a memory location that isn't initialized.
     |     st off, c
     |     add a, lives
     | }
-    ? UninitializedAccessError: a
+    ? UnmeaningfulReadError: a in main
 
 Can't `add` to a memory location that isn't writeable.
 
@@ -346,7 +346,7 @@ Can't `add` to a memory location that isn't writeable.
     |     st off, c
     |     add a, 0
     | }
-    ? IllegalWriteError: a
+    ? ForbiddenWriteError: a in main
 
 ### sub ###
 
@@ -371,7 +371,7 @@ Can't `sub` from or to a memory location that isn't initialized.
     |     st off, c
     |     sub a, lives
     | }
-    ? UninitializedAccessError: lives
+    ? UnmeaningfulReadError: lives in main
 
     | byte lives
     | routine main
@@ -382,7 +382,7 @@ Can't `sub` from or to a memory location that isn't initialized.
     |     st off, c
     |     sub a, lives
     | }
-    ? UninitializedAccessError: a
+    ? UnmeaningfulReadError: a in main
 
 Can't `sub` to a memory location that isn't writeable.
 
@@ -393,7 +393,7 @@ Can't `sub` to a memory location that isn't writeable.
     |     st off, c
     |     sub a, 0
     | }
-    ? IllegalWriteError: a
+    ? ForbiddenWriteError: a in main
 
 ### inc ###
 
@@ -405,7 +405,7 @@ Location must be initialized and writeable.
     | {
     |     inc x
     | }
-    ? UninitializedAccessError: x
+    ? UnmeaningfulReadError: x in main
 
     | routine main
     |   inputs x
@@ -413,7 +413,7 @@ Location must be initialized and writeable.
     | {
     |     inc x
     | }
-    ? IllegalWriteError: x
+    ? ForbiddenWriteError: x in main
 
     | routine main
     |   inputs x
@@ -434,7 +434,7 @@ Location must be initialized and writeable.
     | {
     |     dec x
     | }
-    ? UninitializedAccessError: x
+    ? UnmeaningfulReadError: x in main
 
     | routine main
     |   inputs x
@@ -442,7 +442,7 @@ Location must be initialized and writeable.
     | {
     |     dec x
     | }
-    ? IllegalWriteError: x
+    ? ForbiddenWriteError: x in main
 
     | routine main
     |   inputs x
@@ -471,14 +471,14 @@ Some rudimentary tests for cmp.
     | {
     |     cmp a, 4
     | }
-    ? IllegalWriteError: c
+    ? ForbiddenWriteError: c in main
 
     | routine main
     |   trashes z, c, n
     | {
     |     cmp a, 4
     | }
-    ? UninitializedAccessError: a
+    ? UnmeaningfulReadError: a in main
 
 ### and ###
 
@@ -498,14 +498,14 @@ Some rudimentary tests for and.
     | {
     |     and a, 4
     | }
-    ? IllegalWriteError: a
+    ? ForbiddenWriteError: a in main
 
     | routine main
     |   trashes z, n
     | {
     |     and a, 4
     | }
-    ? UninitializedAccessError: a
+    ? UnmeaningfulReadError: a in main
 
 ### or ###
 
@@ -525,14 +525,14 @@ Writing unit tests on a train.  Wow.
     | {
     |     or a, 4
     | }
-    ? IllegalWriteError: a
+    ? ForbiddenWriteError: a in main
 
     | routine main
     |   trashes z, n
     | {
     |     or a, 4
     | }
-    ? UninitializedAccessError: a
+    ? UnmeaningfulReadError: a in main
 
 ### xor ###
 
@@ -552,14 +552,14 @@ Writing unit tests on a train.  Wow.
     | {
     |     xor a, 4
     | }
-    ? IllegalWriteError: a
+    ? ForbiddenWriteError: a in main
 
     | routine main
     |   trashes z, n
     | {
     |     xor a, 4
     | }
-    ? UninitializedAccessError: a
+    ? UnmeaningfulReadError: a in main
 
 ### shl ###
 
@@ -579,7 +579,7 @@ Some rudimentary tests for shl.
     | {
     |     shl a
     | }
-    ? IllegalWriteError: a
+    ? ForbiddenWriteError: a in main
 
     | routine main
     |   inputs a
@@ -587,7 +587,7 @@ Some rudimentary tests for shl.
     | {
     |     shl a
     | }
-    ? UninitializedAccessError: c
+    ? UnmeaningfulReadError: c in main
 
 ### shr ###
 
@@ -607,7 +607,7 @@ Some rudimentary tests for shr.
     | {
     |     shr a
     | }
-    ? IllegalWriteError: a
+    ? ForbiddenWriteError: a in main
 
     | routine main
     |   inputs a
@@ -615,7 +615,7 @@ Some rudimentary tests for shr.
     | {
     |     shr a
     | }
-    ? UninitializedAccessError: c
+    ? UnmeaningfulReadError: c in main
 
 ### call ###
 
@@ -635,7 +635,7 @@ initialized.
     | {
     |     call foo
     | }
-    ? UninitializedAccessError: x
+    ? UnmeaningfulReadError: x in main
 
 Note that if you call a routine that trashes a location, you also trash it.
 
@@ -654,7 +654,7 @@ Note that if you call a routine that trashes a location, you also trash it.
     |     ld x, 0
     |     call foo
     | }
-    ? IllegalWriteError: lives
+    ? ForbiddenWriteError: lives in main
 
     | byte lives
     | 
@@ -691,7 +691,7 @@ You can't output a value that the thing you called trashed.
     |     ld x, 0
     |     call foo
     | }
-    ? UninitializedOutputError: lives
+    ? UnmeaningfulOutputError: lives in main
 
 ...unless you write to it yourself afterwards.
 
@@ -742,7 +742,7 @@ calling it.
     |     call foo
     |     ld a, x
     | }
-    ? UninitializedAccessError: x
+    ? UnmeaningfulReadError: x in main
 
 If a routine trashes locations, they are uninitialized in the caller after
 calling it.
@@ -767,7 +767,7 @@ calling it.
     |     call foo
     |     ld a, x
     | }
-    ? UninitializedAccessError: x
+    ? UnmeaningfulReadError: x in main
 
 Calling an extern is just the same as calling a defined routine with the
 same constraints.
@@ -795,7 +795,7 @@ same constraints.
     | {
     |     call chrout
     | }
-    ? UninitializedAccessError: a
+    ? UnmeaningfulReadError: a in main
 
     | routine chrout
     |   inputs a
@@ -809,7 +809,7 @@ same constraints.
     |     call chrout
     |     ld x, a
     | }
-    ? UninitializedAccessError: a
+    ? UnmeaningfulReadError: a in main
 
 ### if ###
 
@@ -964,7 +964,7 @@ initialized at the start.
     |         cmp x, 10
     |     } until z
     | }
-    ? UninitializedAccessError: y
+    ? UnmeaningfulReadError: y in main
 
 ### copy ###
 
@@ -987,7 +987,7 @@ Can't `copy` from a memory location that isn't initialized.
     | {
     |     copy x, lives
     | }
-    ? UninitializedAccessError: x
+    ? UnmeaningfulReadError: x in main
 
 Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
 
@@ -1015,7 +1015,7 @@ Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
     | {
     |     copy 0, lives
     | }
-    ? IllegalWriteError: lives
+    ? ForbiddenWriteError: lives in main
 
 a, z, and n are trashed, and must be declared as such
 
@@ -1025,7 +1025,7 @@ a, z, and n are trashed, and must be declared as such
     | {
     |     copy 0, lives
     | }
-    ? IllegalWriteError: a
+    ? ForbiddenWriteError: a in main
 
 a, z, and n are trashed, and must not be declared as outputs.
 
@@ -1035,7 +1035,7 @@ a, z, and n are trashed, and must not be declared as outputs.
     | {
     |     copy 0, lives
     | }
-    ? UninitializedOutputError: a
+    ? UnmeaningfulOutputError: a in main
 
 Unless of course you subsequently initialize them.
 
@@ -1147,7 +1147,7 @@ Calling the vector does indeed trash the things the vector says it does.
     |     copy bar, foo
     |     call foo
     | }
-    ? UninitializedOutputError: x
+    ? UnmeaningfulOutputError: x in main
 
 `goto`, if present, must be in tail position (the final instruction in a routine.)
 
@@ -1250,22 +1250,22 @@ Indirect goto.
 
 Jumping through the vector does indeed output the things the vector says it does.
 
-    | vector foo trashes a, x, z, n
-    | 
-    | routine bar trashes a, x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | routine sub inputs bar trashes foo, a, x, z, n {
-    |     ld x, 0
-    |     copy bar, foo
-    |     goto foo
-    | }
-    | 
-    | routine main inputs bar outputs a trashes z, n {
-    |     call sub
-    |     ld a, x
-    | }
-    ? UninitializedOutputError: x
+    > | vector foo trashes a, x, z, n
+    > | 
+    > | routine bar trashes a, x, z, n {
+    > |     ld x, 200
+    > | }
+    > | 
+    > | routine sub inputs bar trashes foo, a, x, z, n {
+    > |     ld x, 0
+    > |     copy bar, foo
+    > |     goto foo
+    > | }
+    > | 
+    > | routine main inputs bar outputs a trashes z, n {
+    > |     call sub
+    > |     ld a, x
+    > | }
+    > ? UnmeaningfulReadError: x in main
 
 Ack, I have become a bit confused...

@@ -13,11 +13,11 @@ class StaticAnalysisError(ValueError):
     pass
 
 
-class UninitializedAccessError(StaticAnalysisError):
+class UnmeaningfulReadError(StaticAnalysisError):
     pass
 
 
-class UninitializedOutputError(StaticAnalysisError):
+class UnmeaningfulOutputError(StaticAnalysisError):
     pass
 
 
@@ -25,11 +25,11 @@ class InconsistentInitializationError(StaticAnalysisError):
     pass
 
 
-class IllegalWriteError(StaticAnalysisError):
+class ForbiddenWriteError(StaticAnalysisError):
     pass
 
 
-class UsageClashError(StaticAnalysisError):
+class InconsistentConstraintsError(StaticAnalysisError):
     pass
 
 
@@ -45,7 +45,7 @@ class IllegalJumpError(StaticAnalysisError):
     pass
 
 
-class Context():
+class Context(object):
     """
     A location is touched if it was changed (or even potentially
     changed) during this routine, or some routine called by this routine.
@@ -57,7 +57,8 @@ class Context():
     A location is writeable if it was listed in the outputs and trashes
     lists of this routine.
     """
-    def __init__(self, inputs, outputs, trashes):
+    def __init__(self, routine, inputs, outputs, trashes):
+        self.routine = routine
         self._touched = set()
         self._meaningful = set()
         self._writeable = set()
@@ -74,13 +75,14 @@ class Context():
             self._writeable.add(ref)
 
     def clone(self):
-        c = Context([], [], [])
+        c = Context(self.routine, [], [], [])
         c._touched = set(self._touched)
         c._meaningful = set(self._meaningful)
         c._writeable = set(self._writeable)
         return c
 
     def set_from(self, c):
+        assert c.routine == self.routine
         self._touched = set(c._touched)
         self._meaningful = set(c._meaningful)
         self._writeable = set(c._writeable)
@@ -94,20 +96,23 @@ class Context():
             yield ref
 
     def assert_meaningful(self, *refs, **kwargs):
-        exception_class = kwargs.get('exception_class', UninitializedAccessError)
+        exception_class = kwargs.get('exception_class', UnmeaningfulReadError)
         for ref in refs:
             if isinstance(ref, ConstantRef):
                 pass
             elif isinstance(ref, LocationRef):
                 if ref not in self._meaningful:
-                    raise exception_class(ref.name)
+                    message = '%s in %s' % (ref.name, self.routine.name)
+                    raise exception_class(message)
             else:
-                raise ValueError(ref)
+                raise NotImplementedError(ref)
 
-    def assert_writeable(self, *refs):
+    def assert_writeable(self, *refs, **kwargs):
+        exception_class = kwargs.get('exception_class', ForbiddenWriteError)
         for ref in refs:
             if ref not in self._writeable:
-                raise IllegalWriteError(ref.name)
+                message = '%s in %s' % (ref.name, self.routine.name)
+                raise exception_class(message)
 
     def set_touched(self, *refs):
         for ref in refs:
@@ -151,14 +156,15 @@ class Analyzer(object):
             # it's an extern, that's fine
             return
         type = routine.location.type
-        context = Context(type.inputs, type.outputs, type.trashes)
+        context = Context(routine, type.inputs, type.outputs, type.trashes)
         self.analyze_block(routine.block, context, routines)
         if not self.has_encountered_goto:
             for ref in type.outputs:
-                context.assert_meaningful(ref, exception_class=UninitializedOutputError)
+                context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
             for ref in context.each_touched():
                 if ref not in type.outputs and ref not in type.trashes:
-                    raise IllegalWriteError(ref.name)
+                    message = '%s in %s' % (ref.name, routine.name)
+                    raise ForbiddenWriteError(message)
         self.current_routine = None
 
     def analyze_block(self, block, context, routines):
