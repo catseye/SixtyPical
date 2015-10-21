@@ -291,11 +291,12 @@ current routine, and it continues to be initialized afterwards.
 
 Transfers execution to the given executable, whether that is a previously-
 defined routine, or a vector location which contains the address of a routine
-which will be called indirectly.
+which will be called indirectly.  Execution will be transferred back to the
+current routine, when execution of the executable is finished.
 
 Just before the call,
 
-*   It is illegal if any of the memory locations in the called routine's
+*   It is illegal if any of the memory locations in the target executable's
     READS list is uninitialized.
 
 Just after the call,
@@ -304,6 +305,28 @@ Just after the call,
     list are considered uninitialized.
 *   All memory locations listed as TRASHED in the called routine's OUTPUTS
     list are considered initialized.
+
+### goto ###
+
+    goto <executable-name>
+
+Unilaterally transfers execution to the given executable.  Execution will not
+be transferred back to the current routine when execution of the executable is
+finished; rather, it will be transferred back to the caller of the current
+routine.
+
+If `goto` is used in a routine, it must be in tail position.  That is, it
+must be the final instruction in the routine.
+
+Just before the goto,
+
+*   It is illegal if any of the memory locations in the target executable's
+    READS list is uninitialized.
+
+In addition,
+
+*   The target executable's WRITES lists must not include any locations
+    that are not already included in the current routine's WRITES lists.
 
 ### if ###
 
@@ -362,10 +385,6 @@ copy more general types of data (for example, vectors,) and it trashes the
 
 After execution, dest is considered initialized, and `z` and `n`, and
 `a` are considered uninitialized.
-
-### goto ###
-
-TBW
 
 Grammar
 -------
