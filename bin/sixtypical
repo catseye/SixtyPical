@@ -19,7 +19,7 @@ import traceback
 
 from sixtypical.parser import Parser
 from sixtypical.evaluator import Evaluator
-from sixtypical.analyzer import analyze_program
+from sixtypical.analyzer import Analyzer
 from sixtypical.emitter import Emitter, Byte, Word
 from sixtypical.compiler import Compiler
 
@@ -50,12 +50,13 @@ if __name__ == '__main__':
 
     for filename in args:
         text = open(filename).read()
-        p = Parser(text)
-        program = p.program()
+        parser = Parser(text)
+        program = parser.program()
 
         if options.analyze:
             try:
-                analyze_program(program)
+                analyzer = Analyzer()
+                analyzer.analyze_program(program)
             except Exception as e:
                 if options.traceback:
                     raise

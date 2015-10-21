@@ -1149,7 +1149,7 @@ Calling the vector has indeed trashed stuff etc,
     | }
     ? UninitializedOutputError: x
 
-`goto`, if present, must be the final instruction in a routine.
+`goto`, if present, must be in tail position (the final instruction in a routine.)
 
     | routine bar trashes x, z, n {
     |     ld x, 200
@@ -1182,6 +1182,20 @@ Calling the vector has indeed trashed stuff etc,
     |         goto bar
     |     }
     | }
+    = ok
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    |     ld x, 0
+    | }
     ? IllegalJumpError
 
 Can't `goto` a routine that outputs or trashes more than the current routine.
@@ -1195,7 +1209,7 @@ Can't `goto` a routine that outputs or trashes more than the current routine.
     |     ld x, 0
     |     goto bar
     | }
-    ? IllegalWriteError: y
+    ? IncompatibleConstraintsError
 
     | routine bar outputs y trashes z, n {
     |     ld y, 200
@@ -1205,4 +1219,4 @@ Can't `goto` a routine that outputs or trashes more than the current routine.
     |     ld x, 0
     |     goto bar
     | }
-    ? IllegalWriteError: y
+    ? IncompatibleConstraintsError
