@@ -274,4 +274,16 @@ Indirect call.
     |     copy bar, foo
     |     call foo
     | }
-    = 00c0
+    = 00c0wewillfixthislater
+
+goto.
+
+    | routine bar outputs x trashes z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main outputs x trashes a, z, n {
+    |     ld y, 200
+    |     goto bar
+    | }
+    = 00c0a0c84c06c060a2c860
