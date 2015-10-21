@@ -1148,3 +1148,61 @@ Calling the vector has indeed trashed stuff etc,
     |     call foo
     | }
     ? UninitializedOutputError: x
+
+`goto`, if present, must be the final instruction in a routine.
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     goto bar
+    | }
+    = ok
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     goto bar
+    |     ld x, 0
+    | }
+    ? IllegalJumpError
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    | }
+    ? IllegalJumpError
+
+Can't `goto` a routine that outputs or trashes more than the current routine.
+
+    | routine bar trashes x, y, z, n {
+    |     ld x, 200
+    |     ld y, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     goto bar
+    | }
+    ? IllegalWriteError: y
+
+    | routine bar outputs y trashes z, n {
+    |     ld y, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     goto bar
+    | }
+    ? IllegalWriteError: y

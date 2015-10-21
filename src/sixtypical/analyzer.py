@@ -256,5 +256,23 @@ def analyze_instr(instr, context, routines):
         context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
     elif opcode == 'with-sei':
         analyze_block(instr.block, context, routines)
+    elif opcode == 'goto':
+        location = instr.location
+        type = location.type
+
+        if not isinstance(type, ExecutableType):
+            raise TypeMismatchError(location)
+
+        # assert that the dest routine's inputs are all initialized
+        for ref in type.inputs:
+            context.assert_meaningful(ref)
+
+        # and that the called routine's output constraints are a
+        # superset of this routine's
+        current_type = self.current_routine.type
+        if not (current_type.outputs <= type.outputs):
+            raise IncompatibleConstraintsError(current_type.outputs - type.outputs)
+        if not (current_type.trashes <= type.trashes):
+            raise IncompatibleConstraintsError(current_type.trashes - type.trashes)
     else:
         raise NotImplementedError(opcode)
