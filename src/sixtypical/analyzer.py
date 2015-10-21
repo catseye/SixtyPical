@@ -153,11 +153,12 @@ class Analyzer(object):
         type = routine.location.type
         context = Context(type.inputs, type.outputs, type.trashes)
         self.analyze_block(routine.block, context, routines)
-        for ref in type.outputs:
-            context.assert_meaningful(ref, exception_class=UninitializedOutputError)
-        for ref in context.each_touched():
-            if ref not in type.outputs and ref not in type.trashes:
-                raise IllegalWriteError(ref.name)
+        if not self.has_encountered_goto:
+            for ref in type.outputs:
+                context.assert_meaningful(ref, exception_class=UninitializedOutputError)
+            for ref in context.each_touched():
+                if ref not in type.outputs and ref not in type.trashes:
+                    raise IllegalWriteError(ref.name)
         self.current_routine = None
 
     def analyze_block(self, block, context, routines):
