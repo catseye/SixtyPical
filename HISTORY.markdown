@@ -8,6 +8,7 @@ History of SixtyPical
 *   Both routines and vectors can declare `inputs`, `outputs`, and `trashes`,
     and these must be compatible to assign a routine or vector to a vector.
 *   Added `goto` (tail call) instruction, jumps to routine or through vector.
+*   `call` can call a subroutine indirectly, via a vector.
 *   Routine name is now shown in analysis error messages.
 
 0.5

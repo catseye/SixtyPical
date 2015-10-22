@@ -8,8 +8,19 @@ In practice, this means it catches things like
 
 *   you forgot to clear carry before adding something to the accumulator
 *   a subroutine that you call trashes a register you thought was preserved
+*   you tried to write the address of something that was not a routine, to
+    a jump vector
 
-and suchlike.
+and suchlike.  It also provides some convenient operations and abstractions
+based on common machine-language programming idioms, such as
+
+*   copying values from one register to another (via a third register when
+    there are no underlying instructions that directly support it)
+*   explicit tail calls
+*   indirect subroutine calls
+
+The reference implementation can execute, analyze, and compile SixtyPical
+programs to 6502 machine code.
 
 It is a **work in progress**, currently at the **proof-of-concept** stage.
 
@@ -33,16 +44,13 @@ TODO
 
 For 0.6:
 
-*   `call` vector (generates an JSR to a trampoline that does indirect JMP.)
 *   routines shouldn't need to be listed as inputs.
+*   A more involved demo for the C64 — one that sets up an interrupt.
 
 For 0.7:
 
-*   A more involved demo for the C64 — one that sets up an interrupt?
-
-For 0.8:
-
 *   `word` type.
+*   `word table` type.
 *   `trash` instruction.
 *   zero-page memory locations.
 *   indirect addressing.
