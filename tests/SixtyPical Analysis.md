@@ -1248,24 +1248,56 @@ Indirect goto.
     | }
     = ok
 
-Jumping through the vector does indeed output the things the vector says it does.
+Jumping through the vector does indeed trash, or output, the things the
+vector says it does.
 
-    | vector foo trashes a, x, z, n
+    | vector foo
+    |   trashes a, x, z, n
     | 
-    | routine bar trashes a, x, z, n {
+    | routine bar
+    |   trashes a, x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine sub inputs bar trashes foo, a, x, z, n {
+    | routine sub
+    |   inputs bar
+    |   trashes foo, a, x, z, n {
     |     ld x, 0
     |     copy bar, foo
     |     goto foo
     | }
     | 
-    | routine main inputs bar outputs a trashes z, n {
+    | routine main inputs bar
+    |   outputs a
+    |   trashes foo, x, z, n {
     |     call sub
     |     ld a, x
     | }
     ? UnmeaningfulReadError: x in main
 
-Ack, I have become a bit confused...
+    | vector foo
+    |   outputs x
+    |   trashes a, z, n
+    | 
+    | routine bar
+    |   outputs x
+    |   trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine sub
+    |   inputs bar
+    |   outputs x
+    |   trashes foo, a, z, n {
+    |     ld x, 0
+    |     copy bar, foo
+    |     goto foo
+    | }
+    | 
+    | routine main inputs bar
+    |   outputs a
+    |   trashes foo, x, z, n {
+    |     call sub
+    |     ld a, x
+    | }
+    = ok
