@@ -14,6 +14,7 @@ sys.path.insert(0, join(dirname(realpath(sys.argv[0])), '..', 'src'))
 
 import codecs
 from optparse import OptionParser
+from pprint import pprint
 import sys
 import traceback
 
@@ -84,7 +85,7 @@ if __name__ == '__main__':
             compiler = Compiler(emitter)
             compiler.compile_program(program)
             if options.debug:
-                print repr(emitter.accum)
+                pprint(emitter.accum)
             else:
                 emitter.serialize(fh)
 

@@ -30,6 +30,7 @@ class Compiler(object):
         self.emitter = emitter
         self.routines = {}
         self.labels = {}
+        self.trampolines = {}   # Location -> Label
 
     def compile_program(self, program):
         assert isinstance(program, Program)
@@ -52,10 +53,15 @@ class Compiler(object):
             if routine.name != 'main':
                 self.compile_routine(routine)
 
+        for location, label in self.trampolines.iteritems():
+            self.emitter.resolve_label(label)
+            self.emitter.emit(JMP(Indirect(self.labels[location.name])))
+
         for defn in program.defns:
             if defn.addr is None:
                 label = self.labels[defn.name]
                 self.emitter.resolve_bss_label(label)
+
 
     def compile_routine(self, routine):
         assert isinstance(routine, Routine)
@@ -198,9 +204,10 @@ class Compiler(object):
             if isinstance(location.type, RoutineType):
                 self.emitter.emit(JSR(Absolute(label)))
             elif isinstance(location.type, VectorType):
-                # XXX NOT QUITE RIGHT, IS IT?
-                # We need to simulate an indirect JSR!
-                self.emitter.emit(JMP(Indirect(label)))
+                trampoline = self.trampolines.setdefault(
+                    location, Label(location.name + '_trampoline')
+                )
+                self.emitter.emit(JSR(Absolute(trampoline)))
             else:
                 raise NotImplementedError
         elif opcode == 'goto':
