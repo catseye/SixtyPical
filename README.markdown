@@ -34,8 +34,6 @@ TODO
 For 0.6:
 
 *   `call` vector (generates an JSR to a trampoline that does indirect JMP.)
-*   `goto` (tail call) a a vector.
-*   add routine name to error messages.
 *   routines shouldn't need to be listed as inputs.
 
 For 0.7:
