@@ -239,7 +239,7 @@ Copy instruction..
     | }
     = 00c0ad0fc08d0dc0ad10c08d0ec060
 
-Copy instruction inside interrupts off block.
+Copy instruction inside an `interrupts off` block.
 
     | vector bar
     | 
@@ -260,7 +260,7 @@ Copy instruction inside interrupts off block.
     |     copy foo, bar
     |   }
     | }
-    = 00c078ad0fc08d11c0ad10c08d12c05860e860
+    = 00c078a90d8d0fc0a9c08d10c05860e860
 
 Indirect call.
 
@@ -274,7 +274,7 @@ Indirect call.
     |     copy bar, foo
     |     call foo
     | }
-    = 00c0wewillfixthislater
+    = 00c0a90e8d14c0a9c08d15c02011c060a2c8606c14c0
 
 goto.
 
