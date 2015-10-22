@@ -29,19 +29,27 @@ class ForbiddenWriteError(StaticAnalysisError):
     pass
 
 
-class InconsistentConstraintsError(StaticAnalysisError):
-    pass
-
-
 class TypeMismatchError(StaticAnalysisError):
     pass
 
 
-class IncompatibleConstraintsError(StaticAnalysisError):
+class IllegalJumpError(StaticAnalysisError):
     pass
 
 
-class IllegalJumpError(StaticAnalysisError):
+class ConstraintsError(StaticAnalysisError):
+    pass
+
+
+class ConstantConstraintError(ConstraintsError):
+    pass
+
+
+class InconsistentConstraintsError(ConstraintsError):
+    pass
+
+
+class IncompatibleConstraintsError(ConstraintsError):
     pass
 
 
@@ -57,31 +65,39 @@ class Context(object):
     A location is writeable if it was listed in the outputs and trashes
     lists of this routine.
     """
-    def __init__(self, routine, inputs, outputs, trashes):
+    def __init__(self, routines, routine, inputs, outputs, trashes):
+        self.routines = routines    # Location -> AST node
         self.routine = routine
         self._touched = set()
         self._meaningful = set()
         self._writeable = set()
 
         for ref in inputs:
+            if ref.is_constant():
+                raise ConstantConstraintError('%s in %s' % (ref.name, routine.name))
             self._meaningful.add(ref)
         output_names = set()
         for ref in outputs:
+            if ref.is_constant():
+                raise ConstantConstraintError('%s in %s' % (ref.name, routine.name))
             output_names.add(ref.name)
             self._writeable.add(ref)
         for ref in trashes:
+            if ref.is_constant():
+                raise ConstantConstraintError('%s in %s' % (ref.name, routine.name))
             if ref.name in output_names:
-                raise InconsistentConstraintsError(ref.name)
+                raise InconsistentConstraintsError('%s in %s' % (ref.name, routine.name))
             self._writeable.add(ref)
 
     def clone(self):
-        c = Context(self.routine, [], [], [])
+        c = Context(self.routines, self.routine, [], [], [])
         c._touched = set(self._touched)
         c._meaningful = set(self._meaningful)
         c._writeable = set(self._writeable)
         return c
 
     def set_from(self, c):
+        assert c.routines == self.routines
         assert c.routine == self.routine
         self._touched = set(c._touched)
         self._meaningful = set(c._meaningful)
@@ -98,7 +114,7 @@ class Context(object):
     def assert_meaningful(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', UnmeaningfulReadError)
         for ref in refs:
-            if isinstance(ref, ConstantRef):
+            if isinstance(ref, ConstantRef) or ref in self.routines:
                 pass
             elif isinstance(ref, LocationRef):
                 if ref not in self._meaningful:
@@ -141,14 +157,15 @@ class Analyzer(object):
     def __init__(self):
         self.current_routine = None
         self.has_encountered_goto = False
+        self.routines = {}
 
     def analyze_program(self, program):
         assert isinstance(program, Program)
-        routines = {r.name: r for r in program.routines}
+        self.routines = {r.location: r for r in program.routines}
         for routine in program.routines:
-            self.analyze_routine(routine, routines)
+            self.analyze_routine(routine)
 
-    def analyze_routine(self, routine, routines):
+    def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
         self.current_routine = routine
         self.has_encountered_goto = False
@@ -156,8 +173,8 @@ class Analyzer(object):
             # it's an extern, that's fine
             return
         type = routine.location.type
-        context = Context(routine, type.inputs, type.outputs, type.trashes)
-        self.analyze_block(routine.block, context, routines)
+        context = Context(self.routines, routine, type.inputs, type.outputs, type.trashes)
+        self.analyze_block(routine.block, context)
         if not self.has_encountered_goto:
             for ref in type.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
@@ -167,14 +184,14 @@ class Analyzer(object):
                     raise ForbiddenWriteError(message)
         self.current_routine = None
 
-    def analyze_block(self, block, context, routines):
+    def analyze_block(self, block, context):
         assert isinstance(block, Block)
         for i in block.instrs:
             if self.has_encountered_goto:
                 raise IllegalJumpError(i)
-            self.analyze_instr(i, context, routines)
+            self.analyze_instr(i, context)
 
-    def analyze_instr(self, instr, context, routines):
+    def analyze_instr(self, instr, context):
         assert isinstance(instr, Instr)
         opcode = instr.opcode
         dest = instr.dest
@@ -228,9 +245,9 @@ class Analyzer(object):
         elif opcode == 'if':
             context1 = context.clone()
             context2 = context.clone()
-            self.analyze_block(instr.block1, context1, routines)
+            self.analyze_block(instr.block1, context1)
             if instr.block2 is not None:
-                self.analyze_block(instr.block2, context2, routines)
+                self.analyze_block(instr.block2, context2)
             # TODO may we need to deal with touched separately here too?
             # probably not; if it wasn't meaningful in the first place, it
             # doesn't really matter if you modified it or not, coming out.
@@ -242,11 +259,11 @@ class Analyzer(object):
         elif opcode == 'repeat':
             # it will always be executed at least once, so analyze it having
             # been executed the first time.
-            self.analyze_block(instr.block, context, routines)
+            self.analyze_block(instr.block, context)
     
             # now analyze it having been executed a second time, with the context
             # of it having already been executed.
-            self.analyze_block(instr.block, context, routines)
+            self.analyze_block(instr.block, context)
     
             # NB I *think* that's enough... but it might not be?
         elif opcode == 'copy':
@@ -275,7 +292,7 @@ class Analyzer(object):
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
             context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
         elif opcode == 'with-sei':
-            self.analyze_block(instr.block, context, routines)
+            self.analyze_block(instr.block, context)
         elif opcode == 'goto':
             location = instr.location
             type = location.type

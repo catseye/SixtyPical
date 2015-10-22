@@ -1048,7 +1048,8 @@ Unless of course you subsequently initialize them.
     | }
     = ok
 
-You can copy the address of a routine into a vector, if that vector is declared appropriately.
+Routines are constants.  You need not, and in fact cannot, specify a constant
+as an input to, an output of, or as a trashed value of a routine.
 
     | vector vec
     |   inputs x
@@ -1065,6 +1066,72 @@ You can copy the address of a routine into a vector, if that vector is declared 
     | 
     | routine main
     |   inputs foo
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    ? ConstantConstraintError: foo in main
+
+    | vector vec
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec, foo
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    ? ConstantConstraintError: foo in main
+
+    | vector vec
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n, foo
+    | {
+    |     copy foo, vec
+    | }
+    ? ConstantConstraintError: foo in main
+
+You can copy the address of a routine into a vector, if that vector is
+declared appropriately.
+
+    | vector vec
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -1088,7 +1155,6 @@ But not if the vector is declared inappropriately.
     | }
     | 
     | routine main
-    |   inputs foo
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -1112,7 +1178,6 @@ Routines are read-only.
     | }
     | 
     | routine main
-    |   inputs foo
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -1128,7 +1193,7 @@ Indirect call.
     |     ld x, 200
     | }
     | 
-    | routine main inputs bar outputs x, foo trashes a, z, n {
+    | routine main outputs x, foo trashes a, z, n {
     |     copy bar, foo
     |     call foo
     | }
@@ -1142,7 +1207,7 @@ Calling the vector does indeed trash the things the vector says it does.
     |     ld x, 200
     | }
     | 
-    | routine main inputs bar outputs x, foo trashes z, n {
+    | routine main outputs x, foo trashes z, n {
     |     ld x, 0
     |     copy bar, foo
     |     call foo
@@ -1242,7 +1307,7 @@ Indirect goto.
     |     ld x, 200
     | }
     | 
-    | routine main inputs bar outputs x trashes foo, a, z, n {
+    | routine main outputs x trashes foo, a, z, n {
     |     copy bar, foo
     |     goto foo
     | }
@@ -1260,14 +1325,13 @@ vector says it does.
     | }
     | 
     | routine sub
-    |   inputs bar
     |   trashes foo, a, x, z, n {
     |     ld x, 0
     |     copy bar, foo
     |     goto foo
     | }
     | 
-    | routine main inputs bar
+    | routine main
     |   outputs a
     |   trashes foo, x, z, n {
     |     call sub
@@ -1286,7 +1350,6 @@ vector says it does.
     | }
     | 
     | routine sub
-    |   inputs bar
     |   outputs x
     |   trashes foo, a, z, n {
     |     ld x, 0
@@ -1294,7 +1357,7 @@ vector says it does.
     |     goto foo
     | }
     | 
-    | routine main inputs bar
+    | routine main
     |   outputs a
     |   trashes foo, x, z, n {
     |     call sub

@@ -57,7 +57,11 @@ class VectorType(ExecutableType):
 
 
 class Ref(object):
-    pass
+    def is_constant(self):
+        """read-only means that the program cannot change the value
+        of a location.  constant means that the value of the location
+        will not change during the lifetime of the program.""" 
+        raise NotImplementedError
 
 
 class LocationRef(Ref):
@@ -80,6 +84,9 @@ class LocationRef(Ref):
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.type, self.name)
 
+    def is_constant(self):
+        return isinstance(self.type, RoutineType)
+
 
 class ConstantRef(Ref):
     def __init__(self, type, value):
@@ -96,6 +103,9 @@ class ConstantRef(Ref):
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.type, self.value)
+
+    def is_constant(self):
+        return True
 
 
 REG_A = LocationRef(TYPE_BYTE, 'a')

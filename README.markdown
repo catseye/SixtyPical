@@ -44,11 +44,11 @@ TODO
 
 For 0.6:
 
-*   routines shouldn't need to be listed as inputs.
 *   A more involved demo for the C64 — one that sets up an interrupt.
 
 For 0.7:
 
+*   always analyze before executing or compiling, unless told not to
 *   `word` type.
 *   `word table` type.
 *   `trash` instruction.
