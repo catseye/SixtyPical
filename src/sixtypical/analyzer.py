@@ -71,7 +71,7 @@ class Context(object):
             self._writeable.add(ref)
         for ref in trashes:
             if ref.name in output_names:
-                raise UsageClashError(ref.name)
+                raise InconsistentConstraintsError(ref.name)
             self._writeable.add(ref)
 
     def clone(self):

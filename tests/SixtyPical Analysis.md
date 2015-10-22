@@ -33,7 +33,7 @@ Routines may not declare a memory location to be both an output and trashed.
     | {
     |     ld a, 0
     | }
-    ? UsageClashError: a
+    ? InconsistentConstraintsError: a
 
 If a routine declares it outputs a location, that location should be initialized.
 
@@ -42,7 +42,7 @@ If a routine declares it outputs a location, that location should be initialized
     | {
     |     ld x, 0
     | }
-    ? UninitializedOutputError: a
+    ? UnmeaningfulOutputError: a in main
 
     | routine main
     |   inputs a
@@ -107,7 +107,7 @@ Can't `ld` from a memory location that isn't initialized.
     | {
     |     ld a, x
     | }
-    ? UninitializedAccessError: x
+    ? UnmeaningfulReadError: x in main
 
 Can't `ld` to a memory location that doesn't appear in (outputs ∪ trashes).
 
@@ -139,14 +139,14 @@ Can't `ld` to a memory location that doesn't appear in (outputs ∪ trashes).
     | {
     |     ld a, 0
     | }
-    ? IllegalWriteError: a
+    ? ForbiddenWriteError: a in main
 
     | routine main
     |   trashes a, n
     | {
     |     ld a, 0
     | }
-    ? IllegalWriteError: z
+    ? ForbiddenWriteError: z in main
 
 ### st ###
 
@@ -167,7 +167,7 @@ Can't `st` from a memory location that isn't initialized.
     | {
     |     st x, lives
     | }
-    ? UninitializedAccessError: x
+    ? UnmeaningfulReadError: x in main
 
 Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
 
@@ -193,7 +193,7 @@ Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
     | {
     |     st 0, lives
     | }
-    ? IllegalWriteError: lives
+    ? ForbiddenWriteError: lives in main
 
 Storing to a table, you must use an index, and vice-versa.
 
@@ -1250,22 +1250,22 @@ Indirect goto.
 
 Jumping through the vector does indeed output the things the vector says it does.
 
-    > | vector foo trashes a, x, z, n
-    > | 
-    > | routine bar trashes a, x, z, n {
-    > |     ld x, 200
-    > | }
-    > | 
-    > | routine sub inputs bar trashes foo, a, x, z, n {
-    > |     ld x, 0
-    > |     copy bar, foo
-    > |     goto foo
-    > | }
-    > | 
-    > | routine main inputs bar outputs a trashes z, n {
-    > |     call sub
-    > |     ld a, x
-    > | }
-    > ? UnmeaningfulReadError: x in main
+    | vector foo trashes a, x, z, n
+    | 
+    | routine bar trashes a, x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine sub inputs bar trashes foo, a, x, z, n {
+    |     ld x, 0
+    |     copy bar, foo
+    |     goto foo
+    | }
+    | 
+    | routine main inputs bar outputs a trashes z, n {
+    |     call sub
+    |     ld a, x
+    | }
+    ? UnmeaningfulReadError: x in main
 
 Ack, I have become a bit confused...
