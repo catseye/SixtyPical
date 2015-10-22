@@ -7,7 +7,7 @@ from sixtypical.model import (
     RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
-from sixtypical.emitter import Byte, Label, Offset
+from sixtypical.emitter import Byte, Label, Offset, LowAddressByte, HighAddressByte
 from sixtypical.gen6502 import (
     Immediate, Absolute, AbsoluteX, AbsoluteY, Indirect, Relative,
     LDA, LDX, LDY, STA, STX, STY,
@@ -267,13 +267,19 @@ class Compiler(object):
             self.compile_block(instr.block)
             self.emitter.emit(CLI())
         elif opcode == 'copy':
-            if isinstance(src.type, (RoutineType, VectorType)) and \
-               isinstance(dest.type, VectorType):
+            if isinstance(src.type, VectorType) and isinstance(dest.type, VectorType):
                 src_label = self.labels[src.name]
                 dest_label = self.labels[dest.name]
                 self.emitter.emit(LDA(Absolute(src_label)))
                 self.emitter.emit(STA(Absolute(dest_label)))
                 self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
+                self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+            elif isinstance(src.type, RoutineType) and isinstance(dest.type, VectorType):
+                src_label = self.labels[src.name]
+                dest_label = self.labels[dest.name]
+                self.emitter.emit(LDA(Immediate(HighAddressByte(src_label))))
+                self.emitter.emit(STA(Absolute(dest_label)))
+                self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
                 self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
             else:
                 raise NotImplementedError(src.type)

@@ -1,6 +1,6 @@
 """Emittables for 6502 machine code."""
 
-from sixtypical.emitter import Emittable, Byte, Label, Offset
+from sixtypical.emitter import Emittable, Byte, Label, Offset, LowAddressByte, HighAddressByte
 
 
 class AddressingMode(Emittable):
@@ -28,7 +28,7 @@ class Implied(AddressingMode):
 
 class Immediate(AddressingMode):
     def __init__(self, value):
-        assert isinstance(value, Byte)
+        assert isinstance(value, (Byte, LowAddressByte, HighAddressByte))
         self.value = value
 
     def size(self):
@@ -80,6 +80,9 @@ class Relative(AddressingMode):
 
     def serialize(self, addr=None):
         return self.value.serialize_relative_to(addr)
+
+
+# - - - -
 
 
 class Instruction(Emittable):

@@ -82,6 +82,39 @@ class Offset(Emittable):
         return "%s(%r, %r)" % (self.__class__.__name__, self.label, self.offset)
 
 
+class HighAddressByte(Emittable):
+    def __init__(self, label):
+        assert isinstance(label, Label)
+        self.label = label
+
+    def size(self):
+        return 1
+
+    def serialize(self, addr=None):
+        return self.label.serialize()[0]
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.label)
+
+
+class LowAddressByte(Emittable):
+    def __init__(self, label):
+        assert isinstance(label, Label)
+        self.label = label
+
+    def size(self):
+        return 1
+
+    def serialize(self, addr=None):
+        return self.label.serialize()[1]
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.label)
+
+
+# - - - -
+
+
 class Emitter(object):
     def __init__(self, addr):
         self.accum = []
