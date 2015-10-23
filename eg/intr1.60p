@@ -1,7 +1,27 @@
 byte vic_border @ 53280
 
-vector cinv @ 788
+//
+// The constraints on these 2 vectors are kind-of sort-of big fibs.
+// They're only written this way so they can be compatible with our
+// routine.  In fact, CINV is an interrupt routine where it doesn't
+// really matter what you trash anyway, because all registers were
+/// saved by the caller (the KERNAL) and will be restored by the end
+// of the code of the saved origin cinv routine that we goto.
+//
+// I wonder if this could be arranged somehow to be less fibby, in
+// a future version of SixtyPical.
+//
+
+vector cinv
+  inputs vic_border
+  outputs vic_border
+  trashes z, n
+  @ 788
+
 vector save_cinv
+  inputs vic_border
+  outputs vic_border
+  trashes z, n
 
 routine our_cinv
   inputs vic_border
@@ -9,10 +29,11 @@ routine our_cinv
   trashes z, n
 {
     inc vic_border
+    goto save_cinv
 }
 
 routine main
-  inputs cinv, our_cinv
+  inputs cinv
   outputs cinv, save_cinv
   trashes a, n, z
 {

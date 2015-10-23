@@ -1,8 +1,8 @@
 History of SixtyPical
 =====================
 
-0.6-PRE
--------
+0.6
+---
 
 *   Added `routine` and `vector` types, and `copy` instruction.
 *   Both routines and vectors can declare `inputs`, `outputs`, and `trashes`,

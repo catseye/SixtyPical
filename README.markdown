@@ -24,8 +24,8 @@ programs to 6502 machine code.
 
 It is a **work in progress**, currently at the **proof-of-concept** stage.
 
-The current released version of SixtyPical is 0.5.  The current development
-version of SixtyPical, unreleased as of this writing, is 0.6-PRE.
+The current released version of SixtyPical is 0.6.  The current development
+version of SixtyPical, unreleased as of this writing, is 0.7-PRE.
 
 Documentation
 -------------
@@ -42,21 +42,20 @@ Documentation
 TODO
 ----
 
-For 0.6:
-
-*   A more involved demo for the C64 — one that sets up an interrupt.
-
 For 0.7:
 
 *   always analyze before executing or compiling, unless told not to
 *   `word` type.
 *   `word table` type.
-*   `trash` instruction.
+
+For 0.8:
+
 *   zero-page memory locations.
 *   indirect addressing.
 
 At some point...
 
+*   `trash` instruction.
 *   `interrupt` routines.
 *   6502-mnemonic aliases (`sec`, `clc`)
 *   other handy aliases (`eq` for `z`, etc.)
