@@ -77,6 +77,8 @@ Access a defined memory location.
     | }
     = 00c0a0008c09c0ad09c060
 
+Memory location with explicit address.
+
     | byte screen @ 1024
     | 
     | routine main
@@ -86,6 +88,18 @@ Access a defined memory location.
     |   st a, screen
     | }
     = 00c0a9648d000460
+
+Memory location with initial value.
+
+    | byte lives : 3
+    | 
+    | routine main
+    |   inputs lives
+    |   trashes a, z, n
+    | {
+    |   ld a, lives
+    | }
+    = 00c0ad04c06003
 
 Some instructions.
 

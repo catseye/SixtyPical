@@ -36,7 +36,7 @@ class Scanner(object):
             self.token = None
             self.type = 'EOF'
             return
-        if self.scan_pattern(r'\,|\@|\+|\{|\}', 'operator'):
+        if self.scan_pattern(r'\,|\@|\+|\:|\{|\}', 'operator'):
             return
         if self.scan_pattern(r'\d+', 'integer literal'):
             return
@@ -140,13 +140,24 @@ class Parser(object):
         elif inputs or outputs or trashes:
             raise SyntaxError("Cannot apply constraints to non-vector type")
 
+        initial = None
+        if self.scanner.consume(':'):
+            self.scanner.check_type('integer literal')
+            initial = int(self.scanner.token)
+            self.scanner.scan()
+
         addr = None
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
             addr = int(self.scanner.token)
             self.scanner.scan()
+
+        if initial is not None and addr is not None:
+            raise SyntaxError("Definition cannot have both initial value and explicit address")
+
         location = LocationRef(type, name)
-        return Defn(name=name, addr=addr, location=location)
+
+        return Defn(name=name, addr=addr, initial=initial, location=location)
 
     def constraints(self):
         inputs = set()

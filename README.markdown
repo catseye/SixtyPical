@@ -44,8 +44,6 @@ TODO
 
 For 0.7:
 
-*   initialized `byte` memory locations
-*   initialized `byte table` memory locations
 *   `word` type.
 *   `word table` type.
 
@@ -60,6 +58,7 @@ For 0.9
 
 At some point...
 
+*   initialized `byte table` memory locations
 *   always analyze before executing or compiling, unless told not to
 *   `trash` instruction.
 *   `interrupt` routines.

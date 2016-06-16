@@ -123,7 +123,7 @@ Repeat with not
     | }
     = ok
 
-Extern memory locations.
+Explicit memory address.
 
     | byte screen @ 1024
     | 
@@ -135,13 +135,23 @@ Extern memory locations.
 
 Initialized memory locations.
 
-    | byte lives = 3
+    | byte lives : 3
     | 
     | routine main {
     |   ld a, lives
     |   st a, lives
     | }
     = ok
+
+Cannot have both initial value and explicit address.
+
+    | byte screen : 3 @ 1024
+    | 
+    | routine main {
+    |   ld a, lives
+    |   st a, lives
+    | }
+    ? SyntaxError
 
 Can't access an undeclared memory location.
 

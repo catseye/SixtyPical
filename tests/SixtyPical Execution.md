@@ -45,6 +45,22 @@ Program accesses a memory location.
     = y: 0
     = z: 0
 
+Program accesses a memory location with initial value.
+
+    | byte lives : 3
+    | 
+    | routine main {
+    |     ld a, lives
+    | }
+    = a: 3
+    = c: 0
+    = lives: 3
+    = n: 0
+    = v: 0
+    = x: 0
+    = y: 0
+    = z: 0
+
 Add honours carry.
 
     | routine main {

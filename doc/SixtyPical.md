@@ -86,8 +86,7 @@ An address in memory may be given explicitly on a user-defined memory location.
 Or, a user-defined memory location may be given an initial value.  But in this
 case, an explicit address in memory cannot be given.
 
-    byte pos = 0
-    byte table scores = [1, 3, 8, 17, 26, 100]
+    byte pos : 0
 
 A user-defined vector memory location is decorated with READS and WRITES lists
 like a routine (see below), and it may only hold addresses of routines which

@@ -1,6 +1,11 @@
 History of SixtyPical
 =====================
 
+0.7-PRE
+-------
+
+*   User-defined `byte` locations can be given an initial value.
+
 0.6
 ---
 

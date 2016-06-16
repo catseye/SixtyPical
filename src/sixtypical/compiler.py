@@ -57,8 +57,16 @@ class Compiler(object):
             self.emitter.resolve_label(label)
             self.emitter.emit(JMP(Indirect(self.labels[location.name])))
 
+        # initialized data
         for defn in program.defns:
-            if defn.addr is None:
+            if defn.initial is not None:
+                label = self.labels[defn.name]
+                self.emitter.resolve_label(label)
+                self.emitter.emit(Byte(defn.initial))
+
+        # uninitialized, "BSS" data
+        for defn in program.defns:
+            if defn.initial is None and defn.addr is None:
                 label = self.labels[defn.name]
                 self.emitter.resolve_bss_label(label)
 

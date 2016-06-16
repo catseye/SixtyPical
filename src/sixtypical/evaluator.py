@@ -37,10 +37,16 @@ class Evaluator(object):
         for ref in (REG_A, REG_X, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C):
             context.set(ref, 0)
         main = None
+
+        for defn in program.defns:
+            if defn.initial is not None:
+                context.set(defn.location, defn.initial)
+
         for routine in program.routines:
             context.set(routine.location, routine)
             if routine.name == 'main':
                 main = routine
+
         self.eval_routine(main, context)
         return context
 
