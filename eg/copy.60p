@@ -1,0 +1,10 @@
+byte bar
+byte baz
+
+routine main
+  inputs baz
+  outputs bar
+  trashes a, n, z
+{
+  copy baz, bar
+}
