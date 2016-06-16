@@ -44,7 +44,8 @@ TODO
 
 For 0.7:
 
-*   always analyze before executing or compiling, unless told not to
+*   initialized `byte` memory locations
+*   initialized `byte table` memory locations
 *   `word` type.
 *   `word table` type.
 
@@ -53,8 +54,13 @@ For 0.8:
 *   zero-page memory locations.
 *   indirect addressing.
 
+For 0.9
+
+*   save registers on stack or in memory (the preserves them = not trashed)
+
 At some point...
 
+*   always analyze before executing or compiling, unless told not to
 *   `trash` instruction.
 *   `interrupt` routines.
 *   6502-mnemonic aliases (`sec`, `clc`)
@@ -62,3 +68,5 @@ At some point...
 *   have `copy` instruction able to copy a constant to a user-def mem loc, etc.
 *   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
 *   check and disallow recursion.
+*   automatic tail-call optimization (could be tricky, w/constraints?)
+*   re-order routines and optimize tail-calls to fallthroughs

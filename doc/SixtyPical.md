@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.6,
+This document describes the SixtyPical programming language version 0.7-PRE,
 both its execution aspect and its static analysis aspect (even though
 these are, technically speaking, separate concepts.)
 
@@ -79,9 +79,15 @@ name.
 
     byte pos
 
-A location in memory may be given explicitly on a user-defined memory location.
+An address in memory may be given explicitly on a user-defined memory location.
 
     byte table screen @ 1024
+
+Or, a user-defined memory location may be given an initial value.  But in this
+case, an explicit address in memory cannot be given.
+
+    byte pos = 0
+    byte table scores = [1, 3, 8, 17, 26, 100]
 
 A user-defined vector memory location is decorated with READS and WRITES lists
 like a routine (see below), and it may only hold addresses of routines which

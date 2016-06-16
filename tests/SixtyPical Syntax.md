@@ -123,13 +123,23 @@ Repeat with not
     | }
     = ok
 
-Extern memory locations
+Extern memory locations.
 
     | byte screen @ 1024
     | 
     | routine main {
     |   ld a, 100
     |   st a, screen
+    | }
+    = ok
+
+Initialized memory locations.
+
+    | byte lives = 3
+    | 
+    | routine main {
+    |   ld a, lives
+    |   st a, lives
     | }
     = ok
 
