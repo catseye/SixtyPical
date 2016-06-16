@@ -4,7 +4,7 @@ from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE,
     RoutineType, VectorType, ExecutableType,
-    LocationRef, ConstantRef
+    LocationRef, ConstantRef, PartRef
 )
 from sixtypical.scanner import Scanner
 
@@ -142,7 +142,16 @@ class Parser(object):
             self.scanner.scan()
             return loc
         else:
+            op = None
+            if self.scanner.consume('<'):
+                op = '<'
+            elif self.scanner.consume('>'):
+                op = '>'
             loc = self.lookup(self.scanner.token)
+            if op == '<':
+                loc = PartRef(loc, 0)
+            elif op == '>':
+                loc = PartRef(loc, 1)
             self.scanner.scan()
             return loc
 

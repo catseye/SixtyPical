@@ -45,16 +45,17 @@ TODO
 For 0.7:
 
 *   `low` and `high` address operators (turn `word` type into `byte`.)
-*   `word table` type.
 
 For 0.8:
 
+*   `word table` type.
+*   `vector table` type.
 *   zero-page memory locations.
 *   indirect addressing.
 
 For 0.9
 
-*   save registers on stack or in memory (the preserves them = not trashed)
+*   save registers on stack or in memory (this preserves them = not trashed)
 
 At some point...
 

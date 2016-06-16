@@ -143,6 +143,16 @@ Initialized memory locations.
     | }
     = ok
 
+Cannot have both initial value and explicit address.
+
+    | byte screen : 3 @ 1024
+    | 
+    | routine main {
+    |   ld a, lives
+    |   st a, lives
+    | }
+    ? SyntaxError
+
 User-defined locations of other types.
 
     | byte table screen @ 1024
@@ -154,25 +164,15 @@ User-defined locations of other types.
     | }
     = ok
 
-Initialized memory locations.
+Referencing low and high byte of a word.
 
-    | byte lives : 3
+    | word r1
     | 
     | routine main {
-    |   ld a, lives
-    |   st a, lives
+    |    ld x, <r1
+    |    ld y, >r1
     | }
     = ok
-
-Cannot have both initial value and explicit address.
-
-    | byte screen : 3 @ 1024
-    | 
-    | routine main {
-    |   ld a, lives
-    |   st a, lives
-    | }
-    ? SyntaxError
 
 Can't access an undeclared memory location.
 

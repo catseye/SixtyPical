@@ -2,7 +2,7 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    ConstantRef, LocationRef,
+    ConstantRef, LocationRef, PartRef,
     REG_A, REG_X, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
@@ -21,10 +21,27 @@ class Context(object):
             return ref.value
         elif isinstance(ref, LocationRef):
             return self._store[ref.name]
+        elif isinstance(ref, PartRef):
+            value = self.get(ref.ref)
+            if ref.height == 0:
+                return value & 255
+            elif ref.height == 1:
+                return (value >> 8) & 255
+            else:
+                raise NotImplementedError
         else:
             raise ValueError(ref)
 
     def set(self, ref, value):
+        if isinstance(ref, PartRef):
+            old = self.get(ref.ref)
+            if ref.height == 0:
+                value = (old & (255 << 8)) | value
+            elif ref.height == 1:
+                value = (value << 8) | (old & 255)
+            else:
+                raise NotImplementedError
+            ref = ref.ref
         assert isinstance(ref, LocationRef)
         self._store[ref.name] = value
 

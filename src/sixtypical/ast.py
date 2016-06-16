@@ -25,10 +25,6 @@ class Routine(AST):
     pass
 
 
-class DecLoc(AST):
-    pass
-
-
 class Block(AST):
     pass
 

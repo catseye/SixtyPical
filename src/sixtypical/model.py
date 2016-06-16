@@ -90,6 +90,34 @@ class LocationRef(Ref):
         return isinstance(self.type, RoutineType)
 
 
+class PartRef(Ref):
+    """For 'low byte of' location and 'high byte of' location modifiers.
+
+    height=0 = low byte, height=1 = high byte.
+
+    """
+    def __init__(self, ref, height):
+        assert isinstance(ref, Ref)
+        assert ref.type == TYPE_WORD
+        self.ref = ref
+        self.height = height
+        self.type = TYPE_BYTE
+
+    def __eq__(self, other):
+        return isinstance(other, PartRef) and (
+            other.height == self.height and other.ref == self.ref
+        )
+
+    def __hash__(self):
+        return hash(self.ref) ^ hash(self.height) ^ hash(self.type)
+
+    def __repr__(self):
+        return '%s(%r, %r)' % (self.__class__.__name__, self.ref, self.height)
+
+    def is_constant(self):
+        return self.ref.is_constant()
+
+
 class ConstantRef(Ref):
     def __init__(self, type, value):
         self.type = type

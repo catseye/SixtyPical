@@ -417,6 +417,45 @@ after copy executes.
     = y: 5
     = z: 0
 
+Copy word to word.
+
+    | word foo : 2000
+    | word bar
+    | 
+    | routine main {
+    |     copy foo, bar
+    | }
+    = a: 0
+    = bar: 2000
+    = c: 0
+    = foo: 2000
+    = n: 0
+    = v: 0
+    = x: 0
+    = y: 0
+    = z: 0
+
+Load and store low byte, high byte of word.
+
+    | word foo : 511
+    | 
+    | routine main {
+    |     ld x, <foo
+    |     ld y, >foo
+    |     ld a, 2
+    |     st a, <foo
+    |     ld a, 1
+    |     st a, >foo
+    | }
+    = a: 1
+    = c: 0
+    = foo: 258
+    = n: 0
+    = v: 0
+    = x: 255
+    = y: 1
+    = z: 0
+
 Indirect call.
 
     | vector foo outputs x trashes z, n

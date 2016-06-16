@@ -395,14 +395,15 @@ Grammar
 -------
 
     Program ::= {Defn} {Routine}.
-    Defn    ::= Type Ident<new> [Constraints] ["@" WordConst].
+    Defn    ::= Type Ident<new> [Constraints] (":" Literal | "@" LitWord).
     Type    ::= "byte" ["table"] | "vector"
     Constrnt::= ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs].
-    Routine ::= "routine" Ident<new> Constraints (Block | "@" WordConst).
+    Routine ::= "routine" Ident<new> Constraints (Block | "@" LitWord).
     LocExprs::= LocExpr {"," LocExpr}.
-    LocExpr ::= Register | Flag | LitByte | Ident.
+    LocExpr ::= Register | Flag | Literal | ("<" | ">") Ident.
     Register::= "a" | "x" | "y".
     Flag    ::= "c" | "z" | "n" | "v".
+    Literal ::= LitByte | LitWord.
     LitByte ::= "0" ... "255".
     LitWord ::= "0" ... "65535".
     Block   ::= "{" {Instr} "}".
