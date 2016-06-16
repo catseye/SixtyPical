@@ -5,6 +5,8 @@ History of SixtyPical
 -------
 
 *   User-defined `byte` locations can be given an initial value.
+*   `word` type locations which can be defined and `copy`ed between.
+*   Can `copy` directly from one user-defined `byte` location to another.
 
 0.6
 ---

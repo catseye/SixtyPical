@@ -44,7 +44,7 @@ TODO
 
 For 0.7:
 
-*   `word` type.
+*   `low` and `high` address operators (turn `word` type into `byte`.)
 *   `word table` type.
 
 For 0.8:

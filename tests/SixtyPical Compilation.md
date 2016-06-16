@@ -239,7 +239,35 @@ Indexed access.
     | }
     = 00c0a200a9009d0dc0bd0dc060
 
-Copy instruction..
+Copy byte to byte.
+
+    | byte bar
+    | byte baz
+    | 
+    | routine main
+    |   inputs baz
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |   copy baz, bar
+    | }
+    = 00c0ad09c08d07c060
+
+Copy word to word.
+
+    | word bar
+    | word baz
+    | 
+    | routine main
+    |   inputs baz
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |   copy baz, bar
+    | }
+    = 00c0ad0fc08d0dc0ad10c08d0ec060
+
+Copy vector to vector.
 
     | vector bar
     | vector baz
