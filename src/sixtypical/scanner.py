@@ -55,8 +55,8 @@ class Scanner(object):
             raise SyntaxError("Expected '%s', but found '%s'" %
                               (token, self.token))
 
-    def on(self, token):
-        return self.token == token
+    def on(self, *tokens):
+        return self.token in tokens
 
     def on_type(self, type):
         return self.type == type

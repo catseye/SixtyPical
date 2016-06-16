@@ -159,6 +159,13 @@ class Analyzer(object):
         self.has_encountered_goto = False
         self.routines = {}
 
+    def assert_type(self, type, *locations):
+        for location in locations:
+            if location.type != type:
+                raise TypeMismatchError('%s in %s' %
+                    (location.name, self.current_routine.name)
+                )
+
     def analyze_program(self, program):
         assert isinstance(program, Program)
         self.routines = {r.location: r for r in program.routines}
@@ -202,9 +209,13 @@ class Analyzer(object):
                 if src.type == TYPE_BYTE_TABLE and dest.type == TYPE_BYTE:
                     pass
                 else:
-                    raise TypeMismatchError((src, dest))
+                    raise TypeMismatchError('%s and %s in %s' %
+                        (src.name, dest.name, self.current_routine.name)
+                    )
             elif src.type != dest.type:
-                raise TypeMismatchError((src, dest))
+                raise TypeMismatchError('%s and %s in %s' %
+                    (src.name, dest.name, self.current_routine.name)
+                )
             context.assert_meaningful(src)
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
@@ -214,22 +225,29 @@ class Analyzer(object):
                 else:
                     raise TypeMismatchError((src, dest))
             elif src.type != dest.type:
-                raise TypeMismatchError((src, dest))
+                raise TypeMismatchError('%s and %s in %s' %
+                    (src.name, dest.name, self.current_routine.name)
+                )
             context.assert_meaningful(src)
             context.set_written(dest)
         elif opcode in ('add', 'sub'):
+            self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest, FLAG_C)
             context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
         elif opcode in ('inc', 'dec'):
+            self.assert_type(TYPE_BYTE, dest)
             context.assert_meaningful(dest)
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'cmp':
+            self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
             context.set_written(FLAG_Z, FLAG_N, FLAG_C)
         elif opcode in ('and', 'or', 'xor'):
+            self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode in ('shl', 'shr'):
+            self.assert_type(TYPE_BYTE, dest)
             context.assert_meaningful(dest, FLAG_C)
             context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
         elif opcode == 'call':

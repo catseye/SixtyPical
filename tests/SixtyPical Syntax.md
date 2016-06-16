@@ -143,6 +143,27 @@ Initialized memory locations.
     | }
     = ok
 
+User-defined locations of other types.
+
+    | byte table screen @ 1024
+    | word r1
+    | word r2 @ 60000
+    | word r3 : 2000
+    | 
+    | routine main {
+    | }
+    = ok
+
+Initialized memory locations.
+
+    | byte lives : 3
+    | 
+    | routine main {
+    |   ld a, lives
+    |   st a, lives
+    | }
+    = ok
+
 Cannot have both initial value and explicit address.
 
     | byte screen : 3 @ 1024

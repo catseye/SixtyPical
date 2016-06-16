@@ -17,6 +17,8 @@ class Type(object):
 TYPE_BIT = Type('bit')
 TYPE_BYTE = Type('byte')
 TYPE_BYTE_TABLE = Type('byte table')
+TYPE_WORD = Type('word')
+TYPE_WORD_TABLE = Type('word table')
 
 
 class ExecutableType(Type):

@@ -148,6 +148,18 @@ Can't `ld` to a memory location that doesn't appear in (outputs ∪ trashes).
     | }
     ? ForbiddenWriteError: z in main
 
+Can't `ld` a `word` type.
+
+    | word foo
+    | 
+    | routine main
+    |   inputs foo
+    |   trashes a, n, z
+    | {
+    |     ld a, foo
+    | }
+    ? TypeMismatchError: foo and a in main
+
 ### st ###
 
 Can't `st` from a memory location that isn't initialized.
@@ -301,6 +313,19 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     = ok
 
+Can't `st` a `word` type.
+
+    | word foo
+    | 
+    | routine main
+    |   outputs foo
+    |   trashes a, n, z
+    | {
+    |     ld a, 0
+    |     st a, foo
+    | }
+    ? TypeMismatchError: a and foo in main
+
 ### add ###
 
 Can't `add` from or to a memory location that isn't initialized.
@@ -424,6 +449,19 @@ Location must be initialized and writeable.
     | }
     = ok
 
+Can't `inc` a `word` type.
+
+    | word foo
+    | 
+    | routine main
+    |   inputs foo
+    |   outputs foo
+    |   trashes z, n
+    | {
+    |     inc foo
+    | }
+    ? TypeMismatchError: foo in main
+
 ### dec ###
 
 Location must be initialized and writeable.
@@ -452,6 +490,19 @@ Location must be initialized and writeable.
     |     dec x
     | }
     = ok
+
+Can't `dec` a `word` type.
+
+    | word foo
+    | 
+    | routine main
+    |   inputs foo
+    |   outputs foo
+    |   trashes z, n
+    | {
+    |     dec foo
+    | }
+    ? TypeMismatchError: foo in main
 
 ### cmp ###
 
@@ -1047,6 +1098,64 @@ Unless of course you subsequently initialize them.
     |     ld a, 0
     | }
     = ok
+
+Can `copy` from a `byte` to a `byte`.
+
+    | byte source : 0
+    | byte dest
+    | 
+    | routine main
+    |   inputs source
+    |   outputs dest
+    |   trashes a, z, n
+    | {
+    |     copy source, dest
+    | }
+    = ok
+
+Can `copy` from a `word` to a `word`.
+
+    | word source : 0
+    | word dest
+    | 
+    | routine main
+    |   inputs source
+    |   outputs dest
+    |   trashes a, z, n
+    | {
+    |     copy source, dest
+    | }
+    = ok
+
+Can't `copy` from a `byte` to a `word`.
+
+    | byte source : 0
+    | word dest
+    | 
+    | routine main
+    |   inputs source
+    |   outputs dest
+    |   trashes a, z, n
+    | {
+    |     copy source, dest
+    | }
+    ? TypeMismatchError
+
+Can't `copy` from a `word` to a `byte`.
+
+    | word source : 0
+    | byte dest
+    | 
+    | routine main
+    |   inputs source
+    |   outputs dest
+    |   trashes a, z, n
+    | {
+    |     copy source, dest
+    | }
+    ? TypeMismatchError
+
+### routines ###
 
 Routines are constants.  You need not, and in fact cannot, specify a constant
 as an input to, an output of, or as a trashed value of a routine.

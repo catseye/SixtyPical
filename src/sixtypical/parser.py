@@ -2,7 +2,7 @@
 
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE,
+    TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE,
     RoutineType, VectorType, ExecutableType,
     LocationRef, ConstantRef
 )
@@ -32,7 +32,7 @@ class Parser(object):
     def program(self):
         defns = []
         routines = []
-        while self.scanner.on('byte') or self.scanner.on('vector'):
+        while self.scanner.on('byte', 'word', 'vector'):
             defn = self.defn()
             name = defn.name
             if name in self.symbols:
@@ -50,14 +50,18 @@ class Parser(object):
         return Program(defns=defns, routines=routines)
 
     def defn(self):
-        type = TYPE_BYTE
+        type = None
         if self.scanner.consume('byte'):
             type = TYPE_BYTE
             if self.scanner.consume('table'):
                 type = TYPE_BYTE_TABLE
+        elif self.scanner.consume('word'):
+            type = TYPE_WORD
+            if self.scanner.consume('table'):
+                type = TYPE_WORD_TABLE
         else:
             self.scanner.expect('vector')
-            type = 'vector'
+            type = 'vector'  # will be resolved to a Type below
         self.scanner.check_type('identifier')
         name = self.scanner.token
         self.scanner.scan()
