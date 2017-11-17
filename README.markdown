@@ -33,11 +33,11 @@ Documentation
 *   Design Goals — coming soon.
 *   [SixtyPical specification](doc/SixtyPical.md)
 *   [SixtyPical history](HISTORY.md)
-*   [Literate test suite for SixtyPical syntax](tests/SixtyPical Syntax.md)
-*   [Literate test suite for SixtyPical execution](tests/SixtyPical Execution.md)
-*   [Literate test suite for SixtyPical analysis](tests/SixtyPical Analysis.md)
-*   [Literate test suite for SixtyPical compilation](tests/SixtyPical Compilation.md)
-*   [6502 Opcodes used/not used in SixtyPical](doc/6502 Opcodes.md)
+*   [Literate test suite for SixtyPical syntax](tests/SixtyPical%20Syntax.md)
+*   [Literate test suite for SixtyPical execution](tests/SixtyPical%20Execution.md)
+*   [Literate test suite for SixtyPical analysis](tests/SixtyPical%20Analysis.md)
+*   [Literate test suite for SixtyPical compilation](tests/SixtyPical%20Compilation.md)
+*   [6502 Opcodes used/not used in SixtyPical](doc/6502%20Opcodes.md)
 
 TODO
 ----
