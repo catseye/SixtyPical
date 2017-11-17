@@ -164,16 +164,6 @@ User-defined locations of other types.
     | }
     = ok
 
-Referencing low and high byte of a word.
-
-    | word r1
-    | 
-    | routine main {
-    |    ld x, <r1
-    |    ld y, >r1
-    | }
-    = ok
-
 Can't access an undeclared memory location.
 
     | routine main {

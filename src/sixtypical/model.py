@@ -95,6 +95,7 @@ class PartRef(Ref):
 
     height=0 = low byte, height=1 = high byte.
 
+    NOTE: Not actually used yet.  Might require more thought before it's usable.
     """
     def __init__(self, ref, height):
         assert isinstance(ref, Ref)

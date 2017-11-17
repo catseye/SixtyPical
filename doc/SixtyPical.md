@@ -400,7 +400,7 @@ Grammar
     Constrnt::= ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs].
     Routine ::= "routine" Ident<new> Constraints (Block | "@" LitWord).
     LocExprs::= LocExpr {"," LocExpr}.
-    LocExpr ::= Register | Flag | Literal | ("<" | ">") Ident.
+    LocExpr ::= Register | Flag | Literal | Ident.
     Register::= "a" | "x" | "y".
     Flag    ::= "c" | "z" | "n" | "v".
     Literal ::= LitByte | LitWord.
