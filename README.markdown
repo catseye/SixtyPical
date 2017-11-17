@@ -42,19 +42,11 @@ Documentation
 TODO
 ----
 
-For 0.7:
-
-*   `low` and `high` address operators (turn `word` type into `byte`.)
-
-For 0.8:
-
 *   `word table` type.
 *   `vector table` type.
 *   zero-page memory locations.
 *   indirect addressing.
-
-For 0.9
-
+*   `low` and `high` address operators (turn `word` type into `byte`.)  Possibly.
 *   save registers on stack or in memory (this preserves them = not trashed)
 
 At some point...
