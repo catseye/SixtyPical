@@ -14,20 +14,22 @@ the language.
 Types
 -----
 
-There are five TYPES in SixtyPical:
+There are seven *types* in SixtyPical:
 
 *   bit (2 possible values)
 *   byte (256 possible values)
 *   byte table (256 entries, each holding a byte)
+*   word (65536 possible values)
+*   word table (256 entries, each holding a word)
 *   routine (code stored somewhere in memory, read-only)
 *   vector (address of a routine)
 
 Memory locations
 ----------------
 
-A primary concept in SixtyPical is the MEMORY LOCATION.  At any given point
-in time during execution, each memory location is either UNINITIALIZED or
-INITIALIZED.  At any given point in the program text, too, each memory
+A primary concept in SixtyPical is the *memory location*.  At any given point
+in time during execution, each memory location is either *uninitialized* or
+*initialized*.  At any given point in the program text, too, each memory
 location is either uninitialized or initialized.  Where-ever it is one or
 the other during execution, it is the same in the corresponding place in
 the program text; thus, it is a static property.
@@ -64,17 +66,27 @@ They come in bit and byte types.  There are two bit constants,
     off
     on
 
-and two-hundred and fifty-six byte constants,
+two hundred and fifty-six byte constants,
 
     0
     1
     ...
     255
 
+and sixty-five thousand five hundred and thirty-six word constants,
+
+    0
+    1
+    ...
+    65535
+
+Note that all byte constants serve double duty as word constants in that
+context.
+
 ### User-defined ###
 
 There may be any number of user-defined memory locations.  They are defined
-by giving the type, which must be `byte`, `byte table`, or `vector`, and the
+by giving the type (which may be any type except `bit` and `routine`) and the
 name.
 
     byte pos
@@ -88,10 +100,10 @@ case, an explicit address in memory cannot be given.
 
     byte pos : 0
 
-A user-defined vector memory location is decorated with READS and WRITES lists
-like a routine (see below), and it may only hold addresses of routines which
-are compatible.  (Meaning, the routine's inputs (resp. outputs, trashes)
-must be a subset of the vector's inputs (resp. outputs, trashes.))
+A user-defined vector memory location is decorated with `inputs`, `outputs`
+and `trashes` lists like a routine (see below), and it may only hold addresses
+of routines which are compatible.  (Meaning, the routine's inputs (resp. outputs,
+trashes) must be a subset of the vector's inputs (resp. outputs, trashes.))
 
     vector actor_logic
       inputs a, score
@@ -102,10 +114,16 @@ must be a subset of the vector's inputs (resp. outputs, trashes.))
 Routines
 --------
 
-Every routine must list all the memory locations it READS from, i.e. its
-INPUTS, and all the memory locations it WRITES to, whether they are OUTPUTS
-or merely TRASHED.  Every memory location that is not written to by the
-routine (or any routines that the routine calls) is PRESERVED by the routine.
+Every routine must list all the memory locations it *reads from*, which we
+call its `inputs`, and all the memory locations it *writes to*.  The latter
+we divide into two groups: its `outputs` which it intentionally initializes,
+and its `trashes`, which it does not care about, and leaves uninitialized.
+For example, if it uses a register to temporarily store an intermediate
+value used in a multiplication, that register has no meaning outside of
+the multiplication, and is one of the routine's `trashes`.
+
+It is common to say that the `trashes` are the memory locations that are
+*not preserved* by the routine.
 
     routine foo
       inputs a, score
@@ -113,6 +131,9 @@ routine (or any routines that the routine calls) is PRESERVED by the routine.
       trashes y {
         ...
     }
+
+The `inputs` are sometimes called the routine's READS set, while the
+`outputs` and `trashes` are collectively called the WRITES set.
 
 Routines may call only routines previously defined in the program source.
 Thus, directly recursive routines are not allowed.  (However, routines may
@@ -122,12 +143,12 @@ case, there is, for the time being, no check for recursive calls.)
 For a SixtyPical program to be run, there must be one routine called `main`.
 This routine is executed when the program is run.
 
-The memory locations given given as inputs are considered to be initialized
+The memory locations given as inputs to a routine are considered to be initialized
 at the beginning of the routine.  Various instructions cause memory locations
 to be initialized after they are executed.  Calling a routine which trashes
 some memory locations causes those memory locations to be uninitialized after
 that routine is called.  At the end of a routine, all memory locations listed
-as outputs must be initialised.
+as outputs must be initialized.
 
 A routine can also be declared as "external", in which case its body need
 not be defined but an absolute address must be given for where the routine
@@ -141,6 +162,13 @@ is located in memory.
 Instructions
 ------------
 
+Instructions are inspired by, and in many cases closely resemble, the 6502
+instruction set.  However, in many cases they do not map 1:1 to 6502 instructions.
+If a SixtyPical instruction cannot be translated validly to one more more 6502
+instructions while retaining all the stated constraints, that's a static error
+in a SixtyPical program, and technically any implementation of SixtyPical, even
+an interpreter, should flag it up.
+
 ### ld ###
 
     ld <dest-memory-location>, <src-memory-location> [+ <index-memory-location>]
@@ -148,13 +176,12 @@ Instructions
 Reads from src and writes to dest.
 
 *   It is illegal if dest is not a register.
-*   It is illegal if dest does not occur in the WRITES lists of the current
-    routine.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
 *   It is illegal if src is not of same type as dest (i.e., is not a byte.)
 *   It is illegal if src is uninitialized.
 
 After execution, dest is considered initialized.  The flags `z` and `n` may be
-changed by this instruction; they must be named in the WRITES lists, and they
+changed by this instruction; they must be named in the WRITES, and they
 are considered initialized after it has executed.
 
 If and only if src is a byte table, the index-memory-location must be given.
@@ -169,8 +196,7 @@ underlying opcodes.
 Reads from src and writes to dest.
 
 *   It is illegal if dest is a register or if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES lists of the current
-    routine.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
 *   It is illegal if src is not of same type as dest.
 *   It is illegal if src is uninitialized.
 
@@ -187,10 +213,9 @@ Adds the contents of src to dest and stores the result in dest.
 
 *   It is illegal if src OR dest OR c is uninitialized.
 *   It is illegal if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES lists
-    of the current routine.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
 
-Affects n, z, c, and v flags, requiring that they be in the WRITES lists,
+Affects n, z, c, and v flags, requiring that they be in the WRITES,
 and initializing them afterwards.
 
 dest and src continue to be initialized afterwards.
@@ -203,10 +228,9 @@ Increments the value in dest.  Does not honour carry.
 
 *   It is illegal if dest is uninitialized.
 *   It is illegal if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES lists
-    of the current routine.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
 
-Affects n and z flags, requiring that they be in the WRITES lists,
+Affects n and z flags, requiring that they be in the WRITES,
 and initializing them afterwards.
 
 ### sub ###
@@ -217,10 +241,9 @@ Subtracts the contents of src from dest and stores the result in dest.
 
 *   It is illegal if src OR dest OR c is uninitialized.
 *   It is illegal if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES lists
-    of the current routine.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
 
-Affects n, z, c, and v flags, requiring that they be in the WRITES lists,
+Affects n, z, c, and v flags, requiring that they be in the WRITES,
 and initializing them afterwards.
 
 dest and src continue to be initialized afterwards.
@@ -233,10 +256,9 @@ Decrements the value in dest.  Does not honour carry.
 
 *   It is illegal if dest is uninitialized.
 *   It is illegal if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES lists
-    of the current routine.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
 
-Affects n and z flags, requiring that they be in the WRITES lists,
+Affects n and z flags, requiring that they be in the WRITES,
 and initializing them afterwards.
 
 ### cmp ###
@@ -248,7 +270,7 @@ does not store the result anywhere, only sets the resulting flags.
 
 *   It is illegal if src OR dest is uninitialized.
 
-Affects n, z, and c flags, requiring that they be in the WRITES lists,
+Affects n, z, and c flags, requiring that they be in the WRITES,
 and initializing them afterwards.
 
 ### and, or, xor ###
@@ -262,10 +284,9 @@ the result in dest.
 
 *   It is illegal if src OR dest OR is uninitialized.
 *   It is illegal if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES lists
-    of the current routine.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
 
-Affects n and z flags, requiring that they be in the WRITES lists of the
+Affects n and z flags, requiring that they be in the WRITES of the
 current routine, and sets them as initialized afterwards.
 
 dest and src continue to be initialized afterwards.
@@ -284,10 +305,9 @@ and `c` becomes the bit that was shifted off the right.
 *   It is illegal if dest is a register besides `a`.
 *   It is illegal if dest is read-only.
 *   It is illegal if dest OR c is uninitialized.
-*   It is illegal if dest does not occur in the WRITES lists
-    of the current routine.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
 
-Affects the c flag, requiring that it be in the WRITES lists of the
+Affects the c flag, requiring that it be in the WRITES of the
 current routine, and it continues to be initialized afterwards.
 
 ### call ###
@@ -299,17 +319,15 @@ defined routine, or a vector location which contains the address of a routine
 which will be called indirectly.  Execution will be transferred back to the
 current routine, when execution of the executable is finished.
 
-Just before the call,
-
-*   It is illegal if any of the memory locations in the target executable's
-    READS list is uninitialized.
+*   It is illegal if any of the memory locations listed in the called routine's
+    `inputs` are uninitialized immediately before the call.
 
 Just after the call,
 
-*   All memory locations listed as TRASHED in the called routine's WRITES
-    list are considered uninitialized.
-*   All memory locations listed as TRASHED in the called routine's OUTPUTS
-    list are considered initialized.
+*   All memory locations listed in the called routine's `trashes` are considered
+    to now be uninitialized.
+*   All memory locations listed in the called routine's `outputs` are considered
+    to not be initialized.
 
 ### goto ###
 
@@ -330,8 +348,8 @@ Just before the goto,
 
 In addition,
 
-*   The target executable's WRITES lists must not include any locations
-    that are not already included in the current routine's WRITES lists.
+*   The target executable's WRITES must not include any locations
+    that are not already included in the current routine's WRITES.
 
 ### if ###
 
@@ -383,8 +401,7 @@ copy more general types of data (for example, vectors,) and it trashes the
 `z` and `n` flags and the `a` register.
 
 *   It is illegal if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES lists of the current
-    routine.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
 *   It is illegal if src is not of same type as dest.
 *   It is illegal if src is uninitialized.
 
