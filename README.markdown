@@ -24,7 +24,7 @@ programs to 6502 machine code.
 
 It is a **work in progress**, currently at the **proof-of-concept** stage.
 
-The current released version of SixtyPical is 0.7.
+The current development version of SixtyPical is 0.8-PRE.
 
 Documentation
 -------------

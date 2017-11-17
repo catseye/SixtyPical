@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.7,
+This document describes the SixtyPical programming language version 0.8-PRE,
 both its execution aspect and its static analysis aspect (even though
 these are, technically speaking, separate concepts.)
 
