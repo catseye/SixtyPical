@@ -1,8 +1,8 @@
 History of SixtyPical
 =====================
 
-0.7-PRE
--------
+0.7
+---
 
 *   User-defined `byte` locations can be given an initial value.
 *   `word` type locations which can be defined and `copy`ed between.
