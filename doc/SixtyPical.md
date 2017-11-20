@@ -111,6 +111,13 @@ trashes) must be a subset of the vector's inputs (resp. outputs, trashes.))
       trashes y
       @ $c000
 
+> TODO: need to confirm this, but, the rule is:
+>
+> *   If it is NAMED, it is a memory address.
+> *   If it is a LITERAL INTEGER, it is an immediate value.
+>
+> However, this really needs a review, deep in the code, for how this is implemented.
+
 Routines
 --------
 
@@ -383,6 +390,8 @@ it is treated like an empty block.
 *   It is illegal if src is not initialized.
 *   It is illegal if any location initialized at the end of the true-branch
     is not initialized at the end of the false-branch, and vice versa.
+
+The sense of the test can be inverted with `not`.
 
 ### repeat ###
 

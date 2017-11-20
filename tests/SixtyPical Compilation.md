@@ -1,15 +1,15 @@
-Sixtypical Compilation
+SixtyPical Compilation
 ======================
 
 This is a test suite, written in [Falderal][] format, for compiling
-Sixtypical to 6502 machine code.
+SixtyPical to 6502 machine code.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Compile Sixtypical program" is implemented by
+    -> Functionality "Compile SixtyPical program" is implemented by
     -> shell command "bin/sixtypical --compile %(test-body-file) | fa-bin-to-hex"
 
-    -> Tests for functionality "Compile Sixtypical program"
+    -> Tests for functionality "Compile SixtyPical program"
 
 Null program.
 

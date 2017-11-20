@@ -1,4 +1,4 @@
-Sixtypical Execution
+SixtyPical Execution
 ====================
 
 This is a test suite, written in [Falderal][] format, for the dynamic
@@ -6,10 +6,10 @@ execution behaviour of the Sixtypical language, disgregarding static analysis.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Execute Sixtypical program" is implemented by
+    -> Functionality "Execute SixtyPical program" is implemented by
     -> shell command "bin/sixtypical --execute %(test-body-file)"
 
-    -> Tests for functionality "Execute Sixtypical program"
+    -> Tests for functionality "Execute SixtyPical program"
 
 Rudimentary program.
 
