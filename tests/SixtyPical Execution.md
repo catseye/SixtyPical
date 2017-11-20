@@ -435,6 +435,22 @@ Copy word to word.
     = y: 0
     = z: 0
 
+Copy literal word to word.
+
+    | word bar
+    | 
+    | routine main {
+    |     copy word 2000, bar
+    | }
+    = a: 0
+    = bar: 2000
+    = c: 0
+    = n: 0
+    = v: 0
+    = x: 0
+    = y: 0
+    = z: 0
+
 Indirect call.
 
     | vector foo outputs x trashes z, n

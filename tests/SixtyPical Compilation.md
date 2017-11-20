@@ -267,6 +267,18 @@ Copy word to word.
     | }
     = 00c0ad0fc08d0dc0ad10c08d0ec060
 
+Copy literal word to word.
+
+    | word bar
+    | 
+    | routine main
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |   copy 65535, bar
+    | }
+    = 00c0a9ff8d0bc0a9ff8d0cc060
+
 Copy vector to vector.
 
     | vector bar
@@ -281,7 +293,7 @@ Copy vector to vector.
     | }
     = 00c0ad0fc08d0dc0ad10c08d0ec060
 
-Copy instruction inside an `interrupts off` block.
+Copy routine to vector, inside an `interrupts off` block.
 
     | vector bar
     | 
