@@ -286,12 +286,13 @@ class Analyzer(object):
             # it will always be executed at least once, so analyze it having
             # been executed the first time.
             self.analyze_block(instr.block, context)
-    
+            context.assert_meaningful(src)
+
             # now analyze it having been executed a second time, with the context
             # of it having already been executed.
             self.analyze_block(instr.block, context)
-    
-            # NB I *think* that's enough... but it might not be?
+            context.assert_meaningful(src)
+
         elif opcode == 'copy':
             # check that their types are basically compatible
             if src.type == dest.type:

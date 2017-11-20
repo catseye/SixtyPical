@@ -1017,6 +1017,23 @@ initialized at the start.
     | }
     ? UnmeaningfulReadError: y in main
 
+And if you trash the test expression (i.e. `z` in the below) inside the loop,
+this is an error too.
+
+    | word one : 0
+    | word two : 0
+    | 
+    | routine main
+    |   inputs one, two
+    |   outputs two
+    |   trashes a, z, n
+    | {
+    |     repeat {
+    |         copy one, two
+    |     } until z
+    | }
+    ? UnmeaningfulReadError: z in main
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
