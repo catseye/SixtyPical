@@ -132,8 +132,8 @@ It is common to say that the `trashes` are the memory locations that are
         ...
     }
 
-The `inputs` are sometimes called the routine's READS set, while the
-`outputs` and `trashes` are collectively called the WRITES set.
+The union of the `outputs` and `trashes` is sometimes collectively called
+"the WRITES" of the routine, for historical reasons and as shorthand.
 
 Routines may call only routines previously defined in the program source.
 Thus, directly recursive routines are not allowed.  (However, routines may
@@ -150,9 +150,9 @@ some memory locations causes those memory locations to be uninitialized after
 that routine is called.  At the end of a routine, all memory locations listed
 as outputs must be initialized.
 
-A routine can also be declared as "external", in which case its body need
-not be defined but an absolute address must be given for where the routine
-is located in memory.
+A literal word can given instead of the body of the routine.  This word is the
+absolute address of an "external" routine located in memory but not defined by
+the SixtyPical program.
 
     routine chrout
       inputs a
@@ -204,6 +204,22 @@ After execution, dest is considered initialized.  No flags are
 changed by this instruction (unless of course dest is a flag.)
 
 If and only if dest is a byte table, the index-memory-location must be given.
+
+### copy ###
+
+    copy <src-memory-location>, <dest-memory-location>
+
+Reads from src and writes to dest.  Differs from `st` in that is able to
+copy more general types of data (for example, vectors,) and it trashes the
+`z` and `n` flags and the `a` register.
+
+*   It is illegal if dest is read-only.
+*   It is illegal if dest does not occur in the WRITES of the current routine.
+*   It is illegal if src is not of same type as dest.
+*   It is illegal if src is uninitialized.
+
+After execution, dest is considered initialized, and `z` and `n`, and
+`a` are considered uninitialized.
 
 ### add dest, src ###
 
@@ -343,8 +359,8 @@ must be the final instruction in the routine.
 
 Just before the goto,
 
-*   It is illegal if any of the memory locations in the target executable's
-    READS list is uninitialized.
+*   It is illegal if any of the memory locations in the target routine's
+    `inputs` list is uninitialized.
 
 In addition,
 
@@ -390,23 +406,21 @@ To simulate a "while" loop, use an `if` internal to the block, like
         }
     } until z
 
-"until" is optional, but if omitted, must be replaced with "forever".
+"until" is optional, but if omitted, must be replaced with "forever":
 
-### copy ###
+    repeat {
+        cmp y, 25
+        if z {
+        }
+    } forever
 
-    copy <src-memory-location>, <dest-memory-location>
+The sense of the test can be inverted with `not`.
 
-Reads from src and writes to dest.  Differs from `st` in that is able to
-copy more general types of data (for example, vectors,) and it trashes the
-`z` and `n` flags and the `a` register.
-
-*   It is illegal if dest is read-only.
-*   It is illegal if dest does not occur in the WRITES of the current routine.
-*   It is illegal if src is not of same type as dest.
-*   It is illegal if src is uninitialized.
-
-After execution, dest is considered initialized, and `z` and `n`, and
-`a` are considered uninitialized.
+    repeat {
+        cmp y, 25
+        if z {
+        }
+    } until not z
 
 Grammar
 -------
