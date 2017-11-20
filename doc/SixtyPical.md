@@ -14,15 +14,19 @@ the language.
 Types
 -----
 
-There are seven *types* in SixtyPical:
+There are five *primitive types* in SixtyPical:
 
 *   bit (2 possible values)
 *   byte (256 possible values)
-*   byte table (256 entries, each holding a byte)
 *   word (65536 possible values)
-*   word table (256 entries, each holding a word)
 *   routine (code stored somewhere in memory, read-only)
 *   vector (address of a routine)
+
+There is also one *type constructor*:
+
+*   X table (256 entries, each holding a value of type X)
+
+This constructor can only be applied to bytes or words.
 
 Memory locations
 ----------------
@@ -111,12 +115,17 @@ trashes) must be a subset of the vector's inputs (resp. outputs, trashes.))
       trashes y
       @ $c000
 
-> TODO: need to confirm this, but, the rule is:
->
-> *   If it is NAMED, it is a memory address.
-> *   If it is a LITERAL INTEGER, it is an immediate value.
->
-> However, this really needs a review, deep in the code, for how this is implemented.
+Note that in the code of a routine, if a memory location is named by a
+user-defined symbol, it is an address in memory, and can be read and written.
+But if it is named by a literal integer, either decimal or hexadecimal, it
+is a constant and can only be read (and when read always yields that constant
+value.  So, for instance, to read the value at `screen` above, in the code,
+you would need to reference the symbol `screen`; attempting to read 1024
+would not work.
+
+This is actually useful, at least at this point, as you can rely on the fact
+that literal integers in the code are always immediate values.  (But this
+may change at some point.)
 
 Routines
 --------
