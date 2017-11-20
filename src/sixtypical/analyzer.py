@@ -119,6 +119,8 @@ class Context(object):
             elif isinstance(ref, LocationRef):
                 if ref not in self._meaningful:
                     message = '%s in %s' % (ref.name, self.routine.name)
+                    if kwargs.get('message'):
+                        message += ' (%s)' % kwargs['message']
                     raise exception_class(message)
             else:
                 raise NotImplementedError(ref)
@@ -128,6 +130,8 @@ class Context(object):
         for ref in refs:
             if ref not in self._writeable:
                 message = '%s in %s' % (ref.name, self.routine.name)
+                if kwargs.get('message'):
+                    message += ' (%s)' % kwargs['message']
                 raise exception_class(message)
 
     def set_touched(self, *refs):
@@ -270,9 +274,13 @@ class Analyzer(object):
             # probably not; if it wasn't meaningful in the first place, it
             # doesn't really matter if you modified it or not, coming out.
             for ref in context1.each_meaningful():
-                context2.assert_meaningful(ref, exception_class=InconsistentInitializationError)
+                context2.assert_meaningful(
+                    ref, exception_class=InconsistentInitializationError, message='initialized in block 1 but not in block 2'
+                )
             for ref in context2.each_meaningful():
-                context1.assert_meaningful(ref, exception_class=InconsistentInitializationError)
+                context1.assert_meaningful(
+                    ref, exception_class=InconsistentInitializationError, message='initialized in block 2 but not in block 1'
+                )
             context.set_from(context1)
         elif opcode == 'repeat':
             # it will always be executed at least once, so analyze it having

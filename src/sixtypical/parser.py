@@ -138,7 +138,13 @@ class Parser(object):
             self.scanner.scan()
             return loc
         elif self.scanner.on_type('integer literal'):
-            loc = ConstantRef(TYPE_BYTE, int(self.scanner.token))
+            value = int(self.scanner.token)
+            type_ = TYPE_WORD if value > 255 else TYPE_BYTE
+            loc = ConstantRef(type_, value)
+            self.scanner.scan()
+            return loc
+        elif self.scanner.consume('word'):
+            loc = ConstantRef(TYPE_WORD, int(self.scanner.token))
             self.scanner.scan()
             return loc
         else:
@@ -219,7 +225,9 @@ class Parser(object):
             src = self.locexpr()
             self.scanner.expect(',')
             dest = self.locexpr()
-            return Instr(opcode=opcode, dest=dest, src=src)
+            i = Instr(opcode=opcode, dest=dest, src=src)
+            #print repr(i)
+            return i
         elif self.scanner.consume("with"):
             self.scanner.expect("interrupts")
             self.scanner.expect("off")

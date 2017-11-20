@@ -75,13 +75,13 @@ two hundred and fifty-six byte constants,
 
 and sixty-five thousand five hundred and thirty-six word constants,
 
-    0
-    1
+    word 0
+    word 1
     ...
-    65535
+    word 65535
 
-Note that all byte constants serve double duty as word constants in that
-context.
+Note that if a word constant is between 256 and 65535, the leading `word`
+token can be omitted.
 
 ### User-defined ###
 

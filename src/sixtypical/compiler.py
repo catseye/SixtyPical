@@ -276,17 +276,29 @@ class Compiler(object):
             self.emitter.emit(CLI())
         elif opcode == 'copy':
             if src.type == TYPE_BYTE and dest.type == TYPE_BYTE:
-                src_label = self.labels[src.name]
-                dest_label = self.labels[dest.name]
-                self.emitter.emit(LDA(Absolute(src_label)))
-                self.emitter.emit(STA(Absolute(dest_label)))
+                if isinstance(src, ConstantRef):
+                    raise NotImplementedError
+                else:
+                    src_label = self.labels[src.name]
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(Absolute(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
             elif src.type == TYPE_WORD and dest.type == TYPE_WORD:
-                src_label = self.labels[src.name]
-                dest_label = self.labels[dest.name]
-                self.emitter.emit(LDA(Absolute(src_label)))
-                self.emitter.emit(STA(Absolute(dest_label)))
-                self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
-                self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                if isinstance(src, ConstantRef):
+                    dest_label = self.labels[dest.name]
+                    hi = (src.value >> 8) & 255
+                    lo = src.value & 255
+                    self.emitter.emit(LDA(Immediate(Byte(hi))))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(Immediate(Byte(lo))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                else:
+                    src_label = self.labels[src.name]
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(Absolute(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
             elif isinstance(src.type, VectorType) and isinstance(dest.type, VectorType):
                 src_label = self.labels[src.name]
                 dest_label = self.labels[dest.name]
