@@ -41,14 +41,22 @@ Documentation
 TODO
 ----
 
-*   `word table` type.
-*   `vector table` type.
-*   zero-page memory locations.
-*   indirect addressing.
-*   `low` and `high` address operators (turn `word` type into `byte`.)  Possibly.
-*   save registers on stack or in memory (this preserves them = not trashed)
+`byte buffer` and `pointer` types.  Basically, a `buffer` is a table that can
+be longer than 256 bytes, and a `pointer` is an address within a buffer.
+A `pointer` is implemented as a zero-page memory location, and accessing the
+buffer pointed to is implemented with indirect addressing.  We will likely
+need a new instruction for this, or at least a mode, and it will likely
+trash the `x` register, and it will likely be unchecked, at least to start.
+Basically, this is to allow us to write to the `byte buffer[2048]` known as
+"the screen".
 
-At some point...
+`word table` and `vector table` types.
+
+`low` and `high` address operators (turn `word` type into `byte`.)  Possibly.
+
+Save registers on stack or in memory (this preserves them = not trashed).
+
+And at some point...
 
 *   initialized `byte table` memory locations
 *   always analyze before executing or compiling, unless told not to
