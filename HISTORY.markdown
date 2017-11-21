@@ -1,6 +1,12 @@
 History of SixtyPical
 =====================
 
+0.8
+---
+
+*   Explicit word literals prefixed with `word` token.
+*   Can `copy` literals into user-defined destinations.
+
 0.7
 ---
 

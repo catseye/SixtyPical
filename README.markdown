@@ -29,9 +29,9 @@ The current development version of SixtyPical is 0.8-PRE.
 Documentation
 -------------
 
-*   Design Goals — coming soon.
+*   [Design Goals](doc/Design%20Goals.md)
 *   [SixtyPical specification](doc/SixtyPical.md)
-*   [SixtyPical history](HISTORY.md)
+*   [SixtyPical revision history](HISTORY.md)
 *   [Literate test suite for SixtyPical syntax](tests/SixtyPical%20Syntax.md)
 *   [Literate test suite for SixtyPical execution](tests/SixtyPical%20Execution.md)
 *   [Literate test suite for SixtyPical analysis](tests/SixtyPical%20Analysis.md)
