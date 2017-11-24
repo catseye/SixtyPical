@@ -8,5 +8,5 @@ routine main
 {
     ld y, 0
     copy buf, ptr
-    // copy 123, [ptr] + y
+    copy 123, [ptr] + y
 }

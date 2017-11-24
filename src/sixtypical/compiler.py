@@ -322,5 +322,15 @@ class Compiler(object):
                 self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
             else:
                 raise NotImplementedError(src.type)
+        elif opcode == 'copy[]+y':
+            if src.type == TYPE_BYTE and isinstance(dest.type, PointerType):
+                if isinstance(src, ConstantRef):
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(Immediate(Byte(src.value))))
+                    self.emitter.emit(STA(IndirectY(dest_label)))
+                else:
+                    raise NotImplementedError((src.type, dest.type))
+            else:
+                raise NotImplementedError((src.type, dest.type))
         else:
             raise NotImplementedError(opcode)

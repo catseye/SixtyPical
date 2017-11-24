@@ -82,16 +82,8 @@ class Indirect(AddressingMode):
         return self.value.serialize()
 
 
-class IndirectY(AddressingMode):
-    def __init__(self, value):
-        assert isinstance(value, Label)
-        self.value = value
-
-    def size(self):
-        return 1
-
-    def serialize(self, addr=None):
-        return self.value.serialize()
+class IndirectY(ZeroPage):
+    pass
 
 
 class Relative(AddressingMode):
