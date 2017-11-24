@@ -341,3 +341,19 @@ goto.
     |     goto bar
     | }
     = 00c0a0c84c06c060a2c860
+
+Buffers and pointers.
+
+    > | buffer[2048] buf
+    > | pointer ptr : 254
+    > | 
+    > | routine main
+    > |   inputs buf
+    > |   outputs buf, y
+    > |   trashes a, z, n, ptr
+    > | {
+    > |     ld y, 0
+    > |     copy buf, ptr
+    > |     // copy 123, [ptr] + y
+    > | }
+    > = 00c0a000a90b850dc0a9c0850ec060

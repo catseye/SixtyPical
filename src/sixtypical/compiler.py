@@ -8,7 +8,7 @@ from sixtypical.model import (
 )
 from sixtypical.emitter import Byte, Label, Offset, LowAddressByte, HighAddressByte
 from sixtypical.gen6502 import (
-    Immediate, Absolute, AbsoluteX, AbsoluteY, Indirect, IndirectY, Relative,
+    Immediate, Absolute, AbsoluteX, AbsoluteY, ZeroPage, Indirect, IndirectY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
     TAX, TAY, TXA, TYA,
     CLC, SEC, ADC, SBC, ROL, ROR,
@@ -299,7 +299,14 @@ class Compiler(object):
                     self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
                     self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
             elif isinstance(src.type, BufferType) and isinstance(dest.type, PointerType):
-                raise NotImplementedError('zeropage')
+                # TODO: this maybe should not be the 'copy' opcode at all that means this
+                src_label = self.labels[src.name]
+                dest_label = self.labels[dest.name]                
+                self.emitter.emit(LDA(Immediate(HighAddressByte(src_label))))
+                self.emitter.emit(STA(ZeroPage(dest_label)))
+                self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
+                #self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
+                self.emitter.emit(STA(ZeroPage(dest_label)))
             elif isinstance(src.type, VectorType) and isinstance(dest.type, VectorType):
                 src_label = self.labels[src.name]
                 dest_label = self.labels[dest.name]

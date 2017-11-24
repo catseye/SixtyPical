@@ -49,13 +49,18 @@ A `pointer` is implemented as a zero-page memory location, and accessing the
 buffer pointed to is implemented with "indirect indexed" addressing, as in
 
     LDA ($02), Y
+    STA ($02), Y
 
 We will likely have a new mode of `copy` for this, like
 
-    copy 100, [ptr] + y
+    copy ^buf, ptr           // this is the only way to initialize a pointer
+    add ptr, 4               // ok, but only if it does not exceed buffer's size
+    ld y, 0                  // you must set this to something yourself
+    copy [ptr] + y, byt      // read memory through pointer, into byte
+    copy 100, [ptr] + y      // write memory through pointer (still trashes a)
 
-where `ptr` is a user-defined storage location of `pointer` type, and `+ y`
-is mandatory (and you can/should set it to zero yourself if you want.)
+where `ptr` is a user-defined storage location of `pointer` type, and the
+`+ y` part is mandatory.
 
 This instruction will likely be unchecked, at least to start.  Basically,
 this is to allow us to write to the `byte buffer[2048]` known as "the screen",

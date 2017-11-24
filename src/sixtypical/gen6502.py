@@ -58,6 +58,18 @@ class AbsoluteY(Absolute):
     pass
 
 
+class ZeroPage(AddressingMode):
+    def __init__(self, value):
+        assert isinstance(value, (Label, Offset))
+        self.value = value
+
+    def size(self):
+        return 1
+
+    def serialize(self, addr=None):
+        return self.value.serialize_as_zero_page()
+
+
 class Indirect(AddressingMode):
     def __init__(self, value):
         assert isinstance(value, Label)
@@ -76,7 +88,7 @@ class IndirectY(AddressingMode):
         self.value = value
 
     def size(self):
-        return 2
+        return 1
 
     def serialize(self, addr=None):
         return self.value.serialize()
@@ -257,6 +269,7 @@ class LDA(Instruction):
         AbsoluteX: 0xbd,
         AbsoluteY: 0xb9,
         IndirectY: 0xb1,
+        ZeroPage:  0xa5,
     }
 
 
@@ -334,6 +347,7 @@ class STA(Instruction):
         AbsoluteX: 0x9d,
         AbsoluteY: 0x99,
         IndirectY: 0x91,
+        ZeroPage:  0x85,
     }
 
 
