@@ -123,6 +123,30 @@ Repeat with not
     | }
     = ok
 
+User-defined memory addresses of different types.
+
+    | byte byt
+    | word wor
+    | vector vec
+    | byte table tab
+    | 
+    | routine main {
+    | }
+    = ok
+
+Buffer and pointer types.
+
+    | byte byt
+    | word wor
+    | vector vec
+    | byte table tab
+    | buffer[2048] buf
+    | pointer ptr
+    | 
+    | routine main {
+    | }
+    = ok
+
 Explicit memory address.
 
     | byte screen @ 1024

@@ -58,6 +58,17 @@ class VectorType(ExecutableType):
         super(VectorType, self).__init__('vector', **kwargs)
 
 
+class BufferType(Type):
+    def __init__(self, size):
+        self.size = size
+        self.name = 'buffer[%s]' % self.size
+
+
+class PointerType(Type):
+    def __init__(self):
+        self.name = 'pointer'
+
+
 class Ref(object):
     def is_constant(self):
         """read-only means that the program cannot change the value

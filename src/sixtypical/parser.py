@@ -3,7 +3,7 @@
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE,
-    RoutineType, VectorType, ExecutableType,
+    RoutineType, VectorType, ExecutableType, BufferType, PointerType,
     LocationRef, ConstantRef
 )
 from sixtypical.scanner import Scanner
@@ -32,7 +32,7 @@ class Parser(object):
     def program(self):
         defns = []
         routines = []
-        while self.scanner.on('byte', 'word', 'vector'):
+        while self.scanner.on('byte', 'word', 'vector', 'buffer', 'pointer'):
             defn = self.defn()
             name = defn.name
             if name in self.symbols:
@@ -50,25 +50,15 @@ class Parser(object):
         return Program(defns=defns, routines=routines)
 
     def defn(self):
-        type = None
-        if self.scanner.consume('byte'):
-            type = TYPE_BYTE
-            if self.scanner.consume('table'):
-                type = TYPE_BYTE_TABLE
-        elif self.scanner.consume('word'):
-            type = TYPE_WORD
-            if self.scanner.consume('table'):
-                type = TYPE_WORD_TABLE
-        else:
-            self.scanner.expect('vector')
-            type = 'vector'  # will be resolved to a Type below
+        type_ = self.defn_type()
+
         self.scanner.check_type('identifier')
         name = self.scanner.token
         self.scanner.scan()
 
         (inputs, outputs, trashes) = self.constraints()
-        if type == 'vector':
-            type = VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
+        if type_ == 'vector':
+            type_ = VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
         elif inputs or outputs or trashes:
             raise SyntaxError("Cannot apply constraints to non-vector type")
 
@@ -87,9 +77,31 @@ class Parser(object):
         if initial is not None and addr is not None:
             raise SyntaxError("Definition cannot have both initial value and explicit address")
 
-        location = LocationRef(type, name)
+        location = LocationRef(type_, name)
 
         return Defn(name=name, addr=addr, initial=initial, location=location)
+
+    def defn_type(self):
+        if self.scanner.consume('byte'):
+            if self.scanner.consume('table'):
+                return TYPE_BYTE_TABLE
+            return TYPE_BYTE
+        elif self.scanner.consume('word'):
+            if self.scanner.consume('table'):
+                return TYPE_WORD_TABLE
+            return TYPE_WORD
+        elif self.scanner.consume('vector'):
+            return 'vector'  # will be resolved to a Type by caller
+        elif self.scanner.consume('buffer'):
+            self.scanner.expect('[')
+            self.scanner.check_type('integer literal')
+            size = int(self.scanner.token)
+            self.scanner.scan()
+            self.scanner.expect(']')
+            return BufferType(size)
+        else:
+            self.scanner.expect('pointer')
+            return PointerType()
 
     def constraints(self):
         inputs = set()

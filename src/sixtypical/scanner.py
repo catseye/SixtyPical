@@ -29,7 +29,7 @@ class Scanner(object):
             self.token = None
             self.type = 'EOF'
             return
-        if self.scan_pattern(r'\,|\@|\+|\:|\<|\>|\{|\}', 'operator'):
+        if self.scan_pattern(r'\,|\@|\+|\:|\<|\>|\{|\}|\[|\]', 'operator'):
             return
         if self.scan_pattern(r'\d+', 'integer literal'):
             return

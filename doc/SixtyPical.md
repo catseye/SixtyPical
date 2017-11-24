@@ -26,7 +26,7 @@ There is also one *type constructor*:
 
 *   X table (256 entries, each holding a value of type X)
 
-This constructor can only be applied to bytes or words.
+This constructor can only be applied to one type, `byte`.
 
 Memory locations
 ----------------
