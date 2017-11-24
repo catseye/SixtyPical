@@ -70,6 +70,18 @@ class Indirect(AddressingMode):
         return self.value.serialize()
 
 
+class IndirectY(AddressingMode):
+    def __init__(self, value):
+        assert isinstance(value, Label)
+        self.value = value
+
+    def size(self):
+        return 2
+
+    def serialize(self, addr=None):
+        return self.value.serialize()
+
+
 class Relative(AddressingMode):
     def __init__(self, value):
         assert isinstance(value, Label)
@@ -244,6 +256,7 @@ class LDA(Instruction):
         Absolute:  0xad,
         AbsoluteX: 0xbd,
         AbsoluteY: 0xb9,
+        IndirectY: 0xb1,
     }
 
 
@@ -320,6 +333,7 @@ class STA(Instruction):
         Absolute:  0x8d,
         AbsoluteX: 0x9d,
         AbsoluteY: 0x99,
+        IndirectY: 0x91,
     }
 
 

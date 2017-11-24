@@ -236,7 +236,14 @@ class Parser(object):
             self.scanner.scan()
             src = self.locexpr()
             self.scanner.expect(',')
-            dest = self.locexpr()
+            if self.scanner.consume('['):
+                dest = self.locexpr()
+                self.scanner.expect(']')
+                self.scanner.expect('+')
+                self.scanner.expect('y')
+                opcode = 'copy[]+y'
+            else:
+                dest = self.locexpr()
             i = Instr(opcode=opcode, dest=dest, src=src)
             #print repr(i)
             return i

@@ -196,6 +196,15 @@ class Evaluator(object):
             context.set(REG_A, 0)
             context.set(FLAG_Z, 0)
             context.set(FLAG_N, 0)
+        elif opcode == 'copy[]':
+            addr = context.get(dest)
+            # memloc = memory[addr + context.get(REG_Y)]
+            # context.set(memloc, context.get(src))
+            context.set(dest, context.get(src))
+            # these are trashed; so could be anything really
+            context.set(REG_A, 0)
+            context.set(FLAG_Z, 0)
+            context.set(FLAG_N, 0)
         elif opcode == 'with-sei':
             self.eval_block(instr.block)
         else:

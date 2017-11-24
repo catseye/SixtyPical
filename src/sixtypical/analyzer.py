@@ -2,10 +2,9 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BYTE, TYPE_BYTE_TABLE,
-    VectorType, ExecutableType,
+    TYPE_BYTE, TYPE_BYTE_TABLE, BufferType, PointerType, VectorType, ExecutableType,
     ConstantRef, LocationRef,
-    REG_A, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
+    REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
 
@@ -294,15 +293,18 @@ class Analyzer(object):
             context.assert_meaningful(src)
 
         elif opcode == 'copy':
-            # check that their types are basically compatible
+            # check that their types are compatible
             if src.type == dest.type:
                 pass
             elif isinstance(src.type, ExecutableType) and \
                  isinstance(dest.type, VectorType):
                 pass
+            elif isinstance(src.type, BufferType) and \
+                 isinstance(dest.type, PointerType):
+                pass
             else:
                 raise TypeMismatchError((src, dest))
-    
+
             # if dealing with routines and vectors,
             # check that they're not incompatible
             if isinstance(src.type, ExecutableType) and \
@@ -313,11 +315,24 @@ class Analyzer(object):
                     raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
                 if not (src.type.trashes <= dest.type.trashes):
                     raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
-                    
+
             context.assert_meaningful(src)
             context.set_written(dest)
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
             context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
+
+        elif opcode == 'copy[]+y':
+            # check that their types are compatible
+            if src.type == TYPE_BYTE and isinstance(dest.type, PointerType):
+                pass
+            else:
+                raise TypeMismatchError((src, dest))
+
+            context.assert_meaningful(src, REG_Y)
+            context.set_written(dest)
+            context.set_touched(REG_A, FLAG_Z, FLAG_N)
+            context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
+
         elif opcode == 'with-sei':
             self.analyze_block(instr.block, context)
         elif opcode == 'goto':

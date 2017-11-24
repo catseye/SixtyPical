@@ -3,13 +3,12 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     ConstantRef,
-    TYPE_BIT, TYPE_BYTE, TYPE_WORD,
-    RoutineType, VectorType,
+    TYPE_BIT, TYPE_BYTE, TYPE_WORD, BufferType, PointerType, RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
 from sixtypical.emitter import Byte, Label, Offset, LowAddressByte, HighAddressByte
 from sixtypical.gen6502 import (
-    Immediate, Absolute, AbsoluteX, AbsoluteY, Indirect, Relative,
+    Immediate, Absolute, AbsoluteX, AbsoluteY, Indirect, IndirectY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
     TAX, TAY, TXA, TYA,
     CLC, SEC, ADC, SBC, ROL, ROR,
@@ -299,6 +298,8 @@ class Compiler(object):
                     self.emitter.emit(STA(Absolute(dest_label)))
                     self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
                     self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+            elif isinstance(src.type, BufferType) and isinstance(dest.type, PointerType):
+                raise NotImplementedError('zeropage')
             elif isinstance(src.type, VectorType) and isinstance(dest.type, VectorType):
                 src_label = self.labels[src.name]
                 dest_label = self.labels[dest.name]

@@ -129,17 +129,6 @@ User-defined memory addresses of different types.
     | word wor
     | vector vec
     | byte table tab
-    | 
-    | routine main {
-    | }
-    = ok
-
-Buffer and pointer types.
-
-    | byte byt
-    | word wor
-    | vector vec
-    | byte table tab
     | buffer[2048] buf
     | pointer ptr
     | 
@@ -332,3 +321,14 @@ goto.
     |     goto foo
     | }
     ? SyntaxError
+
+Buffers and pointers.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | 
+    | routine main {
+    |     copy buf, ptr
+    |     copy 123, [ptr] + y
+    | }
+    = ok

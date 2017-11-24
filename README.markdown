@@ -52,9 +52,9 @@ buffer pointed to is implemented with "indirect indexed" addressing, as in
 
 We will likely have a new mode of `copy` for this, like
 
-    copy 100, p + y
+    copy 100, [ptr] + y
 
-where `p` is a user-defined storage location of `pointer` type, and `+ y`
+where `ptr` is a user-defined storage location of `pointer` type, and `+ y`
 is mandatory (and you can/should set it to zero yourself if you want.)
 
 This instruction will likely be unchecked, at least to start.  Basically,
