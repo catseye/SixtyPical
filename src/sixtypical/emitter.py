@@ -82,6 +82,9 @@ class Offset(Emittable):
     def serialize(self, addr=None):
         return self.label.serialize(offset=self.offset)
 
+    def serialize_as_zero_page(self, offset=0):
+        return self.label.serialize_as_zero_page(offset=self.offset)
+
     def __repr__(self):
         return "%s(%r, %r)" % (self.__class__.__name__, self.label, self.offset)
 

@@ -301,12 +301,11 @@ class Compiler(object):
             elif isinstance(src.type, BufferType) and isinstance(dest.type, PointerType):
                 # TODO: this maybe should not be the 'copy' opcode at all that means this
                 src_label = self.labels[src.name]
-                dest_label = self.labels[dest.name]                
+                dest_label = self.labels[dest.name]
                 self.emitter.emit(LDA(Immediate(HighAddressByte(src_label))))
                 self.emitter.emit(STA(ZeroPage(dest_label)))
                 self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
-                #self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
-                self.emitter.emit(STA(ZeroPage(dest_label)))
+                self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
             elif isinstance(src.type, VectorType) and isinstance(dest.type, VectorType):
                 src_label = self.labels[src.name]
                 dest_label = self.labels[dest.name]
