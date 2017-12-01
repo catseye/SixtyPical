@@ -8,9 +8,7 @@ History of SixtyPical
 *   Can `copy` literals into user-defined destinations.
 *   `buffer` and `pointer` types.
 *   `copy ^` syntax to load the addr of a buffer into a pointer.
-*   `copy []+y` syntax to write a value into memory through a pointer.
-*   TODO: read through pointer.
-*   TODO: insist the buffer being read or written to through pointer, appears in approporiate set.
+*   `copy []+y` syntax to read and write values to and from memory through a pointer.
 
 0.7
 ---

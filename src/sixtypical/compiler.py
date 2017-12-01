@@ -274,14 +274,27 @@ class Compiler(object):
             self.compile_block(instr.block)
             self.emitter.emit(CLI())
         elif opcode == 'copy':
-            if isinstance(dest, IndirectRef):
+            if isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndirectRef):
                 if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
                     if isinstance(src, ConstantRef):
                         dest_label = self.labels[dest.ref.name]
                         self.emitter.emit(LDA(Immediate(Byte(src.value))))
                         self.emitter.emit(STA(IndirectY(dest_label)))
+                    elif isinstance(src, LocationRef):
+                        src_label = self.labels[src.name]
+                        dest_label = self.labels[dest.ref.name]
+                        self.emitter.emit(LDA(Absolute(src_label)))
+                        self.emitter.emit(STA(IndirectY(dest_label)))
                     else:
                         raise NotImplementedError((src, dest))
+                else:
+                    raise NotImplementedError((src, dest))
+            elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
+                if dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
+                    src_label = self.labels[src.ref.name]
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(IndirectY(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
                 else:
                     raise NotImplementedError((src, dest))
             elif isinstance(src, AddressRef) and isinstance(dest, LocationRef) and \

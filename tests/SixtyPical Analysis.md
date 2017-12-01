@@ -1177,13 +1177,16 @@ Can't `copy` from a `word` to a `byte`.
 Buffers and pointers.
 
 Note that `^buf` is not considered "reading" buf, so does not require it in `inputs`.
-TODO: It *should* require it in `outputs`.
+TODO: If reading from it through a pointer, it *should* require it in `inputs`.
+TODO: If writing to it through a pointer, it *should* require it in `outputs`.
+
+Write literal through a pointer.
 
     | buffer[2048] buf
     | pointer ptr
     | 
     | routine main
-    |   outputs y
+    |   outputs y //, buf
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
@@ -1198,12 +1201,47 @@ It does use `y`.
     | pointer ptr
     | 
     | routine main
+    |   // outputs buf
     |   trashes a, z, n, ptr
     | {
     |     copy ^buf, ptr
     |     copy 123, [ptr] + y
     | }
     ? UnmeaningfulReadError
+
+Write stored value through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | byte foo
+    | 
+    | routine main
+    |   inputs foo
+    |   outputs y //, buf
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy foo, [ptr] + y
+    | }
+    = ok
+
+Read through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | byte foo
+    | 
+    | routine main
+    |   // inputs buf
+    |   outputs foo
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy [ptr] + y, foo
+    | }
+    = ok
 
 ### routines ###
 

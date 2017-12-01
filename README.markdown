@@ -41,6 +41,10 @@ Documentation
 TODO
 ----
 
+Insist the buffer being read or written to through pointer, appears in approporiate set.
+
+Add to pointer.
+
 ### `word table` and `vector table` types
 
 ### `low` and `high` address operators

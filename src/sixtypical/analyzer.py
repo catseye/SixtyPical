@@ -295,17 +295,21 @@ class Analyzer(object):
         elif opcode == 'copy':
             # 1. check that their types are compatible
 
-            if isinstance(dest, IndirectRef):
-                if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
-                    pass
-                else:
-                    raise TypeMismatchError((src, dest))
-            elif isinstance(src, AddressRef):
+            if isinstance(src, AddressRef) and isinstance(dest, LocationRef):
                 if isinstance(src.ref.type, BufferType) and isinstance(dest.type, PointerType):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
-
+            elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndirectRef):
+                if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+            elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
+                if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
                 if src.type == dest.type:
                     pass
@@ -326,10 +330,15 @@ class Analyzer(object):
 
             # 2. check that the context is meaningful
 
-            if isinstance(dest, IndirectRef):
+            if isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndirectRef):
                 context.assert_meaningful(src, REG_Y)
                 # TODO this will need to be more sophisticated.  it's the thing ref points to that is written, not ref itself.
                 context.set_written(dest.ref)
+            elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
+                context.assert_meaningful(src.ref, REG_Y)
+                # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
+                context.set_touched(src.ref)
+                context.set_written(dest)
             else:
                 context.assert_meaningful(src)
                 context.set_written(dest)

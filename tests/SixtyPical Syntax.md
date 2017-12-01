@@ -326,9 +326,11 @@ Buffers and pointers.
 
     | buffer[2048] buf
     | pointer ptr
+    | byte foo
     | 
     | routine main {
     |     copy ^buf, ptr
     |     copy 123, [ptr] + y
+    |     copy [ptr] + y, foo
     | }
     = ok

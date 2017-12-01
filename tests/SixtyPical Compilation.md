@@ -357,7 +357,7 @@ Buffers and pointers.
     | }
     = 00c0a000a90b85fea9c085ff60
 
-Writing through a pointer.
+Writing literal through a pointer.
 
     | buffer[2048] buf
     | pointer ptr @ 254
@@ -371,3 +371,37 @@ Writing through a pointer.
     |     copy 123, [ptr] + y
     | }
     = 00c0a000a90f85fea9c085ffa97b91fe60
+
+Write stored value through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | byte foo
+    | 
+    | routine main
+    |   inputs foo
+    |   outputs y //, buf
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy foo, [ptr] + y
+    | }
+    = 00c0a000a91085fea9c085ffad12c091fe60
+
+Reading through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | byte foo
+    | 
+    | routine main
+    |   // inputs buf
+    |   outputs y, foo
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy [ptr] + y, foo
+    | }
+    = 00c0a000a91085fea9c085ffb1fe8d12c060
