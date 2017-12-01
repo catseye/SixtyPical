@@ -41,7 +41,11 @@ Documentation
 TODO
 ----
 
-### Add to pointer.
+### Add 16 bit values.
+
+I guess this means making `add` a bit more like `copy`.
+
+And then: add to pointer.  (Not necessarily range-checked yet though.)
 
 And then write a little demo "game" where you can move a block around the screen with
 the joystick.
