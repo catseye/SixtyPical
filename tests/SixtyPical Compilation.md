@@ -342,7 +342,9 @@ goto.
     | }
     = 00c0a0c84c06c060a2c860
 
-Buffers and pointers.
+### Buffers and Pointers
+
+Load address into pointer.
 
     | buffer[2048] buf
     | pointer ptr @ 254
@@ -357,12 +359,13 @@ Buffers and pointers.
     | }
     = 00c0a000a90b85fea9c085ff60
 
-Writing literal through a pointer.
+Write literal through a pointer.
 
     | buffer[2048] buf
     | pointer ptr @ 254
     | 
     | routine main
+    |   inputs buf
     |   outputs buf, y
     |   trashes a, z, n, ptr
     | {
@@ -379,8 +382,8 @@ Write stored value through a pointer.
     | byte foo
     | 
     | routine main
-    |   inputs foo
-    |   outputs y //, buf
+    |   inputs foo, buf
+    |   outputs y, buf
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
@@ -389,14 +392,14 @@ Write stored value through a pointer.
     | }
     = 00c0a000a91085fea9c085ffad12c091fe60
 
-Reading through a pointer.
+Read through a pointer.
 
     | buffer[2048] buf
     | pointer ptr @ 254
     | byte foo
     | 
     | routine main
-    |   // inputs buf
+    |   inputs buf
     |   outputs y, foo
     |   trashes a, z, n, ptr
     | {

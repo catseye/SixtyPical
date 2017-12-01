@@ -1176,9 +1176,20 @@ Can't `copy` from a `word` to a `byte`.
 
 Buffers and pointers.
 
-Note that `^buf` is not considered "reading" buf, so does not require it in `inputs`.
-TODO: If reading from it through a pointer, it *should* require it in `inputs`.
-TODO: If writing to it through a pointer, it *should* require it in `outputs`.
+Note that `^buf` is a constant value, so it by itself does not require `buf` to be
+listed in any input/output sets.
+
+However, if the code reads from it through a pointer, it *should* be in `inputs`.
+
+Likewise, if the code writes to it through a pointer, it *should* be in `outputs`.
+
+Of course, unless you write to *all* the bytes in a buffer, some of those bytes
+might not be meaningful.  So how meaningful is this check?
+
+This is an open problem.
+
+For now, convention says: if it is being read, list it in `inputs`, and if it is
+being modified, list it in both `inputs` and `outputs`.
 
 Write literal through a pointer.
 
@@ -1186,7 +1197,8 @@ Write literal through a pointer.
     | pointer ptr
     | 
     | routine main
-    |   outputs y //, buf
+    |   inputs buf
+    |   outputs y, buf
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
@@ -1201,7 +1213,8 @@ It does use `y`.
     | pointer ptr
     | 
     | routine main
-    |   // outputs buf
+    |   inputs buf
+    |   outputs buf
     |   trashes a, z, n, ptr
     | {
     |     copy ^buf, ptr
@@ -1216,8 +1229,8 @@ Write stored value through a pointer.
     | byte foo
     | 
     | routine main
-    |   inputs foo
-    |   outputs y //, buf
+    |   inputs foo, buf
+    |   outputs y, buf
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
@@ -1233,7 +1246,7 @@ Read through a pointer.
     | byte foo
     | 
     | routine main
-    |   // inputs buf
+    |   inputs buf
     |   outputs foo
     |   trashes a, y, z, n, ptr
     | {

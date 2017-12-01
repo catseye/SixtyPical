@@ -41,9 +41,10 @@ Documentation
 TODO
 ----
 
-Insist the buffer being read or written to through pointer, appears in approporiate set.
+### Add to pointer.
 
-Add to pointer.
+And then write a little demo "game" where you can move a block around the screen with
+the joystick.
 
 ### `word table` and `vector table` types
 
@@ -58,6 +59,9 @@ are trashed inside the block.
 
 ### And at some point...
 
+*   `copy x, [ptr] + y`
+*   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
+*   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
 *   initialized `byte table` memory locations
 *   always analyze before executing or compiling, unless told not to
 *   `trash` instruction.

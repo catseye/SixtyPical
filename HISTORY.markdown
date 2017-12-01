@@ -6,6 +6,7 @@ History of SixtyPical
 
 *   Explicit word literals prefixed with `word` token.
 *   Can `copy` literals into user-defined destinations.
+*   Fixed bug where loop variable wasn't being checked at end of `repeat` loop.
 *   `buffer` and `pointer` types.
 *   `copy ^` syntax to load the addr of a buffer into a pointer.
 *   `copy []+y` syntax to read and write values to and from memory through a pointer.
