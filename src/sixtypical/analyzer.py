@@ -3,7 +3,7 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BYTE, TYPE_BYTE_TABLE, BufferType, PointerType, VectorType, ExecutableType,
-    ConstantRef, LocationRef, IndirectRef,
+    ConstantRef, LocationRef, IndirectRef, AddressRef,
     REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
@@ -113,7 +113,7 @@ class Context(object):
     def assert_meaningful(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', UnmeaningfulReadError)
         for ref in refs:
-            if isinstance(ref, ConstantRef) or ref in self.routines:
+            if ref.is_constant() or ref in self.routines:
                 pass
             elif isinstance(ref, LocationRef):
                 if ref not in self._meaningful:
@@ -293,34 +293,38 @@ class Analyzer(object):
             context.assert_meaningful(src)
 
         elif opcode == 'copy':
-            # check that their types are compatible
+            # 1. check that their types are compatible
 
             if isinstance(dest, IndirectRef):
                 if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
-            elif src.type == dest.type:
-                pass
-            elif isinstance(src.type, ExecutableType) and \
-                 isinstance(dest.type, VectorType):
-                pass
-            elif isinstance(src.type, BufferType) and \
-                 isinstance(dest.type, PointerType):
-                pass
+            elif isinstance(src, AddressRef):
+                if isinstance(src.ref.type, BufferType) and isinstance(dest.type, PointerType):
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+
+            elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
+                if src.type == dest.type:
+                    pass
+                elif isinstance(src.type, ExecutableType) and \
+                     isinstance(dest.type, VectorType):
+                    # if dealing with routines and vectors,
+                    # check that they're not incompatible
+                    if not (src.type.inputs <= dest.type.inputs):
+                        raise IncompatibleConstraintsError(src.type.inputs - dest.type.inputs)
+                    if not (src.type.outputs <= dest.type.outputs):
+                        raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
+                    if not (src.type.trashes <= dest.type.trashes):
+                        raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
+                else:
+                    raise TypeMismatchError((src, dest))
             else:
                 raise TypeMismatchError((src, dest))
 
-            # if dealing with routines and vectors,
-            # check that they're not incompatible
-            if isinstance(src.type, ExecutableType) and \
-               isinstance(dest.type, VectorType):
-                if not (src.type.inputs <= dest.type.inputs):
-                    raise IncompatibleConstraintsError(src.type.inputs - dest.type.inputs)
-                if not (src.type.outputs <= dest.type.outputs):
-                    raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
-                if not (src.type.trashes <= dest.type.trashes):
-                    raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
+            # 2. check that the context is meaningful
 
             if isinstance(dest, IndirectRef):
                 context.assert_meaningful(src, REG_Y)

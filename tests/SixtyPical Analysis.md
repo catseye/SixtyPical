@@ -1176,19 +1176,18 @@ Can't `copy` from a `word` to a `byte`.
 
 Buffers and pointers.
 
-Note that `copy buf, ptr` should probably be `copy ^buf, ptr` and `^buf` should not
-be considered "reading" buf and should not require it in `inputs` for that reason.
+Note that `^buf` is not considered "reading" buf, so does not require it in `inputs`.
+TODO: It *should* require it in `outputs`.
 
     | buffer[2048] buf
     | pointer ptr
     | 
     | routine main
-    |   inputs buf
-    |   outputs buf, y
+    |   outputs y
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
-    |     copy buf, ptr
+    |     copy ^buf, ptr
     |     copy 123, [ptr] + y
     | }
     = ok
@@ -1199,11 +1198,9 @@ It does use `y`.
     | pointer ptr
     | 
     | routine main
-    |   inputs buf
-    |   outputs buf
     |   trashes a, z, n, ptr
     | {
-    |     copy buf, ptr
+    |     copy ^buf, ptr
     |     copy 123, [ptr] + y
     | }
     ? UnmeaningfulReadError

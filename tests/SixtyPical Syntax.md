@@ -328,7 +328,7 @@ Buffers and pointers.
     | pointer ptr
     | 
     | routine main {
-    |     copy buf, ptr
+    |     copy ^buf, ptr
     |     copy 123, [ptr] + y
     | }
     = ok

@@ -7,6 +7,6 @@ routine main
   trashes a, z, n, ptr
 {
     ld y, 0
-    copy buf, ptr
+    copy ^buf, ptr
     copy 123, [ptr] + y
 }

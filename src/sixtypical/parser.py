@@ -4,7 +4,7 @@ from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE,
     RoutineType, VectorType, ExecutableType, BufferType, PointerType,
-    LocationRef, ConstantRef, IndirectRef,
+    LocationRef, ConstantRef, IndirectRef, AddressRef,
 )
 from sixtypical.scanner import Scanner
 
@@ -171,6 +171,9 @@ class Parser(object):
             self.scanner.expect('+')
             self.scanner.expect('y')
             return IndirectRef(loc)
+        elif self.scanner.consume('^'):
+            loc = self.locexpr()
+            return AddressRef(loc)
         else:
             return self.locexpr()
 

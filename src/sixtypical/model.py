@@ -109,7 +109,7 @@ class IndirectRef(Ref):
         return self.ref == other.ref
 
     def __hash__(self):
-        return hash(hash('[]') ^ hash(self.ref))
+        return hash(self.__class__.name) ^ hash(self.ref)
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.ref)
@@ -120,6 +120,27 @@ class IndirectRef(Ref):
 
     def is_constant(self):
         return False
+
+
+class AddressRef(Ref):
+    def __init__(self, ref):
+        self.ref = ref
+
+    def __eq__(self, other):
+        return self.ref == other.ref
+
+    def __hash__(self):
+        return hash(self.__class__.name) ^ hash(self.ref)
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.ref)
+
+    @property
+    def name(self):
+        return '^{}'.format(self.ref.name)
+
+    def is_constant(self):
+        return True
 
 
 class PartRef(Ref):

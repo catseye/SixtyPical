@@ -353,7 +353,7 @@ Buffers and pointers.
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
-    |     copy buf, ptr
+    |     copy ^buf, ptr
     | }
     = 00c0a000a90b85fea9c085ff60
 
@@ -363,12 +363,11 @@ Writing through a pointer.
     | pointer ptr @ 254
     | 
     | routine main
-    |   inputs buf
     |   outputs buf, y
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
-    |     copy buf, ptr
+    |     copy ^buf, ptr
     |     copy 123, [ptr] + y
     | }
     = 00c0a000a90f85fea9c085ffa97b91fe60
