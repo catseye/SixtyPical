@@ -2,7 +2,7 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    ConstantRef, LocationRef, PartRef,
+    ConstantRef, LocationRef, PartRef, IndirectRef,
     REG_A, REG_X, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
@@ -191,15 +191,12 @@ class Evaluator(object):
             while context.get(src) == 0:
                 self.eval_block(instr.block, context)
         elif opcode == 'copy':
-            context.set(dest, context.get(src))
-            # these are trashed; so could be anything really
-            context.set(REG_A, 0)
-            context.set(FLAG_Z, 0)
-            context.set(FLAG_N, 0)
-        elif opcode == 'copy[]':
-            addr = context.get(dest)
-            # memloc = memory[addr + context.get(REG_Y)]
-            # context.set(memloc, context.get(src))
+            if isinstance(src, IndirectRef):
+                raise NotImplementedError("this doesn't actually work")
+                src = src.ref
+            if isinstance(dest, IndirectRef):
+                raise NotImplementedError("this doesn't actually work")
+                dest = dest.ref
             context.set(dest, context.get(src))
             # these are trashed; so could be anything really
             context.set(REG_A, 0)

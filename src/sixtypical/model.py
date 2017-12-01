@@ -87,7 +87,7 @@ class LocationRef(Ref):
         # but because we store the type in here and we want to treat
         # these objects as immutable, we compare the types, too.
         # Not sure if very wise.
-        return isinstance(other, LocationRef) and (
+        return isinstance(other, self.__class__) and (
             other.name == self.name and other.type == self.type
         )
 
@@ -99,6 +99,27 @@ class LocationRef(Ref):
 
     def is_constant(self):
         return isinstance(self.type, RoutineType)
+
+
+class IndirectRef(Ref):
+    def __init__(self, ref):
+        self.ref = ref
+
+    def __eq__(self, other):
+        return self.ref == other.ref
+
+    def __hash__(self):
+        return hash(hash('[]') ^ hash(self.ref))
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, self.ref)
+
+    @property
+    def name(self):
+        return '[{}]+y'.format(self.ref.name)
+
+    def is_constant(self):
+        return False
 
 
 class PartRef(Ref):

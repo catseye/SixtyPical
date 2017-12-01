@@ -4,7 +4,7 @@ from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE,
     RoutineType, VectorType, ExecutableType, BufferType, PointerType,
-    LocationRef, ConstantRef
+    LocationRef, ConstantRef, IndirectRef,
 )
 from sixtypical.scanner import Scanner
 
@@ -164,6 +164,16 @@ class Parser(object):
             self.scanner.scan()
             return loc
 
+    def indlocexpr(self):
+        if self.scanner.consume('['):
+            loc = self.locexpr()
+            self.scanner.expect(']')
+            self.scanner.expect('+')
+            self.scanner.expect('y')
+            return IndirectRef(loc)
+        else:
+            return self.locexpr()
+
     def block(self):
         instrs = []
         self.scanner.expect('{')
@@ -234,19 +244,10 @@ class Parser(object):
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token
             self.scanner.scan()
-            src = self.locexpr()
+            src = self.indlocexpr()
             self.scanner.expect(',')
-            if self.scanner.consume('['):
-                dest = self.locexpr()
-                self.scanner.expect(']')
-                self.scanner.expect('+')
-                self.scanner.expect('y')
-                opcode = 'copy[]+y'
-            else:
-                dest = self.locexpr()
-            i = Instr(opcode=opcode, dest=dest, src=src)
-            #print repr(i)
-            return i
+            dest = self.indlocexpr()
+            return Instr(opcode=opcode, dest=dest, src=src)
         elif self.scanner.consume("with"):
             self.scanner.expect("interrupts")
             self.scanner.expect("off")

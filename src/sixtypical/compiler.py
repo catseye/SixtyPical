@@ -2,7 +2,7 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    ConstantRef,
+    ConstantRef, IndirectRef,
     TYPE_BIT, TYPE_BYTE, TYPE_WORD, BufferType, PointerType, RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
@@ -274,7 +274,17 @@ class Compiler(object):
             self.compile_block(instr.block)
             self.emitter.emit(CLI())
         elif opcode == 'copy':
-            if src.type == TYPE_BYTE and dest.type == TYPE_BYTE:
+            if isinstance(dest, IndirectRef):
+                if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
+                    if isinstance(src, ConstantRef):
+                        dest_label = self.labels[dest.ref.name]
+                        self.emitter.emit(LDA(Immediate(Byte(src.value))))
+                        self.emitter.emit(STA(IndirectY(dest_label)))
+                    else:
+                        raise NotImplementedError((src, dest))
+                else:
+                    raise NotImplementedError((src, dest))
+            elif src.type == TYPE_BYTE and dest.type == TYPE_BYTE:
                 if isinstance(src, ConstantRef):
                     raise NotImplementedError
                 else:
@@ -322,15 +332,5 @@ class Compiler(object):
                 self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
             else:
                 raise NotImplementedError(src.type)
-        elif opcode == 'copy[]+y':
-            if src.type == TYPE_BYTE and isinstance(dest.type, PointerType):
-                if isinstance(src, ConstantRef):
-                    dest_label = self.labels[dest.name]
-                    self.emitter.emit(LDA(Immediate(Byte(src.value))))
-                    self.emitter.emit(STA(IndirectY(dest_label)))
-                else:
-                    raise NotImplementedError((src.type, dest.type))
-            else:
-                raise NotImplementedError((src.type, dest.type))
         else:
             raise NotImplementedError(opcode)

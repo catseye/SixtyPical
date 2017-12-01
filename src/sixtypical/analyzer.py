@@ -3,7 +3,7 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BYTE, TYPE_BYTE_TABLE, BufferType, PointerType, VectorType, ExecutableType,
-    ConstantRef, LocationRef,
+    ConstantRef, LocationRef, IndirectRef,
     REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
@@ -294,7 +294,13 @@ class Analyzer(object):
 
         elif opcode == 'copy':
             # check that their types are compatible
-            if src.type == dest.type:
+
+            if isinstance(dest, IndirectRef):
+                if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+            elif src.type == dest.type:
                 pass
             elif isinstance(src.type, ExecutableType) and \
                  isinstance(dest.type, VectorType):
@@ -316,20 +322,14 @@ class Analyzer(object):
                 if not (src.type.trashes <= dest.type.trashes):
                     raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
 
-            context.assert_meaningful(src)
-            context.set_written(dest)
-            context.set_touched(REG_A, FLAG_Z, FLAG_N)
-            context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
-
-        elif opcode == 'copy[]+y':
-            # check that their types are compatible
-            if src.type == TYPE_BYTE and isinstance(dest.type, PointerType):
-                pass
+            if isinstance(dest, IndirectRef):
+                context.assert_meaningful(src, REG_Y)
+                # TODO this will need to be more sophisticated.  it's the thing ref points to that is written, not ref itself.
+                context.set_written(dest.ref)
             else:
-                raise TypeMismatchError((src, dest))
+                context.assert_meaningful(src)
+                context.set_written(dest)
 
-            context.assert_meaningful(src, REG_Y)
-            context.set_written(dest)
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
             context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
 
