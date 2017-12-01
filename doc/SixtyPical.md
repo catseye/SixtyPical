@@ -14,19 +14,19 @@ the language.
 Types
 -----
 
-There are five *primitive types* in SixtyPical:
+There are six *primitive types* in SixtyPical:
 
 *   bit (2 possible values)
 *   byte (256 possible values)
 *   word (65536 possible values)
 *   routine (code stored somewhere in memory, read-only)
 *   vector (address of a routine)
+*   pointer (address of a byte in a buffer)
 
-There is also one *type constructor*:
+There are also two *type constructors*:
 
-*   X table (256 entries, each holding a value of type X)
-
-This constructor can only be applied to one type, `byte`.
+*   X table (256 entries, each holding a value of type X, where X is `byte`)
+*   buffer[N] (N entries; each entry is a byte; N is a power of 2, ≤ 64K)
 
 Memory locations
 ----------------
@@ -126,6 +126,29 @@ would not work.
 This is actually useful, at least at this point, as you can rely on the fact
 that literal integers in the code are always immediate values.  (But this
 may change at some point.)
+
+### Buffers and Pointers ###
+
+Roughly speaking, a `buffer` is a table that can be longer than 256 bytes,
+and a `pointer` is an address within a buffer.
+
+A `pointer` is implemented as a zero-page memory location, and accessing the
+buffer pointed to is implemented with "indirect indexed" addressing, as in
+
+    LDA ($02), Y
+    STA ($02), Y
+
+There are extended modes of `copy` for using these types of memory location.
+See `copy` below, but here is some illustrative example code:
+
+    copy ^buf, ptr           // this is the only way to initialize a pointer
+    add ptr, 4               // ok, but only if it does not exceed buffer's size
+    ld y, 0                  // you must set this to something yourself
+    copy [ptr] + y, byt      // read memory through pointer, into byte
+    copy 100, [ptr] + y      // write memory through pointer (still trashes a)
+
+where `ptr` is a user-defined storage location of `pointer` type, and the
+`+ y` part is mandatory.
 
 Routines
 --------
@@ -236,6 +259,33 @@ copy more general types of data (for example, vectors,) and it trashes the
 
 After execution, dest is considered initialized, and `z` and `n`, and
 `a` are considered uninitialized.
+
+There are two extra modes that this instruction can be used in.  The first is
+to load an address into a pointer:
+
+    copy ^<src-memory-location>, <dest-memory-location>
+
+This copies the address of src into dest.  In this case, src must be
+of type buffer, and dest must be of type pointer.  src will not be
+considered a memory location that is read, since it is only its address
+that is being retrieved.
+
+The second is to read or write indirectly through a pointer.
+
+    copy [<src-memory-location>] + y, <dest-memory-location>
+    copy <src-memory-location>, [<dest-memory-location>] + y
+
+In both of these, the memory location in the `[]+y` syntax must be
+a pointer.
+
+The first copies the contents of memory at the pointer (offset by the `y`
+register) into a byte memory location.
+
+The second copies a literal byte, or a byte memory location, into
+the contents of memory at the pointer (offset by the `y` register).
+
+In addition to the constraints above, `y` must be initialized before
+this mode is used.
 
 ### add dest, src ###
 
@@ -359,7 +409,7 @@ Just after the call,
 *   All memory locations listed in the called routine's `trashes` are considered
     to now be uninitialized.
 *   All memory locations listed in the called routine's `outputs` are considered
-    to not be initialized.
+    to now be initialized.
 
 ### goto ###
 

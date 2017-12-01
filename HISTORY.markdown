@@ -6,6 +6,11 @@ History of SixtyPical
 
 *   Explicit word literals prefixed with `word` token.
 *   Can `copy` literals into user-defined destinations.
+*   `buffer` and `pointer` types.
+*   `copy ^` syntax to load the addr of a buffer into a pointer.
+*   `copy []+y` syntax to write a value into memory through a pointer.
+*   TODO: read through pointer.
+*   TODO: insist the buffer being read or written to through pointer, appears in approporiate set.
 
 0.7
 ---
