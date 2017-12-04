@@ -2,10 +2,9 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BYTE, TYPE_BYTE_TABLE,
-    VectorType, ExecutableType,
-    ConstantRef, LocationRef,
-    REG_A, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
+    TYPE_BYTE, TYPE_BYTE_TABLE, BufferType, PointerType, VectorType, ExecutableType,
+    ConstantRef, LocationRef, IndirectRef, AddressRef,
+    REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
 
@@ -114,11 +113,13 @@ class Context(object):
     def assert_meaningful(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', UnmeaningfulReadError)
         for ref in refs:
-            if isinstance(ref, ConstantRef) or ref in self.routines:
+            if ref.is_constant() or ref in self.routines:
                 pass
             elif isinstance(ref, LocationRef):
                 if ref not in self._meaningful:
                     message = '%s in %s' % (ref.name, self.routine.name)
+                    if kwargs.get('message'):
+                        message += ' (%s)' % kwargs['message']
                     raise exception_class(message)
             else:
                 raise NotImplementedError(ref)
@@ -128,6 +129,8 @@ class Context(object):
         for ref in refs:
             if ref not in self._writeable:
                 message = '%s in %s' % (ref.name, self.routine.name)
+                if kwargs.get('message'):
+                    message += ' (%s)' % kwargs['message']
                 raise exception_class(message)
 
     def set_touched(self, *refs):
@@ -270,45 +273,79 @@ class Analyzer(object):
             # probably not; if it wasn't meaningful in the first place, it
             # doesn't really matter if you modified it or not, coming out.
             for ref in context1.each_meaningful():
-                context2.assert_meaningful(ref, exception_class=InconsistentInitializationError)
+                context2.assert_meaningful(
+                    ref, exception_class=InconsistentInitializationError, message='initialized in block 1 but not in block 2'
+                )
             for ref in context2.each_meaningful():
-                context1.assert_meaningful(ref, exception_class=InconsistentInitializationError)
+                context1.assert_meaningful(
+                    ref, exception_class=InconsistentInitializationError, message='initialized in block 2 but not in block 1'
+                )
             context.set_from(context1)
         elif opcode == 'repeat':
             # it will always be executed at least once, so analyze it having
             # been executed the first time.
             self.analyze_block(instr.block, context)
-    
+            context.assert_meaningful(src)
+
             # now analyze it having been executed a second time, with the context
             # of it having already been executed.
             self.analyze_block(instr.block, context)
-    
-            # NB I *think* that's enough... but it might not be?
+            context.assert_meaningful(src)
+
         elif opcode == 'copy':
-            # check that their types are basically compatible
-            if src.type == dest.type:
-                pass
-            elif isinstance(src.type, ExecutableType) and \
-                 isinstance(dest.type, VectorType):
-                pass
+            # 1. check that their types are compatible
+
+            if isinstance(src, AddressRef) and isinstance(dest, LocationRef):
+                if isinstance(src.ref.type, BufferType) and isinstance(dest.type, PointerType):
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+            elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndirectRef):
+                if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+            elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
+                if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+            elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
+                if src.type == dest.type:
+                    pass
+                elif isinstance(src.type, ExecutableType) and \
+                     isinstance(dest.type, VectorType):
+                    # if dealing with routines and vectors,
+                    # check that they're not incompatible
+                    if not (src.type.inputs <= dest.type.inputs):
+                        raise IncompatibleConstraintsError(src.type.inputs - dest.type.inputs)
+                    if not (src.type.outputs <= dest.type.outputs):
+                        raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
+                    if not (src.type.trashes <= dest.type.trashes):
+                        raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
+                else:
+                    raise TypeMismatchError((src, dest))
             else:
                 raise TypeMismatchError((src, dest))
-    
-            # if dealing with routines and vectors,
-            # check that they're not incompatible
-            if isinstance(src.type, ExecutableType) and \
-               isinstance(dest.type, VectorType):
-                if not (src.type.inputs <= dest.type.inputs):
-                    raise IncompatibleConstraintsError(src.type.inputs - dest.type.inputs)
-                if not (src.type.outputs <= dest.type.outputs):
-                    raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
-                if not (src.type.trashes <= dest.type.trashes):
-                    raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
-                    
-            context.assert_meaningful(src)
-            context.set_written(dest)
+
+            # 2. check that the context is meaningful
+
+            if isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndirectRef):
+                context.assert_meaningful(src, REG_Y)
+                # TODO this will need to be more sophisticated.  it's the thing ref points to that is written, not ref itself.
+                context.set_written(dest.ref)
+            elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
+                context.assert_meaningful(src.ref, REG_Y)
+                # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
+                context.set_touched(src.ref)
+                context.set_written(dest)
+            else:
+                context.assert_meaningful(src)
+                context.set_written(dest)
+
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
             context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
+
         elif opcode == 'with-sei':
             self.analyze_block(instr.block, context)
         elif opcode == 'goto':

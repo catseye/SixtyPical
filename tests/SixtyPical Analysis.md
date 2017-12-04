@@ -1017,6 +1017,23 @@ initialized at the start.
     | }
     ? UnmeaningfulReadError: y in main
 
+And if you trash the test expression (i.e. `z` in the below) inside the loop,
+this is an error too.
+
+    | word one : 0
+    | word two : 0
+    | 
+    | routine main
+    |   inputs one, two
+    |   outputs two
+    |   trashes a, z, n
+    | {
+    |     repeat {
+    |         copy one, two
+    |     } until z
+    | }
+    ? UnmeaningfulReadError: z in main
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
@@ -1154,6 +1171,90 @@ Can't `copy` from a `word` to a `byte`.
     |     copy source, dest
     | }
     ? TypeMismatchError
+
+### copy[] ###
+
+Buffers and pointers.
+
+Note that `^buf` is a constant value, so it by itself does not require `buf` to be
+listed in any input/output sets.
+
+However, if the code reads from it through a pointer, it *should* be in `inputs`.
+
+Likewise, if the code writes to it through a pointer, it *should* be in `outputs`.
+
+Of course, unless you write to *all* the bytes in a buffer, some of those bytes
+might not be meaningful.  So how meaningful is this check?
+
+This is an open problem.
+
+For now, convention says: if it is being read, list it in `inputs`, and if it is
+being modified, list it in both `inputs` and `outputs`.
+
+Write literal through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs y, buf
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy 123, [ptr] + y
+    | }
+    = ok
+
+It does use `y`.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf
+    |   trashes a, z, n, ptr
+    | {
+    |     copy ^buf, ptr
+    |     copy 123, [ptr] + y
+    | }
+    ? UnmeaningfulReadError
+
+Write stored value through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | byte foo
+    | 
+    | routine main
+    |   inputs foo, buf
+    |   outputs y, buf
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy foo, [ptr] + y
+    | }
+    = ok
+
+Read through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | byte foo
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs foo
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy [ptr] + y, foo
+    | }
+    = ok
 
 ### routines ###
 

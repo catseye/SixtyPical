@@ -1,4 +1,4 @@
-Sixtypical Execution
+SixtyPical Execution
 ====================
 
 This is a test suite, written in [Falderal][] format, for the dynamic
@@ -6,10 +6,10 @@ execution behaviour of the Sixtypical language, disgregarding static analysis.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Execute Sixtypical program" is implemented by
+    -> Functionality "Execute SixtyPical program" is implemented by
     -> shell command "bin/sixtypical --execute %(test-body-file)"
 
-    -> Tests for functionality "Execute Sixtypical program"
+    -> Tests for functionality "Execute SixtyPical program"
 
 Rudimentary program.
 
@@ -429,6 +429,22 @@ Copy word to word.
     = bar: 2000
     = c: 0
     = foo: 2000
+    = n: 0
+    = v: 0
+    = x: 0
+    = y: 0
+    = z: 0
+
+Copy literal word to word.
+
+    | word bar
+    | 
+    | routine main {
+    |     copy word 2000, bar
+    | }
+    = a: 0
+    = bar: 2000
+    = c: 0
     = n: 0
     = v: 0
     = x: 0

@@ -1,0 +1,15 @@
+buffer[2048] buf
+pointer ptr @ 254
+byte foo
+
+routine main
+  inputs buf
+  outputs buf, y, foo
+  trashes a, z, n, ptr
+{
+    ld y, 0
+    copy ^buf, ptr
+    copy 123, [ptr] + y
+    copy [ptr] + y, foo
+    copy foo, [ptr] + y
+}

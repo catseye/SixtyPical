@@ -24,14 +24,14 @@ programs to 6502 machine code.
 
 It is a **work in progress**, currently at the **proof-of-concept** stage.
 
-The current released version of SixtyPical is 0.7.
+The current development version of SixtyPical is 0.8.
 
 Documentation
 -------------
 
-*   Design Goals — coming soon.
+*   [Design Goals](doc/Design%20Goals.md)
 *   [SixtyPical specification](doc/SixtyPical.md)
-*   [SixtyPical history](HISTORY.md)
+*   [SixtyPical revision history](HISTORY.md)
 *   [Literate test suite for SixtyPical syntax](tests/SixtyPical%20Syntax.md)
 *   [Literate test suite for SixtyPical execution](tests/SixtyPical%20Execution.md)
 *   [Literate test suite for SixtyPical analysis](tests/SixtyPical%20Analysis.md)
@@ -41,15 +41,31 @@ Documentation
 TODO
 ----
 
-*   `word table` type.
-*   `vector table` type.
-*   zero-page memory locations.
-*   indirect addressing.
-*   `low` and `high` address operators (turn `word` type into `byte`.)  Possibly.
-*   save registers on stack or in memory (this preserves them = not trashed)
+### Add 16 bit values.
 
-At some point...
+I guess this means making `add` a bit more like `copy`.
 
+And then: add to pointer.  (Not necessarily range-checked yet though.)
+
+And then write a little demo "game" where you can move a block around the screen with
+the joystick.
+
+### `word table` and `vector table` types
+
+### `low` and `high` address operators
+
+To turn `word` type into `byte`.
+
+### save registers on stack
+
+This preserves them, so semantically, they can be used even though they
+are trashed inside the block.
+
+### And at some point...
+
+*   `copy x, [ptr] + y`
+*   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
+*   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
 *   initialized `byte table` memory locations
 *   always analyze before executing or compiling, unless told not to
 *   `trash` instruction.

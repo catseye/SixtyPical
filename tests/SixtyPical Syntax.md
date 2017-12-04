@@ -1,5 +1,5 @@
-Sixtypical Execution
-====================
+SixtyPical Syntax
+=================
 
 This is a test suite, written in [Falderal][] format, for the syntax of
 the Sixtypical language, disgregarding execution, static analysis, etc.
@@ -9,10 +9,10 @@ but not necessarily sensible programs.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Check syntax of Sixtypical program" is implemented by
+    -> Functionality "Check syntax of SixtyPical program" is implemented by
     -> shell command "bin/sixtypical %(test-body-file) && echo ok"
 
-    -> Tests for functionality "Check syntax of Sixtypical program"
+    -> Tests for functionality "Check syntax of SixtyPical program"
 
 Rudimentary program.
 
@@ -120,6 +120,19 @@ Repeat with not
     |     repeat {
     |         inc y
     |     } until not z
+    | }
+    = ok
+
+User-defined memory addresses of different types.
+
+    | byte byt
+    | word wor
+    | vector vec
+    | byte table tab
+    | buffer[2048] buf
+    | pointer ptr
+    | 
+    | routine main {
     | }
     = ok
 
@@ -308,3 +321,16 @@ goto.
     |     goto foo
     | }
     ? SyntaxError
+
+Buffers and pointers.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | byte foo
+    | 
+    | routine main {
+    |     copy ^buf, ptr
+    |     copy 123, [ptr] + y
+    |     copy [ptr] + y, foo
+    | }
+    = ok

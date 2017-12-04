@@ -1,15 +1,15 @@
-Sixtypical Compilation
+SixtyPical Compilation
 ======================
 
 This is a test suite, written in [Falderal][] format, for compiling
-Sixtypical to 6502 machine code.
+SixtyPical to 6502 machine code.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Compile Sixtypical program" is implemented by
+    -> Functionality "Compile SixtyPical program" is implemented by
     -> shell command "bin/sixtypical --compile %(test-body-file) | fa-bin-to-hex"
 
-    -> Tests for functionality "Compile Sixtypical program"
+    -> Tests for functionality "Compile SixtyPical program"
 
 Null program.
 
@@ -267,6 +267,18 @@ Copy word to word.
     | }
     = 00c0ad0fc08d0dc0ad10c08d0ec060
 
+Copy literal word to word.
+
+    | word bar
+    | 
+    | routine main
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |   copy 65535, bar
+    | }
+    = 00c0a9ff8d0bc0a9ff8d0cc060
+
 Copy vector to vector.
 
     | vector bar
@@ -281,7 +293,7 @@ Copy vector to vector.
     | }
     = 00c0ad0fc08d0dc0ad10c08d0ec060
 
-Copy instruction inside an `interrupts off` block.
+Copy routine to vector, inside an `interrupts off` block.
 
     | vector bar
     | 
@@ -329,3 +341,70 @@ goto.
     |     goto bar
     | }
     = 00c0a0c84c06c060a2c860
+
+### Buffers and Pointers
+
+Load address into pointer.
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf, y
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    | }
+    = 00c0a000a90b85fea9c085ff60
+
+Write literal through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf, y
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy 123, [ptr] + y
+    | }
+    = 00c0a000a90f85fea9c085ffa97b91fe60
+
+Write stored value through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | byte foo
+    | 
+    | routine main
+    |   inputs foo, buf
+    |   outputs y, buf
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy foo, [ptr] + y
+    | }
+    = 00c0a000a91085fea9c085ffad12c091fe60
+
+Read through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | byte foo
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs y, foo
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     copy [ptr] + y, foo
+    | }
+    = 00c0a000a91085fea9c085ffb1fe8d12c060

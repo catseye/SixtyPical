@@ -2,14 +2,13 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    ConstantRef,
-    TYPE_BIT, TYPE_BYTE, TYPE_WORD,
-    RoutineType, VectorType,
+    ConstantRef, LocationRef, IndirectRef, AddressRef,
+    TYPE_BIT, TYPE_BYTE, TYPE_WORD, BufferType, PointerType, RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
 from sixtypical.emitter import Byte, Label, Offset, LowAddressByte, HighAddressByte
 from sixtypical.gen6502 import (
-    Immediate, Absolute, AbsoluteX, AbsoluteY, Indirect, Relative,
+    Immediate, Absolute, AbsoluteX, AbsoluteY, ZeroPage, Indirect, IndirectY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
     TAX, TAY, TXA, TYA,
     CLC, SEC, ADC, SBC, ROL, ROR,
@@ -275,18 +274,63 @@ class Compiler(object):
             self.compile_block(instr.block)
             self.emitter.emit(CLI())
         elif opcode == 'copy':
-            if src.type == TYPE_BYTE and dest.type == TYPE_BYTE:
-                src_label = self.labels[src.name]
+            if isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndirectRef):
+                if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
+                    if isinstance(src, ConstantRef):
+                        dest_label = self.labels[dest.ref.name]
+                        self.emitter.emit(LDA(Immediate(Byte(src.value))))
+                        self.emitter.emit(STA(IndirectY(dest_label)))
+                    elif isinstance(src, LocationRef):
+                        src_label = self.labels[src.name]
+                        dest_label = self.labels[dest.ref.name]
+                        self.emitter.emit(LDA(Absolute(src_label)))
+                        self.emitter.emit(STA(IndirectY(dest_label)))
+                    else:
+                        raise NotImplementedError((src, dest))
+                else:
+                    raise NotImplementedError((src, dest))
+            elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
+                if dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
+                    src_label = self.labels[src.ref.name]
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(IndirectY(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                else:
+                    raise NotImplementedError((src, dest))
+            elif isinstance(src, AddressRef) and isinstance(dest, LocationRef) and \
+                 isinstance(src.ref.type, BufferType) and isinstance(dest.type, PointerType):
+                src_label = self.labels[src.ref.name]
                 dest_label = self.labels[dest.name]
-                self.emitter.emit(LDA(Absolute(src_label)))
-                self.emitter.emit(STA(Absolute(dest_label)))
+                self.emitter.emit(LDA(Immediate(HighAddressByte(src_label))))
+                self.emitter.emit(STA(ZeroPage(dest_label)))
+                self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
+                self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
+            elif not isinstance(src, (ConstantRef, LocationRef)) or not isinstance(dest, LocationRef):
+                raise NotImplementedError((src, dest))
+            elif src.type == TYPE_BYTE and dest.type == TYPE_BYTE:
+                if isinstance(src, ConstantRef):
+                    raise NotImplementedError
+                else:
+                    src_label = self.labels[src.name]
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(Absolute(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
             elif src.type == TYPE_WORD and dest.type == TYPE_WORD:
-                src_label = self.labels[src.name]
-                dest_label = self.labels[dest.name]
-                self.emitter.emit(LDA(Absolute(src_label)))
-                self.emitter.emit(STA(Absolute(dest_label)))
-                self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
-                self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                if isinstance(src, ConstantRef):
+                    dest_label = self.labels[dest.name]
+                    hi = (src.value >> 8) & 255
+                    lo = src.value & 255
+                    self.emitter.emit(LDA(Immediate(Byte(hi))))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(Immediate(Byte(lo))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                else:
+                    src_label = self.labels[src.name]
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(Absolute(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
             elif isinstance(src.type, VectorType) and isinstance(dest.type, VectorType):
                 src_label = self.labels[src.name]
                 dest_label = self.labels[dest.name]
