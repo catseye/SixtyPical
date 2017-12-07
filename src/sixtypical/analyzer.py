@@ -2,7 +2,7 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BYTE, TYPE_BYTE_TABLE, BufferType, PointerType, VectorType, ExecutableType,
+    TYPE_BYTE, TYPE_WORD, TYPE_BYTE_TABLE, BufferType, PointerType, VectorType, ExecutableType,
     ConstantRef, LocationRef, IndirectRef, AddressRef,
     REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
@@ -233,7 +233,17 @@ class Analyzer(object):
                 )
             context.assert_meaningful(src)
             context.set_written(dest)
-        elif opcode in ('add', 'sub'):
+        elif opcode == 'add':
+            if src.type == TYPE_BYTE:
+                self.assert_type(TYPE_BYTE, src, dest)
+                context.assert_meaningful(src, dest, FLAG_C)
+                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+            else:
+                self.assert_type(TYPE_WORD, src, dest)
+                context.assert_meaningful(src, dest, FLAG_C)
+                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+                context.set_unmeaningful(REG_A)
+        elif opcode == 'sub':
             self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest, FLAG_C)
             context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)

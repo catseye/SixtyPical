@@ -373,6 +373,45 @@ Can't `add` to a memory location that isn't writeable.
     | }
     ? ForbiddenWriteError: a in main
 
+You can `add` a word constant to a word memory location.
+
+    | word score
+    | routine main
+    |   inputs a, score
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add score, 1999
+    | }
+    = ok
+
+`add`ing a word constant to a word memory location trashes `a`.
+
+    | word score
+    | routine main
+    |   inputs a, score
+    |   outputs score, a
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add score, 1999
+    | }
+    ? UnmeaningfulOutputError: a in main
+
+Not sure why this doesn't also raise an error?  `a` is trashed...
+
+    | word score
+    | routine main
+    |   inputs score
+    |   outputs score
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add score, 1999
+    | }
+    ? UnmeaningfulOutputError: a in main
+
 ### sub ###
 
 Can't `sub` from or to a memory location that isn't initialized.
