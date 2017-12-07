@@ -22,9 +22,8 @@ based on common machine-language programming idioms, such as
 The reference implementation can execute, analyze, and compile SixtyPical
 programs to 6502 machine code.
 
-It is a **work in progress**, currently at the **proof-of-concept** stage.
-
-The current development version of SixtyPical is 0.8.
+SixtyPical is a work in progress.  The current released version of SixtyPical
+is 0.9-PRE (not released yet.)
 
 Documentation
 -------------
