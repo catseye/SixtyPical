@@ -412,6 +412,34 @@ To be sure, `add`ing a word constant to a word memory location trashes `a`.
     | }
     ? ForbiddenWriteError: a in main
 
+You can `add` a word memory location to another word memory location.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add score, delta
+    | }
+    = ok
+
+`add`ing a word memory location to a word memory location trashes `a`.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add score, delta
+    | }
+    ? ForbiddenWriteError: a in main
+
 ### sub ###
 
 Can't `sub` from or to a memory location that isn't initialized.

@@ -1,6 +1,11 @@
 History of SixtyPical
 =====================
 
+0.9
+---
+
+*   Add word (constant or memory location) to word memory location.
+
 0.8
 ---
 

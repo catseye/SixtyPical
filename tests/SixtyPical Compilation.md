@@ -344,11 +344,11 @@ goto.
 
 ### word operations
 
-Adding a constant word to a memory location.
+Adding a constant word to a word memory location.
 
     | word score
     | routine main
-    |   inputs a, score
+    |   inputs score
     |   outputs score
     |   trashes a, c, z, v, n
     | {
@@ -356,6 +356,20 @@ Adding a constant word to a memory location.
     |     add score, 1999
     | }
     = 00c018ad12c069cf8d12c0ad13c069078d13c060
+
+Adding a word memory location to another word memory location.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add score, delta
+    | }
+    = 00c018ad14c06d16c08d14c0ad15c06d17c08d15c060
 
 ### Buffers and Pointers
 

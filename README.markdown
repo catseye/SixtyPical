@@ -40,11 +40,11 @@ Documentation
 TODO
 ----
 
-### Add 16 bit values.
+### Operations on 16 bit values
 
-I guess this means making `add` a bit more like `copy`.
+Add word (constant or memory location) to pointer.  (Not necessarily range-checked yet though.)
 
-And then: add to pointer.  (Not necessarily range-checked yet though.)
+Compare word (constant or memory location) with memory location or pointer.  (Maybe?)
 
 And then write a little demo "game" where you can move a block around the screen with
 the joystick.
