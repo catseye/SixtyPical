@@ -399,7 +399,7 @@ You can `add` a word constant to a word memory location.
     | }
     ? UnmeaningfulOutputError: a in main
 
-Not sure why this doesn't also raise an error?  `a` is trashed...
+To be sure, `add`ing a word constant to a word memory location trashes `a`.
 
     | word score
     | routine main
@@ -410,7 +410,7 @@ Not sure why this doesn't also raise an error?  `a` is trashed...
     |     st off, c
     |     add score, 1999
     | }
-    ? UnmeaningfulOutputError: a in main
+    ? ForbiddenWriteError: a in main
 
 ### sub ###
 

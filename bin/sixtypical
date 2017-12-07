@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
         if options.analyze:
             try:
-                analyzer = Analyzer()
+                analyzer = Analyzer(debug=options.debug)
                 analyzer.analyze_program(program)
             except Exception as e:
                 if options.traceback:

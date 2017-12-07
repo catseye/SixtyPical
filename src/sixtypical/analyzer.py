@@ -88,6 +88,20 @@ class Context(object):
                 raise InconsistentConstraintsError('%s in %s' % (ref.name, routine.name))
             self._writeable.add(ref)
 
+    def __str__(self):
+        def locstr(loc):
+            if isinstance(loc, LocationRef):
+                return "{}:{}".format(loc.name, loc.type)
+            else:
+                return str(loc)
+
+        def locsetstr(s):
+            return '{' + ', '.join([locstr(loc) for loc in list(s)]) + '}'
+
+        return "Context(\n  _touched={},\n  _meaningful={},\n  _writeable={}\n)".format(
+            locsetstr(self._touched), locsetstr(self._meaningful), locsetstr(self._writeable)
+        )
+
     def clone(self):
         c = Context(self.routines, self.routine, [], [], [])
         c._touched = set(self._touched)
@@ -157,10 +171,11 @@ class Context(object):
 
 class Analyzer(object):
 
-    def __init__(self):
+    def __init__(self, debug=False):
         self.current_routine = None
         self.has_encountered_goto = False
         self.routines = {}
+        self.debug = debug
 
     def assert_type(self, type, *locations):
         for location in locations:
@@ -184,7 +199,13 @@ class Analyzer(object):
             return
         type = routine.location.type
         context = Context(self.routines, routine, type.inputs, type.outputs, type.trashes)
+        if self.debug:
+            print "at start of routine `{}`:".format(routine.name)
+            print context
         self.analyze_block(routine.block, context)
+        if self.debug:
+            print "at end of routine `{}`:".format(routine.name)
+            print context
         if not self.has_encountered_goto:
             for ref in type.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
@@ -242,6 +263,7 @@ class Analyzer(object):
                 self.assert_type(TYPE_WORD, src, dest)
                 context.assert_meaningful(src, dest, FLAG_C)
                 context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+                context.set_touched(REG_A)
                 context.set_unmeaningful(REG_A)
         elif opcode == 'sub':
             self.assert_type(TYPE_BYTE, src, dest)
