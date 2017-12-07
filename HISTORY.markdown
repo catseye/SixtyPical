@@ -5,6 +5,8 @@ History of SixtyPical
 ---
 
 *   Add word (constant or memory location) to word memory location.
+*   Add word to pointer (unchecked for now).
+*   Implementation: `--debug` shows some extra info during analysis.
 
 0.8
 ---

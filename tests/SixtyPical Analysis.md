@@ -440,6 +440,36 @@ You can `add` a word memory location to another word memory location.
     | }
     ? ForbiddenWriteError: a in main
 
+You can `add` a word memory location, or a constant, to a pointer.
+
+    | pointer ptr
+    | word delta
+    | routine main
+    |   inputs ptr, delta
+    |   outputs ptr
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add ptr, delta
+    |     add ptr, word 1
+    | }
+    = ok
+
+`add`ing a word memory location, or a constant, to a pointer, trashes `a`.
+
+    | pointer ptr
+    | word delta
+    | routine main
+    |   inputs ptr, delta
+    |   outputs ptr
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add ptr, delta
+    |     add ptr, word 1
+    | }
+    ? ForbiddenWriteError: a in main
+
 ### sub ###
 
 Can't `sub` from or to a memory location that isn't initialized.

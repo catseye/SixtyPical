@@ -437,3 +437,25 @@ Read through a pointer.
     |     copy [ptr] + y, foo
     | }
     = 00c0a000a91085fea9c085ffb1fe8d12c060
+
+Add a word memory location, and a literal word, to a pointer, and then read through it.
+Note that this is *not* range-checked.  (Yet.)
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | byte foo
+    | word delta
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs y, foo, delta
+    |   trashes a, z, n, ptr
+    | {
+    |     copy 619, delta
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     add ptr, delta
+    |     add ptr, word 1
+    |     copy [ptr] + y, foo
+    | }
+    = 00c0a9028d38c0a96b8d39c0a000a93485fea9c085ffa5fe6d38c085fea5ff6d39c085ffa5fe690185fea5ff690085ffb1fe8d36c060

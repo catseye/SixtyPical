@@ -147,7 +147,7 @@ class Compiler(object):
                     self.emitter.emit(ADC(Immediate(Byte(src.value))))
                 else:
                     self.emitter.emit(ADC(Absolute(self.labels[src.name])))
-            elif isinstance(dest, LocationRef) and dest.type == TYPE_WORD and src.type == TYPE_WORD:
+            elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and dest.type == TYPE_WORD:
                 if isinstance(src, ConstantRef):
                     dest_label = self.labels[dest.name]
                     self.emitter.emit(LDA(Absolute(dest_label)))
@@ -165,6 +165,26 @@ class Compiler(object):
                     self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
                     self.emitter.emit(ADC(Absolute(Offset(src_label, 1))))
                     self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                else:
+                    raise UnsupportedOpcodeError(instr)
+            elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and isinstance(dest.type, PointerType):
+                if isinstance(src, ConstantRef):
+                    dest_label = self.labels[dest.name]  # this. is. zero-page.
+                    self.emitter.emit(LDA(ZeroPage(dest_label)))
+                    self.emitter.emit(ADC(Immediate(Byte(src.low_byte()))))
+                    self.emitter.emit(STA(ZeroPage(dest_label)))
+                    self.emitter.emit(LDA(ZeroPage(Offset(dest_label, 1))))
+                    self.emitter.emit(ADC(Immediate(Byte(src.high_byte()))))
+                    self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
+                elif isinstance(src, LocationRef):
+                    src_label = self.labels[src.name]
+                    dest_label = self.labels[dest.name]  # this. is. zero-page.
+                    self.emitter.emit(LDA(ZeroPage(dest_label)))
+                    self.emitter.emit(ADC(Absolute(src_label)))
+                    self.emitter.emit(STA(ZeroPage(dest_label)))
+                    self.emitter.emit(LDA(ZeroPage(Offset(dest_label, 1))))
+                    self.emitter.emit(ADC(Absolute(Offset(src_label, 1))))
+                    self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
                 else:
                     raise UnsupportedOpcodeError(instr)
             else:

@@ -42,8 +42,6 @@ TODO
 
 ### Operations on 16 bit values
 
-Add word (constant or memory location) to pointer.  (Not necessarily range-checked yet though.)
-
 Compare word (constant or memory location) with memory location or pointer.  (Maybe?)
 
 And then write a little demo "game" where you can move a block around the screen with
