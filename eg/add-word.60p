@@ -2,7 +2,7 @@ word score
 routine main
   inputs score
   outputs score
-  trashes c, z, v, n
+  trashes a, c, z, v, n
 {
     st off, c
     add score, 1999

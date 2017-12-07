@@ -191,6 +191,12 @@ class ConstantRef(Ref):
     def is_constant(self):
         return True
 
+    def high_byte(self):
+        return (self.value >> 8) & 255
+
+    def low_byte(self):
+        return self.value & 255
+
 
 REG_A = LocationRef(TYPE_BYTE, 'a')
 REG_X = LocationRef(TYPE_BYTE, 'x')

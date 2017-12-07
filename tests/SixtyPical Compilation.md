@@ -342,6 +342,21 @@ goto.
     | }
     = 00c0a0c84c06c060a2c860
 
+### word operations
+
+Adding a constant word to a memory location.
+
+    | word score
+    | routine main
+    |   inputs a, score
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add score, 1999
+    | }
+    = 00c018ad12c069cf8d12c0ad13c069078d13c060
+
 ### Buffers and Pointers
 
 Load address into pointer.

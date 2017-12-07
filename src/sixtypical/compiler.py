@@ -147,6 +147,14 @@ class Compiler(object):
                     self.emitter.emit(ADC(Immediate(Byte(src.value))))
                 else:
                     self.emitter.emit(ADC(Absolute(self.labels[src.name])))
+            elif isinstance(src, ConstantRef) and isinstance(dest, LocationRef) and dest.type == TYPE_WORD:
+                dest_label = self.labels[dest.name]
+                self.emitter.emit(LDA(Absolute(dest_label)))
+                self.emitter.emit(ADC(Immediate(Byte(src.low_byte()))))
+                self.emitter.emit(STA(Absolute(dest_label)))
+                self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
+                self.emitter.emit(ADC(Immediate(Byte(src.high_byte()))))
+                self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'sub':
@@ -318,11 +326,9 @@ class Compiler(object):
             elif src.type == TYPE_WORD and dest.type == TYPE_WORD:
                 if isinstance(src, ConstantRef):
                     dest_label = self.labels[dest.name]
-                    hi = (src.value >> 8) & 255
-                    lo = src.value & 255
-                    self.emitter.emit(LDA(Immediate(Byte(hi))))
+                    self.emitter.emit(LDA(Immediate(Byte(src.high_byte()))))
                     self.emitter.emit(STA(Absolute(dest_label)))
-                    self.emitter.emit(LDA(Immediate(Byte(lo))))
+                    self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
                     self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
                 else:
                     src_label = self.labels[src.name]
