@@ -275,9 +275,9 @@ Copy literal word to word.
     |   outputs bar
     |   trashes a, n, z
     | {
-    |   copy 65535, bar
+    |   copy 2000, bar
     | }
-    = 00c0a9ff8d0bc0a9ff8d0cc060
+    = 00c0a9d08d0bc0a9078d0cc060
 
 Copy vector to vector.
 
@@ -458,4 +458,4 @@ Note that this is *not* range-checked.  (Yet.)
     |     add ptr, word 1
     |     copy [ptr] + y, foo
     | }
-    = 00c0a9028d38c0a96b8d39c0a000a93485fea9c085ffa5fe6d38c085fea5ff6d39c085ffa5fe690185fea5ff690085ffb1fe8d36c060
+    = 00c0a96b8d38c0a9028d39c0a000a93485fea9c085ffa5fe6d38c085fea5ff6d39c085ffa5fe690185fea5ff690085ffb1fe8d36c060

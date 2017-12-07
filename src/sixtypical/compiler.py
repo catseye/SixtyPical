@@ -358,9 +358,9 @@ class Compiler(object):
             elif src.type == TYPE_WORD and dest.type == TYPE_WORD:
                 if isinstance(src, ConstantRef):
                     dest_label = self.labels[dest.name]
-                    self.emitter.emit(LDA(Immediate(Byte(src.high_byte()))))
-                    self.emitter.emit(STA(Absolute(dest_label)))
                     self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(Immediate(Byte(src.high_byte()))))
                     self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
                 else:
                     src_label = self.labels[src.name]

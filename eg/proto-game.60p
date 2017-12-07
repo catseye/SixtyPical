@@ -83,9 +83,10 @@ routine our_cinv
 
 routine main
   inputs cinv
-  outputs cinv, save_cinv
+  outputs cinv, save_cinv, pos
   trashes a, n, z
 {
+    copy word 0, pos
     with interrupts off {
         copy cinv, save_cinv
         copy our_cinv, cinv
