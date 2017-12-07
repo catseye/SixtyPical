@@ -302,6 +302,12 @@ and initializing them afterwards.
 
 dest and src continue to be initialized afterwards.
 
+In addition, if dest is of `word` type, then src must also be of `word`
+type, and in this case this instruction trashes the `a` register.
+
+NOTE: If dest is a pointer, the addition does not check if the result of
+the pointer arithmetic continues to be valid (within a buffer) or not.
+
 ### inc ###
 
     inc <dest-memory-location>
