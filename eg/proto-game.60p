@@ -1,0 +1,93 @@
+buffer[2048] screen @ 1024
+byte joy2 @ $dc00
+
+pointer ptr @ 254
+word pos
+word delta
+
+//
+// The constraints on these 2 vectors are kind-of sort-of big fibs.
+// They're only written this way so they can be compatible with our
+// routine.  In fact, CINV is an interrupt routine where it doesn't
+// really matter what you trash anyway, because all registers were
+/// saved by the caller (the KERNAL) and will be restored by the end
+// of the code of the saved origin cinv routine that we goto.
+//
+// I wonder if this could be arranged somehow to be less fibby, in
+// a future version of SixtyPical.
+//
+
+vector cinv
+  inputs joy2, pos
+  outputs delta, pos, screen
+  trashes a, x, y, c, z, n, v, ptr
+  @ 788
+
+vector save_cinv
+  inputs joy2, pos
+  outputs delta, pos, screen
+  trashes a, x, y, c, z, n, v, ptr
+
+routine read_stick
+  inputs joy2
+  outputs delta
+  trashes a, x, z, n
+{
+    ld x, joy2
+    ld a, x
+    and a, 1                   // up
+    if z {
+        copy $ffd8, delta      // -40
+    } else {
+        ld a, x
+        and a, 2               // down
+        if z {
+            copy word 40, delta
+        } else {
+            ld a, x
+            and a, 4               // left
+            if z {
+                copy $ffff, delta  // -1
+            } else {
+                ld a, x
+                and a, 8           // right
+                if z {
+                    copy word 1, delta
+                } else {
+                    copy word 0, delta
+                }
+            }
+        }
+    }
+}
+
+routine our_cinv
+  inputs joy2, pos
+  outputs delta, pos, screen
+  trashes a, x, y, c, z, n, v, ptr
+{
+    call read_stick
+
+    st off, c
+    add pos, delta
+
+    copy ^screen, ptr
+    st off, c
+    add ptr, pos
+
+    ld y, 0
+    copy 81, [ptr] + y
+
+    goto save_cinv
+}
+
+routine main
+  inputs cinv
+  outputs cinv, save_cinv
+  trashes a, n, z
+{
+    with interrupts off {
+        copy cinv, save_cinv
+        copy our_cinv, cinv
+    }
+}
