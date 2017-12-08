@@ -316,6 +316,23 @@ Copy routine to vector, inside an `interrupts off` block.
     | }
     = 00c078a90d8d0fc0a9c08d10c05860e860
 
+Copy word to word table and back.
+
+    | word one
+    | word table many
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 777, one
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    = 00c0a200a9009d0dc0bd0dc060....
+
 Indirect call.
 
     | vector foo outputs x trashes z, n

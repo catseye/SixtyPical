@@ -2,8 +2,8 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    ConstantRef, LocationRef, IndirectRef, AddressRef,
-    TYPE_BIT, TYPE_BYTE, TYPE_WORD, BufferType, PointerType, RoutineType, VectorType,
+    ConstantRef, LocationRef, IndexedRef, IndirectRef, AddressRef,
+    TYPE_BIT, TYPE_BYTE, TYPE_WORD, TYPE_WORD_TABLE, BufferType, PointerType, RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
 from sixtypical.emitter import Byte, Label, Offset, LowAddressByte, HighAddressByte
@@ -169,7 +169,7 @@ class Compiler(object):
                     raise UnsupportedOpcodeError(instr)
             elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and isinstance(dest.type, PointerType):
                 if isinstance(src, ConstantRef):
-                    dest_label = self.labels[dest.name]  # this. is. zero-page.
+                    dest_label = self.labels[dest.name]
                     self.emitter.emit(LDA(ZeroPage(dest_label)))
                     self.emitter.emit(ADC(Immediate(Byte(src.low_byte()))))
                     self.emitter.emit(STA(ZeroPage(dest_label)))
@@ -178,7 +178,7 @@ class Compiler(object):
                     self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
                 elif isinstance(src, LocationRef):
                     src_label = self.labels[src.name]
-                    dest_label = self.labels[dest.name]  # this. is. zero-page.
+                    dest_label = self.labels[dest.name]
                     self.emitter.emit(LDA(ZeroPage(dest_label)))
                     self.emitter.emit(ADC(Absolute(src_label)))
                     self.emitter.emit(STA(ZeroPage(dest_label)))
@@ -345,6 +345,17 @@ class Compiler(object):
                 self.emitter.emit(STA(ZeroPage(dest_label)))
                 self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
                 self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
+            elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
+                if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
+                    src_label = self.labels[src.name]
+                    dest_label = self.labels[dest.ref.name]
+                    raise NotImplementedError("""\
+What we will need to do here, is to have TWO 'labels' per name, one for the high byte table,
+and one for the low byte table.  Then select AbsoluteX() or AbsoluteY() addressing on those
+tables.  And use that in the STA() part.""")
+                else:
+                    raise NotImplementedError
+
             elif not isinstance(src, (ConstantRef, LocationRef)) or not isinstance(dest, LocationRef):
                 raise NotImplementedError((src, dest))
             elif src.type == TYPE_BYTE and dest.type == TYPE_BYTE:

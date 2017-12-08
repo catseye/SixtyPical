@@ -47,7 +47,7 @@ Compare word (constant or memory location) with memory location or pointer.  (Ma
 And then write a little demo "game" where you can move a block around the screen with
 the joystick.
 
-### `word table` and `vector table` types
+### `vector table` type
 
 ### `low` and `high` address operators
 
@@ -55,7 +55,7 @@ To turn `word` type into `byte`.
 
 ### save registers on stack
 
-This preserves them, so semantically, they can be used even though they
+This preserves them, so that, semantically, they can be used later even though they
 are trashed inside the block.
 
 ### And at some point...

@@ -6,6 +6,7 @@ History of SixtyPical
 
 *   Add word (constant or memory location) to word memory location.
 *   Add word to pointer (unchecked for now).
+*   Adding `word table` type (in progress).
 *   Implementation: `--debug` shows some extra info during analysis.
 *   Fixed bug where `copy`ing literal word into word storage used wrong endianness.
 
