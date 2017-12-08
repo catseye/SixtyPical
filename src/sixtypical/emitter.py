@@ -42,6 +42,17 @@ class Word(Emittable):
         return "%s(%r)" % (self.__class__.__name__, self.value)
 
 
+class Table(Emittable):
+    def size(self):
+        return 256
+
+    def serialize(self, addr=None):
+        return chr(0) * self.size()
+
+    def __repr__(self):
+        return "%s()" % (self.__class__.__name__)
+
+
 class Label(Emittable):
     def __init__(self, name, addr=None):
         self.name = name

@@ -239,6 +239,49 @@ Indexed access.
     | }
     = 00c0a200a9009d0dc0bd0dc060
 
+Byte tables take up 256 bytes in memory.  This is clearer if you disassemble the output,
+but what we don't want to see, is something like:
+
+$800E   LDX #$00
+$8010   LDA $0816,X
+$8013   STA $0818,X
+$8016   RTS
+
+    | byte table tab1
+    | byte table tab2
+    | 
+    | routine main
+    |   inputs tab1
+    |   outputs tab2
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, tab1 + x
+    |     st a, tab2 + x
+    | }
+    = 00c0a200bd09c09d0bc060
+
+Byte storage locations take up only 1 byte in memory.  This is clearer if you disassemble the output,
+but what we don't want to see, is something like:
+
+$800E   LDX #$00
+$8010   LDA $0816
+$8013   STA $0818
+$8016   RTS
+
+    | byte one
+    | byte two
+    | 
+    | routine main
+    |   outputs one, two
+    |   trashes a, x, n, z
+    | {
+    |     ld a, 0
+    |     st a, one
+    |     st a, two
+    | }
+    = 00c0a200bd09c09d0bc060
+
 Copy byte to byte.
 
     | byte bar
