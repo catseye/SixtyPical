@@ -355,6 +355,12 @@ class Analyzer(object):
                 else:
                     raise TypeMismatchError((src, dest))
 
+            elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
+                if src.ref.type == TYPE_WORD_TABLE and dest.type == TYPE_WORD:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
                 if src.type == dest.type:
                     pass
@@ -382,7 +388,15 @@ class Analyzer(object):
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, REG_Y)
                 # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
-                context.set_touched(src.ref)
+                context.set_touched(src.ref)  # TODO and REG_Y?  if not, why not?
+                context.set_written(dest)
+            elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
+                context.assert_meaningful(src, dest.ref, dest.index)
+                context.set_touched(src)  # TODO and dest.index?
+                context.set_written(dest.ref)
+            elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
+                context.assert_meaningful(src.ref, src.index, dest)
+                context.set_touched(dest)  # TODO and src.index?
                 context.set_written(dest)
             else:
                 context.assert_meaningful(src)
