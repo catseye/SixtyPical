@@ -106,7 +106,7 @@ class IndirectRef(Ref):
         self.ref = ref
 
     def __eq__(self, other):
-        return self.ref == other.ref
+        return isinstance(other, self.__class__) and self.ref == other.ref
 
     def __hash__(self):
         return hash(self.__class__.name) ^ hash(self.ref)
@@ -117,6 +117,28 @@ class IndirectRef(Ref):
     @property
     def name(self):
         return '[{}]+y'.format(self.ref.name)
+
+    def is_constant(self):
+        return False
+
+
+class IndexedRef(Ref):
+    def __init__(self, ref, index):
+        self.ref = ref
+        self.index = index
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.ref == other.ref and self.index == other.index
+
+    def __hash__(self):
+        return hash(self.__class__.name) ^ hash(self.ref) ^ hash(self.index)
+
+    def __repr__(self):
+        return '%s(%r, %r)' % (self.__class__.__name__, self.ref, self.index)
+
+    @property
+    def name(self):
+        return '{}+{}'.format(self.ref.name, self.index.name)
 
     def is_constant(self):
         return False

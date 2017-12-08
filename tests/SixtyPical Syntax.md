@@ -129,6 +129,7 @@ User-defined memory addresses of different types.
     | word wor
     | vector vec
     | byte table tab
+    | word table wtab
     | buffer[2048] buf
     | pointer ptr
     | 
@@ -250,7 +251,7 @@ Can't define two routines with the same name.
     | }
     ? SyntaxError
 
-Declaring a byte table memory location.
+Declaring byte and word table memory location.
 
     | byte table tab
     | 
@@ -259,6 +260,17 @@ Declaring a byte table memory location.
     |     ld y, 0
     |     ld a, tab + x
     |     st a, tab + y
+    | }
+    = ok
+
+    | word one
+    | word table many
+    | 
+    | routine main {
+    |     ld x, 0
+    |     copy one, many + x
+    |     copy word 0, many + x
+    |     copy many + x, one
     | }
     = ok
 

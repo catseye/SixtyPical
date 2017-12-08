@@ -4,7 +4,7 @@ from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE,
     RoutineType, VectorType, ExecutableType, BufferType, PointerType,
-    LocationRef, ConstantRef, IndirectRef, AddressRef,
+    LocationRef, ConstantRef, IndirectRef, IndexedRef, AddressRef,
 )
 from sixtypical.scanner import Scanner
 
@@ -175,7 +175,12 @@ class Parser(object):
             loc = self.locexpr()
             return AddressRef(loc)
         else:
-            return self.locexpr()
+            loc = self.locexpr()
+            index = None
+            if self.scanner.consume('+'):
+                index = self.locexpr()
+                loc = IndexedRef(loc, index)
+            return loc
 
     def block(self):
         instrs = []

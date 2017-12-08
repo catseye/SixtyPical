@@ -2,8 +2,8 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BYTE, TYPE_WORD, TYPE_BYTE_TABLE, BufferType, PointerType, VectorType, ExecutableType,
-    ConstantRef, LocationRef, IndirectRef, AddressRef,
+    TYPE_BYTE, TYPE_WORD, TYPE_BYTE_TABLE, TYPE_WORD_TABLE, BufferType, PointerType, VectorType, ExecutableType,
+    ConstantRef, LocationRef, IndirectRef, IndexedRef, AddressRef,
     REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
@@ -348,6 +348,13 @@ class Analyzer(object):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
+
+            elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
+                if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
                 if src.type == dest.type:
                     pass

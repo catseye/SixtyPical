@@ -207,6 +207,21 @@ Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
     | }
     ? ForbiddenWriteError: lives in main
 
+Can't `st` a `word` type.
+
+    | word foo
+    | 
+    | routine main
+    |   outputs foo
+    |   trashes a, n, z
+    | {
+    |     ld a, 0
+    |     st a, foo
+    | }
+    ? TypeMismatchError: a and foo in main
+
+### tables ###
+
 Storing to a table, you must use an index, and vice-versa.
 
     | byte one
@@ -313,18 +328,47 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     = ok
 
-Can't `st` a `word` type.
+Copying to and from a word table.
 
-    | word foo
+    | word one
+    | word table many
     | 
     | routine main
-    |   outputs foo
-    |   trashes a, n, z
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
     | {
-    |     ld a, 0
-    |     st a, foo
+    |     ld x, 0
+    |     copy one, many + x
+    |     copy many + x, one
     | }
-    ? TypeMismatchError: a and foo in main
+    = ok
+
+    | word one
+    | word table many
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy one, many
+    | }
+    ? TypeMismatchError
+
+    | word one
+    | word table many
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy one + x, many
+    | }
+    ? TypeMismatchError
 
 ### add ###
 
