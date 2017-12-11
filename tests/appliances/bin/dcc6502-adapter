@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+# script that allows the binary output of sixtypical --basic-prelude --compile to be
+# disassembled by https://github.com/tcarmelveilleux/dcc6502
+
+import sys
+import re
+from subprocess import check_output
+from tempfile import NamedTemporaryFile
+
+bytes = sys.stdin.read()
+
+bytes = bytes[14:]
+
+f = NamedTemporaryFile(delete=False)
+filename = f.name
+f.write(bytes)
+f.close()
+
+lines = [line for line in check_output("dcc6502 -o 2061 {}".format(filename), shell=True).split('\n') if line and not line.startswith(';')]
+lines = [re.sub(r'\s*\;.*$', '', line) for line in lines]
+lines.pop()
+sys.stdout.write('\n'.join(lines))
