@@ -9,6 +9,8 @@ History of SixtyPical
 *   Adding `word table` type (in progress).
 *   Implementation: `--debug` shows some extra info during analysis.
 *   Fixed bug where `copy`ing literal word into word storage used wrong endianness.
+*   Fixed bug where every memory location was allocated 2 bytes of storage, regardless of type.
+*   Tests: use https://github.com/tcarmelveilleux/dcc6502 to disassemble code for comparison.
 
 0.8
 ---
