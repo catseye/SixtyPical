@@ -1,5 +1,6 @@
 """Data/storage model for SixtyPical."""
 
+
 class Type(object):
     def __init__(self, name):
         self.name = name

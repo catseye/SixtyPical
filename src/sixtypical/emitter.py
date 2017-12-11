@@ -1,3 +1,8 @@
+"""Binary machine code emitter.  Used in SixtyPical to emit 6502 machine code,
+but not specific to SixtyPical, or 6502.  Not even necessarily machine code -
+though some parts are written around the assumptions of 8-bit architectures."""
+
+
 class Emittable(object):
     def size(self):
         raise NotImplementedError
@@ -54,12 +59,16 @@ class Table(Emittable):
 
 
 class Label(Emittable):
-    def __init__(self, name, addr=None):
+    def __init__(self, name, addr=None, length=None):
         self.name = name
         self.addr = addr
+        self.length = length
 
     def set_addr(self, addr):
         self.addr = addr
+
+    def set_length(self, length):
+        self.length = length
 
     def size(self):
         return 2
@@ -77,8 +86,9 @@ class Label(Emittable):
         return Byte(self.addr + offset).serialize()
 
     def __repr__(self):
-        addrs = ', addr=%r' % self.addr if self.addr is not None else ''
-        return "%s(%r%s)" % (self.__class__.__name__, self.name, addrs)
+        addr_s = ', addr=%r' % self.addr if self.addr is not None else ''
+        length_s = ', length=%r' % self.length if self.length is not None else ''
+        return "%s(%r%s%s)" % (self.__class__.__name__, self.name, addr_s, length_s)
 
 
 class Offset(Emittable):
@@ -165,4 +175,4 @@ class Emitter(object):
         """Set the given label to be at the current address and
         advance the address for the next label, but don't emit anything."""
         self.resolve_label(label)
-        self.addr += label.size()
+        self.addr += label.length
