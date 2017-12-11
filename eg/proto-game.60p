@@ -1,3 +1,11 @@
+// ****************************
+// * Demo Game for SixtyPical *
+// ****************************
+
+// ----------------------------------------------------------------
+// Variables
+// ----------------------------------------------------------------
+
 buffer[2048] screen @ 1024
 byte joy2 @ $dc00
 
@@ -27,6 +35,17 @@ vector save_cinv
   inputs joy2, pos
   outputs delta, pos, screen
   trashes a, x, y, c, z, n, v, ptr
+
+// (This one is less fibby.)
+
+vector dispatch_game_state
+  inputs joy2, pos
+  outputs delta, pos, screen
+  trashes a, x, y, c, z, n, v, ptr
+
+// ----------------------------------------------------------------
+// Routines
+// ----------------------------------------------------------------
 
 routine read_stick
   inputs joy2
@@ -61,7 +80,11 @@ routine read_stick
     }
 }
 
-routine our_cinv
+// ----------------------------------------------------------------
+// Game States
+// ----------------------------------------------------------------
+
+routine game_state_play
   inputs joy2, pos
   outputs delta, pos, screen
   trashes a, x, y, c, z, n, v, ptr
@@ -81,14 +104,30 @@ routine our_cinv
     goto save_cinv
 }
 
+// *************************
+// * Main Game Loop Driver *
+// *************************
+
+routine our_cinv
+  inputs joy2, pos
+  outputs delta, pos, screen
+  trashes a, x, y, c, z, n, v, ptr
+{
+    goto dispatch_game_state
+}
+
 routine main
   inputs cinv
-  outputs cinv, save_cinv, pos
+  outputs cinv, save_cinv, pos, dispatch_game_state
   trashes a, n, z
 {
+    // jsr clear_screen
+    copy game_state_play, dispatch_game_state
+
     copy word 0, pos
     with interrupts off {
         copy cinv, save_cinv
         copy our_cinv, cinv
     }
+    // repeat forever {}
 }
