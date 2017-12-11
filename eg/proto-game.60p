@@ -32,7 +32,7 @@ word delta
 
 vector dispatch_game_state
   inputs joy2, pos
-  outputs delta, pos, screen, vic_border, vic_bg, screen1
+  outputs delta, pos, screen, screen1
   trashes a, x, y, c, z, n, v, ptr
 
 //
@@ -49,13 +49,13 @@ vector dispatch_game_state
 
 vector cinv
   inputs joy2, pos
-  outputs delta, pos, screen, vic_border, vic_bg, screen1
+  outputs delta, pos, screen, screen1
   trashes a, x, y, c, z, n, v, ptr
   @ 788
 
 vector save_cinv
   inputs joy2, pos
-  outputs delta, pos, screen, vic_border, vic_bg, screen1
+  outputs delta, pos, screen, screen1
   trashes a, x, y, c, z, n, v, ptr
 
 
@@ -125,7 +125,7 @@ routine clear_screen
 
 routine game_state_play
   inputs joy2, pos
-  outputs delta, pos, screen, vic_border, vic_bg, screen1
+  outputs delta, pos, screen, screen1
   trashes a, x, y, c, z, n, v, ptr
 {
     call read_stick
@@ -145,15 +145,10 @@ routine game_state_play
 
 routine game_state_title_screen
   inputs joy2, pos
-  outputs delta, pos, screen, vic_border, vic_bg, screen1
+  outputs delta, pos, screen, screen1
   trashes a, x, y, c, z, n, v, ptr
 {
-    ld a, 5
-    st a, vic_border
-    ld a, 0
-    st a, vic_bg
     ld y, 0
-
     repeat {
         ld a, 82
         st a, screen1 + y
@@ -182,7 +177,7 @@ routine game_state_title_screen
 
 routine our_cinv
   inputs joy2, pos
-  outputs delta, pos, screen, vic_border, vic_bg, screen1
+  outputs delta, pos, screen, screen1
   trashes a, x, y, c, z, n, v, ptr
 {
     goto dispatch_game_state
@@ -194,8 +189,16 @@ routine main
           screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, y, n, c, z, vic_border, vic_bg
 {
+    ld a, 5
+    st a, vic_border
+    ld a, 0
+    st a, vic_bg
+    ld y, 0
+
     call clear_screen
-    copy game_state_title_screen, dispatch_game_state
+
+    copy game_state_play, dispatch_game_state
+    // copy game_state_title_screen, dispatch_game_state
 
     copy word 0, pos
     with interrupts off {

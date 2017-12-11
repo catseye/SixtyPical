@@ -40,13 +40,16 @@ Documentation
 TODO
 ----
 
+### Demo game
+
 Finish the little demo "game" where you can move a block around the screen with
 the joystick (i.e. bring it up to par with the original demo game that was written
 for SixtyPical)
 
-### Operations on 16 bit values
+### Self-reference in signatures
 
-Compare word (constant or memory location) with memory location or pointer.  (Maybe?)
+A vector might store [the address of] a routine which changes the vector.  Thus its
+signature might look like `vector foo outputs foo`.  Thus we need to support that.
 
 ### `vector table` type
 
@@ -69,6 +72,7 @@ This should be tracked in the abstract interpretation.
 
 ### And at some point...
 
+*   Compare word (constant or memory location) with memory location or pointer.  (Maybe?)
 *   `copy x, [ptr] + y`
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
