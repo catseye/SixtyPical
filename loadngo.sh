@@ -2,7 +2,7 @@
 
 SRC=$1
 OUT=/tmp/a-out.prg
-bin/sixtypical --analyze --compile --basic-prelude $SRC > $OUT || exit 1
+bin/sixtypical --traceback --analyze --compile --basic-prelude $SRC > $OUT || exit 1
 if [ -e vicerc ]; then
     x64 -config vicerc $OUT
 else

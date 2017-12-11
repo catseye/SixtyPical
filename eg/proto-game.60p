@@ -6,6 +6,9 @@
 // Global Variables and System Locations
 // ----------------------------------------------------------------
 
+byte vic_border @ 53280
+byte vic_bg @ 53281
+
 byte table screen1 @ 1024
 byte table screen2 @ 1274
 byte table screen3 @ 1524
@@ -24,6 +27,15 @@ word pos
 word delta
 
 //
+// Points to the routine that implements the current game state.
+//
+
+vector dispatch_game_state
+  inputs joy2, pos
+  outputs delta, pos, screen, vic_border, vic_bg, screen1
+  trashes a, x, y, c, z, n, v, ptr
+
+//
 // The constraints on these 2 vectors are kind-of sort-of big fibs.
 // They're only written this way so they can be compatible with our
 // routine.  In fact, CINV is an interrupt routine where it doesn't
@@ -37,21 +49,15 @@ word delta
 
 vector cinv
   inputs joy2, pos
-  outputs delta, pos, screen
+  outputs delta, pos, screen, vic_border, vic_bg, screen1
   trashes a, x, y, c, z, n, v, ptr
   @ 788
 
 vector save_cinv
   inputs joy2, pos
-  outputs delta, pos, screen
+  outputs delta, pos, screen, vic_border, vic_bg, screen1
   trashes a, x, y, c, z, n, v, ptr
 
-// (This one is less fibby.)
-
-vector dispatch_game_state
-  inputs joy2, pos
-  outputs delta, pos, screen
-  trashes a, x, y, c, z, n, v, ptr
 
 // ----------------------------------------------------------------
 // Utility Routines
@@ -119,7 +125,7 @@ routine clear_screen
 
 routine game_state_play
   inputs joy2, pos
-  outputs delta, pos, screen
+  outputs delta, pos, screen, vic_border, vic_bg, screen1
   trashes a, x, y, c, z, n, v, ptr
 {
     call read_stick
@@ -137,13 +143,46 @@ routine game_state_play
     goto save_cinv
 }
 
+routine game_state_title_screen
+  inputs joy2, pos
+  outputs delta, pos, screen, vic_border, vic_bg, screen1
+  trashes a, x, y, c, z, n, v, ptr
+{
+    ld a, 5
+    st a, vic_border
+    ld a, 0
+    st a, vic_bg
+    ld y, 0
+
+    repeat {
+        ld a, 82
+        st a, screen1 + y
+        inc y
+        cmp y, 18
+    } until not z
+
+    st off, c
+    // jsr check_button
+
+    if c {
+        // call clear_screen
+        // jsr init_game
+        // FIXME various reasons we can't do this, mainly that self-reference
+        // is disallowed: we would need to put "outputs dispatch_game_state" in
+        // the signature of dispatch_game_state!
+        // copy game_state_play, dispatch_game_state
+    }
+
+    goto save_cinv
+}
+
 // *************************
 // * Main Game Loop Driver *
 // *************************
 
 routine our_cinv
   inputs joy2, pos
-  outputs delta, pos, screen
+  outputs delta, pos, screen, vic_border, vic_bg, screen1
   trashes a, x, y, c, z, n, v, ptr
 {
     goto dispatch_game_state
@@ -153,10 +192,10 @@ routine main
   inputs cinv
   outputs cinv, save_cinv, pos, dispatch_game_state,
           screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, y, n, c, z
+  trashes a, y, n, c, z, vic_border, vic_bg
 {
     call clear_screen
-    copy game_state_play, dispatch_game_state
+    copy game_state_title_screen, dispatch_game_state
 
     copy word 0, pos
     with interrupts off {
