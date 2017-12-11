@@ -363,10 +363,17 @@ class Compiler(object):
                 if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
                     src_label = self.labels[src.name]
                     dest_label = self.labels[dest.ref.name]
-                    raise NotImplementedError("""\
-What we will need to do here, is to have TWO 'labels' per name, one for the high byte table,
-and one for the low byte table.  Then select AbsoluteX() or AbsoluteY() addressing on those
-tables.  And use that in the STA() part.""")
+                    addressing_mode = None
+                    if dest.index == REG_X:
+                        addressing_mode = AbsoluteX
+                    elif dest.index == REG_Y:
+                        addressing_mode = AbsoluteY
+                    else:
+                        raise NotImplementedError(dest)
+                    self.emitter.emit(LDA(Absolute(src_label)))
+                    self.emitter.emit(STA(AbsoluteX(dest_label)))
+                    self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
+                    self.emitter.emit(STA(AbsoluteX(Offset(dest_label, 256))))
                 else:
                     raise NotImplementedError
 

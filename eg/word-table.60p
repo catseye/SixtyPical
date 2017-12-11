@@ -9,5 +9,5 @@ routine main
     ld x, 0
     copy 777, one
     copy one, many + x
-    copy many + x, one
+    //copy many + x, one
 }

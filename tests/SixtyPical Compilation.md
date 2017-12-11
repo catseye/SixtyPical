@@ -453,7 +453,7 @@ Copy routine to vector, inside an `interrupts off` block.
     = $081A   INX
     = $081B   RTS
 
-Copy word to word table and back.
+Copy word to word table.
 
     | word one
     | word table many
@@ -466,15 +466,17 @@ Copy word to word table and back.
     |     ld x, 0
     |     copy 777, one
     |     copy one, many + x
-    |     copy many + x, one
     | }
     = $080D   LDX #$00
-    = $08..   LDA #$D0
-    = $080F   STA $0818
-    = $0812   LDA #$07
-    = $0814   STA $0819
-    = ...
-    = $08..   RTS
+    = $080F   LDA #$09
+    = $0811   STA $0826
+    = $0814   LDA #$03
+    = $0816   STA $0827
+    = $0819   LDA $0826
+    = $081C   STA $0828,X
+    = $081F   LDA $0827
+    = $0822   STA $0928,X
+    = $0825   RTS
 
 Indirect call.
 
