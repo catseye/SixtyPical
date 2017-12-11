@@ -163,5 +163,8 @@ routine main
         copy cinv, save_cinv
         copy our_cinv, cinv
     }
-    // repeat forever {}
+    // FIXME: find out why `repeat { } forever` does not analyze OK
+    repeat {
+        ld a, 0
+    } until not z
 }
