@@ -3,8 +3,18 @@
 // ****************************
 
 // ----------------------------------------------------------------
-// Variables
+// Global Variables and System Locations
 // ----------------------------------------------------------------
+
+byte table screen1 @ 1024
+byte table screen2 @ 1274
+byte table screen3 @ 1524
+byte table screen4 @ 1774
+
+byte table colormap1 @ 55296
+byte table colormap2 @ 55546
+byte table colormap3 @ 55796
+byte table colormap4 @ 56046
 
 buffer[2048] screen @ 1024
 byte joy2 @ $dc00
@@ -44,7 +54,7 @@ vector dispatch_game_state
   trashes a, x, y, c, z, n, v, ptr
 
 // ----------------------------------------------------------------
-// Routines
+// Utility Routines
 // ----------------------------------------------------------------
 
 routine read_stick
@@ -78,6 +88,29 @@ routine read_stick
             }
         }
     }
+}
+
+routine clear_screen
+  outputs screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  trashes a, y, c, n, z
+{
+    ld y, 0
+    repeat {
+        ld a, 1
+        st a, colormap1 + y
+        st a, colormap2 + y
+        st a, colormap3 + y
+        st a, colormap4 + y
+
+        ld a, 32
+        st a, screen1 + y
+        st a, screen2 + y
+        st a, screen3 + y
+        st a, screen4 + y
+
+        inc y
+        cmp y, 250
+    } until z
 }
 
 // ----------------------------------------------------------------
@@ -118,10 +151,11 @@ routine our_cinv
 
 routine main
   inputs cinv
-  outputs cinv, save_cinv, pos, dispatch_game_state
-  trashes a, n, z
+  outputs cinv, save_cinv, pos, dispatch_game_state,
+          screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  trashes a, y, n, c, z
 {
-    // jsr clear_screen
+    call clear_screen
     copy game_state_play, dispatch_game_state
 
     copy word 0, pos
