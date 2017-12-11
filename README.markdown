@@ -40,12 +40,13 @@ Documentation
 TODO
 ----
 
+Finish the little demo "game" where you can move a block around the screen with
+the joystick (i.e. bring it up to par with the original demo game that was written
+for SixtyPical)
+
 ### Operations on 16 bit values
 
 Compare word (constant or memory location) with memory location or pointer.  (Maybe?)
-
-And then write a little demo "game" where you can move a block around the screen with
-the joystick.
 
 ### `vector table` type
 
@@ -53,23 +54,32 @@ the joystick.
 
 To turn `word` type into `byte`.
 
-### save registers on stack
+### Save registers on stack
 
 This preserves them, so that, semantically, they can be used later even though they
 are trashed inside the block.
+
+### Range checking in the abstract interpretation
+
+If you copy the address of a buffer (say it is size N) to a pointer, it is valid.
+If you add a value from 0 to N-1 to the pointer, it is still valid.
+But if you add a value ≥ N to it, it becomes invalid.
+This should be tracked in the abstract interpretation.
+(If only because abstract interpretation is the major point of this project!)
 
 ### And at some point...
 
 *   `copy x, [ptr] + y`
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
+*   `byte table` and `word table` of sizes other than 256
 *   initialized `byte table` memory locations
 *   always analyze before executing or compiling, unless told not to
 *   `trash` instruction.
-*   `interrupt` routines.
-*   6502-mnemonic aliases (`sec`, `clc`)
-*   other handy aliases (`eq` for `z`, etc.)
-*   have `copy` instruction able to copy a constant to a user-def mem loc, etc.
+*   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
+*   pre-initialized `word` variables
+*   error messages that include the line number of the source code
+*   have `copy` instruction able to copy a byte to a user-def mem loc, etc.
 *   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
 *   check and disallow recursion.
 *   automatic tail-call optimization (could be tricky, w/constraints?)
