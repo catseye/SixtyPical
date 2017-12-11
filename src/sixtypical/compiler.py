@@ -371,9 +371,26 @@ class Compiler(object):
                     else:
                         raise NotImplementedError(dest)
                     self.emitter.emit(LDA(Absolute(src_label)))
-                    self.emitter.emit(STA(AbsoluteX(dest_label)))
+                    self.emitter.emit(STA(addressing_mode(dest_label)))
                     self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
-                    self.emitter.emit(STA(AbsoluteX(Offset(dest_label, 256))))
+                    self.emitter.emit(STA(addressing_mode(Offset(dest_label, 256))))
+                else:
+                    raise NotImplementedError
+            elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
+                if src.ref.type == TYPE_WORD_TABLE and dest.type == TYPE_WORD:
+                    src_label = self.labels[src.ref.name]
+                    dest_label = self.labels[dest.name]
+                    addressing_mode = None
+                    if src.index == REG_X:
+                        addressing_mode = AbsoluteX
+                    elif src.index == REG_Y:
+                        addressing_mode = AbsoluteY
+                    else:
+                        raise NotImplementedError(src)
+                    self.emitter.emit(LDA(addressing_mode(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(addressing_mode(Offset(src_label, 256))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
                 else:
                     raise NotImplementedError
 
