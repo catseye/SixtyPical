@@ -305,6 +305,25 @@ Only vectors can be decorated with constraints like that.
     | }
     ? SyntaxError
 
+A vector can name itself in its inputs, outputs, and trashes.
+
+    | vector cinv
+    |   inputs cinv, a
+    |   outputs cinv, x
+    |   trashes a, x, z, n
+    |   @ 788
+    | 
+    | routine foo {
+    |     ld a, 0
+    | }
+    | routine main {
+    |     with interrupts off {
+    |         copy foo, cinv
+    |     }
+    |     call cinv
+    | }
+    = ok
+
 goto.
 
     | routine foo {
