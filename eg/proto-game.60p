@@ -123,6 +123,10 @@ routine clear_screen
 // Game States
 // ----------------------------------------------------------------
 
+//
+// Because these all `goto save_cinv` at the end, they must have the same signature as that routine.
+//
+
 routine game_state_play
   inputs joy2, pos
   outputs delta, pos, dispatch_game_state, screen, screen1

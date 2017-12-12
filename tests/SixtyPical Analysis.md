@@ -1513,6 +1513,30 @@ But not if the vector is declared inappropriately.
     | }
     ? IncompatibleConstraintsError
 
+"Appropriately" means, if the routine affects no more than what is named
+in the input/output sets of the vector.
+
+    | vector vec
+    |   inputs a, x
+    |   outputs x
+    |   trashes a, z, n
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
 Routines are read-only.
 
     | vector vec
