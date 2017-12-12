@@ -46,10 +46,15 @@ Finish the little demo "game" where you can move a block around the screen with
 the joystick (i.e. bring it up to par with the original demo game that was written
 for SixtyPical)
 
-### Self-reference in signatures
+### `call` routines that are defined further down in the source code
 
-A vector might store [the address of] a routine which changes the vector.  Thus its
-signature might look like `vector foo outputs foo`.  Thus we need to support that.
+We might have a graph of states that refer to each other and that want to `goto`
+each other.  Thus we need this.  We have it for vectors, but we need it for `call`.
+
+### Allow branches to diverge in what they touch
+
+For example, if the routine inputs and outputs `foo`, and one branch of an `if`
+sets `foo` and the other does not touch it, that should be OK.
 
 ### `vector table` type
 
