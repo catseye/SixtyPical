@@ -46,11 +46,6 @@ Finish the little demo "game" where you can move a block around the screen with
 the joystick (i.e. bring it up to par with the original demo game that was written
 for SixtyPical)
 
-### Allow branches to diverge in what they touch
-
-For example, if the routine inputs and outputs `foo`, and one branch of an `if`
-sets `foo` and the other does not touch it, that should be OK.
-
 ### `vector table` type
 
 ### `low` and `high` address operators
