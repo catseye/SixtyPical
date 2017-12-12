@@ -89,11 +89,12 @@ class LocationRef(Ref):
     def __eq__(self, other):
         # Ordinarily there will only be one ref with a given name,
         # but because we store the type in here and we want to treat
-        # these objects as immutable, we compare the types, too.
-        # Not sure if very wise.
-        return isinstance(other, self.__class__) and (
-            other.name == self.name and other.type == self.type
-        )
+        # these objects as immutable, we compare the types, too,
+        # just to be sure.
+        equal = isinstance(other, self.__class__) and other.name == self.name
+        if equal:
+            assert other.type == self.type
+        return equal
 
     def __hash__(self):
         return hash(self.name + str(self.type))
