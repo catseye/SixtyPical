@@ -202,9 +202,6 @@ routine game_state_title_screen
         // call clear_screen
         // call init_game
         copy game_state_play, dispatch_game_state
-    } else {
-        // This is sort of a hack.  FIXME: let `if` branches diverge this much.
-        copy forward game_state_title_screen, dispatch_game_state
     }
 
     goto save_cinv

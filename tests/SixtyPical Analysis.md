@@ -1065,6 +1065,26 @@ If a location is initialized in one block, is must be initialized in the other a
     | }
     ? InconsistentInitializationError: x
 
+However, this only pertains to initialization.  If a value is already
+initialized, either because it was set previous to the `if`, or is an
+input to the routine, and it is initialized in one branch, it need not
+be initialized in the other.
+
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     ld a, 0
+    |     cmp a, 42
+    |     if z {
+    |         ld x, 7
+    |     } else {
+    |         ld a, 23
+    |     }
+    | }
+    = ok
+
 An `if` with a single block is analyzed as if it had an empty `else` block.
 
     | routine foo
