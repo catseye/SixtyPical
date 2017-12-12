@@ -7,6 +7,7 @@ History of SixtyPical
 *   Can `call` and `goto` routines that are defined further down in the source code.
 *   The `forward` modifier can also be used to indicate that the symbol being copied
     in a `copy` to a vector is a routine that is defined further down in the source.
+*   Initialized `word` memory locations.
 *   Fixed bug which was preventing `if` branches to diverge in what they initialized,
     if it was already initialized when going into the `if`.
 *   Fixed a bug which was making it crash when trying to analyze `repeat forever` loops.

@@ -117,6 +117,26 @@ Memory location with initial value.
     = $0810   RTS
     = $0811   .byte $03
 
+Word memory locations with explicit address, initial value.
+
+    | word w1 @ 60001
+    | word w2 : 3003
+    | 
+    | routine main
+    |   inputs w1
+    |   outputs w2
+    |   trashes a, z, n
+    | {
+    |   copy w1, w2
+    | }
+    = $080D   LDA $EA61
+    = $0810   STA $081A
+    = $0813   LDA $EA62
+    = $0816   STA $081B
+    = $0819   RTS
+    = $081A   .byte $BB
+    = $081B   .byte $0B
+
 Some instructions.
 
     | byte foo

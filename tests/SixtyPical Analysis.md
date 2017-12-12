@@ -89,6 +89,24 @@ If a routine modifies a location, it needs to either output it or trash it.
     | }
     = ok
 
+If a routine reads or writes a user-define memory location, it needs to declare that too.
+
+    | byte b1 @ 60000
+    | byte b2 : 3
+    | word w1 @ 60001
+    | word w2 : 2000
+    | 
+    | routine main
+    |   inputs b1, w1
+    |   outputs b2, w2
+    |   trashes a, z, n
+    | {
+    |   ld a, b1
+    |   st a, b2
+    |   copy w1, w2
+    | }
+    = ok
+
 ### ld ###
 
 Can't `ld` from a memory location that isn't initialized.

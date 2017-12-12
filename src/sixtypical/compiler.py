@@ -6,7 +6,7 @@ from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE, BufferType, PointerType, RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
-from sixtypical.emitter import Byte, Label, Offset, LowAddressByte, HighAddressByte
+from sixtypical.emitter import Byte, Word, Label, Offset, LowAddressByte, HighAddressByte
 from sixtypical.gen6502 import (
     Immediate, Absolute, AbsoluteX, AbsoluteY, ZeroPage, Indirect, IndirectY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
@@ -72,7 +72,14 @@ class Compiler(object):
         for defn in program.defns:
             if defn.initial is not None:
                 label = self.labels[defn.name]
-                initial_data = Byte(defn.initial)  # TODO: support other types than Byte
+                initial_data = None
+                type_ = defn.location.type
+                if type_ == TYPE_BYTE:
+                    initial_data = Byte(defn.initial)
+                elif type_ == TYPE_WORD:
+                    initial_data = Word(defn.initial)
+                else:
+                    raise NotImplementedError(type_)
                 label.set_length(initial_data.size())
                 self.emitter.resolve_label(label)
                 self.emitter.emit(initial_data)

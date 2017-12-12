@@ -76,7 +76,6 @@ This should be tracked in the abstract interpretation.
 *   always analyze before executing or compiling, unless told not to
 *   `trash` instruction.
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
-*   pre-initialized `word` variables
 *   error messages that include the line number of the source code
 *   have `copy` instruction able to copy a byte to a user-def mem loc, etc.
 *   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
