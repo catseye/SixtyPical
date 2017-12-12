@@ -297,6 +297,16 @@ Compiling `repeat forever`.
     = $0810   JMP $080F
     = $0813   RTS
 
+The body of `repeat forever` can be empty.
+
+    | routine main
+    | {
+    |     repeat {
+    |     } forever
+    | }
+    = $080D   JMP $080D
+    = $0810   RTS
+
 Indexed access.
 
     | byte one

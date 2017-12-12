@@ -307,7 +307,7 @@ class Compiler(object):
         elif opcode == 'repeat':
             top_label = self.emitter.make_label()
             self.compile_block(instr.block)
-            if src is None:
+            if src is None:  # indicates 'repeat forever'
                 self.emitter.emit(JMP(Absolute(top_label)))
             else:
                 cls = {

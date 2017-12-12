@@ -9,6 +9,7 @@ History of SixtyPical
     in a `copy` to a vector is a routine that is defined further down in the source.
 *   Fixed bug which was preventing `if` branches to diverge in what they initialized,
     if it was already initialized when going into the `if`.
+*   Fixed a bug which was making it crash when trying to analyze `repeat forever` loops.
 
 0.9
 ---

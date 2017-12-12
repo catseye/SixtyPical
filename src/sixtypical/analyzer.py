@@ -324,12 +324,14 @@ class Analyzer(object):
             # it will always be executed at least once, so analyze it having
             # been executed the first time.
             self.analyze_block(instr.block, context)
-            context.assert_meaningful(src)
+            if src is not None:  # None indicates 'repeat forever'
+                context.assert_meaningful(src)
 
             # now analyze it having been executed a second time, with the context
             # of it having already been executed.
             self.analyze_block(instr.block, context)
-            context.assert_meaningful(src)
+            if src is not None:
+                context.assert_meaningful(src)
 
         elif opcode == 'copy':
             # 1. check that their types are compatible

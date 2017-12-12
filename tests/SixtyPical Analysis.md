@@ -1195,6 +1195,15 @@ this is an error too.
     | }
     ? UnmeaningfulReadError: z in main
 
+The body of `repeat forever` can be empty.
+
+    | routine main
+    | {
+    |     repeat {
+    |     } forever
+    | }
+    = ok
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
