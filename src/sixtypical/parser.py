@@ -64,6 +64,14 @@ class Parser(object):
                 if not isinstance(self.symbols[name].model.type, ExecutableType):
                     raise SyntaxError('Illegal call of non-executable "%s"' % name)
                 instr.location = self.symbols[name].model
+            if instr.opcode in ('assign',):
+                name = instr.src
+                if name not in self.symbols:
+                    raise SyntaxError('Undefined routine "%s"' % name)
+                if not isinstance(self.symbols[name].model.type, ExecutableType):
+                    raise SyntaxError('Illegal assign of non-executable "%s"' % name)
+                instr.src = self.symbols[name].model
+                instr.opcode = 'copy'
 
         return Program(defns=defns, routines=routines)
 
@@ -286,6 +294,15 @@ class Parser(object):
             self.scanner.expect(',')
             dest = self.indlocexpr()
             return Instr(opcode=opcode, dest=dest, src=src)
+        elif self.scanner.token == 'assign':
+            opcode = self.scanner.token
+            self.scanner.scan()
+            src = self.label()
+            self.scanner.expect(',')
+            dest = self.indlocexpr()
+            instr = Instr(opcode=opcode, dest=dest, src=src)
+            self.backpatch_instrs.append(instr)
+            return instr
         elif self.scanner.consume("with"):
             self.scanner.expect("interrupts")
             self.scanner.expect("off")

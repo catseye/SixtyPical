@@ -46,11 +46,6 @@ Finish the little demo "game" where you can move a block around the screen with
 the joystick (i.e. bring it up to par with the original demo game that was written
 for SixtyPical)
 
-### `copy` (to vectors) routines that are defined further down in the source code
-
-We might have a graph of states that refer to each other and that want to `goto`
-each other.  Thus we need this.  We have it for other things.
-
 ### Allow branches to diverge in what they touch
 
 For example, if the routine inputs and outputs `foo`, and one branch of an `if`

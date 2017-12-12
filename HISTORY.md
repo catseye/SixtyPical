@@ -5,6 +5,7 @@ History of SixtyPical
 ----
 
 *   Can `call` and `goto` routines that are defined further down in the source code.
+*   `assign`, a form of `copy` that can copy (to a vector) a routine that is defined further down.
 
 0.9
 ---

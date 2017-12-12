@@ -356,6 +356,28 @@ A vector can name itself in its inputs, outputs, and trashes.
     | }
     = ok
 
+A routine can be copied into a vector before the routine appears in the program.
+*However*, in order to do this currently, one needs to use the special opcode
+form `assign`, which is equivalent to `copy` except that the routine need not
+have already appeared in the program.
+
+    | vector cinv
+    |   inputs cinv, a
+    |   outputs cinv, x
+    |   trashes a, x, z, n
+    |   @ 788
+    | 
+    | routine main {
+    |     with interrupts off {
+    |         assign foo, cinv
+    |     }
+    |     call cinv
+    | }
+    | routine foo {
+    |     ld a, 0
+    | }
+    = ok
+
 goto.
 
     | routine foo {
