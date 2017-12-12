@@ -4,7 +4,7 @@ from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE,
     RoutineType, VectorType, ExecutableType, BufferType, PointerType,
-    LocationRef, ConstantRef, IndirectRef, AddressRef,
+    LocationRef, ConstantRef, IndirectRef, IndexedRef, AddressRef,
 )
 from sixtypical.scanner import Scanner
 
@@ -29,6 +29,8 @@ class Parser(object):
             raise SyntaxError('Undefined symbol "%s"' % name)
         return self.symbols[name].model
 
+    # --- grammar productions
+
     def program(self):
         defns = []
         routines = []
@@ -47,6 +49,19 @@ class Parser(object):
             self.symbols[name] = SymEntry(routine, routine.location)
             routines.append(routine)
         self.scanner.check_type('EOF')
+        # now backpatch the executable types.
+        for defn in defns:
+            if isinstance(defn.location.type, VectorType):
+                t = defn.location.type
+                t.inputs = set([self.lookup(w) for w in t.inputs])
+                t.outputs = set([self.lookup(w) for w in t.outputs])
+                t.trashes = set([self.lookup(w) for w in t.trashes])
+        for routine in routines:
+            if isinstance(routine.location.type, ExecutableType):
+                t = routine.location.type
+                t.inputs = set([self.lookup(w) for w in t.inputs])
+                t.outputs = set([self.lookup(w) for w in t.outputs])
+                t.trashes = set([self.lookup(w) for w in t.trashes])
         return Program(defns=defns, routines=routines)
 
     def defn(self):
@@ -108,11 +123,11 @@ class Parser(object):
         outputs = set()
         trashes = set()
         if self.scanner.consume('inputs'):
-            inputs = set(self.locexprs())
+            inputs = set(self.labels())
         if self.scanner.consume('outputs'):
-            outputs = set(self.locexprs())
+            outputs = set(self.labels())
         if self.scanner.consume('trashes'):
-            trashes = set(self.locexprs())
+            trashes = set(self.labels())
         return (inputs, outputs, trashes)
 
     def routine(self):
@@ -136,6 +151,20 @@ class Parser(object):
             name=name, block=block, addr=addr,
             location=location
         )
+
+    def labels(self):
+        accum = []
+        accum.append(self.label())
+        while self.scanner.consume(','):
+            accum.append(self.label())
+        return accum
+
+    def label(self):
+        """Like a locexpr, but does not allow literal values, and the labels do not
+        need to be defined yet.  They will be resolved at the end of parsing."""
+        loc = self.scanner.token
+        self.scanner.scan()
+        return loc
 
     def locexprs(self):
         accum = []
@@ -175,7 +204,12 @@ class Parser(object):
             loc = self.locexpr()
             return AddressRef(loc)
         else:
-            return self.locexpr()
+            loc = self.locexpr()
+            index = None
+            if self.scanner.consume('+'):
+                index = self.locexpr()
+                loc = IndexedRef(loc, index)
+            return loc
 
     def block(self):
         instrs = []

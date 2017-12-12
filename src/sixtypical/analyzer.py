@@ -2,8 +2,8 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BYTE, TYPE_BYTE_TABLE, BufferType, PointerType, VectorType, ExecutableType,
-    ConstantRef, LocationRef, IndirectRef, AddressRef,
+    TYPE_BYTE, TYPE_WORD, TYPE_BYTE_TABLE, TYPE_WORD_TABLE, BufferType, PointerType, VectorType, ExecutableType,
+    ConstantRef, LocationRef, IndirectRef, IndexedRef, AddressRef,
     REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
 
@@ -88,6 +88,20 @@ class Context(object):
                 raise InconsistentConstraintsError('%s in %s' % (ref.name, routine.name))
             self._writeable.add(ref)
 
+    def __str__(self):
+        def locstr(loc):
+            if isinstance(loc, LocationRef):
+                return "{}:{}".format(loc.name, loc.type)
+            else:
+                return str(loc)
+
+        def locsetstr(s):
+            return '{' + ', '.join([locstr(loc) for loc in list(s)]) + '}'
+
+        return "Context(\n  _touched={},\n  _meaningful={},\n  _writeable={}\n)".format(
+            locsetstr(self._touched), locsetstr(self._meaningful), locsetstr(self._writeable)
+        )
+
     def clone(self):
         c = Context(self.routines, self.routine, [], [], [])
         c._touched = set(self._touched)
@@ -157,10 +171,11 @@ class Context(object):
 
 class Analyzer(object):
 
-    def __init__(self):
+    def __init__(self, debug=False):
         self.current_routine = None
         self.has_encountered_goto = False
         self.routines = {}
+        self.debug = debug
 
     def assert_type(self, type, *locations):
         for location in locations:
@@ -168,6 +183,26 @@ class Analyzer(object):
                 raise TypeMismatchError('%s in %s' %
                     (location.name, self.current_routine.name)
                 )
+
+    def assert_affected_within(self, name, affected, limited_to):
+        # We reduce the set of LocationRefs to a set of strings (their labels).
+        # This is necessary because currently, two LocationRefs that refer to the
+        # same location are not considered euqal.  (But two LocationRefs with the
+        # same label should always be the same type.)
+
+        affected = set([loc.name for loc in affected])
+        limited_to = set([loc.name for loc in limited_to])
+
+        def loc_list(label_set):
+            return ', '.join(sorted(label_set))
+
+        overage = affected - limited_to
+        if not overage:
+            return
+        message = 'in %s: %s are {%s} but affects {%s} which exceeds by: {%s} ' % (
+            self.current_routine.name, name, loc_list(limited_to), loc_list(affected), loc_list(overage)
+        )
+        raise IncompatibleConstraintsError(message)
 
     def analyze_program(self, program):
         assert isinstance(program, Program)
@@ -184,7 +219,13 @@ class Analyzer(object):
             return
         type = routine.location.type
         context = Context(self.routines, routine, type.inputs, type.outputs, type.trashes)
+        if self.debug:
+            print "at start of routine `{}`:".format(routine.name)
+            print context
         self.analyze_block(routine.block, context)
+        if self.debug:
+            print "at end of routine `{}`:".format(routine.name)
+            print context
         if not self.has_encountered_goto:
             for ref in type.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
@@ -233,7 +274,24 @@ class Analyzer(object):
                 )
             context.assert_meaningful(src)
             context.set_written(dest)
-        elif opcode in ('add', 'sub'):
+        elif opcode == 'add':
+            context.assert_meaningful(src, dest, FLAG_C)
+            if src.type == TYPE_BYTE:
+                self.assert_type(TYPE_BYTE, src, dest)
+                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+            else:
+                self.assert_type(TYPE_WORD, src)
+                if dest.type == TYPE_WORD:
+                    context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+                    context.set_touched(REG_A)
+                    context.set_unmeaningful(REG_A)
+                elif isinstance(dest.type, PointerType):
+                    context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+                    context.set_touched(REG_A)
+                    context.set_unmeaningful(REG_A)
+                else:
+                    self.assert_type(TYPE_WORD, dest)
+        elif opcode == 'sub':
             self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest, FLAG_C)
             context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
@@ -310,19 +368,26 @@ class Analyzer(object):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
+
+            elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
+                if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+
+            elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
+                if src.ref.type == TYPE_WORD_TABLE and dest.type == TYPE_WORD:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
                 if src.type == dest.type:
                     pass
-                elif isinstance(src.type, ExecutableType) and \
-                     isinstance(dest.type, VectorType):
-                    # if dealing with routines and vectors,
-                    # check that they're not incompatible
-                    if not (src.type.inputs <= dest.type.inputs):
-                        raise IncompatibleConstraintsError(src.type.inputs - dest.type.inputs)
-                    if not (src.type.outputs <= dest.type.outputs):
-                        raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
-                    if not (src.type.trashes <= dest.type.trashes):
-                        raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
+                elif isinstance(src.type, ExecutableType) and isinstance(dest.type, VectorType):
+                    self.assert_affected_within('inputs', src.type.inputs, dest.type.inputs)
+                    self.assert_affected_within('outputs', src.type.outputs, dest.type.outputs)
+                    self.assert_affected_within('trashes', src.type.trashes, dest.type.trashes)
                 else:
                     raise TypeMismatchError((src, dest))
             else:
@@ -337,7 +402,15 @@ class Analyzer(object):
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, REG_Y)
                 # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
-                context.set_touched(src.ref)
+                context.set_touched(src.ref)  # TODO and REG_Y?  if not, why not?
+                context.set_written(dest)
+            elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
+                context.assert_meaningful(src, dest.ref, dest.index)
+                context.set_touched(src)  # TODO and dest.index?
+                context.set_written(dest.ref)
+            elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
+                context.assert_meaningful(src.ref, src.index, dest)
+                context.set_touched(dest)  # TODO and src.index?
                 context.set_written(dest)
             else:
                 context.assert_meaningful(src)
@@ -350,22 +423,21 @@ class Analyzer(object):
             self.analyze_block(instr.block, context)
         elif opcode == 'goto':
             location = instr.location
-            type = location.type
+            type_ = location.type
     
-            if not isinstance(type, ExecutableType):
+            if not isinstance(type_, ExecutableType):
                 raise TypeMismatchError(location)
     
             # assert that the dest routine's inputs are all initialized
-            for ref in type.inputs:
+            for ref in type_.inputs:
                 context.assert_meaningful(ref)
     
             # and that this routine's trashes and output constraints are a
             # superset of the called routine's
             current_type = self.current_routine.location.type
-            if not (type.outputs <= current_type.outputs):
-                raise IncompatibleConstraintsError(type.outputs - current_type.outputs)
-            if not (type.trashes <= current_type.trashes):
-                raise IncompatibleConstraintsError(type.trashes - current_type.trashes)
+            self.assert_affected_within('outputs', type_.outputs, current_type.outputs)
+            self.assert_affected_within('trashes', type_.trashes, current_type.trashes)
+
             self.has_encountered_goto = True
         else:
             raise NotImplementedError(opcode)

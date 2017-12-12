@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.8,
+This document describes the SixtyPical programming language version 0.9,
 both its execution aspect and its static analysis aspect (even though
 these are, technically speaking, separate concepts.)
 
@@ -25,7 +25,8 @@ There are six *primitive types* in SixtyPical:
 
 There are also two *type constructors*:
 
-*   X table (256 entries, each holding a value of type X, where X is `byte`)
+*   T table (256 entries, each holding a value of type T, where T is either
+            `byte` or `word`)
 *   buffer[N] (N entries; each entry is a byte; N is a power of 2, ≤ 64K)
 
 Memory locations
@@ -301,6 +302,12 @@ Affects n, z, c, and v flags, requiring that they be in the WRITES,
 and initializing them afterwards.
 
 dest and src continue to be initialized afterwards.
+
+In addition, if dest is of `word` type, then src must also be of `word`
+type, and in this case this instruction trashes the `a` register.
+
+NOTE: If dest is a pointer, the addition does not check if the result of
+the pointer arithmetic continues to be valid (within a buffer) or not.
 
 ### inc ###
 

@@ -1,0 +1,16 @@
+word one
+word table many
+
+routine main
+  inputs one, many
+  outputs one, many
+  trashes a, x, y, n, z
+{
+    ld x, 0
+    ld y, 0
+    copy 777, one
+    copy one, many + x
+    copy one, many + y
+    copy many + x, one
+    copy many + y, one
+}

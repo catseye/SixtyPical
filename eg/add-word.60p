@@ -1,0 +1,9 @@
+word score
+routine main
+  inputs score
+  outputs score
+  trashes a, c, z, v, n
+{
+    st off, c
+    add score, 1999
+}

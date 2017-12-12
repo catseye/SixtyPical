@@ -7,7 +7,7 @@ SixtyPical to 6502 machine code.
 [Falderal]:     http://catseye.tc/node/Falderal
 
     -> Functionality "Compile SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --compile %(test-body-file) | fa-bin-to-hex"
+    -> shell command "bin/sixtypical --basic-prelude --compile %(test-body-file) | tests/appliances/bin/dcc6502-adapter"
 
     -> Tests for functionality "Compile SixtyPical program"
 
@@ -16,7 +16,7 @@ Null program.
     | routine main
     | {
     | }
-    = 00c060
+    = $080D   RTS
 
 Rudimentary program.
 
@@ -28,7 +28,9 @@ Rudimentary program.
     |     st off, c
     |     add a, 4
     | }
-    = 00c018690460
+    = $080D   CLC
+    = $080E   ADC #$04
+    = $0810   RTS
 
 Call extern.
 
@@ -44,7 +46,9 @@ Call extern.
     |     ld a, 65
     |     call chrout
     | }
-    = 00c0a94120d2ff60
+    = $080D   LDA #$41
+    = $080F   JSR $FFD2
+    = $0812   RTS
 
 Call defined routine.
 
@@ -62,7 +66,12 @@ Call defined routine.
     | {
     |     call foo
     | }
-    = 00c02004c060a900a200a00060
+    = $080D   JSR $0811
+    = $0810   RTS
+    = $0811   LDA #$00
+    = $0813   LDX #$00
+    = $0815   LDY #$00
+    = $0817   RTS
 
 Access a defined memory location.
 
@@ -75,7 +84,10 @@ Access a defined memory location.
     |     st y, foo
     |     ld a, foo
     | }
-    = 00c0a0008c09c0ad09c060
+    = $080D   LDY #$00
+    = $080F   STY $0816
+    = $0812   LDA $0816
+    = $0815   RTS
 
 Memory location with explicit address.
 
@@ -87,7 +99,9 @@ Memory location with explicit address.
     |   ld a, 100
     |   st a, screen
     | }
-    = 00c0a9648d000460
+    = $080D   LDA #$64
+    = $080F   STA $0400
+    = $0812   RTS
 
 Memory location with initial value.
 
@@ -99,7 +113,9 @@ Memory location with initial value.
     | {
     |   ld a, lives
     | }
-    = 00c0ad04c06003
+    = $080D   LDA $0811
+    = $0810   RTS
+    = $0811   .byte $03
 
 Some instructions.
 
@@ -141,7 +157,39 @@ Some instructions.
     |     shl a
     |     shr a
     | }
-    = 00c0a900a200a0008d46c08e46c08c46c0381869016d46c0e901ed46c0ee46c0e8c8ce46c0ca8829ff2d46c009ff0d46c049ff4d46c0c901cd46c0e001ec46c0c001cc46c02a6a60
+    = $080D   LDA #$00
+    = $080F   LDX #$00
+    = $0811   LDY #$00
+    = $0813   STA $0853
+    = $0816   STX $0853
+    = $0819   STY $0853
+    = $081C   SEC
+    = $081D   CLC
+    = $081E   ADC #$01
+    = $0820   ADC $0853
+    = $0823   SBC #$01
+    = $0825   SBC $0853
+    = $0828   INC $0853
+    = $082B   INX
+    = $082C   INY
+    = $082D   DEC $0853
+    = $0830   DEX
+    = $0831   DEY
+    = $0832   AND #$FF
+    = $0834   AND $0853
+    = $0837   ORA #$FF
+    = $0839   ORA $0853
+    = $083C   EOR #$FF
+    = $083E   EOR $0853
+    = $0841   CMP #$01
+    = $0843   CMP $0853
+    = $0846   CPX #$01
+    = $0848   CPX $0853
+    = $084B   CPY #$01
+    = $084D   CPY $0853
+    = $0850   ROL A
+    = $0851   ROR A
+    = $0852   RTS
 
 Compiling `if`.
 
@@ -155,7 +203,12 @@ Compiling `if`.
     |         ld y, 2
     |     }
     | }
-    = 00c0a900d005a0014c0bc0a00260
+    = $080D   LDA #$00
+    = $080F   BNE $0816
+    = $0811   LDY #$01
+    = $0813   JMP $0818
+    = $0816   LDY #$02
+    = $0818   RTS
 
 Compiling `if not`.
 
@@ -169,7 +222,12 @@ Compiling `if not`.
     |         ld y, 2
     |     }
     | }
-    = 00c0a900f005a0014c0bc0a00260
+    = $080D   LDA #$00
+    = $080F   BEQ $0816
+    = $0811   LDY #$01
+    = $0813   JMP $0818
+    = $0816   LDY #$02
+    = $0818   RTS
 
 Compiling `if` without `else`.
 
@@ -181,7 +239,10 @@ Compiling `if` without `else`.
     |         ld y, 1
     |     }
     | }
-    = 00c0a900d002a00160
+    = $080D   LDA #$00
+    = $080F   BNE $0813
+    = $0811   LDY #$01
+    = $0813   RTS
 
 Compiling `repeat`.
 
@@ -195,7 +256,12 @@ Compiling `repeat`.
     |         cmp y, 91
     |     } until z
     | }
-    = 00c0a04198c8c05bd0fa60
+    = $080D   LDY #$41
+    = $080F   TYA
+    = $0810   INY
+    = $0811   CPY #$5B
+    = $0813   BNE $080F
+    = $0815   RTS
 
 Compiling `repeat until not`.
 
@@ -209,7 +275,12 @@ Compiling `repeat until not`.
     |         cmp y, 91
     |     } until not z
     | }
-    = 00c0a04198c8c05bf0fa60
+    = $080D   LDY #$41
+    = $080F   TYA
+    = $0810   INY
+    = $0811   CPY #$5B
+    = $0813   BEQ $080F
+    = $0815   RTS
 
 Compiling `repeat forever`.
 
@@ -221,7 +292,10 @@ Compiling `repeat forever`.
     |         inc y
     |     } forever
     | }
-    = 00c0a041c84c02c060
+    = $080D   LDY #$41
+    = $080F   INY
+    = $0810   JMP $080F
+    = $0813   RTS
 
 Indexed access.
 
@@ -237,7 +311,48 @@ Indexed access.
     |     st a, many + x
     |     ld a, many + x
     | }
-    = 00c0a200a9009d0dc0bd0dc060
+    = $080D   LDX #$00
+    = $080F   LDA #$00
+    = $0811   STA $0819,X
+    = $0814   LDA $0819,X
+    = $0817   RTS
+
+Byte tables take up 256 bytes in memory.
+
+    | byte table tab1
+    | byte table tab2
+    | 
+    | routine main
+    |   inputs tab1
+    |   outputs tab2
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, tab1 + x
+    |     st a, tab2 + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA $0816,X
+    = $0812   STA $0916,X
+    = $0815   RTS
+
+Byte storage locations take up only 1 byte in memory.
+
+    | byte one
+    | byte two
+    | 
+    | routine main
+    |   outputs one, two
+    |   trashes a, x, n, z
+    | {
+    |     ld a, 0
+    |     st a, one
+    |     st a, two
+    | }
+    = $080D   LDA #$00
+    = $080F   STA $0816
+    = $0812   STA $0817
+    = $0815   RTS
 
 Copy byte to byte.
 
@@ -251,7 +366,9 @@ Copy byte to byte.
     | {
     |   copy baz, bar
     | }
-    = 00c0ad09c08d07c060
+    = $080D   LDA $0815
+    = $0810   STA $0814
+    = $0813   RTS
 
 Copy word to word.
 
@@ -265,7 +382,11 @@ Copy word to word.
     | {
     |   copy baz, bar
     | }
-    = 00c0ad0fc08d0dc0ad10c08d0ec060
+    = $080D   LDA $081C
+    = $0810   STA $081A
+    = $0813   LDA $081D
+    = $0816   STA $081B
+    = $0819   RTS
 
 Copy literal word to word.
 
@@ -275,9 +396,13 @@ Copy literal word to word.
     |   outputs bar
     |   trashes a, n, z
     | {
-    |   copy 65535, bar
+    |   copy 2000, bar
     | }
-    = 00c0a9ff8d0bc0a9ff8d0cc060
+    = $080D   LDA #$D0
+    = $080F   STA $0818
+    = $0812   LDA #$07
+    = $0814   STA $0819
+    = $0817   RTS
 
 Copy vector to vector.
 
@@ -291,7 +416,11 @@ Copy vector to vector.
     | {
     |   copy baz, bar
     | }
-    = 00c0ad0fc08d0dc0ad10c08d0ec060
+    = $080D   LDA $081C
+    = $0810   STA $081A
+    = $0813   LDA $081D
+    = $0816   STA $081B
+    = $0819   RTS
 
 Copy routine to vector, inside an `interrupts off` block.
 
@@ -314,7 +443,57 @@ Copy routine to vector, inside an `interrupts off` block.
     |     copy foo, bar
     |   }
     | }
-    = 00c078a90d8d0fc0a9c08d10c05860e860
+    = $080D   SEI
+    = $080E   LDA #$1A
+    = $0810   STA $081C
+    = $0813   LDA #$08
+    = $0815   STA $081D
+    = $0818   CLI
+    = $0819   RTS
+    = $081A   INX
+    = $081B   RTS
+
+Copy word to word table and back, with both `x` and `y` as indexes.
+
+    | word one
+    | word table many
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, y, n, z
+    | {
+    |     ld x, 0
+    |     ld y, 0
+    |     copy 777, one
+    |     copy one, many + x
+    |     copy one, many + y
+    |     copy many + x, one
+    |     copy many + y, one
+    | }
+    = $080D   LDX #$00
+    = $080F   LDY #$00
+    = $0811   LDA #$09
+    = $0813   STA $084C
+    = $0816   LDA #$03
+    = $0818   STA $084D
+    = $081B   LDA $084C
+    = $081E   STA $084E,X
+    = $0821   LDA $084D
+    = $0824   STA $094E,X
+    = $0827   LDA $084C
+    = $082A   STA $084E,Y
+    = $082D   LDA $084D
+    = $0830   STA $094E,Y
+    = $0833   LDA $084E,X
+    = $0836   STA $084C
+    = $0839   LDA $094E,X
+    = $083C   STA $084D
+    = $083F   LDA $084E,Y
+    = $0842   STA $084C
+    = $0845   LDA $094E,Y
+    = $0848   STA $084D
+    = $084B   RTS
 
 Indirect call.
 
@@ -328,7 +507,15 @@ Indirect call.
     |     copy bar, foo
     |     call foo
     | }
-    = 00c0a90e8d14c0a9c08d15c02011c060a2c8606c14c0
+    = $080D   LDA #$1B
+    = $080F   STA $0821
+    = $0812   LDA #$08
+    = $0814   STA $0822
+    = $0817   JSR $081E
+    = $081A   RTS
+    = $081B   LDX #$C8
+    = $081D   RTS
+    = $081E   JMP ($0821)
 
 goto.
 
@@ -340,7 +527,54 @@ goto.
     |     ld y, 200
     |     goto bar
     | }
-    = 00c0a0c84c06c060a2c860
+    = $080D   LDY #$C8
+    = $080F   JMP $0813
+    = $0812   RTS
+    = $0813   LDX #$C8
+    = $0815   RTS
+
+### word operations
+
+Adding a constant word to a word memory location.
+
+    | word score
+    | routine main
+    |   inputs score
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add score, 1999
+    | }
+    = $080D   CLC
+    = $080E   LDA $081F
+    = $0811   ADC #$CF
+    = $0813   STA $081F
+    = $0816   LDA $0820
+    = $0819   ADC #$07
+    = $081B   STA $0820
+    = $081E   RTS
+
+Adding a word memory location to another word memory location.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add score, delta
+    | }
+    = $080D   CLC
+    = $080E   LDA $0821
+    = $0811   ADC $0823
+    = $0814   STA $0821
+    = $0817   LDA $0822
+    = $081A   ADC $0824
+    = $081D   STA $0822
+    = $0820   RTS
 
 ### Buffers and Pointers
 
@@ -357,7 +591,12 @@ Load address into pointer.
     |     ld y, 0
     |     copy ^buf, ptr
     | }
-    = 00c0a000a90b85fea9c085ff60
+    = $080D   LDY #$00
+    = $080F   LDA #$18
+    = $0811   STA $FE
+    = $0813   LDA #$08
+    = $0815   STA $FF
+    = $0817   RTS
 
 Write literal through a pointer.
 
@@ -373,7 +612,14 @@ Write literal through a pointer.
     |     copy ^buf, ptr
     |     copy 123, [ptr] + y
     | }
-    = 00c0a000a90f85fea9c085ffa97b91fe60
+    = $080D   LDY #$00
+    = $080F   LDA #$1C
+    = $0811   STA $FE
+    = $0813   LDA #$08
+    = $0815   STA $FF
+    = $0817   LDA #$7B
+    = $0819   STA ($FE),Y
+    = $081B   RTS
 
 Write stored value through a pointer.
 
@@ -390,7 +636,14 @@ Write stored value through a pointer.
     |     copy ^buf, ptr
     |     copy foo, [ptr] + y
     | }
-    = 00c0a000a91085fea9c085ffad12c091fe60
+    = $080D   LDY #$00
+    = $080F   LDA #$1D
+    = $0811   STA $FE
+    = $0813   LDA #$08
+    = $0815   STA $FF
+    = $0817   LDA $101D
+    = $081A   STA ($FE),Y
+    = $081C   RTS
 
 Read through a pointer.
 
@@ -407,4 +660,56 @@ Read through a pointer.
     |     copy ^buf, ptr
     |     copy [ptr] + y, foo
     | }
-    = 00c0a000a91085fea9c085ffb1fe8d12c060
+    = $080D   LDY #$00
+    = $080F   LDA #$1D
+    = $0811   STA $FE
+    = $0813   LDA #$08
+    = $0815   STA $FF
+    = $0817   LDA ($FE),Y
+    = $0819   STA $101D
+    = $081C   RTS
+
+Add a word memory location, and a literal word, to a pointer, and then read through it.
+Note that this is *not* range-checked.  (Yet.)
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | byte foo
+    | word delta
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs y, foo, delta
+    |   trashes a, z, n, ptr
+    | {
+    |     copy 619, delta
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     add ptr, delta
+    |     add ptr, word 1
+    |     copy [ptr] + y, foo
+    | }
+    = $080D   LDA #$6B
+    = $080F   STA $1042
+    = $0812   LDA #$02
+    = $0814   STA $1043
+    = $0817   LDY #$00
+    = $0819   LDA #$41
+    = $081B   STA $FE
+    = $081D   LDA #$08
+    = $081F   STA $FF
+    = $0821   LDA $FE
+    = $0823   ADC $1042
+    = $0826   STA $FE
+    = $0828   LDA $FF
+    = $082A   ADC $1043
+    = $082D   STA $FF
+    = $082F   LDA $FE
+    = $0831   ADC #$01
+    = $0833   STA $FE
+    = $0835   LDA $FF
+    = $0837   ADC #$00
+    = $0839   STA $FF
+    = $083B   LDA ($FE),Y
+    = $083D   STA $1041
+    = $0840   RTS

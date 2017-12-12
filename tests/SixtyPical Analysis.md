@@ -207,6 +207,21 @@ Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
     | }
     ? ForbiddenWriteError: lives in main
 
+Can't `st` a `word` type.
+
+    | word foo
+    | 
+    | routine main
+    |   outputs foo
+    |   trashes a, n, z
+    | {
+    |     ld a, 0
+    |     st a, foo
+    | }
+    ? TypeMismatchError: a and foo in main
+
+### tables ###
+
 Storing to a table, you must use an index, and vice-versa.
 
     | byte one
@@ -313,18 +328,47 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     = ok
 
-Can't `st` a `word` type.
+Copying to and from a word table.
 
-    | word foo
+    | word one
+    | word table many
     | 
     | routine main
-    |   outputs foo
-    |   trashes a, n, z
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
     | {
-    |     ld a, 0
-    |     st a, foo
+    |     ld x, 0
+    |     copy one, many + x
+    |     copy many + x, one
     | }
-    ? TypeMismatchError: a and foo in main
+    = ok
+
+    | word one
+    | word table many
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy one, many
+    | }
+    ? TypeMismatchError
+
+    | word one
+    | word table many
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy one + x, many
+    | }
+    ? TypeMismatchError
 
 ### add ###
 
@@ -370,6 +414,103 @@ Can't `add` to a memory location that isn't writeable.
     | {
     |     st off, c
     |     add a, 0
+    | }
+    ? ForbiddenWriteError: a in main
+
+You can `add` a word constant to a word memory location.
+
+    | word score
+    | routine main
+    |   inputs a, score
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add score, 1999
+    | }
+    = ok
+
+`add`ing a word constant to a word memory location trashes `a`.
+
+    | word score
+    | routine main
+    |   inputs a, score
+    |   outputs score, a
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add score, 1999
+    | }
+    ? UnmeaningfulOutputError: a in main
+
+To be sure, `add`ing a word constant to a word memory location trashes `a`.
+
+    | word score
+    | routine main
+    |   inputs score
+    |   outputs score
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add score, 1999
+    | }
+    ? ForbiddenWriteError: a in main
+
+You can `add` a word memory location to another word memory location.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add score, delta
+    | }
+    = ok
+
+`add`ing a word memory location to a word memory location trashes `a`.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add score, delta
+    | }
+    ? ForbiddenWriteError: a in main
+
+You can `add` a word memory location, or a constant, to a pointer.
+
+    | pointer ptr
+    | word delta
+    | routine main
+    |   inputs ptr, delta
+    |   outputs ptr
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add ptr, delta
+    |     add ptr, word 1
+    | }
+    = ok
+
+`add`ing a word memory location, or a constant, to a pointer, trashes `a`.
+
+    | pointer ptr
+    | word delta
+    | routine main
+    |   inputs ptr, delta
+    |   outputs ptr
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add ptr, delta
+    |     add ptr, word 1
     | }
     ? ForbiddenWriteError: a in main
 
@@ -1371,6 +1512,30 @@ But not if the vector is declared inappropriately.
     |     copy foo, vec
     | }
     ? IncompatibleConstraintsError
+
+"Appropriately" means, if the routine affects no more than what is named
+in the input/output sets of the vector.
+
+    | vector vec
+    |   inputs a, x
+    |   outputs x
+    |   trashes a, z, n
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
 
 Routines are read-only.
 

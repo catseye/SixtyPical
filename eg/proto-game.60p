@@ -1,0 +1,250 @@
+// ****************************
+// * Demo Game for SixtyPical *
+// ****************************
+
+// ----------------------------------------------------------------
+// System Locations
+// ----------------------------------------------------------------
+
+byte vic_border @ 53280
+byte vic_bg @ 53281
+
+byte table screen1 @ 1024
+byte table screen2 @ 1274
+byte table screen3 @ 1524
+byte table screen4 @ 1774
+
+byte table colormap1 @ 55296
+byte table colormap2 @ 55546
+byte table colormap3 @ 55796
+byte table colormap4 @ 56046
+
+buffer[2048] screen @ 1024
+byte joy2 @ $dc00
+
+// ----------------------------------------------------------------
+// Global Variables
+// ----------------------------------------------------------------
+
+pointer ptr @ 254
+word pos
+word delta
+byte button_down : 0  // effectively static-local to check_button
+
+//
+// Points to the routine that implements the current game state.
+//
+
+vector dispatch_game_state
+  inputs joy2, pos, button_down, dispatch_game_state
+  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  trashes a, x, y, c, z, n, v, ptr
+
+//
+// The constraints on these 2 vectors are kind-of sort-of big fibs.
+// They're only written this way so they can be compatible with our
+// routine.  In fact, CINV is an interrupt routine where it doesn't
+// really matter what you trash anyway, because all registers were
+/// saved by the caller (the KERNAL) and will be restored by the end
+// of the code of the saved origin cinv routine that we goto.
+//
+// I wonder if this could be arranged somehow to be less fibby, in
+// a future version of SixtyPical.
+//
+
+vector cinv
+  inputs joy2, pos, button_down, dispatch_game_state
+  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  trashes a, x, y, c, z, n, v, ptr
+  @ 788
+
+vector save_cinv
+  inputs joy2, pos, button_down, dispatch_game_state
+  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  trashes a, x, y, c, z, n, v, ptr
+
+// ----------------------------------------------------------------
+// Utility Routines
+// ----------------------------------------------------------------
+
+routine read_stick
+  inputs joy2
+  outputs delta
+  trashes a, x, z, n
+{
+    ld x, joy2
+    ld a, x
+    and a, 1                   // up
+    if z {
+        copy $ffd8, delta      // -40
+    } else {
+        ld a, x
+        and a, 2               // down
+        if z {
+            copy word 40, delta
+        } else {
+            ld a, x
+            and a, 4               // left
+            if z {
+                copy $ffff, delta  // -1
+            } else {
+                ld a, x
+                and a, 8           // right
+                if z {
+                    copy word 1, delta
+                } else {
+                    copy word 0, delta
+                }
+            }
+        }
+    }
+}
+
+// You can repeatedly (i.e. as part of actor logic or an IRQ handler)
+// call this routine.
+// Upon return, if carry is set, the button was pressed then released.
+
+routine check_button
+  inputs joy2, button_down
+  outputs c, button_down
+  trashes a, z, n
+{
+    ld a, button_down
+    if z {
+        ld a, joy2
+        and a, $10
+        if z {
+            ld a, 1
+            st a, button_down
+        }
+        st off, c
+    } else {
+        ld a, joy2
+        and a, $10
+        if not z {
+            ld a, 0
+            st a, button_down
+            st on, c
+        } else {
+            st off, c
+        }
+    }
+}
+
+routine clear_screen
+  outputs screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  trashes a, y, c, n, z
+{
+    ld y, 0
+    repeat {
+        ld a, 1
+        st a, colormap1 + y
+        st a, colormap2 + y
+        st a, colormap3 + y
+        st a, colormap4 + y
+
+        ld a, 32
+        st a, screen1 + y
+        st a, screen2 + y
+        st a, screen3 + y
+        st a, screen4 + y
+
+        inc y
+        cmp y, 250
+    } until z
+}
+
+// ----------------------------------------------------------------
+// Game States
+// ----------------------------------------------------------------
+
+//
+// Because these all `goto save_cinv` at the end, they must have the same signature as that routine.
+//
+
+routine game_state_play
+  inputs joy2, pos, button_down, dispatch_game_state
+  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  trashes a, x, y, c, z, n, v, ptr
+{
+    call read_stick
+
+    st off, c
+    add pos, delta
+
+    copy ^screen, ptr
+    st off, c
+    add ptr, pos
+
+    ld y, 0
+    copy 81, [ptr] + y
+
+    goto save_cinv
+}
+
+routine game_state_title_screen
+  inputs joy2, pos, button_down, dispatch_game_state
+  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  trashes a, x, y, c, z, n, v, ptr
+{
+    ld y, 10
+    repeat {
+        ld a, 90
+        st a, screen1 + y
+        inc y
+        cmp y, 20
+    } until z
+
+    st off, c
+    call check_button
+
+    if c {
+        // call clear_screen
+        // call init_game
+        copy game_state_play, dispatch_game_state
+    } else {
+        // This is sort of a hack.  FIXME: let `if` branches diverge this much.
+        copy dispatch_game_state, dispatch_game_state
+    }
+
+    goto save_cinv
+}
+
+// *************************
+// * Main Game Loop Driver *
+// *************************
+
+routine our_cinv
+  inputs joy2, pos, button_down, dispatch_game_state
+  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  trashes a, x, y, c, z, n, v, ptr
+{
+    goto dispatch_game_state
+}
+
+routine main
+  inputs cinv
+  outputs cinv, save_cinv, pos, dispatch_game_state,
+          screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  trashes a, y, n, c, z, vic_border, vic_bg
+{
+    ld a, 5
+    st a, vic_border
+    ld a, 0
+    st a, vic_bg
+    ld y, 0
+
+    call clear_screen
+
+    copy game_state_title_screen, dispatch_game_state
+
+    copy word 0, pos
+    with interrupts off {
+        copy cinv, save_cinv
+        copy our_cinv, cinv
+    }
+    // FIXME: find out why `repeat { } forever` does not analyze OK
+    repeat {
+        ld a, 0
+    } until not z
+}
