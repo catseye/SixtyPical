@@ -185,16 +185,23 @@ class Analyzer(object):
                 )
 
     def assert_affected_within(self, name, affected, limited_to):
+        # We reduce the set of LocationRefs to a set of strings (their labels).
+        # This is necessary because currently, two LocationRefs that refer to the
+        # same location are not considered euqal.  (But two LocationRefs with the
+        # same label should always be the same type.)
 
-        def format(loc):
-            assert isinstance(loc, LocationRef)
-            return loc.name
+        affected = set([loc.name for loc in affected])
+        limited_to = set([loc.name for loc in limited_to])
 
-        if affected <= limited_to:
-            return
+        def loc_list(label_set):
+            return ', '.join(sorted(label_set))
+
         overage = affected - limited_to
-        overage_s = ', '.join(sorted([format(loc) for loc in overage]))
-        message = 'affected beyond %s: {%s} in %s' % (name, overage_s, self.current_routine.name)
+        if not overage:
+            return
+        message = 'in %s: %s are {%s} but affects {%s} which exceeds by: {%s} ' % (
+            self.current_routine.name, name, loc_list(limited_to), loc_list(affected), loc_list(overage)
+        )
         raise IncompatibleConstraintsError(message)
 
     def analyze_program(self, program):
