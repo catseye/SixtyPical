@@ -51,17 +51,9 @@ class Parser(object):
         self.scanner.check_type('EOF')
         # now backpatch the executable types.
         for defn in defns:
-            if isinstance(defn.location.type, VectorType):
-                t = defn.location.type
-                t.inputs = set([self.lookup(w) for w in t.inputs])
-                t.outputs = set([self.lookup(w) for w in t.outputs])
-                t.trashes = set([self.lookup(w) for w in t.trashes])
+            defn.location.backpatch_labels(lambda w: self.lookup(w))
         for routine in routines:
-            if isinstance(routine.location.type, ExecutableType):
-                t = routine.location.type
-                t.inputs = set([self.lookup(w) for w in t.inputs])
-                t.outputs = set([self.lookup(w) for w in t.outputs])
-                t.trashes = set([self.lookup(w) for w in t.trashes])
+            routine.location.backpatch_labels(lambda w: self.lookup(w))
         return Program(defns=defns, routines=routines)
 
     def defn(self):

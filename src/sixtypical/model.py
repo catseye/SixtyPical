@@ -107,6 +107,13 @@ class LocationRef(Ref):
     def is_constant(self):
         return isinstance(self.type, RoutineType)
 
+    def backpatch_labels(self, resolver):
+        if isinstance(self.type, ExecutableType):
+            t = self.type
+            t.inputs = set([resolver(w) for w in t.inputs])
+            t.outputs = set([resolver(w) for w in t.outputs])
+            t.trashes = set([resolver(w) for w in t.trashes])
+
     @classmethod
     def format_set(cls, location_refs):
         return '{%s}' % ', '.join([str(loc) for loc in sorted(location_refs)])
