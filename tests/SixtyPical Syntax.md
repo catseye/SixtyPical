@@ -178,6 +178,22 @@ User-defined locations of other types.
     | }
     = ok
 
+Initialized byte table.
+
+    | byte table message : "WHAT DO YOU WANT TO DO NEXT?"
+    | 
+    | routine main {
+    | }
+    = ok
+
+Can't initialize anything but a byte table with a string.
+
+    | word message : "WHAT DO YOU WANT TO DO NEXT?"
+    | 
+    | routine main {
+    | }
+    ? SyntaxError
+
 Can't access an undeclared memory location.
 
     | routine main {

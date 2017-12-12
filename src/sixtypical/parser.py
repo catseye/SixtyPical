@@ -89,8 +89,11 @@ class Parser(object):
 
         initial = None
         if self.scanner.consume(':'):
-            self.scanner.check_type('integer literal')
-            initial = int(self.scanner.token)
+            if type_ == TYPE_BYTE_TABLE and self.scanner.on_type('string literal'):
+                initial = self.scanner.token
+            else:
+                self.scanner.check_type('integer literal')
+                initial = int(self.scanner.token)
             self.scanner.scan()
 
         addr = None
