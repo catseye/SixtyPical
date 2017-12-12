@@ -89,17 +89,8 @@ class Context(object):
             self._writeable.add(ref)
 
     def __str__(self):
-        def locstr(loc):
-            if isinstance(loc, LocationRef):
-                return "{}:{}".format(loc.name, loc.type)
-            else:
-                return str(loc)
-
-        def locsetstr(s):
-            return '{' + ', '.join([locstr(loc) for loc in list(s)]) + '}'
-
         return "Context(\n  _touched={},\n  _meaningful={},\n  _writeable={}\n)".format(
-            locsetstr(self._touched), locsetstr(self._meaningful), locsetstr(self._writeable)
+            LocationRef.format_set(self._touched), LocationRef.format_set(self._meaningful), LocationRef.format_set(self._writeable)
         )
 
     def clone(self):
@@ -185,22 +176,12 @@ class Analyzer(object):
                 )
 
     def assert_affected_within(self, name, affected, limited_to):
-        # We reduce the set of LocationRefs to a set of strings (their labels).
-        # This is necessary because currently, two LocationRefs that refer to the
-        # same location are not considered euqal.  (But two LocationRefs with the
-        # same label should always be the same type.)
-
-        affected = set([loc.name for loc in affected])
-        limited_to = set([loc.name for loc in limited_to])
-
-        def loc_list(label_set):
-            return ', '.join(sorted(label_set))
-
         overage = affected - limited_to
         if not overage:
             return
-        message = 'in %s: %s are {%s} but affects {%s} which exceeds by: {%s} ' % (
-            self.current_routine.name, name, loc_list(limited_to), loc_list(affected), loc_list(overage)
+        message = 'in %s: %s are %s but affects %s which exceeds it by: %s ' % (
+            self.current_routine.name, name,
+            LocationRef.format_set(limited_to), LocationRef.format_set(affected), LocationRef.format_set(overage)
         )
         raise IncompatibleConstraintsError(message)
 

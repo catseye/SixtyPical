@@ -1234,7 +1234,7 @@ a, z, and n are trashed, and must be declared as such
     | {
     |     copy 0, lives
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: n in main
 
 a, z, and n are trashed, and must not be declared as outputs.
 
@@ -1244,7 +1244,7 @@ a, z, and n are trashed, and must not be declared as outputs.
     | {
     |     copy 0, lives
     | }
-    ? UnmeaningfulOutputError: a in main
+    ? UnmeaningfulOutputError: n in main
 
 Unless of course you subsequently initialize them.
 

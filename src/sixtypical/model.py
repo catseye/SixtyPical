@@ -8,6 +8,9 @@ class Type(object):
     def __repr__(self):
         return 'Type(%r)' % self.name
 
+    def __str__(self):
+        return self.name
+
     def __eq__(self, other):
         return isinstance(other, Type) and other.name == self.name
 
@@ -98,8 +101,15 @@ class LocationRef(Ref):
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.type, self.name)
 
+    def __str__(self):
+        return "{}:{}".format(self.name, self.type)
+
     def is_constant(self):
         return isinstance(self.type, RoutineType)
+
+    @classmethod
+    def format_set(cls, location_refs):
+        return '{%s}' % ', '.join([str(loc) for loc in sorted(location_refs)])
 
 
 class IndirectRef(Ref):
