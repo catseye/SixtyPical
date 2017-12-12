@@ -8,6 +8,7 @@ History of SixtyPical
 *   Add word to pointer (unchecked for now).
 *   Added `word table` type.
 *   Can `copy` from word storage location to word table and back.
+*   A `vector` can name itself in its `inputs` and `outputs` or `trashes` sets.
 *   Implementation: `--debug` shows some extra info during analysis.
 *   Fixed bug where `copy`ing literal word into word storage used wrong endianness.
 *   Fixed bug where every memory location was allocated 2 bytes of storage, regardless of type.

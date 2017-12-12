@@ -184,6 +184,19 @@ class Analyzer(object):
                     (location.name, self.current_routine.name)
                 )
 
+    def assert_affected_within(self, name, affected, limited_to):
+
+        def format(loc):
+            assert isinstance(loc, LocationRef)
+            return loc.name
+
+        if affected <= limited_to:
+            return
+        overage = affected - limited_to
+        overage_s = ', '.join(sorted([format(loc) for loc in overage]))
+        message = 'affected beyond %s: {%s} in %s' % (name, overage_s, self.current_routine.name)
+        raise IncompatibleConstraintsError(message)
+
     def analyze_program(self, program):
         assert isinstance(program, Program)
         self.routines = {r.location: r for r in program.routines}
@@ -364,16 +377,10 @@ class Analyzer(object):
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
                 if src.type == dest.type:
                     pass
-                elif isinstance(src.type, ExecutableType) and \
-                     isinstance(dest.type, VectorType):
-                    # if dealing with routines and vectors,
-                    # check that they're not incompatible
-                    if not (src.type.inputs <= dest.type.inputs):
-                        raise IncompatibleConstraintsError(src.type.inputs - dest.type.inputs)
-                    if not (src.type.outputs <= dest.type.outputs):
-                        raise IncompatibleConstraintsError(src.type.outputs - dest.type.outputs)
-                    if not (src.type.trashes <= dest.type.trashes):
-                        raise IncompatibleConstraintsError(src.type.trashes - dest.type.trashes)
+                elif isinstance(src.type, ExecutableType) and isinstance(dest.type, VectorType):
+                    self.assert_affected_within('inputs', src.type.inputs, dest.type.inputs)
+                    self.assert_affected_within('outputs', src.type.outputs, dest.type.outputs)
+                    self.assert_affected_within('trashes', src.type.trashes, dest.type.trashes)
                 else:
                     raise TypeMismatchError((src, dest))
             else:
@@ -409,22 +416,21 @@ class Analyzer(object):
             self.analyze_block(instr.block, context)
         elif opcode == 'goto':
             location = instr.location
-            type = location.type
+            type_ = location.type
     
-            if not isinstance(type, ExecutableType):
+            if not isinstance(type_, ExecutableType):
                 raise TypeMismatchError(location)
     
             # assert that the dest routine's inputs are all initialized
-            for ref in type.inputs:
+            for ref in type_.inputs:
                 context.assert_meaningful(ref)
     
             # and that this routine's trashes and output constraints are a
             # superset of the called routine's
             current_type = self.current_routine.location.type
-            if not (type.outputs <= current_type.outputs):
-                raise IncompatibleConstraintsError(type.outputs - current_type.outputs)
-            if not (type.trashes <= current_type.trashes):
-                raise IncompatibleConstraintsError(type.trashes - current_type.trashes)
+            self.assert_affected_within('outputs', type_.outputs, current_type.outputs)
+            self.assert_affected_within('trashes', type_.trashes, current_type.trashes)
+
             self.has_encountered_goto = True
         else:
             raise NotImplementedError(opcode)
