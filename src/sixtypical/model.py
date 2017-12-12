@@ -108,7 +108,7 @@ class LocationRef(Ref):
     def is_constant(self):
         return isinstance(self.type, RoutineType)
 
-    def backpatch_labels(self, resolver):
+    def backpatch_vector_labels(self, resolver):
         if isinstance(self.type, ExecutableType):
             t = self.type
             t.inputs = set([resolver(w) for w in t.inputs])

@@ -239,6 +239,19 @@ And you can't call a non-routine.
     | }
     ? SyntaxError
 
+But you can call a routine that is yet to be defined, further on.
+
+    | routine main {
+    |     ld x, 0
+    |     ld y, 1
+    |     call up
+    |     call up
+    | }
+    | routine up {
+    |     ld a, 0
+    | }
+    = ok
+
 Can't define two routines with the same name.
 
     | routine main {
@@ -350,6 +363,14 @@ goto.
     | }
     | routine main {
     |     goto foo
+    | }
+    = ok
+
+    | routine main {
+    |     goto foo
+    | }
+    | routine foo {
+    |     ld a, 0
     | }
     = ok
 

@@ -1,6 +1,11 @@
 History of SixtyPical
 =====================
 
+0.10
+----
+
+*   Can `call` and `goto` routines that are defined further down in the source code.
+
 0.9
 ---
 
