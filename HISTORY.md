@@ -5,7 +5,8 @@ History of SixtyPical
 ----
 
 *   Can `call` and `goto` routines that are defined further down in the source code.
-*   `assign`, a form of `copy` that can copy (to a vector) a routine that is defined further down.
+*   The `forward` modifier can also be used to indicate that the symbol being copied
+    in a `copy` to a vector is a routine that is defined further down in the source.
 
 0.9
 ---

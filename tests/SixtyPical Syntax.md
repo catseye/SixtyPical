@@ -356,20 +356,25 @@ A vector can name itself in its inputs, outputs, and trashes.
     | }
     = ok
 
-A routine can be copied into a vector before the routine appears in the program.
-*However*, in order to do this currently, one needs to use the special opcode
-form `assign`, which is equivalent to `copy` except that the routine need not
-have already appeared in the program.
+A routine can be copied into a vector before the routine appears in the program,
+*however*, it must be marked as such with the keyword `forward`.
 
-    | vector cinv
-    |   inputs cinv, a
-    |   outputs cinv, x
-    |   trashes a, x, z, n
-    |   @ 788
-    | 
+    | vector cinv   inputs cinv, a   outputs cinv, x   trashes a, x, z, n @ 788
     | routine main {
     |     with interrupts off {
-    |         assign foo, cinv
+    |         copy foo, cinv
+    |     }
+    |     call cinv
+    | }
+    | routine foo {
+    |     ld a, 0
+    | }
+    ? SyntaxError: Undefined symbol
+
+    | vector cinv   inputs cinv, a   outputs cinv, x   trashes a, x, z, n @ 788
+    | routine main {
+    |     with interrupts off {
+    |         copy forward foo, cinv
     |     }
     |     call cinv
     | }
