@@ -23,7 +23,7 @@ The reference implementation can execute, analyze, and compile SixtyPical
 programs to 6502 machine code.
 
 SixtyPical is a work in progress.  The current released version of SixtyPical
-is 0.9.
+is 0.10 (not released yet).
 
 Documentation
 -------------
