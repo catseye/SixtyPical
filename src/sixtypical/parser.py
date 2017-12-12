@@ -23,32 +23,12 @@ class Parser(object):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
         for token in ('c', 'z', 'n', 'v'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BIT, token))
+        self.backpatch_instrs = []
 
     def lookup(self, name):
         if name not in self.symbols:
             raise SyntaxError('Undefined symbol "%s"' % name)
         return self.symbols[name].model
-
-    def backpatch_call_labels(self, block):
-        """Backpatches labels in call and goto instructions."""
-        if block is None:
-            return
-        for instr in block.instrs:
-            if instr.opcode == 'if':
-                self.backpatch_call_labels(instr.block1)
-                self.backpatch_call_labels(instr.block2)
-            elif instr.opcode == 'repeat':
-                self.backpatch_call_labels(instr.block)
-            elif instr.opcode == 'with-sei':
-                self.backpatch_call_labels(instr.block)
-            elif instr.opcode in ('call', 'goto'):
-                if isinstance(instr.location, basestring):
-                    name = instr.location
-                    if name not in self.symbols:
-                        raise SyntaxError('Undefined routine "%s"' % name)
-                    if not isinstance(self.symbols[name].model.type, ExecutableType):
-                        raise SyntaxError('Illegal call of non-executable "%s"' % name)
-                    instr.location = self.symbols[name].model
 
     # --- grammar productions
 
@@ -70,12 +50,21 @@ class Parser(object):
             self.symbols[name] = SymEntry(routine, routine.location)
             routines.append(routine)
         self.scanner.check_type('EOF')
+
         # now backpatch the executable types.
         for defn in defns:
             defn.location.backpatch_vector_labels(lambda w: self.lookup(w))
         for routine in routines:
             routine.location.backpatch_vector_labels(lambda w: self.lookup(w))
-            self.backpatch_call_labels(routine.block)
+        for instr in self.backpatch_instrs:
+            if instr.opcode in ('call', 'goto'):
+                name = instr.location
+                if name not in self.symbols:
+                    raise SyntaxError('Undefined routine "%s"' % name)
+                if not isinstance(self.symbols[name].model.type, ExecutableType):
+                    raise SyntaxError('Illegal call of non-executable "%s"' % name)
+                instr.location = self.symbols[name].model
+
         return Program(defns=defns, routines=routines)
 
     def defn(self):
@@ -287,8 +276,9 @@ class Parser(object):
             self.scanner.scan()
             name = self.scanner.token
             self.scanner.scan()
-            # this will be backpatched
-            return Instr(opcode=opcode, location=name, dest=None, src=None)
+            instr = Instr(opcode=opcode, location=name, dest=None, src=None)
+            self.backpatch_instrs.append(instr)
+            return instr
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token
             self.scanner.scan()
