@@ -434,6 +434,25 @@ Copy literal word to word.
     = $0814   STA $0819
     = $0817   RTS
 
+You can also copy a literal word to a word table.
+
+    | word table many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 9999, many + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$0F
+    = $0811   STA $081A,X
+    = $0814   LDA #$27
+    = $0816   STA $091A,X
+    = $0819   RTS
+
 Copy vector to vector.
 
     | vector bar

@@ -388,6 +388,20 @@ Copying to and from a word table.
     | }
     ? TypeMismatchError
 
+You can also copy a literal word to a word table.
+
+    | word table many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 9999, many + x
+    | }
+    = ok
+
 ### add ###
 
 Can't `add` from or to a memory location that isn't initialized.

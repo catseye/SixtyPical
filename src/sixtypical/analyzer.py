@@ -352,7 +352,7 @@ class Analyzer(object):
                 else:
                     raise TypeMismatchError((src, dest))
 
-            elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
+            elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
                 if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
                     pass
                 else:
@@ -390,6 +390,9 @@ class Analyzer(object):
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
                 context.set_touched(src)  # TODO and dest.index?
+                context.set_written(dest.ref)
+            elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
+                context.assert_meaningful(src, dest.ref, dest.index)
                 context.set_written(dest.ref)
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, src.index, dest)
