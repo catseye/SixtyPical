@@ -30,6 +30,7 @@ pointer ptr @ 254
 
 word table actor_pos
 word pos
+word new_pos
 
 word table actor_delta
 word delta
@@ -51,10 +52,10 @@ byte save_x
 
 vector dispatch_game_state
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, actor_delta, delta,
+         actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs button_down, dispatch_game_state, save_x,
-          actor_pos, pos, actor_delta, delta,
+          actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 
@@ -72,20 +73,20 @@ vector dispatch_game_state
 
 vector cinv
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, actor_delta, delta,
+         actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs button_down, dispatch_game_state, save_x,
-          actor_pos, pos, actor_delta, delta,
+          actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
   @ 788
 
 vector save_cinv
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, actor_delta, delta,
+         actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs button_down, dispatch_game_state, save_x,
-          actor_pos, pos, actor_delta, delta,
+          actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 
@@ -180,26 +181,90 @@ routine clear_screen
     } until z
 }
 
+routine calculate_new_position
+  inputs pos, delta
+  outputs new_pos
+  trashes a, c, n, z, v
+{
+    copy pos, new_pos
+    st off, c
+    add new_pos, delta
+}
+
+// routine compare_new_pos
+// {
+//     lda >new_position
+//     cmp >compare_target
+//     if beq {
+//         lda <new_position
+//         cmp <compare_target
+//     } else {
+//     }
+// }
+
+routine check_new_position_in_bounds
+  outputs c
+{
+    // for now, we just assume the new position is in bounds, because we are awesomely lazy
+    st on, c
+   
+    // copy #$07e8 compare_target      // just past bottom of screen
+    // jsr compare_new_pos
+    // 
+    // if bcs {
+    //     clc
+    // } else {
+    // 
+    //     copy #$0400 compare_target
+    //     jsr compare_new_pos
+    // 
+    //     if bcc {
+    //         clc
+    //     } else {
+    //         sec
+    //     }
+    // }
+}
+
 // ----------------------------------------------------------------
 // Actor Logics
 // ----------------------------------------------------------------
 
 routine player_logic
   inputs pos, delta, joy2, screen
-  outputs pos, delta, screen
+  outputs pos, delta, new_pos, screen
   trashes a, x, y, c, z, n, v, ptr
 {
     call read_stick
 
-    st off, c
-    add pos, delta
+    call calculate_new_position
+    call check_new_position_in_bounds
 
-    copy ^screen, ptr
-    st off, c
-    add ptr, pos
+    if c {
+        copy ^screen, ptr
+        st off, c
+        add ptr, new_pos
+        ld y, 0
 
-    ld y, 0
-    copy 81, [ptr] + y
+        // copy [ptr] + y, a
+        // cmp a, 32
+        // if z {
+        //     copy new_pos, pos
+        //     copy 81, [ptr] + y
+        // } else {
+        //     // copy game_state_game_over, dispatch_game_state
+        // }
+
+        copy 81, [ptr] + y
+        copy new_pos, pos
+
+        ld a, 0    // FIXME shouldn't be needed
+    } else {
+        copy ^screen, ptr  // FIXME shouldn't be needed
+        ld y, 0    // FIXME shouldn't be needed
+        ld a, 0    // FIXME shouldn't be needed
+        add a, 0   // FIXME shouldn't be needed
+    }
 }
 
 routine enemy_logic
@@ -219,10 +284,10 @@ routine enemy_logic
 
 routine game_state_play
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, actor_delta, delta,
+         actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs button_down, dispatch_game_state, save_x,
-          actor_pos, pos, actor_delta, delta,
+          actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 {
@@ -258,10 +323,10 @@ routine game_state_play
 
 routine game_state_title_screen
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, actor_delta, delta,
+         actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs button_down, dispatch_game_state, save_x,
-          actor_pos, pos, actor_delta, delta,
+          actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 {
@@ -300,10 +365,10 @@ routine game_state_title_screen
 
 routine our_cinv
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, actor_delta, delta,
+         actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs button_down, dispatch_game_state, save_x,
-          actor_pos, pos, actor_delta, delta,
+          actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 {
