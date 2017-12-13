@@ -206,12 +206,12 @@ routine check_new_position_in_bounds
         st on, c
         sub compare_target, new_pos
         if not c {
-            st on, c
-        } else {
             st off, c
+        } else {
+            st on, c
         }
     } else {
-        st off, c
+        st on, c
     }
 }
 
