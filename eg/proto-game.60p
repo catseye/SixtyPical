@@ -36,10 +36,18 @@ byte table press_fire_msg: "PRESS`FIRE`TO`PLAY"
 //
 // Points to the routine that implements the current game state.
 //
+// It's very arguable that screen1/2/3/4 and colormap1/2/3/4 are not REALLY inputs.
+// They're only there to support the fact that game states sometimes clear the
+// screen, and sometimes don't.  When they don't, they preserve the screen, and
+// currently the way to say "we preserve the screen" is to have it as both input
+// and output.  There is probably a better way to do this, but it needs thought.
+//
 
 vector dispatch_game_state
-  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
-  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state,
+         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs delta, pos, button_down, dispatch_game_state,
+          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 
 //
@@ -55,14 +63,18 @@ vector dispatch_game_state
 //
 
 vector cinv
-  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
-  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state,
+         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs delta, pos, button_down, dispatch_game_state,
+          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
   @ 788
 
 vector save_cinv
-  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
-  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state,
+         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs delta, pos, button_down, dispatch_game_state,
+          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 
 // ----------------------------------------------------------------
@@ -165,8 +177,10 @@ routine clear_screen
 //
 
 routine game_state_play
-  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
-  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state,
+         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs delta, pos, button_down, dispatch_game_state,
+          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 {
     call read_stick
@@ -185,8 +199,10 @@ routine game_state_play
 }
 
 routine game_state_title_screen
-  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
-  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state,
+         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs delta, pos, button_down, dispatch_game_state,
+          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 {
     ld y, 0
@@ -205,9 +221,14 @@ routine game_state_title_screen
     call check_button
 
     if c {
-        // call clear_screen
+        call clear_screen
         // call init_game
         copy game_state_play, dispatch_game_state
+        ld a, 0   // FIXME we shouldn't need to.
+        ld y, 0   // FIXME we shouldn't need to.
+        st off, c // FIXME we shouldn't need to.
+    } else {
+        ld a, 0   // FIXME we shouldn't need to.
     }
 
     goto save_cinv
@@ -218,8 +239,10 @@ routine game_state_title_screen
 // *************************
 
 routine our_cinv
-  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
-  outputs delta, pos, screen, screen1, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state,
+         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs delta, pos, button_down, dispatch_game_state,
+          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr
 {
     goto dispatch_game_state
