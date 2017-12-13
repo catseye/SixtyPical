@@ -39,6 +39,7 @@ byte button_down : 0  // effectively static-local to check_button
 byte table press_fire_msg: "PRESS`FIRE`TO`PLAY"
 
 byte save_x
+word compare_target
 
 //
 // Points to the routine that implements the current game state.
@@ -54,10 +55,10 @@ vector dispatch_game_state
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state, save_x,
+  outputs button_down, dispatch_game_state,
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
 
 //
 // The constraints on these 2 vectors are kind-of sort-of big fibs.
@@ -75,20 +76,20 @@ vector cinv
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state, save_x,
+  outputs button_down, dispatch_game_state,
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
   @ 788
 
 vector save_cinv
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state, save_x,
+  outputs button_down, dispatch_game_state,
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
 
 // ----------------------------------------------------------------
 // Utility Routines
@@ -191,39 +192,27 @@ routine calculate_new_position
     add new_pos, delta
 }
 
-// routine compare_new_pos
-// {
-//     lda >new_position
-//     cmp >compare_target
-//     if beq {
-//         lda <new_position
-//         cmp <compare_target
-//     } else {
-//     }
-// }
-
 routine check_new_position_in_bounds
+  inputs new_pos
   outputs c
+  trashes compare_target, a, z, n, v
 {
-    // for now, we just assume the new position is in bounds, because we are awesomely lazy
+    copy 1000, compare_target
     st on, c
-   
-    // copy #$07e8 compare_target      // just past bottom of screen
-    // jsr compare_new_pos
-    // 
-    // if bcs {
-    //     clc
-    // } else {
-    // 
-    //     copy #$0400 compare_target
-    //     jsr compare_new_pos
-    // 
-    //     if bcc {
-    //         clc
-    //     } else {
-    //         sec
-    //     }
-    // }
+    sub compare_target, new_pos
+
+    if not c {
+        copy word 0, compare_target
+        st on, c
+        sub compare_target, new_pos
+        if not c {
+            st on, c
+        } else {
+            st off, c
+        }
+    } else {
+        st off, c
+    }
 }
 
 // ----------------------------------------------------------------
@@ -233,7 +222,7 @@ routine check_new_position_in_bounds
 routine player_logic
   inputs pos, delta, joy2, screen
   outputs pos, delta, new_pos, screen
-  trashes a, x, y, c, z, n, v, ptr
+  trashes a, x, y, c, z, n, v, ptr, compare_target
 {
     call read_stick
 
@@ -288,10 +277,10 @@ routine game_state_play
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state, save_x,
+  outputs button_down, dispatch_game_state,
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
 {
     ld x, 0
     repeat {
@@ -327,10 +316,10 @@ routine game_state_title_screen
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state, save_x,
+  outputs button_down, dispatch_game_state,
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
 {
     ld y, 0
     repeat {
@@ -375,10 +364,10 @@ routine our_cinv
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state, save_x,
+  outputs button_down, dispatch_game_state,
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
 {
     goto dispatch_game_state
 }
