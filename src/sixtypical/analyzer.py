@@ -414,7 +414,10 @@ class Analyzer(object):
 
             # FIXME: this is just to support "copy [foo] + y, a".  consider disallowing `a` as something
             # that can be used in `copy`.  should be using `st` or `ld` instead, probably.
-            if dest != REG_A:
+            if dest == REG_A:
+                context.set_touched(REG_A)
+                context.set_written(REG_A)
+            else:
                 context.set_unmeaningful(REG_A)
 
         elif opcode == 'with-sei':

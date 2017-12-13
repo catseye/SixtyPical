@@ -239,8 +239,14 @@ routine player_logic
         copy [ptr] + y, a
         cmp a, 32
         if z {
-            copy new_pos, pos
             copy 81, [ptr] + y
+
+            copy ^screen, ptr
+            st off, c
+            add ptr, pos
+            copy 32, [ptr] + y
+
+            copy new_pos, pos
         } else {
             // copy game_state_game_over, dispatch_game_state
             trash n
