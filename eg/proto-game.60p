@@ -258,12 +258,14 @@ routine player_logic
         copy 81, [ptr] + y
         copy new_pos, pos
 
-        ld a, 0    // FIXME shouldn't be needed
-    } else {
-        copy ^screen, ptr  // FIXME shouldn't be needed
-        ld y, 0    // FIXME shouldn't be needed
-        ld a, 0    // FIXME shouldn't be needed
-        add a, 0   // FIXME shouldn't be needed
+        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
+        // but currently the compiler cares too much about values that are
+        // initialized in one branch of an `if`, but not the other, but trashed
+        // at the end of the routine anyway.
+        trash ptr
+        trash y
+        trash a
+        trash v
     }
 }
 
@@ -349,11 +351,17 @@ routine game_state_title_screen
         call clear_screen
         // call init_game
         copy game_state_play, dispatch_game_state
-        ld a, 0   // FIXME we shouldn't need to.
-        ld y, 0   // FIXME we shouldn't need to.
-        st off, c // FIXME we shouldn't need to.
+
+        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
+        // but currently the compiler cares too much about values that are
+        // initialized in one branch of an `if`, but not the other, but trashed
+        // at the end of the routine anyway.
+        trash a
+        trash n
+        trash z
     } else {
-        ld a, 0   // FIXME we shouldn't need to.
+        trash y
+        trash c
     }
 
     goto save_cinv
