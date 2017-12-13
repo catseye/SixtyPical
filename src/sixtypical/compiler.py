@@ -470,5 +470,7 @@ class Compiler(object):
                 self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
             else:
                 raise NotImplementedError(src.type)
+        elif opcode == 'trash':
+            pass
         else:
             raise NotImplementedError(opcode)

@@ -70,6 +70,14 @@ Extern routines
     |   @ 65487
     = ok
 
+Trash.
+
+    | routine main {
+    |     trash a
+    |     trash n
+    | }
+    = ok
+
 If with not
 
     | routine foo {

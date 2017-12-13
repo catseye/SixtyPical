@@ -431,5 +431,7 @@ class Analyzer(object):
             self.assert_affected_within('trashes', type_.trashes, current_type.trashes)
 
             self.has_encountered_goto = True
+        elif opcode == 'trash':
+            context.set_unmeaningful(instr.dest)
         else:
             raise NotImplementedError(opcode)

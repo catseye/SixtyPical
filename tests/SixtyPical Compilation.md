@@ -1073,3 +1073,20 @@ Note that this is *not* range-checked.  (Yet.)
     = $083B   LDA ($FE),Y
     = $083D   STA $1041
     = $0840   RTS
+
+### Trash
+
+Trash does nothing except indicate that we do not care about the value anymore.
+
+    | routine main
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n
+    | {
+    |     ld x, a
+    |     ld a, 0
+    |     trash a
+    | }
+    = $080D   TAX
+    = $080E   LDA #$00
+    = $0810   RTS

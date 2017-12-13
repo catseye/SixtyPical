@@ -74,7 +74,6 @@ This should be tracked in the abstract interpretation.
 *   `byte table` and `word table` of sizes other than 256
 *   initialized `byte table` memory locations
 *   always analyze before executing or compiling, unless told not to
-*   `trash` instruction.
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
 *   error messages that include the line number of the source code
 *   have `copy` instruction able to copy a byte to a user-def mem loc, etc.

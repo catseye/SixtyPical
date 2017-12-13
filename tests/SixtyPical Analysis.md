@@ -1089,6 +1089,43 @@ same constraints.
     | }
     ? UnmeaningfulReadError: a in main
 
+### trash ###
+
+Trash does nothing except indicate that we do not care about the value anymore.
+
+    | routine foo
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n
+    | {
+    |     st a, x
+    |     ld a, 0
+    |     trash a
+    | }
+    = ok
+
+    | routine foo
+    |   inputs a
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     st a, x
+    |     ld a, 0
+    |     trash a
+    | }
+    ? UnmeaningfulOutputError: a in foo
+
+    | routine foo
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n
+    | {
+    |     st a, x
+    |     trash a
+    |     st a, x
+    | }
+    ? UnmeaningfulReadError: a in foo
+
 ### if ###
 
 Both blocks of an `if` are analyzed.

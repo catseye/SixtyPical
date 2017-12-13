@@ -305,5 +305,8 @@ class Parser(object):
             self.scanner.expect("off")
             block = self.block()
             return Instr(opcode='with-sei', dest=None, src=None, block=block)
+        elif self.scanner.consume("trash"):
+            dest = self.locexpr()
+            return Instr(opcode='trash', src=None, dest=dest)
         else:
             raise ValueError('bad opcode "%s"' % self.scanner.token)
