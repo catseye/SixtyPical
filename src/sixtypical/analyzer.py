@@ -273,9 +273,15 @@ class Analyzer(object):
                 else:
                     self.assert_type(TYPE_WORD, dest)
         elif opcode == 'sub':
-            self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest, FLAG_C)
-            context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+            if src.type == TYPE_BYTE:
+                self.assert_type(TYPE_BYTE, src, dest)
+                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+            else:
+                self.assert_type(TYPE_WORD, src, dest)
+                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+                context.set_touched(REG_A)
+                context.set_unmeaningful(REG_A)
         elif opcode in ('inc', 'dec'):
             self.assert_type(TYPE_BYTE, dest)
             context.assert_meaningful(dest)

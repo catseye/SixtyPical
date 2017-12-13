@@ -230,6 +230,26 @@ class Compiler(object):
                     self.emitter.emit(SBC(Immediate(Byte(src.value))))
                 else:
                     self.emitter.emit(SBC(Absolute(self.labels[src.name])))
+            elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and dest.type == TYPE_WORD:
+                if isinstance(src, ConstantRef):
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(Absolute(dest_label)))
+                    self.emitter.emit(SBC(Immediate(Byte(src.low_byte()))))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
+                    self.emitter.emit(SBC(Immediate(Byte(src.high_byte()))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                elif isinstance(src, LocationRef):
+                    src_label = self.labels[src.name]
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(Absolute(dest_label)))
+                    self.emitter.emit(SBC(Absolute(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
+                    self.emitter.emit(SBC(Absolute(Offset(src_label, 1))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                else:
+                    raise UnsupportedOpcodeError(instr)
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'inc':

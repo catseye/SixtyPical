@@ -895,6 +895,47 @@ Adding a word memory location to another word memory location.
     = $081D   STA $0822
     = $0820   RTS
 
+Subtracting a constant word from a word memory location.
+
+    | word score
+    | routine main
+    |   inputs score
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub score, 1999
+    | }
+    = $080D   SEC
+    = $080E   LDA $081F
+    = $0811   SBC #$CF
+    = $0813   STA $081F
+    = $0816   LDA $0820
+    = $0819   SBC #$07
+    = $081B   STA $0820
+    = $081E   RTS
+
+Subtracting a word memory location from another word memory location.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub score, delta
+    | }
+    = $080D   SEC
+    = $080E   LDA $0821
+    = $0811   SBC $0823
+    = $0814   STA $0821
+    = $0817   LDA $0822
+    = $081A   SBC $0824
+    = $081D   STA $0822
+    = $0820   RTS
+
 ### Buffers and Pointers
 
 Load address into pointer.

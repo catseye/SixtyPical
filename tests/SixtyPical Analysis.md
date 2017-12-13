@@ -593,6 +593,60 @@ Can't `sub` to a memory location that isn't writeable.
     | }
     ? ForbiddenWriteError: a in main
 
+You can `sub` a word constant from a word memory location.
+
+    | word score
+    | routine main
+    |   inputs a, score
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub score, 1999
+    | }
+    = ok
+
+`sub`ing a word constant from a word memory location trashes `a`.
+
+    | word score
+    | routine main
+    |   inputs a, score
+    |   outputs score, a
+    |   trashes c, z, v, n
+    | {
+    |     st on, c
+    |     sub score, 1999
+    | }
+    ? UnmeaningfulOutputError: a in main
+
+You can `sub` a word memory location from another word memory location.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     sub score, delta
+    | }
+    = ok
+
+`sub`ing a word memory location from a word memory location trashes `a`.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     sub score, delta
+    | }
+    ? ForbiddenWriteError: a in main
+
 ### inc ###
 
 Location must be initialized and writeable.
