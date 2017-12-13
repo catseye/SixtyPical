@@ -29,14 +29,16 @@ byte joy2 @ $dc00
 pointer ptr @ 254
 word pos
 word delta
+
 byte button_down : 0  // effectively static-local to check_button
+byte table press_fire_msg: "PRESS`FIRE`TO`PLAY"
 
 //
 // Points to the routine that implements the current game state.
 //
 
 vector dispatch_game_state
-  inputs joy2, pos, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
   outputs delta, pos, screen, screen1, button_down, dispatch_game_state
   trashes a, x, y, c, z, n, v, ptr
 
@@ -53,13 +55,13 @@ vector dispatch_game_state
 //
 
 vector cinv
-  inputs joy2, pos, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
   outputs delta, pos, screen, screen1, button_down, dispatch_game_state
   trashes a, x, y, c, z, n, v, ptr
   @ 788
 
 vector save_cinv
-  inputs joy2, pos, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
   outputs delta, pos, screen, screen1, button_down, dispatch_game_state
   trashes a, x, y, c, z, n, v, ptr
 
@@ -163,7 +165,7 @@ routine clear_screen
 //
 
 routine game_state_play
-  inputs joy2, pos, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
   outputs delta, pos, screen, screen1, button_down, dispatch_game_state
   trashes a, x, y, c, z, n, v, ptr
 {
@@ -183,16 +185,20 @@ routine game_state_play
 }
 
 routine game_state_title_screen
-  inputs joy2, pos, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
   outputs delta, pos, screen, screen1, button_down, dispatch_game_state
   trashes a, x, y, c, z, n, v, ptr
 {
-    ld y, 10
+    ld y, 0
     repeat {
-        ld a, 90
+        ld a, press_fire_msg + y
+
+        st on, c
+        sub a, 64   // yuck.  oh well
+
         st a, screen1 + y
         inc y
-        cmp y, 20
+        cmp y, 18
     } until z
 
     st off, c
@@ -212,7 +218,7 @@ routine game_state_title_screen
 // *************************
 
 routine our_cinv
-  inputs joy2, pos, button_down, dispatch_game_state
+  inputs joy2, pos, button_down, press_fire_msg, dispatch_game_state
   outputs delta, pos, screen, screen1, button_down, dispatch_game_state
   trashes a, x, y, c, z, n, v, ptr
 {
