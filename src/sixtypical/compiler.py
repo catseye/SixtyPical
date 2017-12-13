@@ -31,6 +31,18 @@ class Compiler(object):
         self.labels = {}
         self.trampolines = {}   # Location -> Label
 
+    # helper methods
+
+    def addressing_mode_for_index(self, index):
+        if index == REG_X:
+            return AbsoluteX
+        elif index == REG_Y:
+            return AbsoluteY
+        else:
+            raise NotImplementedError(index)
+
+    # visitor methods
+
     def compile_program(self, program):
         assert isinstance(program, Program)
 
@@ -372,49 +384,28 @@ class Compiler(object):
                 if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
                     src_label = self.labels[src.name]
                     dest_label = self.labels[dest.ref.name]
-                    addressing_mode = None
-                    if dest.index == REG_X:
-                        addressing_mode = AbsoluteX
-                    elif dest.index == REG_Y:
-                        addressing_mode = AbsoluteY
-                    else:
-                        raise NotImplementedError(dest)
                     self.emitter.emit(LDA(Absolute(src_label)))
-                    self.emitter.emit(STA(addressing_mode(dest_label)))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
                     self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
-                    self.emitter.emit(STA(addressing_mode(Offset(dest_label, 256))))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
                 else:
                     raise NotImplementedError
             elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
                 if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
                     dest_label = self.labels[dest.ref.name]
-                    addressing_mode = None
-                    if dest.index == REG_X:
-                        addressing_mode = AbsoluteX
-                    elif dest.index == REG_Y:
-                        addressing_mode = AbsoluteY
-                    else:
-                        raise NotImplementedError(dest)
                     self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
-                    self.emitter.emit(STA(addressing_mode(dest_label)))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
                     self.emitter.emit(LDA(Immediate(Byte(src.high_byte()))))
-                    self.emitter.emit(STA(addressing_mode(Offset(dest_label, 256))))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
                 else:
                     raise NotImplementedError
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 if src.ref.type == TYPE_WORD_TABLE and dest.type == TYPE_WORD:
                     src_label = self.labels[src.ref.name]
                     dest_label = self.labels[dest.name]
-                    addressing_mode = None
-                    if src.index == REG_X:
-                        addressing_mode = AbsoluteX
-                    elif src.index == REG_Y:
-                        addressing_mode = AbsoluteY
-                    else:
-                        raise NotImplementedError(src)
-                    self.emitter.emit(LDA(addressing_mode(src_label)))
+                    self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))
                     self.emitter.emit(STA(Absolute(dest_label)))
-                    self.emitter.emit(LDA(addressing_mode(Offset(src_label, 256))))
+                    self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(Offset(src_label, 256))))
                     self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
                 else:
                     raise NotImplementedError
