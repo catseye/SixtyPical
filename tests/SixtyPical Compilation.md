@@ -1005,7 +1005,7 @@ Write stored value through a pointer.
     = $081A   STA ($FE),Y
     = $081C   RTS
 
-Read through a pointer.
+Read through a pointer, into a byte storage location, or the `a` register.
 
     | buffer[2048] buf
     | pointer ptr @ 254
@@ -1019,15 +1019,17 @@ Read through a pointer.
     |     ld y, 0
     |     copy ^buf, ptr
     |     copy [ptr] + y, foo
+    |     copy [ptr] + y, a
     | }
     = $080D   LDY #$00
-    = $080F   LDA #$1D
+    = $080F   LDA #$1F
     = $0811   STA $FE
     = $0813   LDA #$08
     = $0815   STA $FF
     = $0817   LDA ($FE),Y
-    = $0819   STA $101D
-    = $081C   RTS
+    = $0819   STA $101F
+    = $081C   LDA ($FE),Y
+    = $081E   RTS
 
 Add a word memory location, and a literal word, to a pointer, and then read through it.
 Note that this is *not* range-checked.  (Yet.)

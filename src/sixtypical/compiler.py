@@ -385,7 +385,10 @@ class Compiler(object):
                 else:
                     raise NotImplementedError((src, dest))
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
-                if dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
+                if dest == REG_A and isinstance(src.ref.type, PointerType):
+                    src_label = self.labels[src.ref.name]
+                    self.emitter.emit(LDA(IndirectY(src_label)))
+                elif dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
                     src_label = self.labels[src.ref.name]
                     dest_label = self.labels[dest.name]
                     self.emitter.emit(LDA(IndirectY(src_label)))

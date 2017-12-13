@@ -235,7 +235,9 @@ routine player_logic
         add ptr, new_pos
         ld y, 0
 
-        // copy [ptr] + y, a
+        // check collision.
+        copy [ptr] + y, a
+
         // cmp a, 32
         // if z {
         //     copy new_pos, pos
