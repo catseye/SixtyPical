@@ -237,17 +237,16 @@ routine player_logic
 
         // check collision.
         copy [ptr] + y, a
-
-        // cmp a, 32
-        // if z {
-        //     copy new_pos, pos
-        //     copy 81, [ptr] + y
-        // } else {
-        //     // copy game_state_game_over, dispatch_game_state
-        // }
-
-        copy 81, [ptr] + y
-        copy new_pos, pos
+        cmp a, 32
+        if z {
+            copy new_pos, pos
+            copy 81, [ptr] + y
+        } else {
+            // copy game_state_game_over, dispatch_game_state
+            trash n
+            trash a
+            trash z
+        }
 
         // FIXME these trashes, strictly speaking, probably shouldn't be needed,
         // but currently the compiler cares too much about values that are

@@ -392,6 +392,7 @@ class Analyzer(object):
                 context.assert_meaningful(src.ref, REG_Y)
                 # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
                 context.set_touched(src.ref)  # TODO and REG_Y?  if not, why not?
+                context.set_touched(dest)
                 context.set_written(dest)
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
@@ -409,7 +410,12 @@ class Analyzer(object):
                 context.set_written(dest)
 
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
-            context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
+            context.set_unmeaningful(FLAG_Z, FLAG_N)
+
+            # FIXME: this is just to support "copy [foo] + y, a".  consider disallowing `a` as something
+            # that can be used in `copy`.  should be using `st` or `ld` instead, probably.
+            if dest != REG_A:
+                context.set_unmeaningful(REG_A)
 
         elif opcode == 'with-sei':
             self.analyze_block(instr.block, context)
