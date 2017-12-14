@@ -215,6 +215,29 @@ routine check_new_position_in_bounds
     }
 }
 
+routine init_game
+  inputs actor_pos, actor_delta
+  outputs actor_pos, actor_delta, pos
+  trashes a, y, z, n, c, v
+{
+    ld y, 0
+    copy word 0, pos
+    repeat {
+        copy pos, actor_pos + y
+        copy word 40, actor_delta + y
+
+        st off, c
+        add pos, word 7
+
+        inc y
+        cmp y, 16
+    } until z
+
+    ld y, 0
+    copy word 0, actor_pos + y
+    copy word 0, actor_delta + y
+}
+
 // ----------------------------------------------------------------
 // Actor Logics
 // ----------------------------------------------------------------
@@ -270,6 +293,12 @@ routine enemy_logic
   outputs pos, delta, screen
   trashes a, x, y, c, z, n, v, ptr
 {
+    copy ^screen, ptr
+    st off, c
+    add ptr, pos
+    ld y, 0
+
+    copy 82, [ptr] + y
 }
 
 // ----------------------------------------------------------------
@@ -296,9 +325,10 @@ routine game_state_play
 
         st x, save_x
 
-        ////// FIXME need VECTOR TABLEs to make this happen:
-        ////// copy actor_logic, x dispatch_logic
-        ////// call indirect_jsr_logic
+        // FIXME need VECTOR TABLEs to make this happen:
+        // copy actor_logic, x dispatch_logic
+        // call indirect_jsr_logic
+        // For now, just check the actor ID to see what type it is, and go from there.
 
         cmp x, 0
         if z {
@@ -345,7 +375,7 @@ routine game_state_title_screen
 
     if c {
         call clear_screen
-        // call init_game
+        call init_game
         copy game_state_play, dispatch_game_state
 
         // FIXME these trashes, strictly speaking, probably shouldn't be needed,
@@ -358,6 +388,7 @@ routine game_state_title_screen
     } else {
         trash y
         trash c
+        trash v
     }
 
     goto save_cinv
