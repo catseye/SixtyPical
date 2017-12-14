@@ -319,11 +319,13 @@ class Analyzer(object):
             # doesn't really matter if you modified it or not, coming out.
             for ref in context1.each_meaningful():
                 context2.assert_meaningful(
-                    ref, exception_class=InconsistentInitializationError, message='initialized in block 1 but not in block 2'
+                    ref, exception_class=InconsistentInitializationError,
+                    message='initialized in block 1 but not in block 2 of `if {}`'.format(src)
                 )
             for ref in context2.each_meaningful():
                 context1.assert_meaningful(
-                    ref, exception_class=InconsistentInitializationError, message='initialized in block 2 but not in block 1'
+                    ref, exception_class=InconsistentInitializationError,
+                    message='initialized in block 2 but not in block 1 of `if {}`'.format(src)
                 )
             context.set_from(context1)
         elif opcode == 'repeat':
