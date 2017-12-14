@@ -264,10 +264,13 @@ routine player_logic
 
         // check collision.
         copy [ptr] + y, a
+        // if "collision" is with your own self, treat it as if it's blank space!
+        cmp a, 81
+        if z {
+            ld a, 32
+        }
         cmp a, 32
         if z {
-            copy 81, [ptr] + y
-
             copy ^screen, ptr
             st off, c
             add ptr, pos
@@ -275,10 +278,14 @@ routine player_logic
 
             copy new_pos, pos
 
+            copy ^screen, ptr
+            st off, c
+            add ptr, pos
+            copy 81, [ptr] + y
+
             st off, c
         } else {
             st on, c
-            st off, c    // FIXME this branch seems to be called even when there is no collision.  why?
             trash n
             trash a
             trash z
