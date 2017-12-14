@@ -243,8 +243,10 @@ routine init_game
 // ----------------------------------------------------------------
 
 routine player_logic
-  inputs pos, delta, joy2, screen
-  outputs pos, delta, new_pos, screen
+  inputs pos, delta, joy2, screen, dispatch_game_state,
+         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs pos, delta, new_pos, screen, dispatch_game_state,
+         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr, compare_target
 {
     call read_stick
@@ -270,8 +272,11 @@ routine player_logic
             copy 32, [ptr] + y
 
             copy new_pos, pos
+            trash y
+            trash c
         } else {
-            // copy game_state_game_over, dispatch_game_state
+            call clear_screen
+            copy forward game_state_game_over, dispatch_game_state
             trash n
             trash a
             trash z
@@ -285,6 +290,9 @@ routine player_logic
         trash y
         trash a
         trash v
+        trash c
+    } else {
+        trash c
     }
 }
 
@@ -308,6 +316,51 @@ routine enemy_logic
 //
 // Because these all `goto save_cinv` at the end, they must have the same signature as that routine.
 //
+
+routine game_state_title_screen
+  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
+         actor_pos, pos, new_pos, actor_delta, delta,
+         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs button_down, dispatch_game_state,
+          actor_pos, pos, new_pos, actor_delta, delta,
+          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+{
+    ld y, 0
+    repeat {
+        ld a, press_fire_msg + y
+
+        st on, c
+        sub a, 64   // yuck.  oh well
+
+        st a, screen1 + y
+        inc y
+        cmp y, 18
+    } until z
+
+    st off, c
+    call check_button
+
+    if c {
+        call clear_screen
+        call init_game
+        copy forward game_state_play, dispatch_game_state
+
+        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
+        // but currently the compiler cares too much about values that are
+        // initialized in one branch of an `if`, but not the other, but trashed
+        // at the end of the routine anyway.
+        trash a
+        trash n
+        trash z
+    } else {
+        trash y
+        trash c
+        trash v
+    }
+
+    goto save_cinv
+}
 
 routine game_state_play
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
@@ -349,7 +402,7 @@ routine game_state_play
     goto save_cinv
 }
 
-routine game_state_title_screen
+routine game_state_game_over
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
@@ -358,25 +411,13 @@ routine game_state_title_screen
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
 {
-    ld y, 0
-    repeat {
-        ld a, press_fire_msg + y
-
-        st on, c
-        sub a, 64   // yuck.  oh well
-
-        st a, screen1 + y
-        inc y
-        cmp y, 18
-    } until z
-
     st off, c
     call check_button
 
     if c {
         call clear_screen
         call init_game
-        copy game_state_play, dispatch_game_state
+        copy game_state_title_screen, dispatch_game_state
 
         // FIXME these trashes, strictly speaking, probably shouldn't be needed,
         // but currently the compiler cares too much about values that are
