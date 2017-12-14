@@ -309,16 +309,61 @@ routine player_logic
 //
 
 routine enemy_logic
-  inputs pos, delta, joy2, screen
-  outputs pos, delta, screen, c
-  trashes a, x, y, z, n, v, ptr
+  inputs pos, delta, screen
+  outputs pos, delta, new_pos, screen, c
+  trashes a, x, y, z, n, v, ptr, compare_target
 {
-    copy ^screen, ptr
-    st off, c
-    add ptr, pos
-    ld y, 0
+    call calculate_new_position
+    call check_new_position_in_bounds
 
-    copy 82, [ptr] + y
+    if c {
+        copy ^screen, ptr
+        st off, c
+        add ptr, new_pos
+        ld y, 0
+
+        // check collision.
+        copy [ptr] + y, a
+        // if "collision" is with your own self, treat it as if it's blank space!
+        cmp a, 82
+        if z {
+            ld a, 32
+        }
+        cmp a, 32
+        if z {
+            copy ^screen, ptr
+            st off, c
+            add ptr, pos
+            copy 32, [ptr] + y
+
+            copy new_pos, pos
+
+            copy ^screen, ptr
+            st off, c
+            add ptr, pos
+            copy 82, [ptr] + y
+
+            st off, c
+        } else {
+            st on, c
+            trash n
+            trash a
+            trash z
+        }
+
+        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
+        // but currently the compiler cares too much about values that are
+        // initialized in one branch of an `if`, but not the other, but trashed
+        // at the end of the routine anyway.
+        trash ptr
+        trash y
+        trash a
+    } else {
+        copy word 0, compare_target
+        sub compare_target, delta
+        copy compare_target, delta
+        trash compare_target
+    }
 
     st off, c
 }
