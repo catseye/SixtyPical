@@ -242,12 +242,14 @@ routine init_game
 // Actor Logics
 // ----------------------------------------------------------------
 
+//
+// Sets carry if the player perished.  Carry clear otherwise.
+//
+
 routine player_logic
-  inputs pos, delta, joy2, screen, dispatch_game_state,
-         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs pos, delta, new_pos, screen, dispatch_game_state,
-         screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, compare_target
+  inputs pos, delta, joy2, screen
+  outputs pos, delta, new_pos, screen, c
+  trashes a, x, y, z, n, v, ptr, compare_target
 {
     call read_stick
 
@@ -272,11 +274,11 @@ routine player_logic
             copy 32, [ptr] + y
 
             copy new_pos, pos
-            trash y
-            trash c
+
+            st off, c
         } else {
-            call clear_screen
-            copy forward game_state_game_over, dispatch_game_state
+            st on, c
+            st off, c    // FIXME this branch seems to be called even when there is no collision.  why?
             trash n
             trash a
             trash z
@@ -290,16 +292,19 @@ routine player_logic
         trash y
         trash a
         trash v
-        trash c
     } else {
-        trash c
+        st off, c
     }
 }
 
+//
+// Sets carry if the player perished.  Carry clear otherwise.
+//
+
 routine enemy_logic
   inputs pos, delta, joy2, screen
-  outputs pos, delta, screen
-  trashes a, x, y, c, z, n, v, ptr
+  outputs pos, delta, screen, c
+  trashes a, x, y, z, n, v, ptr
 {
     copy ^screen, ptr
     st off, c
@@ -307,6 +312,8 @@ routine enemy_logic
     ld y, 0
 
     copy 82, [ptr] + y
+
+    st off, c
 }
 
 // ----------------------------------------------------------------
@@ -388,6 +395,19 @@ routine game_state_play
             call player_logic
         } else {
             call enemy_logic
+        }
+
+        if c {
+            // Player died!  Want no dead!  Break out of the loop (this is a bit awkward.)
+            call clear_screen
+            copy forward game_state_game_over, dispatch_game_state
+            ld x, 15
+            st x, save_x
+            trash n
+            trash z
+            trash x
+        } else {
+            trash c
         }
 
         ld x, save_x
