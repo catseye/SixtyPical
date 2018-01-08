@@ -359,9 +359,14 @@ routine enemy_logic
         trash y
         trash a
     } else {
-        copy word 0, compare_target
-        sub compare_target, delta
-        copy compare_target, delta
+        copy delta, compare_target
+        st on, c
+        sub compare_target, word 40
+        if not z {
+            copy word 40, delta
+        } else {
+            copy $ffd8, delta
+        }
         trash compare_target
     }
 
