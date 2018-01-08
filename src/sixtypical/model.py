@@ -8,6 +8,9 @@ class Type(object):
     def __repr__(self):
         return 'Type(%r)' % self.name
 
+    def __str__(self):
+        return self.name
+
     def __eq__(self, other):
         return isinstance(other, Type) and other.name == self.name
 
@@ -86,11 +89,12 @@ class LocationRef(Ref):
     def __eq__(self, other):
         # Ordinarily there will only be one ref with a given name,
         # but because we store the type in here and we want to treat
-        # these objects as immutable, we compare the types, too.
-        # Not sure if very wise.
-        return isinstance(other, self.__class__) and (
-            other.name == self.name and other.type == self.type
-        )
+        # these objects as immutable, we compare the types, too,
+        # just to be sure.
+        equal = isinstance(other, self.__class__) and other.name == self.name
+        if equal:
+            assert other.type == self.type
+        return equal
 
     def __hash__(self):
         return hash(self.name + str(self.type))
@@ -98,8 +102,22 @@ class LocationRef(Ref):
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.type, self.name)
 
+    def __str__(self):
+        return "{}:{}".format(self.name, self.type)
+
     def is_constant(self):
         return isinstance(self.type, RoutineType)
+
+    def backpatch_vector_labels(self, resolver):
+        if isinstance(self.type, ExecutableType):
+            t = self.type
+            t.inputs = set([resolver(w) for w in t.inputs])
+            t.outputs = set([resolver(w) for w in t.outputs])
+            t.trashes = set([resolver(w) for w in t.trashes])
+
+    @classmethod
+    def format_set(cls, location_refs):
+        return '{%s}' % ', '.join([str(loc) for loc in sorted(location_refs)])
 
 
 class IndirectRef(Ref):

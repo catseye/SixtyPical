@@ -117,6 +117,296 @@ Memory location with initial value.
     = $0810   RTS
     = $0811   .byte $03
 
+Word memory locations with explicit address, initial value.
+
+    | word w1 @ 60001
+    | word w2 : 3003
+    | 
+    | routine main
+    |   inputs w1
+    |   outputs w2
+    |   trashes a, z, n
+    | {
+    |   copy w1, w2
+    | }
+    = $080D   LDA $EA61
+    = $0810   STA $081A
+    = $0813   LDA $EA62
+    = $0816   STA $081B
+    = $0819   RTS
+    = $081A   .byte $BB
+    = $081B   .byte $0B
+
+Initialized byte table.
+
+    | byte table message : "WHAT?"
+    | 
+    | routine main
+    |   inputs message
+    |   outputs x, a, z, n
+    | {
+    |   ld x, 0
+    |   ld a, message + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA $0813,X
+    = $0812   RTS
+    = $0813   .byte $57
+    = $0814   PHA
+    = $0815   EOR ($54,X)
+    = $0817   .byte $3F
+    = $0818   BRK
+    = $0819   BRK
+    = $081A   BRK
+    = $081B   BRK
+    = $081C   BRK
+    = $081D   BRK
+    = $081E   BRK
+    = $081F   BRK
+    = $0820   BRK
+    = $0821   BRK
+    = $0822   BRK
+    = $0823   BRK
+    = $0824   BRK
+    = $0825   BRK
+    = $0826   BRK
+    = $0827   BRK
+    = $0828   BRK
+    = $0829   BRK
+    = $082A   BRK
+    = $082B   BRK
+    = $082C   BRK
+    = $082D   BRK
+    = $082E   BRK
+    = $082F   BRK
+    = $0830   BRK
+    = $0831   BRK
+    = $0832   BRK
+    = $0833   BRK
+    = $0834   BRK
+    = $0835   BRK
+    = $0836   BRK
+    = $0837   BRK
+    = $0838   BRK
+    = $0839   BRK
+    = $083A   BRK
+    = $083B   BRK
+    = $083C   BRK
+    = $083D   BRK
+    = $083E   BRK
+    = $083F   BRK
+    = $0840   BRK
+    = $0841   BRK
+    = $0842   BRK
+    = $0843   BRK
+    = $0844   BRK
+    = $0845   BRK
+    = $0846   BRK
+    = $0847   BRK
+    = $0848   BRK
+    = $0849   BRK
+    = $084A   BRK
+    = $084B   BRK
+    = $084C   BRK
+    = $084D   BRK
+    = $084E   BRK
+    = $084F   BRK
+    = $0850   BRK
+    = $0851   BRK
+    = $0852   BRK
+    = $0853   BRK
+    = $0854   BRK
+    = $0855   BRK
+    = $0856   BRK
+    = $0857   BRK
+    = $0858   BRK
+    = $0859   BRK
+    = $085A   BRK
+    = $085B   BRK
+    = $085C   BRK
+    = $085D   BRK
+    = $085E   BRK
+    = $085F   BRK
+    = $0860   BRK
+    = $0861   BRK
+    = $0862   BRK
+    = $0863   BRK
+    = $0864   BRK
+    = $0865   BRK
+    = $0866   BRK
+    = $0867   BRK
+    = $0868   BRK
+    = $0869   BRK
+    = $086A   BRK
+    = $086B   BRK
+    = $086C   BRK
+    = $086D   BRK
+    = $086E   BRK
+    = $086F   BRK
+    = $0870   BRK
+    = $0871   BRK
+    = $0872   BRK
+    = $0873   BRK
+    = $0874   BRK
+    = $0875   BRK
+    = $0876   BRK
+    = $0877   BRK
+    = $0878   BRK
+    = $0879   BRK
+    = $087A   BRK
+    = $087B   BRK
+    = $087C   BRK
+    = $087D   BRK
+    = $087E   BRK
+    = $087F   BRK
+    = $0880   BRK
+    = $0881   BRK
+    = $0882   BRK
+    = $0883   BRK
+    = $0884   BRK
+    = $0885   BRK
+    = $0886   BRK
+    = $0887   BRK
+    = $0888   BRK
+    = $0889   BRK
+    = $088A   BRK
+    = $088B   BRK
+    = $088C   BRK
+    = $088D   BRK
+    = $088E   BRK
+    = $088F   BRK
+    = $0890   BRK
+    = $0891   BRK
+    = $0892   BRK
+    = $0893   BRK
+    = $0894   BRK
+    = $0895   BRK
+    = $0896   BRK
+    = $0897   BRK
+    = $0898   BRK
+    = $0899   BRK
+    = $089A   BRK
+    = $089B   BRK
+    = $089C   BRK
+    = $089D   BRK
+    = $089E   BRK
+    = $089F   BRK
+    = $08A0   BRK
+    = $08A1   BRK
+    = $08A2   BRK
+    = $08A3   BRK
+    = $08A4   BRK
+    = $08A5   BRK
+    = $08A6   BRK
+    = $08A7   BRK
+    = $08A8   BRK
+    = $08A9   BRK
+    = $08AA   BRK
+    = $08AB   BRK
+    = $08AC   BRK
+    = $08AD   BRK
+    = $08AE   BRK
+    = $08AF   BRK
+    = $08B0   BRK
+    = $08B1   BRK
+    = $08B2   BRK
+    = $08B3   BRK
+    = $08B4   BRK
+    = $08B5   BRK
+    = $08B6   BRK
+    = $08B7   BRK
+    = $08B8   BRK
+    = $08B9   BRK
+    = $08BA   BRK
+    = $08BB   BRK
+    = $08BC   BRK
+    = $08BD   BRK
+    = $08BE   BRK
+    = $08BF   BRK
+    = $08C0   BRK
+    = $08C1   BRK
+    = $08C2   BRK
+    = $08C3   BRK
+    = $08C4   BRK
+    = $08C5   BRK
+    = $08C6   BRK
+    = $08C7   BRK
+    = $08C8   BRK
+    = $08C9   BRK
+    = $08CA   BRK
+    = $08CB   BRK
+    = $08CC   BRK
+    = $08CD   BRK
+    = $08CE   BRK
+    = $08CF   BRK
+    = $08D0   BRK
+    = $08D1   BRK
+    = $08D2   BRK
+    = $08D3   BRK
+    = $08D4   BRK
+    = $08D5   BRK
+    = $08D6   BRK
+    = $08D7   BRK
+    = $08D8   BRK
+    = $08D9   BRK
+    = $08DA   BRK
+    = $08DB   BRK
+    = $08DC   BRK
+    = $08DD   BRK
+    = $08DE   BRK
+    = $08DF   BRK
+    = $08E0   BRK
+    = $08E1   BRK
+    = $08E2   BRK
+    = $08E3   BRK
+    = $08E4   BRK
+    = $08E5   BRK
+    = $08E6   BRK
+    = $08E7   BRK
+    = $08E8   BRK
+    = $08E9   BRK
+    = $08EA   BRK
+    = $08EB   BRK
+    = $08EC   BRK
+    = $08ED   BRK
+    = $08EE   BRK
+    = $08EF   BRK
+    = $08F0   BRK
+    = $08F1   BRK
+    = $08F2   BRK
+    = $08F3   BRK
+    = $08F4   BRK
+    = $08F5   BRK
+    = $08F6   BRK
+    = $08F7   BRK
+    = $08F8   BRK
+    = $08F9   BRK
+    = $08FA   BRK
+    = $08FB   BRK
+    = $08FC   BRK
+    = $08FD   BRK
+    = $08FE   BRK
+    = $08FF   BRK
+    = $0900   BRK
+    = $0901   BRK
+    = $0902   BRK
+    = $0903   BRK
+    = $0904   BRK
+    = $0905   BRK
+    = $0906   BRK
+    = $0907   BRK
+    = $0908   BRK
+    = $0909   BRK
+    = $090A   BRK
+    = $090B   BRK
+    = $090C   BRK
+    = $090D   BRK
+    = $090E   BRK
+    = $090F   BRK
+    = $0910   BRK
+    = $0911   BRK
+    = $0912   BRK
+
 Some instructions.
 
     | byte foo
@@ -297,6 +587,16 @@ Compiling `repeat forever`.
     = $0810   JMP $080F
     = $0813   RTS
 
+The body of `repeat forever` can be empty.
+
+    | routine main
+    | {
+    |     repeat {
+    |     } forever
+    | }
+    = $080D   JMP $080D
+    = $0810   RTS
+
 Indexed access.
 
     | byte one
@@ -403,6 +703,25 @@ Copy literal word to word.
     = $0812   LDA #$07
     = $0814   STA $0819
     = $0817   RTS
+
+You can also copy a literal word to a word table.
+
+    | word table many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 9999, many + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$0F
+    = $0811   STA $081A,X
+    = $0814   LDA #$27
+    = $0816   STA $091A,X
+    = $0819   RTS
 
 Copy vector to vector.
 
@@ -576,6 +895,47 @@ Adding a word memory location to another word memory location.
     = $081D   STA $0822
     = $0820   RTS
 
+Subtracting a constant word from a word memory location.
+
+    | word score
+    | routine main
+    |   inputs score
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub score, 1999
+    | }
+    = $080D   SEC
+    = $080E   LDA $081F
+    = $0811   SBC #$CF
+    = $0813   STA $081F
+    = $0816   LDA $0820
+    = $0819   SBC #$07
+    = $081B   STA $0820
+    = $081E   RTS
+
+Subtracting a word memory location from another word memory location.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub score, delta
+    | }
+    = $080D   SEC
+    = $080E   LDA $0821
+    = $0811   SBC $0823
+    = $0814   STA $0821
+    = $0817   LDA $0822
+    = $081A   SBC $0824
+    = $081D   STA $0822
+    = $0820   RTS
+
 ### Buffers and Pointers
 
 Load address into pointer.
@@ -645,7 +1005,7 @@ Write stored value through a pointer.
     = $081A   STA ($FE),Y
     = $081C   RTS
 
-Read through a pointer.
+Read through a pointer, into a byte storage location, or the `a` register.
 
     | buffer[2048] buf
     | pointer ptr @ 254
@@ -659,15 +1019,17 @@ Read through a pointer.
     |     ld y, 0
     |     copy ^buf, ptr
     |     copy [ptr] + y, foo
+    |     copy [ptr] + y, a
     | }
     = $080D   LDY #$00
-    = $080F   LDA #$1D
+    = $080F   LDA #$1F
     = $0811   STA $FE
     = $0813   LDA #$08
     = $0815   STA $FF
     = $0817   LDA ($FE),Y
-    = $0819   STA $101D
-    = $081C   RTS
+    = $0819   STA $101F
+    = $081C   LDA ($FE),Y
+    = $081E   RTS
 
 Add a word memory location, and a literal word, to a pointer, and then read through it.
 Note that this is *not* range-checked.  (Yet.)
@@ -713,3 +1075,20 @@ Note that this is *not* range-checked.  (Yet.)
     = $083B   LDA ($FE),Y
     = $083D   STA $1041
     = $0840   RTS
+
+### Trash
+
+Trash does nothing except indicate that we do not care about the value anymore.
+
+    | routine main
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n
+    | {
+    |     ld x, a
+    |     ld a, 0
+    |     trash a
+    | }
+    = $080D   TAX
+    = $080E   LDA #$00
+    = $0810   RTS

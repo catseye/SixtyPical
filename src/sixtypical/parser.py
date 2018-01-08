@@ -23,6 +23,7 @@ class Parser(object):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
         for token in ('c', 'z', 'n', 'v'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BIT, token))
+        self.backpatch_instrs = []
 
     def lookup(self, name):
         if name not in self.symbols:
@@ -49,19 +50,28 @@ class Parser(object):
             self.symbols[name] = SymEntry(routine, routine.location)
             routines.append(routine)
         self.scanner.check_type('EOF')
+
         # now backpatch the executable types.
         for defn in defns:
-            if isinstance(defn.location.type, VectorType):
-                t = defn.location.type
-                t.inputs = set([self.lookup(w) for w in t.inputs])
-                t.outputs = set([self.lookup(w) for w in t.outputs])
-                t.trashes = set([self.lookup(w) for w in t.trashes])
+            defn.location.backpatch_vector_labels(lambda w: self.lookup(w))
         for routine in routines:
-            if isinstance(routine.location.type, ExecutableType):
-                t = routine.location.type
-                t.inputs = set([self.lookup(w) for w in t.inputs])
-                t.outputs = set([self.lookup(w) for w in t.outputs])
-                t.trashes = set([self.lookup(w) for w in t.trashes])
+            routine.location.backpatch_vector_labels(lambda w: self.lookup(w))
+        for instr in self.backpatch_instrs:
+            if instr.opcode in ('call', 'goto'):
+                name = instr.location
+                if name not in self.symbols:
+                    raise SyntaxError('Undefined routine "%s"' % name)
+                if not isinstance(self.symbols[name].model.type, ExecutableType):
+                    raise SyntaxError('Illegal call of non-executable "%s"' % name)
+                instr.location = self.symbols[name].model
+            if instr.opcode in ('copy',) and isinstance(instr.src, basestring):
+                name = instr.src
+                if name not in self.symbols:
+                    raise SyntaxError('Undefined routine "%s"' % name)
+                if not isinstance(self.symbols[name].model.type, ExecutableType):
+                    raise SyntaxError('Illegal copy of non-executable "%s"' % name)
+                instr.src = self.symbols[name].model
+
         return Program(defns=defns, routines=routines)
 
     def defn(self):
@@ -79,8 +89,11 @@ class Parser(object):
 
         initial = None
         if self.scanner.consume(':'):
-            self.scanner.check_type('integer literal')
-            initial = int(self.scanner.token)
+            if type_ == TYPE_BYTE_TABLE and self.scanner.on_type('string literal'):
+                initial = self.scanner.token
+            else:
+                self.scanner.check_type('integer literal')
+                initial = int(self.scanner.token)
             self.scanner.scan()
 
         addr = None
@@ -194,7 +207,9 @@ class Parser(object):
             return loc
 
     def indlocexpr(self):
-        if self.scanner.consume('['):
+        if self.scanner.consume('forward'):
+            return self.label()
+        elif self.scanner.consume('['):
             loc = self.locexpr()
             self.scanner.expect(']')
             self.scanner.expect('+')
@@ -273,22 +288,25 @@ class Parser(object):
             self.scanner.scan()
             name = self.scanner.token
             self.scanner.scan()
-            if name not in self.symbols:
-                raise SyntaxError('Undefined routine "%s"' % name)
-            if not isinstance(self.symbols[name].model.type, ExecutableType):
-                raise SyntaxError('Illegal call of non-executable "%s"' % name)
-            return Instr(opcode=opcode, location=self.symbols[name].model, dest=None, src=None)
+            instr = Instr(opcode=opcode, location=name, dest=None, src=None)
+            self.backpatch_instrs.append(instr)
+            return instr
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token
             self.scanner.scan()
             src = self.indlocexpr()
             self.scanner.expect(',')
             dest = self.indlocexpr()
-            return Instr(opcode=opcode, dest=dest, src=src)
+            instr = Instr(opcode=opcode, dest=dest, src=src)
+            self.backpatch_instrs.append(instr)
+            return instr
         elif self.scanner.consume("with"):
             self.scanner.expect("interrupts")
             self.scanner.expect("off")
             block = self.block()
             return Instr(opcode='with-sei', dest=None, src=None, block=block)
+        elif self.scanner.consume("trash"):
+            dest = self.locexpr()
+            return Instr(opcode='trash', src=None, dest=dest)
         else:
             raise ValueError('bad opcode "%s"' % self.scanner.token)

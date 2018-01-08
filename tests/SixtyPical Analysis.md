@@ -89,6 +89,24 @@ If a routine modifies a location, it needs to either output it or trash it.
     | }
     = ok
 
+If a routine reads or writes a user-define memory location, it needs to declare that too.
+
+    | byte b1 @ 60000
+    | byte b2 : 3
+    | word w1 @ 60001
+    | word w2 : 2000
+    | 
+    | routine main
+    |   inputs b1, w1
+    |   outputs b2, w2
+    |   trashes a, z, n
+    | {
+    |   ld a, b1
+    |   st a, b2
+    |   copy w1, w2
+    | }
+    = ok
+
 ### ld ###
 
 Can't `ld` from a memory location that isn't initialized.
@@ -370,6 +388,20 @@ Copying to and from a word table.
     | }
     ? TypeMismatchError
 
+You can also copy a literal word to a word table.
+
+    | word table many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 9999, many + x
+    | }
+    = ok
+
 ### add ###
 
 Can't `add` from or to a memory location that isn't initialized.
@@ -558,6 +590,60 @@ Can't `sub` to a memory location that isn't writeable.
     | {
     |     st off, c
     |     sub a, 0
+    | }
+    ? ForbiddenWriteError: a in main
+
+You can `sub` a word constant from a word memory location.
+
+    | word score
+    | routine main
+    |   inputs a, score
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub score, 1999
+    | }
+    = ok
+
+`sub`ing a word constant from a word memory location trashes `a`.
+
+    | word score
+    | routine main
+    |   inputs a, score
+    |   outputs score, a
+    |   trashes c, z, v, n
+    | {
+    |     st on, c
+    |     sub score, 1999
+    | }
+    ? UnmeaningfulOutputError: a in main
+
+You can `sub` a word memory location from another word memory location.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     sub score, delta
+    | }
+    = ok
+
+`sub`ing a word memory location from a word memory location trashes `a`.
+
+    | word score
+    | word delta
+    | routine main
+    |   inputs score, delta
+    |   outputs score
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     sub score, delta
     | }
     ? ForbiddenWriteError: a in main
 
@@ -1003,6 +1089,43 @@ same constraints.
     | }
     ? UnmeaningfulReadError: a in main
 
+### trash ###
+
+Trash does nothing except indicate that we do not care about the value anymore.
+
+    | routine foo
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n
+    | {
+    |     st a, x
+    |     ld a, 0
+    |     trash a
+    | }
+    = ok
+
+    | routine foo
+    |   inputs a
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     st a, x
+    |     ld a, 0
+    |     trash a
+    | }
+    ? UnmeaningfulOutputError: a in foo
+
+    | routine foo
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n
+    | {
+    |     st a, x
+    |     trash a
+    |     st a, x
+    | }
+    ? UnmeaningfulReadError: a in foo
+
 ### if ###
 
 Both blocks of an `if` are analyzed.
@@ -1064,6 +1187,26 @@ If a location is initialized in one block, is must be initialized in the other a
     |     }
     | }
     ? InconsistentInitializationError: x
+
+However, this only pertains to initialization.  If a value is already
+initialized, either because it was set previous to the `if`, or is an
+input to the routine, and it is initialized in one branch, it need not
+be initialized in the other.
+
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     ld a, 0
+    |     cmp a, 42
+    |     if z {
+    |         ld x, 7
+    |     } else {
+    |         ld a, 23
+    |     }
+    | }
+    = ok
 
 An `if` with a single block is analyzed as if it had an empty `else` block.
 
@@ -1175,6 +1318,15 @@ this is an error too.
     | }
     ? UnmeaningfulReadError: z in main
 
+The body of `repeat forever` can be empty.
+
+    | routine main
+    | {
+    |     repeat {
+    |     } forever
+    | }
+    = ok
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
@@ -1234,7 +1386,7 @@ a, z, and n are trashed, and must be declared as such
     | {
     |     copy 0, lives
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: n in main
 
 a, z, and n are trashed, and must not be declared as outputs.
 
@@ -1244,7 +1396,7 @@ a, z, and n are trashed, and must not be declared as outputs.
     | {
     |     copy 0, lives
     | }
-    ? UnmeaningfulOutputError: a in main
+    ? UnmeaningfulOutputError: n in main
 
 Unless of course you subsequently initialize them.
 

@@ -6,7 +6,7 @@ from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE, BufferType, PointerType, RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
-from sixtypical.emitter import Byte, Label, Offset, LowAddressByte, HighAddressByte
+from sixtypical.emitter import Byte, Word, Table, Label, Offset, LowAddressByte, HighAddressByte
 from sixtypical.gen6502 import (
     Immediate, Absolute, AbsoluteX, AbsoluteY, ZeroPage, Indirect, IndirectY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
@@ -30,6 +30,18 @@ class Compiler(object):
         self.routines = {}
         self.labels = {}
         self.trampolines = {}   # Location -> Label
+
+    # helper methods
+
+    def addressing_mode_for_index(self, index):
+        if index == REG_X:
+            return AbsoluteX
+        elif index == REG_Y:
+            return AbsoluteY
+        else:
+            raise NotImplementedError(index)
+
+    # visitor methods
 
     def compile_program(self, program):
         assert isinstance(program, Program)
@@ -72,7 +84,16 @@ class Compiler(object):
         for defn in program.defns:
             if defn.initial is not None:
                 label = self.labels[defn.name]
-                initial_data = Byte(defn.initial)  # TODO: support other types than Byte
+                initial_data = None
+                type_ = defn.location.type
+                if type_ == TYPE_BYTE:
+                    initial_data = Byte(defn.initial)
+                elif type_ == TYPE_WORD:
+                    initial_data = Word(defn.initial)
+                elif type_ == TYPE_BYTE_TABLE:
+                    initial_data = Table(defn.initial)
+                else:
+                    raise NotImplementedError(type_)
                 label.set_length(initial_data.size())
                 self.emitter.resolve_label(label)
                 self.emitter.emit(initial_data)
@@ -209,6 +230,26 @@ class Compiler(object):
                     self.emitter.emit(SBC(Immediate(Byte(src.value))))
                 else:
                     self.emitter.emit(SBC(Absolute(self.labels[src.name])))
+            elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and dest.type == TYPE_WORD:
+                if isinstance(src, ConstantRef):
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(Absolute(dest_label)))
+                    self.emitter.emit(SBC(Immediate(Byte(src.low_byte()))))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
+                    self.emitter.emit(SBC(Immediate(Byte(src.high_byte()))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                elif isinstance(src, LocationRef):
+                    src_label = self.labels[src.name]
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(Absolute(dest_label)))
+                    self.emitter.emit(SBC(Absolute(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
+                    self.emitter.emit(SBC(Absolute(Offset(src_label, 1))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                else:
+                    raise UnsupportedOpcodeError(instr)
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'inc':
@@ -307,7 +348,7 @@ class Compiler(object):
         elif opcode == 'repeat':
             top_label = self.emitter.make_label()
             self.compile_block(instr.block)
-            if src is None:
+            if src is None:  # indicates 'repeat forever'
                 self.emitter.emit(JMP(Absolute(top_label)))
             else:
                 cls = {
@@ -344,7 +385,10 @@ class Compiler(object):
                 else:
                     raise NotImplementedError((src, dest))
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
-                if dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
+                if dest == REG_A and isinstance(src.ref.type, PointerType):
+                    src_label = self.labels[src.ref.name]
+                    self.emitter.emit(LDA(IndirectY(src_label)))
+                elif dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
                     src_label = self.labels[src.ref.name]
                     dest_label = self.labels[dest.name]
                     self.emitter.emit(LDA(IndirectY(src_label)))
@@ -363,33 +407,28 @@ class Compiler(object):
                 if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
                     src_label = self.labels[src.name]
                     dest_label = self.labels[dest.ref.name]
-                    addressing_mode = None
-                    if dest.index == REG_X:
-                        addressing_mode = AbsoluteX
-                    elif dest.index == REG_Y:
-                        addressing_mode = AbsoluteY
-                    else:
-                        raise NotImplementedError(dest)
                     self.emitter.emit(LDA(Absolute(src_label)))
-                    self.emitter.emit(STA(addressing_mode(dest_label)))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
                     self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
-                    self.emitter.emit(STA(addressing_mode(Offset(dest_label, 256))))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
+                else:
+                    raise NotImplementedError
+            elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
+                if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
+                    dest_label = self.labels[dest.ref.name]
+                    self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
+                    self.emitter.emit(LDA(Immediate(Byte(src.high_byte()))))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
                 else:
                     raise NotImplementedError
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 if src.ref.type == TYPE_WORD_TABLE and dest.type == TYPE_WORD:
                     src_label = self.labels[src.ref.name]
                     dest_label = self.labels[dest.name]
-                    addressing_mode = None
-                    if src.index == REG_X:
-                        addressing_mode = AbsoluteX
-                    elif src.index == REG_Y:
-                        addressing_mode = AbsoluteY
-                    else:
-                        raise NotImplementedError(src)
-                    self.emitter.emit(LDA(addressing_mode(src_label)))
+                    self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))
                     self.emitter.emit(STA(Absolute(dest_label)))
-                    self.emitter.emit(LDA(addressing_mode(Offset(src_label, 256))))
+                    self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(Offset(src_label, 256))))
                     self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
                 else:
                     raise NotImplementedError
@@ -434,5 +473,7 @@ class Compiler(object):
                 self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
             else:
                 raise NotImplementedError(src.type)
+        elif opcode == 'trash':
+            pass
         else:
             raise NotImplementedError(opcode)

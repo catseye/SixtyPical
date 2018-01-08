@@ -89,17 +89,8 @@ class Context(object):
             self._writeable.add(ref)
 
     def __str__(self):
-        def locstr(loc):
-            if isinstance(loc, LocationRef):
-                return "{}:{}".format(loc.name, loc.type)
-            else:
-                return str(loc)
-
-        def locsetstr(s):
-            return '{' + ', '.join([locstr(loc) for loc in list(s)]) + '}'
-
         return "Context(\n  _touched={},\n  _meaningful={},\n  _writeable={}\n)".format(
-            locsetstr(self._touched), locsetstr(self._meaningful), locsetstr(self._writeable)
+            LocationRef.format_set(self._touched), LocationRef.format_set(self._meaningful), LocationRef.format_set(self._writeable)
         )
 
     def clone(self):
@@ -185,22 +176,12 @@ class Analyzer(object):
                 )
 
     def assert_affected_within(self, name, affected, limited_to):
-        # We reduce the set of LocationRefs to a set of strings (their labels).
-        # This is necessary because currently, two LocationRefs that refer to the
-        # same location are not considered euqal.  (But two LocationRefs with the
-        # same label should always be the same type.)
-
-        affected = set([loc.name for loc in affected])
-        limited_to = set([loc.name for loc in limited_to])
-
-        def loc_list(label_set):
-            return ', '.join(sorted(label_set))
-
         overage = affected - limited_to
         if not overage:
             return
-        message = 'in %s: %s are {%s} but affects {%s} which exceeds by: {%s} ' % (
-            self.current_routine.name, name, loc_list(limited_to), loc_list(affected), loc_list(overage)
+        message = 'in %s: %s are %s but affects %s which exceeds it by: %s ' % (
+            self.current_routine.name, name,
+            LocationRef.format_set(limited_to), LocationRef.format_set(affected), LocationRef.format_set(overage)
         )
         raise IncompatibleConstraintsError(message)
 
@@ -292,9 +273,15 @@ class Analyzer(object):
                 else:
                     self.assert_type(TYPE_WORD, dest)
         elif opcode == 'sub':
-            self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest, FLAG_C)
-            context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+            if src.type == TYPE_BYTE:
+                self.assert_type(TYPE_BYTE, src, dest)
+                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+            else:
+                self.assert_type(TYPE_WORD, src, dest)
+                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
+                context.set_touched(REG_A)
+                context.set_unmeaningful(REG_A)
         elif opcode in ('inc', 'dec'):
             self.assert_type(TYPE_BYTE, dest)
             context.assert_meaningful(dest)
@@ -332,23 +319,27 @@ class Analyzer(object):
             # doesn't really matter if you modified it or not, coming out.
             for ref in context1.each_meaningful():
                 context2.assert_meaningful(
-                    ref, exception_class=InconsistentInitializationError, message='initialized in block 1 but not in block 2'
+                    ref, exception_class=InconsistentInitializationError,
+                    message='initialized in block 1 but not in block 2 of `if {}`'.format(src)
                 )
             for ref in context2.each_meaningful():
                 context1.assert_meaningful(
-                    ref, exception_class=InconsistentInitializationError, message='initialized in block 2 but not in block 1'
+                    ref, exception_class=InconsistentInitializationError,
+                    message='initialized in block 2 but not in block 1 of `if {}`'.format(src)
                 )
             context.set_from(context1)
         elif opcode == 'repeat':
             # it will always be executed at least once, so analyze it having
             # been executed the first time.
             self.analyze_block(instr.block, context)
-            context.assert_meaningful(src)
+            if src is not None:  # None indicates 'repeat forever'
+                context.assert_meaningful(src)
 
             # now analyze it having been executed a second time, with the context
             # of it having already been executed.
             self.analyze_block(instr.block, context)
-            context.assert_meaningful(src)
+            if src is not None:
+                context.assert_meaningful(src)
 
         elif opcode == 'copy':
             # 1. check that their types are compatible
@@ -369,7 +360,7 @@ class Analyzer(object):
                 else:
                     raise TypeMismatchError((src, dest))
 
-            elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
+            elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
                 if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
                     pass
                 else:
@@ -403,10 +394,14 @@ class Analyzer(object):
                 context.assert_meaningful(src.ref, REG_Y)
                 # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
                 context.set_touched(src.ref)  # TODO and REG_Y?  if not, why not?
+                context.set_touched(dest)
                 context.set_written(dest)
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
                 context.set_touched(src)  # TODO and dest.index?
+                context.set_written(dest.ref)
+            elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
+                context.assert_meaningful(src, dest.ref, dest.index)
                 context.set_written(dest.ref)
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, src.index, dest)
@@ -417,7 +412,15 @@ class Analyzer(object):
                 context.set_written(dest)
 
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
-            context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
+            context.set_unmeaningful(FLAG_Z, FLAG_N)
+
+            # FIXME: this is just to support "copy [foo] + y, a".  consider disallowing `a` as something
+            # that can be used in `copy`.  should be using `st` or `ld` instead, probably.
+            if dest == REG_A:
+                context.set_touched(REG_A)
+                context.set_written(REG_A)
+            else:
+                context.set_unmeaningful(REG_A)
 
         elif opcode == 'with-sei':
             self.analyze_block(instr.block, context)
@@ -439,5 +442,7 @@ class Analyzer(object):
             self.assert_affected_within('trashes', type_.trashes, current_type.trashes)
 
             self.has_encountered_goto = True
+        elif opcode == 'trash':
+            context.set_unmeaningful(instr.dest)
         else:
             raise NotImplementedError(opcode)

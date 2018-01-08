@@ -23,7 +23,7 @@ The reference implementation can execute, analyze, and compile SixtyPical
 programs to 6502 machine code.
 
 SixtyPical is a work in progress.  The current released version of SixtyPical
-is 0.9.
+is 0.10.
 
 Documentation
 -------------
@@ -46,16 +46,6 @@ Finish the little demo "game" where you can move a block around the screen with
 the joystick (i.e. bring it up to par with the original demo game that was written
 for SixtyPical)
 
-### `call` routines that are defined further down in the source code
-
-We might have a graph of states that refer to each other and that want to `goto`
-each other.  Thus we need this.  We have it for vectors, but we need it for `call`.
-
-### Allow branches to diverge in what they touch
-
-For example, if the routine inputs and outputs `foo`, and one branch of an `if`
-sets `foo` and the other does not touch it, that should be OK.
-
 ### `vector table` type
 
 ### `low` and `high` address operators
@@ -75,20 +65,28 @@ But if you add a value ≥ N to it, it becomes invalid.
 This should be tracked in the abstract interpretation.
 (If only because abstract interpretation is the major point of this project!)
 
-### And at some point...
+### Routine-local static memory locations
 
-*   Compare word (constant or memory location) with memory location or pointer.  (Maybe?)
+These would not need to appear in the inputs/outputs/trashes sets of the routines
+that call this routine.
+
+These might be forced to specify an initial value so that they can always be
+assumed to be meaningful.
+
+### More modes for `copy`
+
+*   don't allow `copy foo, a` probably.  insist on `ld a, foo` for this.
+*   have `copy` instruction able to copy a byte to a user-def mem loc, etc.
 *   `copy x, [ptr] + y`
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
+
+### And at some point...
+
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
 *   `byte table` and `word table` of sizes other than 256
-*   initialized `byte table` memory locations
 *   always analyze before executing or compiling, unless told not to
-*   `trash` instruction.
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
-*   pre-initialized `word` variables
 *   error messages that include the line number of the source code
-*   have `copy` instruction able to copy a byte to a user-def mem loc, etc.
 *   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
 *   check and disallow recursion.
 *   automatic tail-call optimization (could be tricky, w/constraints?)

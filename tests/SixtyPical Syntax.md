@@ -70,6 +70,14 @@ Extern routines
     |   @ 65487
     = ok
 
+Trash.
+
+    | routine main {
+    |     trash a
+    |     trash n
+    | }
+    = ok
+
 If with not
 
     | routine foo {
@@ -178,6 +186,22 @@ User-defined locations of other types.
     | }
     = ok
 
+Initialized byte table.
+
+    | byte table message : "WHAT DO YOU WANT TO DO NEXT?"
+    | 
+    | routine main {
+    | }
+    = ok
+
+Can't initialize anything but a byte table with a string.
+
+    | word message : "WHAT DO YOU WANT TO DO NEXT?"
+    | 
+    | routine main {
+    | }
+    ? SyntaxError
+
 Can't access an undeclared memory location.
 
     | routine main {
@@ -238,6 +262,19 @@ And you can't call a non-routine.
     |     call x
     | }
     ? SyntaxError
+
+But you can call a routine that is yet to be defined, further on.
+
+    | routine main {
+    |     ld x, 0
+    |     ld y, 1
+    |     call up
+    |     call up
+    | }
+    | routine up {
+    |     ld a, 0
+    | }
+    = ok
 
 Can't define two routines with the same name.
 
@@ -343,6 +380,33 @@ A vector can name itself in its inputs, outputs, and trashes.
     | }
     = ok
 
+A routine can be copied into a vector before the routine appears in the program,
+*however*, it must be marked as such with the keyword `forward`.
+
+    | vector cinv   inputs cinv, a   outputs cinv, x   trashes a, x, z, n @ 788
+    | routine main {
+    |     with interrupts off {
+    |         copy foo, cinv
+    |     }
+    |     call cinv
+    | }
+    | routine foo {
+    |     ld a, 0
+    | }
+    ? SyntaxError: Undefined symbol
+
+    | vector cinv   inputs cinv, a   outputs cinv, x   trashes a, x, z, n @ 788
+    | routine main {
+    |     with interrupts off {
+    |         copy forward foo, cinv
+    |     }
+    |     call cinv
+    | }
+    | routine foo {
+    |     ld a, 0
+    | }
+    = ok
+
 goto.
 
     | routine foo {
@@ -350,6 +414,14 @@ goto.
     | }
     | routine main {
     |     goto foo
+    | }
+    = ok
+
+    | routine main {
+    |     goto foo
+    | }
+    | routine foo {
+    |     ld a, 0
     | }
     = ok
 
