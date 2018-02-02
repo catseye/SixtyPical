@@ -135,9 +135,10 @@ User-defined memory addresses of different types.
 
     | byte byt
     | word wor
-    | vector vec
+    | vector trashes a vec
     | byte table[256] tab
     | word table[256] wtab
+    | vector trashes a table[256] vtab
     | buffer[2048] buf
     | pointer ptr
     | 

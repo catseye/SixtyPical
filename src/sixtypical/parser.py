@@ -124,7 +124,11 @@ class Parser(object):
             return TYPE_WORD
         elif self.scanner.consume('vector'):
             (inputs, outputs, trashes) = self.constraints()
-            return VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
+            type_ = VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
+            if self.scanner.consume('table'):
+                size = self.defn_size()
+                type_ = TableType(type_, size)
+            return type_
         elif self.scanner.consume('buffer'):
             size = self.defn_size()
             return BufferType(size)
