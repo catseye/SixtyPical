@@ -368,7 +368,7 @@ class Analyzer(object):
                     # TODO ideally we'd check if the vectors in the table are compatible, rather than equal, to the src
                     pass
                 else:
-                    raise TypeMismatchError("""\n\n%r\n\n%r\n\n%r\n\n%r\n\n%r\n\n%r""" % (src, src.type, dest, dest.ref.type, dest.ref.type.of_type, (src.type == dest.ref.type.of_type)))
+                    raise TypeMismatchError((src, dest))
 
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:

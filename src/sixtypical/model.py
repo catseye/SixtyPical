@@ -37,7 +37,7 @@ class ExecutableType(Type):
         )
 
     def __eq__(self, other):
-        return isinstance(other, RoutineType) and (
+        return isinstance(other, ExecutableType) and (
             other.name == self.name and
             other.inputs == self.inputs and
             other.outputs == self.outputs and
