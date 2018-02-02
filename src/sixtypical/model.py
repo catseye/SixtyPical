@@ -66,6 +66,10 @@ class TableType(Type):
         self.size = size
         self.name = '{} table[{}]'.format(self.of_type.name, self.size)
 
+    @classmethod
+    def is_a_table_type(cls_, x, of_type):
+        return isinstance(x, TableType) and x.of_type == of_type
+
 
 class BufferType(Type):
     def __init__(self, size):

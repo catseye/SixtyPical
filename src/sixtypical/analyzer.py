@@ -232,7 +232,7 @@ class Analyzer(object):
     
         if opcode == 'ld':
             if instr.index:
-                if isinstance(src.type, TableType) and src.type.of_type == TYPE_BYTE and dest.type == TYPE_BYTE:
+                if TableType.is_a_table_type(src.type, TYPE_BYTE) and dest.type == TYPE_BYTE:
                     pass
                 else:
                     raise TypeMismatchError('%s and %s in %s' %
@@ -246,7 +246,7 @@ class Analyzer(object):
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
             if instr.index:
-                if src.type == TYPE_BYTE and isinstance(dest.type, TableType) and dest.type.of_type == TYPE_BYTE:
+                if src.type == TYPE_BYTE and TableType.is_a_table_type(dest.type, TYPE_BYTE):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
@@ -362,13 +362,13 @@ class Analyzer(object):
                     raise TypeMismatchError((src, dest))
 
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
-                if src.type == TYPE_WORD and isinstance(dest.ref.type, TableType) and dest.ref.type.of_type == TYPE_WORD:
+                if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
 
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
-                if isinstance(src.ref.type, TableType) and src.ref.type.of_type == TYPE_WORD and dest.type == TYPE_WORD:
+                if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
                     pass
                 else:
                     raise TypeMismatchError((src, dest))

@@ -25,10 +25,6 @@ class UnsupportedOpcodeError(KeyError):
     pass
 
 
-def is_a_table_type(x, of_type):
-    return isinstance(x, TableType) and x.of_type == of_type
-
-
 class Compiler(object):
     def __init__(self, emitter):
         self.emitter = emitter
@@ -93,7 +89,7 @@ class Compiler(object):
                     initial_data = Byte(defn.initial)
                 elif type_ == TYPE_WORD:
                     initial_data = Word(defn.initial)
-                elif is_a_table_type(type_, TYPE_BYTE):
+                elif TableType.is_a_table_type(type_, TYPE_BYTE):
                     initial_data = Table(defn.initial, type_.size)
                 else:
                     raise NotImplementedError(type_)
@@ -407,7 +403,7 @@ class Compiler(object):
                 self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
                 self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
-                if src.type == TYPE_WORD and is_a_table_type(dest.ref.type, TYPE_WORD):
+                if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
                     src_label = self.labels[src.name]
                     dest_label = self.labels[dest.ref.name]
                     self.emitter.emit(LDA(Absolute(src_label)))
@@ -417,7 +413,7 @@ class Compiler(object):
                 else:
                     raise NotImplementedError
             elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
-                if src.type == TYPE_WORD and is_a_table_type(dest.ref.type, TYPE_WORD):
+                if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
                     dest_label = self.labels[dest.ref.name]
                     self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
                     self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
@@ -426,7 +422,7 @@ class Compiler(object):
                 else:
                     raise NotImplementedError
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
-                if is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
+                if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
                     src_label = self.labels[src.ref.name]
                     dest_label = self.labels[dest.name]
                     self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))
