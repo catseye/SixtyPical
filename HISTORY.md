@@ -7,6 +7,7 @@ History of SixtyPical
 *   Each table has a specified size now (although, bounds checking is not performed.)
 *   Initialized `byte table` values need not have all 256 bytes initialized.
 *   Constraints for `vector` type come immediately after the type, not the variable.
+*   `vector table` storage, and ability to copy vectors in and out of same.
 
 0.10
 ----
