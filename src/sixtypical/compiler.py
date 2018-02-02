@@ -410,6 +410,14 @@ class Compiler(object):
                     self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
                     self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
                     self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
+                elif isinstance(src.type, VectorType) and isinstance(dest.ref.type, TableType) and isinstance(dest.ref.type.of_type, VectorType):
+                    # FIXME this is the exact same as above - can this be simplified?
+                    src_label = self.labels[src.name]
+                    dest_label = self.labels[dest.ref.name]
+                    self.emitter.emit(LDA(Absolute(src_label)))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
+                    self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
+                    self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
                 else:
                     raise NotImplementedError
             elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
@@ -423,6 +431,14 @@ class Compiler(object):
                     raise NotImplementedError
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
+                    src_label = self.labels[src.ref.name]
+                    dest_label = self.labels[dest.name]
+                    self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                    self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(Offset(src_label, 256))))
+                    self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+                elif isinstance(dest.type, VectorType) and isinstance(src.ref.type, TableType) and isinstance(src.ref.type.of_type, VectorType):
+                    # FIXME this is the exact same as above - can this be simplified?
                     src_label = self.labels[src.ref.name]
                     dest_label = self.labels[dest.name]
                     self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))

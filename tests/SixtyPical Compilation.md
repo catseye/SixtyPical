@@ -606,6 +606,53 @@ goto.
     = $0813   LDX #$C8
     = $0815   RTS
 
+### Vector tables
+
+Copying to and from a vector table.
+
+    | vector
+    |   outputs x
+    |   trashes a, z, n
+    |     one
+    | vector
+    |   outputs x
+    |   trashes a, z, n
+    |     table[256] many
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy bar, one
+    |     copy one, many + x
+    |     copy many + x, one
+    |     call one
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$35
+    = $0811   STA $083B
+    = $0814   LDA #$08
+    = $0816   STA $083C
+    = $0819   LDA $083B
+    = $081C   STA $083D,X
+    = $081F   LDA $083C
+    = $0822   STA $093D,X
+    = $0825   LDA $083D,X
+    = $0828   STA $083B
+    = $082B   LDA $093D,X
+    = $082E   STA $083C
+    = $0831   JSR $0838
+    = $0834   RTS
+    = $0835   LDX #$C8
+    = $0837   RTS
+    = $0838   JMP ($083B)
+
 ### word operations
 
 Adding a constant word to a word memory location.

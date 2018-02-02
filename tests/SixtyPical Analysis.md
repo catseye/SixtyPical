@@ -1926,7 +1926,7 @@ Copying to and from a vector table.
     |     ld x, 0
     |     copy bar, one
     |     copy one, many + x
-    |     //copy many + x, one
-    |     //call one
+    |     copy many + x, one
+    |     call one
     | }
     = ok
