@@ -51,7 +51,7 @@ word compare_target
 // and output.  There is probably a better way to do this, but it needs thought.
 //
 
-vector dispatch_game_state
+vector
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
@@ -59,6 +59,7 @@ vector dispatch_game_state
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+    dispatch_game_state
 
 //
 // The constraints on these 2 vectors are kind-of sort-of big fibs.
@@ -72,7 +73,7 @@ vector dispatch_game_state
 // a future version of SixtyPical.
 //
 
-vector cinv
+vector
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
@@ -80,9 +81,9 @@ vector cinv
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
-  @ 788
+    cinv @ 788
 
-vector save_cinv
+vector
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
@@ -90,6 +91,7 @@ vector save_cinv
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+    save_cinv
 
 // ----------------------------------------------------------------
 // Utility Routines
