@@ -136,8 +136,8 @@ User-defined memory addresses of different types.
     | byte byt
     | word wor
     | vector vec
-    | byte table tab
-    | word table wtab
+    | byte table[256] tab
+    | word table[256] wtab
     | buffer[2048] buf
     | pointer ptr
     | 
@@ -177,7 +177,7 @@ Cannot have both initial value and explicit address.
 
 User-defined locations of other types.
 
-    | byte table screen @ 1024
+    | byte table[256] screen @ 1024
     | word r1
     | word r2 @ 60000
     | word r3 : 2000
@@ -188,7 +188,7 @@ User-defined locations of other types.
 
 Initialized byte table.
 
-    | byte table message : "WHAT DO YOU WANT TO DO NEXT?"
+    | byte table[28] message : "WHAT DO YOU WANT TO DO NEXT?"
     | 
     | routine main {
     | }
@@ -290,7 +290,7 @@ Can't define two routines with the same name.
 
 Declaring byte and word table memory location.
 
-    | byte table tab
+    | byte table[256] tab
     | 
     | routine main {
     |     ld x, 0
@@ -301,7 +301,7 @@ Declaring byte and word table memory location.
     = ok
 
     | word one
-    | word table many
+    | word table[256] many
     | 
     | routine main {
     |     ld x, 0

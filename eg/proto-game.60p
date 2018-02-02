@@ -9,15 +9,15 @@
 byte vic_border @ 53280
 byte vic_bg @ 53281
 
-byte table screen1 @ 1024
-byte table screen2 @ 1274
-byte table screen3 @ 1524
-byte table screen4 @ 1774
+byte table[256] screen1 @ 1024
+byte table[256] screen2 @ 1274
+byte table[256] screen3 @ 1524
+byte table[256] screen4 @ 1774
 
-byte table colormap1 @ 55296
-byte table colormap2 @ 55546
-byte table colormap3 @ 55796
-byte table colormap4 @ 56046
+byte table[256] colormap1 @ 55296
+byte table[256] colormap2 @ 55546
+byte table[256] colormap3 @ 55796
+byte table[256] colormap4 @ 56046
 
 buffer[2048] screen @ 1024
 byte joy2 @ $dc00
@@ -28,15 +28,15 @@ byte joy2 @ $dc00
 
 pointer ptr @ 254
 
-word table actor_pos
+word table[256] actor_pos
 word pos
 word new_pos
 
-word table actor_delta
+word table[256] actor_delta
 word delta
 
 byte button_down : 0  // effectively static-local to check_button
-byte table press_fire_msg: "PRESS`FIRE`TO`PLAY"
+byte table[18] press_fire_msg: "PRESS`FIRE`TO`PLAY"
 
 byte save_x
 word compare_target

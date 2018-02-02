@@ -1,6 +1,8 @@
 SixtyPical
 ==========
 
+_Version 0.11.  Work-in-progress, everything is subject to change._
+
 SixtyPical is a very low-level programming language, similar to 6502 assembly,
 with static analysis through abstract interpretation.
 
@@ -21,9 +23,6 @@ based on common machine-language programming idioms, such as
 
 The reference implementation can execute, analyze, and compile SixtyPical
 programs to 6502 machine code.
-
-SixtyPical is a work in progress.  The current released version of SixtyPical
-is 0.10.
 
 Documentation
 -------------
@@ -83,7 +82,6 @@ assumed to be meaningful.
 ### And at some point...
 
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
-*   `byte table` and `word table` of sizes other than 256
 *   always analyze before executing or compiling, unless told not to
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
 *   error messages that include the line number of the source code

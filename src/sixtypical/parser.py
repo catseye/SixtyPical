@@ -2,8 +2,8 @@
 
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE,
-    RoutineType, VectorType, ExecutableType, BufferType, PointerType,
+    TYPE_BIT, TYPE_BYTE, TYPE_WORD,
+    RoutineType, VectorType, ExecutableType, TableType, BufferType, PointerType,
     LocationRef, ConstantRef, IndirectRef, IndexedRef, AddressRef,
 )
 from sixtypical.scanner import Scanner
@@ -89,7 +89,7 @@ class Parser(object):
 
         initial = None
         if self.scanner.consume(':'):
-            if type_ == TYPE_BYTE_TABLE and self.scanner.on_type('string literal'):
+            if isinstance(type_, TableType) and self.scanner.on_type('string literal'):
                 initial = self.scanner.token
             else:
                 self.scanner.check_type('integer literal')
@@ -109,23 +109,29 @@ class Parser(object):
 
         return Defn(name=name, addr=addr, initial=initial, location=location)
 
+    def defn_size(self):
+        self.scanner.expect('[')
+        self.scanner.check_type('integer literal')
+        size = int(self.scanner.token)
+        self.scanner.scan()
+        self.scanner.expect(']')
+        return size
+
     def defn_type(self):
         if self.scanner.consume('byte'):
             if self.scanner.consume('table'):
-                return TYPE_BYTE_TABLE
+                size = self.defn_size()
+                return TableType(TYPE_BYTE, size)
             return TYPE_BYTE
         elif self.scanner.consume('word'):
             if self.scanner.consume('table'):
-                return TYPE_WORD_TABLE
+                size = self.defn_size()
+                return TableType(TYPE_WORD, size)
             return TYPE_WORD
         elif self.scanner.consume('vector'):
             return 'vector'  # will be resolved to a Type by caller
         elif self.scanner.consume('buffer'):
-            self.scanner.expect('[')
-            self.scanner.check_type('integer literal')
-            size = int(self.scanner.token)
-            self.scanner.scan()
-            self.scanner.expect(']')
+            size = self.defn_size()
             return BufferType(size)
         else:
             self.scanner.expect('pointer')

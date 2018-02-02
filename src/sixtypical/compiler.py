@@ -3,7 +3,8 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     ConstantRef, LocationRef, IndexedRef, IndirectRef, AddressRef,
-    TYPE_BIT, TYPE_BYTE, TYPE_BYTE_TABLE, TYPE_WORD, TYPE_WORD_TABLE, BufferType, PointerType, RoutineType, VectorType,
+    TYPE_BIT, TYPE_BYTE, TYPE_WORD,
+    TableType, BufferType, PointerType, RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
 from sixtypical.emitter import Byte, Word, Table, Label, Offset, LowAddressByte, HighAddressByte
@@ -22,6 +23,10 @@ from sixtypical.gen6502 import (
 
 class UnsupportedOpcodeError(KeyError):
     pass
+
+
+def is_a_table_type(x, of_type):
+    return isinstance(x, TableType) and x.of_type == of_type
 
 
 class Compiler(object):
@@ -54,10 +59,8 @@ class Compiler(object):
                 length = 1
             elif type_ == TYPE_WORD or isinstance(type_, (PointerType, VectorType)):
                 length = 2
-            elif type_ == TYPE_BYTE_TABLE:
-                length = 256
-            elif type_ == TYPE_WORD_TABLE:
-                length = 512
+            elif isinstance(type_, TableType):
+                length = type_.size * (1 if type_.of_type == TYPE_BYTE else 2)
             elif isinstance(type_, BufferType):
                 length = type_.size
             if length is None:
@@ -90,8 +93,8 @@ class Compiler(object):
                     initial_data = Byte(defn.initial)
                 elif type_ == TYPE_WORD:
                     initial_data = Word(defn.initial)
-                elif type_ == TYPE_BYTE_TABLE:
-                    initial_data = Table(defn.initial)
+                elif is_a_table_type(type_, TYPE_BYTE):
+                    initial_data = Table(defn.initial, type_.size)
                 else:
                     raise NotImplementedError(type_)
                 label.set_length(initial_data.size())
@@ -404,7 +407,7 @@ class Compiler(object):
                 self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
                 self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
-                if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
+                if src.type == TYPE_WORD and is_a_table_type(dest.ref.type, TYPE_WORD):
                     src_label = self.labels[src.name]
                     dest_label = self.labels[dest.ref.name]
                     self.emitter.emit(LDA(Absolute(src_label)))
@@ -414,7 +417,7 @@ class Compiler(object):
                 else:
                     raise NotImplementedError
             elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
-                if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
+                if src.type == TYPE_WORD and is_a_table_type(dest.ref.type, TYPE_WORD):
                     dest_label = self.labels[dest.ref.name]
                     self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
                     self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
@@ -423,7 +426,7 @@ class Compiler(object):
                 else:
                     raise NotImplementedError
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
-                if src.ref.type == TYPE_WORD_TABLE and dest.type == TYPE_WORD:
+                if is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
                     src_label = self.labels[src.ref.name]
                     dest_label = self.labels[dest.name]
                     self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))

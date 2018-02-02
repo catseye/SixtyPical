@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.10,
+This document describes the SixtyPical programming language version 0.11,
 both its execution aspect and its static analysis aspect (even though
 these are, technically speaking, separate concepts.)
 
@@ -25,8 +25,8 @@ There are six *primitive types* in SixtyPical:
 
 There are also two *type constructors*:
 
-*   T table (256 entries, each holding a value of type T, where T is either
-            `byte` or `word`)
+*   T table (up to 256 entries, each holding a value of type T, where T is
+             either `byte` or `word`)
 *   buffer[N] (N entries; each entry is a byte; N is a power of 2, ≤ 64K)
 
 Memory locations

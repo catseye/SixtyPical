@@ -1,6 +1,12 @@
 History of SixtyPical
 =====================
 
+0.11
+----
+
+*   Each table has a specified size now (although, bounds checking is not performed.)
+*   Initialized `byte table` values need not have all 256 bytes initialized.
+
 0.10
 ----
 
@@ -12,6 +18,7 @@ History of SixtyPical
 *   Subtract word (constant or memory location) from word memory location.
 *   `trash` instruction explicitly indicates a value is no longer considered meaningful.
 *   `copy []+y, a` can indirectly read a byte value into the `a` register.
+*   Initialized `byte table` memory locations.
 *   Fixed bug which was preventing `if` branches to diverge in what they initialized,
     if it was already initialized when going into the `if`.
 *   Fixed a bug which was making it crash when trying to analyze `repeat forever` loops.

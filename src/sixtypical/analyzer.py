@@ -2,7 +2,8 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BYTE, TYPE_WORD, TYPE_BYTE_TABLE, TYPE_WORD_TABLE, BufferType, PointerType, VectorType, ExecutableType,
+    TYPE_BYTE, TYPE_WORD,
+    TableType, BufferType, PointerType, VectorType, ExecutableType,
     ConstantRef, LocationRef, IndirectRef, IndexedRef, AddressRef,
     REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
@@ -231,7 +232,7 @@ class Analyzer(object):
     
         if opcode == 'ld':
             if instr.index:
-                if src.type == TYPE_BYTE_TABLE and dest.type == TYPE_BYTE:
+                if isinstance(src.type, TableType) and src.type.of_type == TYPE_BYTE and dest.type == TYPE_BYTE:
                     pass
                 else:
                     raise TypeMismatchError('%s and %s in %s' %
@@ -245,7 +246,7 @@ class Analyzer(object):
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
             if instr.index:
-                if src.type == TYPE_BYTE and dest.type == TYPE_BYTE_TABLE:
+                if src.type == TYPE_BYTE and isinstance(dest.type, TableType) and dest.type.of_type == TYPE_BYTE:
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
@@ -361,13 +362,13 @@ class Analyzer(object):
                     raise TypeMismatchError((src, dest))
 
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
-                if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
+                if src.type == TYPE_WORD and isinstance(dest.ref.type, TableType) and dest.ref.type.of_type == TYPE_WORD:
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
 
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
-                if src.ref.type == TYPE_WORD_TABLE and dest.type == TYPE_WORD:
+                if isinstance(src.ref.type, TableType) and src.ref.type.of_type == TYPE_WORD and dest.type == TYPE_WORD:
                     pass
                 else:
                     raise TypeMismatchError((src, dest))

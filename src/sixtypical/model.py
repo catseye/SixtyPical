@@ -20,9 +20,7 @@ class Type(object):
 
 TYPE_BIT = Type('bit')
 TYPE_BYTE = Type('byte')
-TYPE_BYTE_TABLE = Type('byte table')
 TYPE_WORD = Type('word')
-TYPE_WORD_TABLE = Type('word table')
 
 
 class ExecutableType(Type):
@@ -60,6 +58,13 @@ class VectorType(ExecutableType):
     """This memory location contains the address of a routine."""
     def __init__(self, **kwargs):
         super(VectorType, self).__init__('vector', **kwargs)
+
+
+class TableType(Type):
+    def __init__(self, of_type, size):
+        self.of_type = of_type
+        self.size = size
+        self.name = '{} table[{}]'.format(self.of_type.name, self.size)
 
 
 class BufferType(Type):

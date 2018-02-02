@@ -243,7 +243,7 @@ Can't `st` a `word` type.
 Storing to a table, you must use an index, and vice-versa.
 
     | byte one
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs one
@@ -256,7 +256,7 @@ Storing to a table, you must use an index, and vice-versa.
     = ok
 
     | byte one
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -269,7 +269,7 @@ Storing to a table, you must use an index, and vice-versa.
     ? TypeMismatchError
 
     | byte one
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs one
@@ -282,7 +282,7 @@ Storing to a table, you must use an index, and vice-versa.
     ? TypeMismatchError
 
     | byte one
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -320,7 +320,7 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     ? TypeMismatchError
 
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -333,7 +333,7 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     ? TypeMismatchError
 
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -349,7 +349,7 @@ Reading from a table, you must use an index, and vice-versa.
 Copying to and from a word table.
 
     | word one
-    | word table many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -363,7 +363,7 @@ Copying to and from a word table.
     = ok
 
     | word one
-    | word table many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -376,7 +376,7 @@ Copying to and from a word table.
     ? TypeMismatchError
 
     | word one
-    | word table many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -390,7 +390,7 @@ Copying to and from a word table.
 
 You can also copy a literal word to a word table.
 
-    | word table many
+    | word table[256] many
     | 
     | routine main
     |   inputs many
