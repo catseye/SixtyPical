@@ -568,7 +568,9 @@ Copy word to word table and back, with both `x` and `y` as indexes.
 
 Indirect call.
 
-    | vector foo outputs x trashes z, n
+    | vector outputs x
+    |        trashes z, n
+    |   foo
     | 
     | routine bar outputs x trashes z, n {
     |     ld x, 200

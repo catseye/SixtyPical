@@ -81,12 +81,6 @@ class Parser(object):
         name = self.scanner.token
         self.scanner.scan()
 
-        (inputs, outputs, trashes) = self.constraints()
-        if type_ == 'vector':
-            type_ = VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
-        elif inputs or outputs or trashes:
-            raise SyntaxError("Cannot apply constraints to non-vector type")
-
         initial = None
         if self.scanner.consume(':'):
             if isinstance(type_, TableType) and self.scanner.on_type('string literal'):
@@ -129,7 +123,8 @@ class Parser(object):
                 return TableType(TYPE_WORD, size)
             return TYPE_WORD
         elif self.scanner.consume('vector'):
-            return 'vector'  # will be resolved to a Type by caller
+            (inputs, outputs, trashes) = self.constraints()
+            return VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
         elif self.scanner.consume('buffer'):
             size = self.defn_size()
             return BufferType(size)

@@ -453,7 +453,7 @@ Copy literal word to word.
 
 Indirect call.
 
-    | vector foo outputs x trashes z, n
+    | vector outputs x trashes z, n foo
     | 
     | routine bar outputs x trashes z, n {
     |     ld x, 200
