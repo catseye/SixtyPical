@@ -1900,3 +1900,33 @@ vector says it does.
     |     ld a, x
     | }
     = ok
+
+### vector table ###
+
+Copying to and from a vector table.
+
+    | vector
+    |   outputs x
+    |   trashes a, z, n
+    |     one
+    | vector
+    |   outputs x
+    |   trashes a, z, n
+    |     table[256] many
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy bar, one
+    |     copy one, many + x
+    |     //copy many + x, one
+    |     //call one
+    | }
+    = ok

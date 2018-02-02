@@ -32,8 +32,8 @@ class ExecutableType(Type):
         self.trashes = trashes or set()
 
     def __repr__(self):
-        return 'RoutineType(%r, inputs=%r, outputs=%r, trashes=%r)' % (
-            self.name, self.inputs, self.outputs, self.trashes
+        return '%s(%r, inputs=%r, outputs=%r, trashes=%r)' % (
+            self.__class__.__name__, self.name, self.inputs, self.outputs, self.trashes
         )
 
     def __eq__(self, other):
@@ -65,6 +65,11 @@ class TableType(Type):
         self.of_type = of_type
         self.size = size
         self.name = '{} table[{}]'.format(self.of_type.name, self.size)
+
+    def __repr__(self):
+        return '%s(%r, %r)' % (
+            self.__class__.__name__, self.of_type, self.size
+        )
 
     @classmethod
     def is_a_table_type(cls_, x, of_type):
@@ -120,6 +125,11 @@ class LocationRef(Ref):
     def backpatch_vector_labels(self, resolver):
         if isinstance(self.type, ExecutableType):
             t = self.type
+            t.inputs = set([resolver(w) for w in t.inputs])
+            t.outputs = set([resolver(w) for w in t.outputs])
+            t.trashes = set([resolver(w) for w in t.trashes])
+        if isinstance(self.type, TableType) and isinstance(self.type.of_type, ExecutableType):
+            t = self.type.of_type
             t.inputs = set([resolver(w) for w in t.inputs])
             t.outputs = set([resolver(w) for w in t.outputs])
             t.trashes = set([resolver(w) for w in t.trashes])
