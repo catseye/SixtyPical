@@ -21,8 +21,8 @@ based on common machine-language programming idioms, such as
 *   explicit tail calls
 *   indirect subroutine calls
 
-The reference implementation can execute, analyze, and compile SixtyPical
-programs to 6502 machine code.
+The reference implementation can analyze and compile SixtyPical programs to
+6502 machine code.
 
 Documentation
 -------------
@@ -44,8 +44,6 @@ TODO
 Finish the little demo "game" where you can move a block around the screen with
 the joystick (i.e. bring it up to par with the original demo game that was written
 for SixtyPical)
-
-### `vector table` type
 
 ### `low` and `high` address operators
 

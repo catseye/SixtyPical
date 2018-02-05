@@ -2,8 +2,9 @@ SixtyPical
 ==========
 
 This document describes the SixtyPical programming language version 0.11,
-both its execution aspect and its static analysis aspect (even though
-these are, technically speaking, separate concepts.)
+both its static semantics (the capabilities and limits of the static
+analyses it defines) and its runtime semantics (with reference to the
+semantics of 6502 machine code.)
 
 This document is nominally normative, but the tests in the `tests` directory
 are even more normative.

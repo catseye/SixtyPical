@@ -2,7 +2,7 @@
 
 """Usage: sixtypical [OPTIONS] FILES
 
-Analyzes and/or executes and/or compiles a Sixtypical program.
+Analyzes and compiles a Sixtypical program.
 """
 
 from os.path import realpath, dirname, join
@@ -19,7 +19,6 @@ import sys
 import traceback
 
 from sixtypical.parser import Parser
-from sixtypical.evaluator import Evaluator
 from sixtypical.analyzer import Analyzer
 from sixtypical.emitter import Emitter, Byte, Word
 from sixtypical.compiler import Compiler
@@ -41,9 +40,6 @@ if __name__ == '__main__':
                          action="store_true",
                          help="")
     optparser.add_option("--traceback",
-                         action="store_true",
-                         help="")
-    optparser.add_option("--execute",
                          action="store_true",
                          help="")
 
@@ -88,7 +84,3 @@ if __name__ == '__main__':
                 pprint(emitter.accum)
             else:
                 emitter.serialize(fh)
-
-        if options.execute:
-            context = Evaluator().eval_program(program)
-            print str(context)
