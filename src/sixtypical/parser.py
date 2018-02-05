@@ -19,6 +19,7 @@ class Parser(object):
     def __init__(self, text):
         self.scanner = Scanner(text)
         self.symbols = {}  # token -> SymEntry
+        self.typedefs = {}  # token -> Type AST
         for token in ('a', 'x', 'y'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
         for token in ('c', 'z', 'n', 'v'):
@@ -35,7 +36,11 @@ class Parser(object):
     def program(self):
         defns = []
         routines = []
-        while self.scanner.on('byte', 'word', 'table', 'vector', 'buffer', 'pointer'): # 'routine', 
+        while self.scanner.on('typedef'):
+            typedef = self.typedef()
+        typenames = ['byte', 'word', 'table', 'vector', 'buffer', 'pointer']  # 'routine',
+        typenames.extend(self.typedefs.keys())
+        while self.scanner.on(*typenames):
             defn = self.defn()
             name = defn.name
             if name in self.symbols:
@@ -77,6 +82,15 @@ class Parser(object):
                 instr.src = self.symbols[name].model
 
         return Program(defns=defns, routines=routines)
+
+    def typedef(self):
+        self.scanner.expect('typedef')
+        type_ = self.defn_type()
+        name = self.defn_name()
+        if name in self.typedefs:
+            raise SyntaxError('Type "%s" already declared' % name)
+        self.typedefs[name] = type_
+        return type_
 
     def defn(self):
         type_ = self.defn_type()
@@ -131,9 +145,14 @@ class Parser(object):
         elif self.scanner.consume('buffer'):
             size = self.defn_size()
             return BufferType(size)
-        else:
-            self.scanner.expect('pointer')
+        elif self.scanner.consume('pointer'):
             return PointerType()
+        else:
+            type_name = self.scanner.token
+            self.scanner.scan()
+            if type_name not in self.typedefs:
+                raise SyntaxError("Undefined type '%s'" % type_name)
+            return self.typedefs[type_name]
 
     def defn_name(self):
         self.scanner.check_type('identifier')

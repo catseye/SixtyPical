@@ -153,6 +153,26 @@ Tables of different types.
     | }
     = ok
 
+Typedefs of different types.
+
+    | typedef byte octet
+    | typedef table[256] octet twokay
+    | typedef routine trashes a game_routine
+    | vector game_routine start_game
+    | 
+    | routine main {
+    | }
+    = ok
+
+Can't have two typedefs with the same name.
+
+    | typedef byte frank
+    | typedef word frank
+    | 
+    | routine main {
+    | }
+    ? SyntaxError
+
 Explicit memory address.
 
     | byte screen @ 1024
