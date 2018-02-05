@@ -135,10 +135,10 @@ User-defined memory addresses of different types.
 
     | byte byt
     | word wor
-    | vector trashes a vec
+    | vector vec trashes a
     | byte table[256] tab
     | word table[256] wtab
-    | vector trashes a table[256] vtab
+    | vector table[256] vtab trashes a
     | buffer[2048] buf
     | pointer ptr
     | 
@@ -314,11 +314,11 @@ Declaring byte and word table memory location.
 
 Declaring and calling a vector.
 
-    | vector
+    | vector cinv
     |   inputs a
     |   outputs x
     |   trashes a, x, z, n
-    |     cinv @ 788
+    |   @ 788
     | 
     | routine foo {
     |     ld a, 0
@@ -333,11 +333,11 @@ Declaring and calling a vector.
 
 Only vectors can be decorated with constraints like that.
 
-    | byte
+    | byte cinv
     |   inputs a
     |   outputs x
     |   trashes a, x, z, n
-    |     cinv @ 788
+    |   @ 788
     | 
     | routine main {
     | }
@@ -345,11 +345,11 @@ Only vectors can be decorated with constraints like that.
 
 Constraints set may only contain labels.
 
-    | vector
+    | vector cinv
     |   inputs a
     |   outputs 200
     |   trashes a, x, z, n
-    |     cinv @ 788
+    |   @ 788
     | 
     | routine foo {
     |     ld a, 0
@@ -364,11 +364,11 @@ Constraints set may only contain labels.
 
 A vector can name itself in its inputs, outputs, and trashes.
 
-    | vector
+    | vector cinv
     |   inputs cinv, a
     |   outputs cinv, x
     |   trashes a, x, z, n
-    |     cinv @ 788
+    |   @ 788
     | 
     | routine foo {
     |     ld a, 0
@@ -384,11 +384,11 @@ A vector can name itself in its inputs, outputs, and trashes.
 A routine can be copied into a vector before the routine appears in the program,
 *however*, it must be marked as such with the keyword `forward`.
 
-    | vector
+    | vector cinv
     |   inputs cinv, a
     |   outputs cinv, x
     |   trashes a, x, z, n
-    |     cinv @ 788
+    |   @ 788
     | routine main {
     |     with interrupts off {
     |         copy foo, cinv
@@ -400,11 +400,11 @@ A routine can be copied into a vector before the routine appears in the program,
     | }
     ? SyntaxError: Undefined symbol
 
-    | vector
+    | vector cinv
     |   inputs cinv, a
     |   outputs cinv, x
     |   trashes a, x, z, n
-    |     cinv @ 788
+    |   @ 788
     | routine main {
     |     with interrupts off {
     |         copy forward foo, cinv

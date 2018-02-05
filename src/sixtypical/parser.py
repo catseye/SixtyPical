@@ -75,11 +75,7 @@ class Parser(object):
         return Program(defns=defns, routines=routines)
 
     def defn(self):
-        type_ = self.defn_type()
-
-        self.scanner.check_type('identifier')
-        name = self.scanner.token
-        self.scanner.scan()
+        type_, name = self.defn_type_and_name()
 
         initial = None
         if self.scanner.consume(':'):
@@ -111,30 +107,45 @@ class Parser(object):
         self.scanner.expect(']')
         return size
 
-    def defn_type(self):
+    def defn_type_and_name(self):
         if self.scanner.consume('byte'):
-            if self.scanner.consume('table'):
-                size = self.defn_size()
-                return TableType(TYPE_BYTE, size)
-            return TYPE_BYTE
-        elif self.scanner.consume('word'):
-            if self.scanner.consume('table'):
-                size = self.defn_size()
-                return TableType(TYPE_WORD, size)
-            return TYPE_WORD
-        elif self.scanner.consume('vector'):
-            (inputs, outputs, trashes) = self.constraints()
-            type_ = VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
+            type_ = TYPE_BYTE
             if self.scanner.consume('table'):
                 size = self.defn_size()
                 type_ = TableType(type_, size)
-            return type_
+            name = self.defn_name()
+            return type_, name
+        elif self.scanner.consume('word'):
+            type_ = TYPE_WORD
+            if self.scanner.consume('table'):
+                size = self.defn_size()
+                type_ = TableType(type_, size)
+            name = self.defn_name()
+            return type_, name
+        elif self.scanner.consume('vector'):
+            size = None
+            if self.scanner.consume('table'):
+                size = self.defn_size()
+            name = self.defn_name()
+            (inputs, outputs, trashes) = self.constraints()
+            type_ = VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
+            if size is not None:
+                type_ = TableType(type_, size)
+            return type_, name
         elif self.scanner.consume('buffer'):
             size = self.defn_size()
-            return BufferType(size)
+            name = self.defn_name()
+            return BufferType(size), name
         else:
             self.scanner.expect('pointer')
-            return PointerType()
+            name = self.defn_name()
+            return PointerType(), name
+
+    def defn_name(self):
+        self.scanner.check_type('identifier')
+        name = self.scanner.token
+        self.scanner.scan()
+        return name
 
     def constraints(self):
         inputs = set()

@@ -1554,11 +1554,10 @@ Read through a pointer.
 Routines are constants.  You need not, and in fact cannot, specify a constant
 as an input to, an output of, or as a trashed value of a routine.
 
-    | vector
+    | vector vec
     |   inputs x
     |   outputs x
     |   trashes z, n
-    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1577,11 +1576,10 @@ as an input to, an output of, or as a trashed value of a routine.
     | }
     ? ConstantConstraintError: foo in main
 
-    | vector
+    | vector vec
     |   inputs x
     |   outputs x
     |   trashes z, n
-    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1599,11 +1597,10 @@ as an input to, an output of, or as a trashed value of a routine.
     | }
     ? ConstantConstraintError: foo in main
 
-    | vector
+    | vector vec
     |   inputs x
     |   outputs x
     |   trashes z, n
-    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1624,11 +1621,10 @@ as an input to, an output of, or as a trashed value of a routine.
 You can copy the address of a routine into a vector, if that vector is
 declared appropriately.
 
-    | vector
+    | vector vec
     |   inputs x
     |   outputs x
     |   trashes z, n
-    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1648,11 +1644,10 @@ declared appropriately.
 
 But not if the vector is declared inappropriately.
 
-    | vector
+    | vector vec
     |   inputs y
     |   outputs y
     |   trashes z, n
-    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1673,11 +1668,10 @@ But not if the vector is declared inappropriately.
 "Appropriately" means, if the routine affects no more than what is named
 in the input/output sets of the vector.
 
-    | vector
+    | vector vec
     |   inputs a, x
     |   outputs x
     |   trashes a, z, n
-    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1697,11 +1691,10 @@ in the input/output sets of the vector.
 
 Routines are read-only.
 
-    | vector
+    | vector vec
     |   inputs x
     |   outputs x
     |   trashes z, n
-    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1721,7 +1714,7 @@ Routines are read-only.
 
 Indirect call.
 
-    | vector outputs x trashes z, n foo
+    | vector foo outputs x trashes z, n
     | 
     | routine bar outputs x trashes z, n {
     |     ld x, 200
@@ -1735,7 +1728,7 @@ Indirect call.
 
 Calling the vector does indeed trash the things the vector says it does.
 
-    | vector trashes x, z, n foo
+    | vector foo trashes x, z, n
     | 
     | routine bar trashes x, z, n {
     |     ld x, 200
@@ -1835,7 +1828,7 @@ Can `goto` a routine that outputs or trashes less than the current routine.
 
 Indirect goto.
 
-    | vector outputs x trashes a, z, n   foo
+    | vector foo outputs x trashes a, z, n
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
@@ -1850,9 +1843,8 @@ Indirect goto.
 Jumping through the vector does indeed trash, or output, the things the
 vector says it does.
 
-    | vector
+    | vector foo
     |   trashes a, x, z, n
-    |     foo
     | 
     | routine bar
     |   trashes a, x, z, n {
@@ -1874,10 +1866,9 @@ vector says it does.
     | }
     ? UnmeaningfulReadError: x in main
 
-    | vector
+    | vector foo
     |   outputs x
     |   trashes a, z, n
-    |     foo
     | 
     | routine bar
     |   outputs x
@@ -1905,14 +1896,12 @@ vector says it does.
 
 Copying to and from a vector table.
 
-    | vector
+    | vector one
     |   outputs x
     |   trashes a, z, n
-    |     one
-    | vector
+    | vector table[256] many
     |   outputs x
     |   trashes a, z, n
-    |     table[256] many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200

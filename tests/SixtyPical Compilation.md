@@ -568,9 +568,7 @@ Copy word to word table and back, with both `x` and `y` as indexes.
 
 Indirect call.
 
-    | vector outputs x
-    |        trashes z, n
-    |   foo
+    | vector foo outputs x trashes z, n
     | 
     | routine bar outputs x trashes z, n {
     |     ld x, 200
@@ -610,14 +608,12 @@ goto.
 
 Copying to and from a vector table.
 
-    | vector
+    | vector one
     |   outputs x
     |   trashes a, z, n
-    |     one
-    | vector
+    | vector table[256] many
     |   outputs x
     |   trashes a, z, n
-    |     table[256] many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
