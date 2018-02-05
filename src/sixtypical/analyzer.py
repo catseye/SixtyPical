@@ -141,9 +141,6 @@ class Context(object):
 
     def set_touched(self, *refs):
         for ref in refs:
-            # FIXME review the whole "touched" thing.  what does it even mean?  how is it different from "written"?
-            if isinstance(ref.type, RoutineType):
-                continue
             self._touched.add(ref)
 
     def set_meaningful(self, *refs):
@@ -403,19 +400,16 @@ class Analyzer(object):
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, REG_Y)
                 # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
-                context.set_touched(src.ref)  # TODO and REG_Y?  if not, why not?
-                context.set_touched(dest)
                 context.set_written(dest)
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
-                context.set_touched(src)  # TODO and dest.index?
                 context.set_written(dest.ref)
             elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
                 context.set_written(dest.ref)
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, src.index, dest)
-                context.set_touched(dest)  # TODO and src.index?
+                context.set_touched(dest)
                 context.set_written(dest)
             else:
                 context.assert_meaningful(src)
