@@ -238,6 +238,7 @@ class Analyzer(object):
                     raise TypeMismatchError('%s and %s in %s' %
                         (src.name, dest.name, self.current_routine.name)
                     )
+                context.assert_meaningful(instr.index)
             elif src.type != dest.type:
                 raise TypeMismatchError('%s and %s in %s' %
                     (src.name, dest.name, self.current_routine.name)
@@ -250,6 +251,7 @@ class Analyzer(object):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
+                context.assert_meaningful(instr.index)
             elif src.type != dest.type:
                 raise TypeMismatchError('%s and %s in %s' %
                     (src.name, dest.name, self.current_routine.name)

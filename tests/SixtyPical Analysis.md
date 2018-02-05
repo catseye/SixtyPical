@@ -240,7 +240,7 @@ Can't `st` a `word` type.
 
 ### tables ###
 
-Storing to a table, you must use an index, and vice-versa.
+Storing to a table, you must use an index.
 
     | byte one
     | byte table[256] many
@@ -294,7 +294,21 @@ Storing to a table, you must use an index, and vice-versa.
     | }
     = ok
 
-Reading from a table, you must use an index, and vice-versa.
+The index must be initialized.
+
+    | byte one
+    | byte table[256] many
+    | 
+    | routine main
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld a, 0
+    |     st a, many + x
+    | }
+    ? UnmeaningfulReadError: x
+
+Reading from a table, you must use an index.
 
     | byte one
     | 
@@ -345,6 +359,31 @@ Reading from a table, you must use an index, and vice-versa.
     |     ld a, many + x
     | }
     = ok
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, many + x
+    | }
+    = ok
+
+The index must be initialized.
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld a, many + x
+    | }
+    ? UnmeaningfulReadError: x
 
 Copying to and from a word table.
 

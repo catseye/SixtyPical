@@ -8,6 +8,7 @@ History of SixtyPical
 *   Initialized `byte table` values need not have all 256 bytes initialized.
 *   Constraints for `vector` type come immediately after the type, not the variable.
 *   `vector table` storage, and ability to copy vectors in and out of same.
+*   Fixed bug where index register wasn't required to be initialized before table access.
 
 0.10
 ----
