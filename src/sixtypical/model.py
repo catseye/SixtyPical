@@ -17,16 +17,27 @@ class Type(object):
     def __hash__(self):
         return hash(self.name)
 
+    def backpatch_constraint_labels(self, resolver):
+        if isinstance(self, TableType):
+            self.of_type.backpatch_constraint_labels(resolver)
+        elif isinstance(self, VectorType):
+            self.of_type.backpatch_constraint_labels(resolver)
+        elif isinstance(self, RoutineType):
+            self.inputs = set([resolver(w) for w in self.inputs])
+            self.outputs = set([resolver(w) for w in self.outputs])
+            self.trashes = set([resolver(w) for w in self.trashes])
+
 
 TYPE_BIT = Type('bit')
 TYPE_BYTE = Type('byte')
 TYPE_WORD = Type('word')
 
 
-class ExecutableType(Type):
-    """Used for routines and vectors."""
-    def __init__(self, name, inputs=None, outputs=None, trashes=None):
-        self.name = name
+
+class RoutineType(Type):
+    """This memory location contains the code for a routine."""
+    def __init__(self, inputs=None, outputs=None, trashes=None):
+        self.name = 'routine'
         self.inputs = inputs or set()
         self.outputs = outputs or set()
         self.trashes = trashes or set()
@@ -37,7 +48,7 @@ class ExecutableType(Type):
         )
 
     def __eq__(self, other):
-        return isinstance(other, ExecutableType) and (
+        return isinstance(other, RoutineType) and (
             other.name == self.name and
             other.inputs == self.inputs and
             other.outputs == self.outputs and
@@ -50,7 +61,11 @@ class ExecutableType(Type):
     @classmethod
     def executable_types_compatible(cls_, src, dest):
         """Returns True iff a value of type `src` can be assigned to a storage location of type `dest`."""
-        if isinstance(src, ExecutableType) and isinstance(dest, VectorType):
+        if isinstance(src, VectorType):
+            src = src.of_type
+        if isinstance(dest, VectorType):
+            dest = dest.of_type
+        if isinstance(src, RoutineType) and isinstance(dest, RoutineType):
             # TODO: I'm sure we can replace some of these with subset-containment, but that requires thought
             return (
                 src.inputs == dest.inputs and
@@ -61,16 +76,22 @@ class ExecutableType(Type):
             return False
 
 
-class RoutineType(ExecutableType):
-    """This memory location contains the code for a routine."""
-    def __init__(self, **kwargs):
-        super(RoutineType, self).__init__('routine', **kwargs)
+class VectorType(Type):
+    """This memory location contains the address of some other type (currently, only RoutineType)."""
+    def __init__(self, of_type):
+        self.name = 'vector'
+        self.of_type = of_type
 
+    def __repr__(self):
+        return '%s(%r)' % (
+            self.__class__.__name__, self.of_type
+        )
 
-class VectorType(ExecutableType):
-    """This memory location contains the address of a routine."""
-    def __init__(self, **kwargs):
-        super(VectorType, self).__init__('vector', **kwargs)
+    def __eq__(self, other):
+        return self.name == other.name and self.of_type == other.of_type
+
+    def __hash__(self):
+        return hash(self.name) ^ hash(self.of_type)
 
 
 class TableType(Type):
@@ -134,18 +155,6 @@ class LocationRef(Ref):
 
     def is_constant(self):
         return isinstance(self.type, RoutineType)
-
-    def backpatch_vector_labels(self, resolver):
-        if isinstance(self.type, ExecutableType):
-            t = self.type
-            t.inputs = set([resolver(w) for w in t.inputs])
-            t.outputs = set([resolver(w) for w in t.outputs])
-            t.trashes = set([resolver(w) for w in t.trashes])
-        if isinstance(self.type, TableType) and isinstance(self.type.of_type, ExecutableType):
-            t = self.type.of_type
-            t.inputs = set([resolver(w) for w in t.inputs])
-            t.outputs = set([resolver(w) for w in t.outputs])
-            t.trashes = set([resolver(w) for w in t.trashes])
 
     @classmethod
     def format_set(cls, location_refs):

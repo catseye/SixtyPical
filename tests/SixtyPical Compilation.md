@@ -139,7 +139,7 @@ Word memory locations with explicit address, initial value.
 
 Initialized byte table.  Bytes allocated, but beyond the string, are 0's.
 
-    | byte table[8] message : "WHAT?"
+    | table[8] byte message : "WHAT?"
     | 
     | routine main
     |   inputs message
@@ -352,7 +352,7 @@ The body of `repeat forever` can be empty.
 Indexed access.
 
     | byte one
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   outputs many
@@ -371,8 +371,8 @@ Indexed access.
 
 Byte tables take up 256 bytes in memory.
 
-    | byte table[256] tab1
-    | byte table[256] tab2
+    | table[256] byte tab1
+    | table[256] byte tab2
     | 
     | routine main
     |   inputs tab1
@@ -458,7 +458,7 @@ Copy literal word to word.
 
 You can also copy a literal word to a word table.
 
-    | word table[256] many
+    | table[256] word many
     | 
     | routine main
     |   inputs many
@@ -477,8 +477,8 @@ You can also copy a literal word to a word table.
 
 Copy vector to vector.
 
-    | vector bar
-    | vector baz
+    | vector routine bar
+    | vector routine baz
     | 
     | routine main
     |   inputs baz
@@ -495,7 +495,7 @@ Copy vector to vector.
 
 Copy routine to vector, inside an `interrupts off` block.
 
-    | vector bar
+    | vector routine bar
     | 
     | routine foo
     |   inputs x
@@ -527,7 +527,7 @@ Copy routine to vector, inside an `interrupts off` block.
 Copy word to word table and back, with both `x` and `y` as indexes.
 
     | word one
-    | word table[256] many
+    | table[256] word many
     | 
     | routine main
     |   inputs one, many
@@ -568,7 +568,7 @@ Copy word to word table and back, with both `x` and `y` as indexes.
 
 Indirect call.
 
-    | vector foo outputs x trashes z, n
+    | vector routine outputs x trashes z, n   foo
     | 
     | routine bar outputs x trashes z, n {
     |     ld x, 200
@@ -608,12 +608,14 @@ goto.
 
 Copying to and from a vector table.
 
-    | vector one
+    | vector routine
     |   outputs x
     |   trashes a, z, n
-    | vector table[256] many
+    |     one
+    | table[256] vector routine
     |   outputs x
     |   trashes a, z, n
+    |     many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200

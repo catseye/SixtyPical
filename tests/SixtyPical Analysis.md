@@ -243,7 +243,7 @@ Can't `st` a `word` type.
 Storing to a table, you must use an index.
 
     | byte one
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   outputs one
@@ -256,7 +256,7 @@ Storing to a table, you must use an index.
     = ok
 
     | byte one
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   outputs many
@@ -269,7 +269,7 @@ Storing to a table, you must use an index.
     ? TypeMismatchError
 
     | byte one
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   outputs one
@@ -282,7 +282,7 @@ Storing to a table, you must use an index.
     ? TypeMismatchError
 
     | byte one
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   outputs many
@@ -297,7 +297,7 @@ Storing to a table, you must use an index.
 The index must be initialized.
 
     | byte one
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   outputs many
@@ -334,7 +334,7 @@ Reading from a table, you must use an index.
     | }
     ? TypeMismatchError
 
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   outputs many
@@ -347,7 +347,7 @@ Reading from a table, you must use an index.
     | }
     ? TypeMismatchError
 
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   outputs many
@@ -360,7 +360,7 @@ Reading from a table, you must use an index.
     | }
     = ok
 
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   inputs many
@@ -374,7 +374,7 @@ Reading from a table, you must use an index.
 
 The index must be initialized.
 
-    | byte table[256] many
+    | table[256] byte many
     | 
     | routine main
     |   inputs many
@@ -388,7 +388,7 @@ The index must be initialized.
 Copying to and from a word table.
 
     | word one
-    | word table[256] many
+    | table[256] word many
     | 
     | routine main
     |   inputs one, many
@@ -402,7 +402,7 @@ Copying to and from a word table.
     = ok
 
     | word one
-    | word table[256] many
+    | table[256] word many
     | 
     | routine main
     |   inputs one, many
@@ -415,7 +415,7 @@ Copying to and from a word table.
     ? TypeMismatchError
 
     | word one
-    | word table[256] many
+    | table[256] word many
     | 
     | routine main
     |   inputs one, many
@@ -429,7 +429,7 @@ Copying to and from a word table.
 
 You can also copy a literal word to a word table.
 
-    | word table[256] many
+    | table[256] word many
     | 
     | routine main
     |   inputs many
@@ -1593,10 +1593,11 @@ Read through a pointer.
 Routines are constants.  You need not, and in fact cannot, specify a constant
 as an input to, an output of, or as a trashed value of a routine.
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1615,10 +1616,11 @@ as an input to, an output of, or as a trashed value of a routine.
     | }
     ? ConstantConstraintError: foo in main
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1636,10 +1638,11 @@ as an input to, an output of, or as a trashed value of a routine.
     | }
     ? ConstantConstraintError: foo in main
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1660,10 +1663,11 @@ as an input to, an output of, or as a trashed value of a routine.
 You can copy the address of a routine into a vector, if that vector is
 declared appropriately.
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1683,10 +1687,11 @@ declared appropriately.
 
 But not if the vector is declared inappropriately.
 
-    | vector vec
+    | vector routine
     |   inputs y
     |   outputs y
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1707,10 +1712,11 @@ But not if the vector is declared inappropriately.
 "Appropriately" means, if the routine affects no more than what is named
 in the input/output sets of the vector.
 
-    | vector vec
+    | vector routine
     |   inputs a, x
     |   outputs x
     |   trashes a, z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1730,10 +1736,11 @@ in the input/output sets of the vector.
 
 Routines are read-only.
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1753,7 +1760,9 @@ Routines are read-only.
 
 Indirect call.
 
-    | vector foo outputs x trashes z, n
+    | vector routine
+    |   outputs x trashes z, n
+    |     foo
     | 
     | routine bar outputs x trashes z, n {
     |     ld x, 200
@@ -1767,7 +1776,7 @@ Indirect call.
 
 Calling the vector does indeed trash the things the vector says it does.
 
-    | vector foo trashes x, z, n
+    | vector routine trashes x, z, n foo
     | 
     | routine bar trashes x, z, n {
     |     ld x, 200
@@ -1867,7 +1876,7 @@ Can `goto` a routine that outputs or trashes less than the current routine.
 
 Indirect goto.
 
-    | vector foo outputs x trashes a, z, n
+    | vector routine outputs x trashes a, z, n foo
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
@@ -1882,8 +1891,9 @@ Indirect goto.
 Jumping through the vector does indeed trash, or output, the things the
 vector says it does.
 
-    | vector foo
+    | vector routine
     |   trashes a, x, z, n
+    |     foo
     | 
     | routine bar
     |   trashes a, x, z, n {
@@ -1905,9 +1915,9 @@ vector says it does.
     | }
     ? UnmeaningfulReadError: x in main
 
-    | vector foo
+    | vector routine
     |   outputs x
-    |   trashes a, z, n
+    |   trashes a, z, n  foo
     | 
     | routine bar
     |   outputs x
@@ -1935,12 +1945,14 @@ vector says it does.
 
 A vector can be copied into a vector table.
 
-    | vector one
+    | vector routine
     |   outputs x
     |   trashes a, z, n
-    | vector table[256] many
+    |     one
+    | table[256] vector routine
     |   outputs x
     |   trashes a, z, n
+    |     many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
@@ -1959,12 +1971,14 @@ A vector can be copied into a vector table.
 
 A vector can be copied out of a vector table.
 
-    | vector one
+    | vector routine
     |   outputs x
     |   trashes a, z, n
-    | vector table[256] many
+    |     one
+    | table[256] vector routine
     |   outputs x
     |   trashes a, z, n
+    |     many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
@@ -1983,9 +1997,10 @@ A vector can be copied out of a vector table.
 
 A routine can be copied into a vector table.
 
-    | vector table[256] many
-    |   outputs x
-    |   trashes a, z, n
+    | table[256] vector routine
+    |     outputs x
+    |     trashes a, z, n
+    |   many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
@@ -2003,9 +2018,10 @@ A routine can be copied into a vector table.
 
 A vector in a vector table cannot be directly called.
 
-    | vector table[256] many
-    |   outputs x
-    |   trashes a, z, n
+    | table[256] vector routine
+    |     outputs x
+    |     trashes a, z, n
+    |   many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200

@@ -3,7 +3,7 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
-    TableType, BufferType, PointerType, VectorType, ExecutableType, RoutineType,
+    TableType, BufferType, PointerType, VectorType, RoutineType,
     ConstantRef, LocationRef, IndirectRef, IndexedRef, AddressRef,
     REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
@@ -303,6 +303,8 @@ class Analyzer(object):
             context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
         elif opcode == 'call':
             type = instr.location.type
+            if isinstance(type, VectorType):
+                type = type.of_type
             for ref in type.inputs:
                 context.assert_meaningful(ref)
             for ref in type.outputs:
@@ -366,8 +368,11 @@ class Analyzer(object):
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
                 if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
                     pass
-                elif (isinstance(src.type, ExecutableType) and isinstance(dest.ref.type, TableType) and
-                      ExecutableType.executable_types_compatible(src.type, dest.ref.type.of_type)):
+                elif (isinstance(src.type, VectorType) and isinstance(dest.ref.type, TableType) and
+                      RoutineType.executable_types_compatible(src.type.of_type, dest.ref.type.of_type)):
+                    pass
+                elif (isinstance(src.type, RoutineType) and isinstance(dest.ref.type, TableType) and
+                      RoutineType.executable_types_compatible(src.type, dest.ref.type.of_type)):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
@@ -376,7 +381,7 @@ class Analyzer(object):
                 if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
                     pass
                 elif (isinstance(src.ref.type, TableType) and isinstance(dest.type, VectorType) and
-                      ExecutableType.executable_types_compatible(src.ref.type.of_type, dest.type)):
+                      RoutineType.executable_types_compatible(src.ref.type.of_type, dest.type.of_type)):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
@@ -384,10 +389,10 @@ class Analyzer(object):
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
                 if src.type == dest.type:
                     pass
-                elif isinstance(src.type, ExecutableType) and isinstance(dest.type, VectorType):
-                    self.assert_affected_within('inputs', src.type.inputs, dest.type.inputs)
-                    self.assert_affected_within('outputs', src.type.outputs, dest.type.outputs)
-                    self.assert_affected_within('trashes', src.type.trashes, dest.type.trashes)
+                elif isinstance(src.type, RoutineType) and isinstance(dest.type, VectorType):
+                    self.assert_affected_within('inputs', src.type.inputs, dest.type.of_type.inputs)
+                    self.assert_affected_within('outputs', src.type.outputs, dest.type.of_type.outputs)
+                    self.assert_affected_within('trashes', src.type.trashes, dest.type.of_type.trashes)
                 else:
                     raise TypeMismatchError((src, dest))
             else:
@@ -434,10 +439,12 @@ class Analyzer(object):
             location = instr.location
             type_ = location.type
     
-            if not isinstance(type_, ExecutableType):
+            if not isinstance(type_, (RoutineType, VectorType)):
                 raise TypeMismatchError(location)
     
             # assert that the dest routine's inputs are all initialized
+            if isinstance(type_, VectorType):
+                type_ = type_.of_type
             for ref in type_.inputs:
                 context.assert_meaningful(ref)
     
