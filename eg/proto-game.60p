@@ -9,15 +9,15 @@
 byte vic_border @ 53280
 byte vic_bg @ 53281
 
-byte table[256] screen1 @ 1024
-byte table[256] screen2 @ 1274
-byte table[256] screen3 @ 1524
-byte table[256] screen4 @ 1774
+table[256] byte screen1 @ 1024
+table[256] byte screen2 @ 1274
+table[256] byte screen3 @ 1524
+table[256] byte screen4 @ 1774
 
-byte table[256] colormap1 @ 55296
-byte table[256] colormap2 @ 55546
-byte table[256] colormap3 @ 55796
-byte table[256] colormap4 @ 56046
+table[256] byte colormap1 @ 55296
+table[256] byte colormap2 @ 55546
+table[256] byte colormap3 @ 55796
+table[256] byte colormap4 @ 56046
 
 buffer[2048] screen @ 1024
 byte joy2 @ $dc00
@@ -28,15 +28,15 @@ byte joy2 @ $dc00
 
 pointer ptr @ 254
 
-word table[256] actor_pos
+table[256] word actor_pos
 word pos
 word new_pos
 
-word table[256] actor_delta
+table[256] word actor_delta
 word delta
 
 byte button_down : 0  // effectively static-local to check_button
-byte table[18] press_fire_msg: "PRESS`FIRE`TO`PLAY"
+table[32] byte press_fire_msg: "PRESS`FIRE`TO`PLAY"
 
 byte save_x
 word compare_target
@@ -51,7 +51,7 @@ word compare_target
 // and output.  There is probably a better way to do this, but it needs thought.
 //
 
-vector dispatch_game_state
+vector routine
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
@@ -59,6 +59,7 @@ vector dispatch_game_state
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+  dispatch_game_state
 
 //
 // The constraints on these 2 vectors are kind-of sort-of big fibs.
@@ -72,7 +73,7 @@ vector dispatch_game_state
 // a future version of SixtyPical.
 //
 
-vector cinv
+vector routine
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
@@ -80,9 +81,9 @@ vector cinv
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
-  @ 788
+  cinv @ 788
 
-vector save_cinv
+vector routine
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
          actor_pos, pos, new_pos, actor_delta, delta,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
@@ -90,6 +91,7 @@ vector save_cinv
           actor_pos, pos, new_pos, actor_delta, delta,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+  save_cinv
 
 // ----------------------------------------------------------------
 // Utility Routines
