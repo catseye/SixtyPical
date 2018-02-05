@@ -47,6 +47,19 @@ class ExecutableType(Type):
     def __hash__(self):
         return hash(self.name) ^ hash(self.inputs) ^ hash(self.outputs) ^ hash(self.trashes)
 
+    @classmethod
+    def executable_types_compatible(cls_, src, dest):
+        """Returns True iff a value of type `src` can be assigned to a storage location of type `dest`."""
+        if isinstance(src, ExecutableType) and isinstance(dest, VectorType):
+            # TODO: I'm sure we can replace some of these with subset-containment, but that requires thought
+            return (
+                src.inputs == dest.inputs and
+                src.outputs == dest.outputs and
+                src.trashes == dest.trashes
+            )
+        else:
+            return False
+
 
 class RoutineType(ExecutableType):
     """This memory location contains the code for a routine."""

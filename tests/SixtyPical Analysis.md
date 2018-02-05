@@ -1892,9 +1892,9 @@ vector says it does.
     | }
     = ok
 
-### vector table ###
+### Vector tables ###
 
-Copying to and from a vector table.
+A vector can be copied into a vector table.
 
     | vector one
     |   outputs x
@@ -1915,7 +1915,70 @@ Copying to and from a vector table.
     |     ld x, 0
     |     copy bar, one
     |     copy one, many + x
+    | }
+    = ok
+
+A vector can be copied out of a vector table.
+
+    | vector one
+    |   outputs x
+    |   trashes a, z, n
+    | vector table[256] many
+    |   outputs x
+    |   trashes a, z, n
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
     |     copy many + x, one
     |     call one
     | }
     = ok
+
+A routine can be copied into a vector table.
+
+    | vector table[256] many
+    |   outputs x
+    |   trashes a, z, n
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy bar, many + x
+    | }
+    = ok
+
+A vector in a vector table cannot be directly called.
+
+    | vector table[256] many
+    |   outputs x
+    |   trashes a, z, n
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy bar, many + x
+    |     call many + x
+    | }
+    ? ValueError

@@ -3,7 +3,7 @@
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
-    TableType, BufferType, PointerType, VectorType, ExecutableType,
+    TableType, BufferType, PointerType, VectorType, ExecutableType, RoutineType,
     ConstantRef, LocationRef, IndirectRef, IndexedRef, AddressRef,
     REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
@@ -141,6 +141,9 @@ class Context(object):
 
     def set_touched(self, *refs):
         for ref in refs:
+            # FIXME review the whole "touched" thing.  what does it even mean?  how is it different from "written"?
+            if isinstance(ref.type, RoutineType):
+                continue
             self._touched.add(ref)
 
     def set_meaningful(self, *refs):
@@ -364,8 +367,8 @@ class Analyzer(object):
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
                 if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
                     pass
-                elif isinstance(src.type, VectorType) and isinstance(dest.ref.type, TableType) and dest.ref.type.of_type == src.type:
-                    # TODO ideally we'd check if the vectors in the table are compatible, rather than equal, to the src
+                elif (isinstance(src.type, ExecutableType) and isinstance(dest.ref.type, TableType) and
+                      ExecutableType.executable_types_compatible(src.type, dest.ref.type.of_type)):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
@@ -373,8 +376,8 @@ class Analyzer(object):
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
                     pass
-                elif isinstance(dest.type, VectorType) and isinstance(src.ref.type, TableType) and src.ref.type.of_type == dest.type:
-                    # TODO ideally we'd check if the vectors in the table are compatible, rather than equal, to the src
+                elif (isinstance(src.ref.type, TableType) and isinstance(dest.type, VectorType) and
+                      ExecutableType.executable_types_compatible(src.ref.type.of_type, dest.type)):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
