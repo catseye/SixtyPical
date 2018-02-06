@@ -207,7 +207,8 @@ class Parser(object):
 
     def routine(self, name):
         type_ = self.defn_type()
-        # TODO assert that it's a routine
+        if not isinstance(type_, RoutineType):
+            raise SyntaxError("Can only define a routine, not %r" % type_)
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
             block = None

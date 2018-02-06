@@ -492,3 +492,40 @@ Buffers and pointers.
     |     copy [ptr] + y, foo
     | }
     = ok
+
+Routines can be defined in a new style.
+
+    | typedef routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     routine_type
+    | 
+    | vector routine_type vec
+    | 
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+Only routines can be defined in the new style.
+
+    | define foo byte table[256]
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     ld a, 0
+    | }
+    ? SyntaxError

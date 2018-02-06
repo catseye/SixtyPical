@@ -402,7 +402,7 @@ Copying to and from a word table.
     = ok
 
     | word one
-    | byte table[256] many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -415,7 +415,7 @@ Copying to and from a word table.
     ? TypeMismatchError
 
     | word one
-    | byte table[256] many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -2052,32 +2052,6 @@ that types have structural equivalence, not name equivalence.
     | vector routine_type vec
     | 
     | routine foo
-    |   inputs x
-    |   outputs x
-    |   trashes z, n
-    | {
-    |   inc x
-    | }
-    | 
-    | routine main
-    |   outputs vec
-    |   trashes a, z, n
-    | {
-    |     copy foo, vec
-    | }
-    = ok
-
-Routines can be defined in a new style.
-
-    | typedef routine
-    |   inputs x
-    |   outputs x
-    |   trashes z, n
-    |     routine_type
-    | 
-    | vector routine_type vec
-    | 
-    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
