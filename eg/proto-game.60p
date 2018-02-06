@@ -17,7 +17,7 @@
 // assigned to it.
 //
 // This type is also used as the type for the location the old interrupt vector
-// is backed up to, because all the game state routines "goto" the old handler
+// is backed up to, because all the game state routines `goto` the old handler
 // and the end of their own routines, so the type needs to be compatible.
 // (In a good sense, it is a continuation.)
 //
@@ -39,6 +39,20 @@ typedef routine
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
     game_state_routine
+
+//
+// Routines that are called to get the new state of each actor (player, enemy, etc.)
+//
+// Routines that conform to this type also follow this convention:
+//
+// Set carry if the player perished.  Carry clear otherwise.
+//
+
+typedef routine
+  inputs pos, delta, joy2, screen
+  outputs pos, delta, new_pos, screen, c
+  trashes a, x, y, z, n, v, ptr, compare_target
+    logic_routine
 
 // ----------------------------------------------------------------
 // System Locations
@@ -251,14 +265,7 @@ routine init_game
 // Actor Logics
 // ----------------------------------------------------------------
 
-//
-// Sets carry if the player perished.  Carry clear otherwise.
-//
-
-routine player_logic
-  inputs pos, delta, joy2, screen
-  outputs pos, delta, new_pos, screen, c
-  trashes a, x, y, z, n, v, ptr, compare_target
+define player_logic logic_routine
 {
     call read_stick
 
@@ -313,14 +320,7 @@ routine player_logic
     }
 }
 
-//
-// Sets carry if the player perished.  Carry clear otherwise.
-//
-
-routine enemy_logic
-  inputs pos, delta, screen
-  outputs pos, delta, new_pos, screen, c
-  trashes a, x, y, z, n, v, ptr, compare_target
+define enemy_logic logic_routine
 {
     call calculate_new_position
     call check_new_position_in_bounds
@@ -385,10 +385,6 @@ routine enemy_logic
 // ----------------------------------------------------------------
 // Game States
 // ----------------------------------------------------------------
-
-//
-// Because these all `goto save_cinv` at the end, they must have the same signature as that routine.
-//
 
 define game_state_title_screen game_state_routine
 {
