@@ -477,8 +477,8 @@ You can also copy a literal word to a word table.
 
 Copy vector to vector.
 
-    | vector bar
-    | vector baz
+    | vector routine bar
+    | vector routine baz
     | 
     | routine main
     |   inputs baz
@@ -495,7 +495,7 @@ Copy vector to vector.
 
 Copy routine to vector, inside an `interrupts off` block.
 
-    | vector bar
+    | vector routine bar
     | 
     | routine foo
     |   inputs x
@@ -568,7 +568,7 @@ Copy word to word table and back, with both `x` and `y` as indexes.
 
 Indirect call.
 
-    | vector foo outputs x trashes z, n
+    | vector routine outputs x trashes z, n   foo
     | 
     | routine bar outputs x trashes z, n {
     |     ld x, 200
@@ -608,12 +608,14 @@ goto.
 
 Copying to and from a vector table.
 
-    | vector one
+    | vector routine
     |   outputs x
     |   trashes a, z, n
-    | vector table[256] many
+    |     one
+    | vector (routine
     |   outputs x
-    |   trashes a, z, n
+    |   trashes a, z, n)
+    |     table[256] many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200

@@ -3,7 +3,7 @@
 from sixtypical.ast import Program, Defn, Routine, Block, Instr
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
-    RoutineType, VectorType, ExecutableType, TableType, BufferType, PointerType,
+    RoutineType, VectorType, TableType, BufferType, PointerType,
     LocationRef, ConstantRef, IndirectRef, IndexedRef, AddressRef,
 )
 from sixtypical.scanner import Scanner
@@ -19,6 +19,7 @@ class Parser(object):
     def __init__(self, text):
         self.scanner = Scanner(text)
         self.symbols = {}  # token -> SymEntry
+        self.typedefs = {}  # token -> Type AST
         for token in ('a', 'x', 'y'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
         for token in ('c', 'z', 'n', 'v'):
@@ -35,16 +36,25 @@ class Parser(object):
     def program(self):
         defns = []
         routines = []
-        while self.scanner.on('byte', 'word', 'vector', 'buffer', 'pointer'):
+        while self.scanner.on('typedef'):
+            typedef = self.typedef()
+        typenames = ['byte', 'word', 'table', 'vector', 'buffer', 'pointer']  # 'routine',
+        typenames.extend(self.typedefs.keys())
+        while self.scanner.on(*typenames):
             defn = self.defn()
             name = defn.name
             if name in self.symbols:
                 raise SyntaxError('Symbol "%s" already declared' % name)
             self.symbols[name] = SymEntry(defn, defn.location)
             defns.append(defn)
-        while self.scanner.on('routine'):
-            routine = self.routine()
-            name = routine.name
+        while self.scanner.on('define', 'routine'):
+            if self.scanner.consume('define'):
+                name = self.scanner.token
+                self.scanner.scan()
+                routine = self.routine(name)
+            else:
+                routine = self.legacy_routine()
+                name = routine.name
             if name in self.symbols:
                 raise SyntaxError('Symbol "%s" already declared' % name)
             self.symbols[name] = SymEntry(routine, routine.location)
@@ -52,30 +62,42 @@ class Parser(object):
         self.scanner.check_type('EOF')
 
         # now backpatch the executable types.
+        #for type_name, type_ in self.typedefs.iteritems():
+        #    type_.backpatch_constraint_labels(lambda w: self.lookup(w))
         for defn in defns:
-            defn.location.backpatch_vector_labels(lambda w: self.lookup(w))
+            defn.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
         for routine in routines:
-            routine.location.backpatch_vector_labels(lambda w: self.lookup(w))
+            routine.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
         for instr in self.backpatch_instrs:
             if instr.opcode in ('call', 'goto'):
                 name = instr.location
                 if name not in self.symbols:
                     raise SyntaxError('Undefined routine "%s"' % name)
-                if not isinstance(self.symbols[name].model.type, ExecutableType):
+                if not isinstance(self.symbols[name].model.type, (RoutineType, VectorType)):
                     raise SyntaxError('Illegal call of non-executable "%s"' % name)
                 instr.location = self.symbols[name].model
             if instr.opcode in ('copy',) and isinstance(instr.src, basestring):
                 name = instr.src
                 if name not in self.symbols:
                     raise SyntaxError('Undefined routine "%s"' % name)
-                if not isinstance(self.symbols[name].model.type, ExecutableType):
+                if not isinstance(self.symbols[name].model.type, (RoutineType, VectorType)):
                     raise SyntaxError('Illegal copy of non-executable "%s"' % name)
                 instr.src = self.symbols[name].model
 
         return Program(defns=defns, routines=routines)
 
+    def typedef(self):
+        self.scanner.expect('typedef')
+        type_ = self.defn_type()
+        name = self.defn_name()
+        if name in self.typedefs:
+            raise SyntaxError('Type "%s" already declared' % name)
+        self.typedefs[name] = type_
+        return type_
+
     def defn(self):
-        type_, name = self.defn_type_and_name()
+        type_ = self.defn_type()
+        name = self.defn_name()
 
         initial = None
         if self.scanner.consume(':'):
@@ -107,39 +129,43 @@ class Parser(object):
         self.scanner.expect(']')
         return size
 
-    def defn_type_and_name(self):
+    def defn_type(self):
+        type_ = None
+
+        if self.scanner.consume('('):
+            type_ = self.defn_type()
+            self.scanner.expect(')')
+            return type_
+
         if self.scanner.consume('byte'):
             type_ = TYPE_BYTE
-            if self.scanner.consume('table'):
-                size = self.defn_size()
-                type_ = TableType(type_, size)
-            name = self.defn_name()
-            return type_, name
         elif self.scanner.consume('word'):
             type_ = TYPE_WORD
-            if self.scanner.consume('table'):
-                size = self.defn_size()
-                type_ = TableType(type_, size)
-            name = self.defn_name()
-            return type_, name
         elif self.scanner.consume('vector'):
-            size = None
-            if self.scanner.consume('table'):
-                size = self.defn_size()
-            name = self.defn_name()
+            type_ = self.defn_type()
+            if not isinstance(type_, RoutineType):
+                raise SyntaxError("Vectors can only be of a routine, not %r" % type_)
+            type_ = VectorType(type_)
+        elif self.scanner.consume('routine'):
             (inputs, outputs, trashes) = self.constraints()
-            type_ = VectorType(inputs=inputs, outputs=outputs, trashes=trashes)
-            if size is not None:
-                type_ = TableType(type_, size)
-            return type_, name
+            type_ = RoutineType(inputs=inputs, outputs=outputs, trashes=trashes)
         elif self.scanner.consume('buffer'):
             size = self.defn_size()
-            name = self.defn_name()
-            return BufferType(size), name
+            type_ = BufferType(size)
+        elif self.scanner.consume('pointer'):
+            type_ = PointerType()
         else:
-            self.scanner.expect('pointer')
-            name = self.defn_name()
-            return PointerType(), name
+            type_name = self.scanner.token
+            self.scanner.scan()
+            if type_name not in self.typedefs:
+                raise SyntaxError("Undefined type '%s'" % type_name)
+            type_ = self.typedefs[type_name]
+
+        if self.scanner.consume('table'):
+            size = self.defn_size()
+            type_ = TableType(type_, size)
+
+        return type_
 
     def defn_name(self):
         self.scanner.check_type('identifier')
@@ -159,11 +185,12 @@ class Parser(object):
             trashes = set(self.labels())
         return (inputs, outputs, trashes)
 
-    def routine(self):
+    def legacy_routine(self):
         self.scanner.expect('routine')
         name = self.scanner.token
         self.scanner.scan()
         (inputs, outputs, trashes) = self.constraints()
+        type_ = RoutineType(inputs=inputs, outputs=outputs, trashes=trashes)
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
             block = None
@@ -172,10 +199,25 @@ class Parser(object):
         else:
             block = self.block()
             addr = None
-        location = LocationRef(
-            RoutineType(inputs=inputs, outputs=outputs, trashes=trashes),
-            name
+        location = LocationRef(type_, name)
+        return Routine(
+            name=name, block=block, addr=addr,
+            location=location
         )
+
+    def routine(self, name):
+        type_ = self.defn_type()
+        if not isinstance(type_, RoutineType):
+            raise SyntaxError("Can only define a routine, not %r" % type_)
+        if self.scanner.consume('@'):
+            self.scanner.check_type('integer literal')
+            block = None
+            addr = int(self.scanner.token)
+            self.scanner.scan()
+        else:
+            block = self.block()
+            addr = None
+        location = LocationRef(type_, name)
         return Routine(
             name=name, block=block, addr=addr,
             location=location

@@ -135,16 +135,43 @@ User-defined memory addresses of different types.
 
     | byte byt
     | word wor
-    | vector vec trashes a
-    | byte table[256] tab
-    | word table[256] wtab
-    | vector table[256] vtab trashes a
+    | vector routine trashes a vec
     | buffer[2048] buf
     | pointer ptr
     | 
     | routine main {
     | }
     = ok
+
+Tables of different types.
+
+    | byte table[256] tab
+    | word table[256] wtab
+    | vector (routine trashes a) table[256] vtab
+    | 
+    | routine main {
+    | }
+    = ok
+
+Typedefs of different types.
+
+    | typedef byte octet
+    | typedef octet table[256] twokay
+    | typedef routine trashes a game_routine
+    | vector game_routine start_game
+    | 
+    | routine main {
+    | }
+    = ok
+
+Can't have two typedefs with the same name.
+
+    | typedef byte frank
+    | typedef word frank
+    | 
+    | routine main {
+    | }
+    ? SyntaxError
 
 Explicit memory address.
 
@@ -189,7 +216,7 @@ User-defined locations of other types.
 
 Initialized byte table.
 
-    | byte table[28] message : "WHAT DO YOU WANT TO DO NEXT?"
+    | byte table[32] message : "WHAT DO YOU WANT TO DO NEXT?"
     | 
     | routine main {
     | }
@@ -314,11 +341,11 @@ Declaring byte and word table memory location.
 
 Declaring and calling a vector.
 
-    | vector cinv
+    | vector routine
     |   inputs a
     |   outputs x
     |   trashes a, x, z, n
-    |   @ 788
+    |   cinv @ 788
     | 
     | routine foo {
     |     ld a, 0
@@ -345,11 +372,11 @@ Only vectors can be decorated with constraints like that.
 
 Constraints set may only contain labels.
 
-    | vector cinv
+    | vector routine
     |   inputs a
     |   outputs 200
     |   trashes a, x, z, n
-    |   @ 788
+    |   cinv @ 788
     | 
     | routine foo {
     |     ld a, 0
@@ -364,11 +391,11 @@ Constraints set may only contain labels.
 
 A vector can name itself in its inputs, outputs, and trashes.
 
-    | vector cinv
+    | vector routine
     |   inputs cinv, a
     |   outputs cinv, x
     |   trashes a, x, z, n
-    |   @ 788
+    |   cinv @ 788
     | 
     | routine foo {
     |     ld a, 0
@@ -384,11 +411,11 @@ A vector can name itself in its inputs, outputs, and trashes.
 A routine can be copied into a vector before the routine appears in the program,
 *however*, it must be marked as such with the keyword `forward`.
 
-    | vector cinv
+    | vector routine
     |   inputs cinv, a
     |   outputs cinv, x
     |   trashes a, x, z, n
-    |   @ 788
+    |   cinv @ 788
     | routine main {
     |     with interrupts off {
     |         copy foo, cinv
@@ -400,11 +427,11 @@ A routine can be copied into a vector before the routine appears in the program,
     | }
     ? SyntaxError: Undefined symbol
 
-    | vector cinv
+    | vector routine
     |   inputs cinv, a
     |   outputs cinv, x
     |   trashes a, x, z, n
-    |   @ 788
+    |   cinv @ 788
     | routine main {
     |     with interrupts off {
     |         copy forward foo, cinv
@@ -434,7 +461,7 @@ goto.
     | }
     = ok
 
-    | vector foo
+    | vector routine foo
     | 
     | routine main {
     |     goto foo
@@ -465,3 +492,40 @@ Buffers and pointers.
     |     copy [ptr] + y, foo
     | }
     = ok
+
+Routines can be defined in a new style.
+
+    | typedef routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     routine_type
+    | 
+    | vector routine_type vec
+    | 
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+Only routines can be defined in the new style.
+
+    | define foo byte table[256]
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     ld a, 0
+    | }
+    ? SyntaxError
