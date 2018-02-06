@@ -145,9 +145,9 @@ User-defined memory addresses of different types.
 
 Tables of different types.
 
-    | table[256] byte tab
-    | table[256] word wtab
-    | table[256] vector routine trashes a vtab
+    | byte table[256] tab
+    | word table[256] wtab
+    | vector (routine trashes a) table[256] vtab
     | 
     | routine main {
     | }
@@ -156,7 +156,7 @@ Tables of different types.
 Typedefs of different types.
 
     | typedef byte octet
-    | typedef table[256] octet twokay
+    | typedef octet table[256] twokay
     | typedef routine trashes a game_routine
     | vector game_routine start_game
     | 
@@ -205,7 +205,7 @@ Cannot have both initial value and explicit address.
 
 User-defined locations of other types.
 
-    | table[256] byte screen @ 1024
+    | byte table[256] screen @ 1024
     | word r1
     | word r2 @ 60000
     | word r3 : 2000
@@ -216,7 +216,7 @@ User-defined locations of other types.
 
 Initialized byte table.
 
-    | table[28] byte message : "WHAT DO YOU WANT TO DO NEXT?"
+    | byte table[32] message : "WHAT DO YOU WANT TO DO NEXT?"
     | 
     | routine main {
     | }
@@ -318,7 +318,7 @@ Can't define two routines with the same name.
 
 Declaring byte and word table memory location.
 
-    | table[256] byte tab
+    | byte table[256] tab
     | 
     | routine main {
     |     ld x, 0
@@ -329,7 +329,7 @@ Declaring byte and word table memory location.
     = ok
 
     | word one
-    | table[256] word many
+    | word table[256] many
     | 
     | routine main {
     |     ld x, 0

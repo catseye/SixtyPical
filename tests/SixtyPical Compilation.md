@@ -139,7 +139,7 @@ Word memory locations with explicit address, initial value.
 
 Initialized byte table.  Bytes allocated, but beyond the string, are 0's.
 
-    | table[8] byte message : "WHAT?"
+    | byte table[8] message : "WHAT?"
     | 
     | routine main
     |   inputs message
@@ -352,7 +352,7 @@ The body of `repeat forever` can be empty.
 Indexed access.
 
     | byte one
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -371,8 +371,8 @@ Indexed access.
 
 Byte tables take up 256 bytes in memory.
 
-    | table[256] byte tab1
-    | table[256] byte tab2
+    | byte table[256] tab1
+    | byte table[256] tab2
     | 
     | routine main
     |   inputs tab1
@@ -458,7 +458,7 @@ Copy literal word to word.
 
 You can also copy a literal word to a word table.
 
-    | table[256] word many
+    | word table[256] many
     | 
     | routine main
     |   inputs many
@@ -527,7 +527,7 @@ Copy routine to vector, inside an `interrupts off` block.
 Copy word to word table and back, with both `x` and `y` as indexes.
 
     | word one
-    | table[256] word many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -612,10 +612,10 @@ Copying to and from a vector table.
     |   outputs x
     |   trashes a, z, n
     |     one
-    | table[256] vector routine
+    | vector (routine
     |   outputs x
-    |   trashes a, z, n
-    |     many
+    |   trashes a, z, n)
+    |     table[256] many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200

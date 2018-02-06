@@ -243,7 +243,7 @@ Can't `st` a `word` type.
 Storing to a table, you must use an index.
 
     | byte one
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   outputs one
@@ -256,7 +256,7 @@ Storing to a table, you must use an index.
     = ok
 
     | byte one
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -269,7 +269,7 @@ Storing to a table, you must use an index.
     ? TypeMismatchError
 
     | byte one
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   outputs one
@@ -282,7 +282,7 @@ Storing to a table, you must use an index.
     ? TypeMismatchError
 
     | byte one
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -297,7 +297,7 @@ Storing to a table, you must use an index.
 The index must be initialized.
 
     | byte one
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -334,7 +334,7 @@ Reading from a table, you must use an index.
     | }
     ? TypeMismatchError
 
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -347,7 +347,7 @@ Reading from a table, you must use an index.
     | }
     ? TypeMismatchError
 
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -360,7 +360,7 @@ Reading from a table, you must use an index.
     | }
     = ok
 
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   inputs many
@@ -374,7 +374,7 @@ Reading from a table, you must use an index.
 
 The index must be initialized.
 
-    | table[256] byte many
+    | byte table[256] many
     | 
     | routine main
     |   inputs many
@@ -388,7 +388,7 @@ The index must be initialized.
 Copying to and from a word table.
 
     | word one
-    | table[256] word many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -402,7 +402,7 @@ Copying to and from a word table.
     = ok
 
     | word one
-    | table[256] word many
+    | byte table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -415,7 +415,7 @@ Copying to and from a word table.
     ? TypeMismatchError
 
     | word one
-    | table[256] word many
+    | byte table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -429,7 +429,7 @@ Copying to and from a word table.
 
 You can also copy a literal word to a word table.
 
-    | table[256] word many
+    | word table[256] many
     | 
     | routine main
     |   inputs many
@@ -1949,10 +1949,10 @@ A vector can be copied into a vector table.
     |   outputs x
     |   trashes a, z, n
     |     one
-    | table[256] vector routine
+    | vector (routine
     |   outputs x
-    |   trashes a, z, n
-    |     many
+    |   trashes a, z, n)
+    |     table[256] many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
@@ -1975,10 +1975,10 @@ A vector can be copied out of a vector table.
     |   outputs x
     |   trashes a, z, n
     |     one
-    | table[256] vector routine
+    | vector (routine
     |   outputs x
-    |   trashes a, z, n
-    |     many
+    |   trashes a, z, n)
+    |     table[256] many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
@@ -1997,10 +1997,10 @@ A vector can be copied out of a vector table.
 
 A routine can be copied into a vector table.
 
-    | table[256] vector routine
+    | vector (routine
     |     outputs x
-    |     trashes a, z, n
-    |   many
+    |     trashes a, z, n)
+    |   table[256] many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
@@ -2018,10 +2018,10 @@ A routine can be copied into a vector table.
 
 A vector in a vector table cannot be directly called.
 
-    | table[256] vector routine
+    | vector (routine
     |     outputs x
-    |     trashes a, z, n
-    |   many
+    |     trashes a, z, n)
+    |   table[256] many
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200

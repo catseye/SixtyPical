@@ -130,32 +130,42 @@ class Parser(object):
         return size
 
     def defn_type(self):
-        if self.scanner.consume('byte'):
-            return TYPE_BYTE
-        elif self.scanner.consume('word'):
-            return TYPE_WORD
-        elif self.scanner.consume('table'):
-            size = self.defn_size()
+        type_ = None
+
+        if self.scanner.consume('('):
             type_ = self.defn_type()
-            return TableType(type_, size)
+            self.scanner.expect(')')
+            return type_
+
+        if self.scanner.consume('byte'):
+            type_ = TYPE_BYTE
+        elif self.scanner.consume('word'):
+            type_ = TYPE_WORD
         elif self.scanner.consume('vector'):
             type_ = self.defn_type()
-            # TODO: assert that it's a routine type
-            return VectorType(type_)
+            if not isinstance(type_, RoutineType):
+                raise SyntaxError("Vectors can only be of a routine, not %r" % type_)
+            type_ = VectorType(type_)
         elif self.scanner.consume('routine'):
             (inputs, outputs, trashes) = self.constraints()
-            return RoutineType(inputs=inputs, outputs=outputs, trashes=trashes)
+            type_ = RoutineType(inputs=inputs, outputs=outputs, trashes=trashes)
         elif self.scanner.consume('buffer'):
             size = self.defn_size()
-            return BufferType(size)
+            type_ = BufferType(size)
         elif self.scanner.consume('pointer'):
-            return PointerType()
+            type_ = PointerType()
         else:
             type_name = self.scanner.token
             self.scanner.scan()
             if type_name not in self.typedefs:
                 raise SyntaxError("Undefined type '%s'" % type_name)
-            return self.typedefs[type_name]
+            type_ = self.typedefs[type_name]
+
+        if self.scanner.consume('table'):
+            size = self.defn_size()
+            type_ = TableType(type_, size)
+
+        return type_
 
     def defn_name(self):
         self.scanner.check_type('identifier')
