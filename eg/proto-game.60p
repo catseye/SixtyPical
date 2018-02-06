@@ -251,7 +251,7 @@ routine init_game
     repeat {
         copy pos, actor_pos + y
         copy word 40, actor_delta + y
-        copy forward enemy_logic, actor_logic + y
+        copy forward null_logic, actor_logic + y
 
         st off, c
         add pos, word 7
@@ -263,7 +263,7 @@ routine init_game
     ld y, 0
     copy word 0, actor_pos + y
     copy word 0, actor_delta + y
-    copy forward player_logic, actor_logic + y
+    // copy forward player_logic, actor_logic + y
 }
 
 // ----------------------------------------------------------------
@@ -387,6 +387,13 @@ define enemy_logic logic_routine
     st off, c
 }
 
+define null_logic logic_routine
+{
+    copy pos, new_pos
+    copy new_pos, pos
+    st off, c
+}
+
 // ----------------------------------------------------------------
 // Game States
 // ----------------------------------------------------------------
@@ -438,8 +445,19 @@ define game_state_play game_state_routine
 
         st x, save_x
 
+        // OLD SKOOL
+        cmp x, 0
+        if z {
+            call player_logic
+        } else {
+            call enemy_logic
+        }
+
+        ld x, save_x
+
+        // NEW SKOOL
         copy actor_logic + x, dispatch_logic
-        call dispatch_logic
+        call null_logic  // dispatch_logic
 
         if c {
             // Player died!  Want no dead!  Break out of the loop (this is a bit awkward.)
