@@ -23,9 +23,9 @@ class Type(object):
         elif isinstance(self, VectorType):
             self.of_type.backpatch_constraint_labels(resolver)
         elif isinstance(self, RoutineType):
-            self.inputs = set([resolver(w) for w in self.inputs])
-            self.outputs = set([resolver(w) for w in self.outputs])
-            self.trashes = set([resolver(w) for w in self.trashes])
+            self.inputs = set([resolver(w) for w in self.inputs if isinstance(w, basestring)])
+            self.outputs = set([resolver(w) for w in self.outputs if isinstance(w, basestring)])
+            self.trashes = set([resolver(w) for w in self.trashes if isinstance(w, basestring)])
 
 
 TYPE_BIT = Type('bit')

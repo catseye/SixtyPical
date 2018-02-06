@@ -176,13 +176,18 @@ class Analyzer(object):
                     (location.name, self.current_routine.name)
                 )
 
-    def assert_affected_within(self, name, affected, limited_to):
+    def assert_affected_within(self, name, affecting_type, limiting_type):
+        assert name in ('inputs', 'outputs', 'trashes')
+        affected = getattr(affecting_type, name)
+        limited_to = getattr(limiting_type, name)
         overage = affected - limited_to
         if not overage:
             return
-        message = 'in %s: %s are %s but affects %s which exceeds it by: %s ' % (
+        message = 'in %s: %s for %s are %s\n\nbut %s affects %s\n\nwhich exceeds it by: %s ' % (
             self.current_routine.name, name,
-            LocationRef.format_set(limited_to), LocationRef.format_set(affected), LocationRef.format_set(overage)
+            limiting_type, LocationRef.format_set(limited_to),
+            affecting_type, LocationRef.format_set(affected),
+            LocationRef.format_set(overage)
         )
         raise IncompatibleConstraintsError(message)
 
@@ -390,9 +395,9 @@ class Analyzer(object):
                 if src.type == dest.type:
                     pass
                 elif isinstance(src.type, RoutineType) and isinstance(dest.type, VectorType):
-                    self.assert_affected_within('inputs', src.type.inputs, dest.type.of_type.inputs)
-                    self.assert_affected_within('outputs', src.type.outputs, dest.type.of_type.outputs)
-                    self.assert_affected_within('trashes', src.type.trashes, dest.type.of_type.trashes)
+                    self.assert_affected_within('inputs', src.type, dest.type.of_type)
+                    self.assert_affected_within('outputs', src.type, dest.type.of_type)
+                    self.assert_affected_within('trashes', src.type, dest.type.of_type)
                 else:
                     raise TypeMismatchError((src, dest))
             else:
@@ -451,8 +456,8 @@ class Analyzer(object):
             # and that this routine's trashes and output constraints are a
             # superset of the called routine's
             current_type = self.current_routine.location.type
-            self.assert_affected_within('outputs', type_.outputs, current_type.outputs)
-            self.assert_affected_within('trashes', type_.trashes, current_type.trashes)
+            self.assert_affected_within('outputs', type_, current_type)
+            self.assert_affected_within('trashes', type_, current_type)
 
             self.has_encountered_goto = True
         elif opcode == 'trash':
