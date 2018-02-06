@@ -3,6 +3,44 @@
 // ****************************
 
 // ----------------------------------------------------------------
+// Type Definitions
+// ----------------------------------------------------------------
+
+//
+// Type of routines (and vectors to those routines) which are called on each frame
+// to implement a certain state of the game (title screen, in play, game over, etc.)
+//
+// This type is also used as the type for the interrupt vector, even though
+// the interrupt routine saves and restores everything before being called and
+// thus clearly does not actually trash all the registers.  It is declared this
+// way so that the game state routines, which do trash these registers, can be
+// assigned to it.
+//
+// This type is also used as the type for the location the old interrupt vector
+// is backed up to, because all the game state routines "goto" the old handler
+// and the end of their own routines, so the type needs to be compatible.
+// (In a good sense, it is a continuation.)
+//
+// Further,
+//
+// It's very arguable that screen1/2/3/4 and colormap1/2/3/4 are not REALLY inputs.
+// They're only there to support the fact that game states sometimes clear the
+// screen, and sometimes don't.  When they don't, they preserve the screen, and
+// currently the way to say "we preserve the screen" is to have it as both input
+// and output.  There is probably a better way to do this, but it needs thought.
+//
+
+typedef routine
+  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
+         actor_pos, pos, new_pos, actor_delta, delta,
+         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs button_down, dispatch_game_state,
+          actor_pos, pos, new_pos, actor_delta, delta,
+          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+    game_state_routine
+
+// ----------------------------------------------------------------
 // System Locations
 // ----------------------------------------------------------------
 
@@ -44,53 +82,22 @@ word compare_target
 //
 // Points to the routine that implements the current game state.
 //
-// It's very arguable that screen1/2/3/4 and colormap1/2/3/4 are not REALLY inputs.
-// They're only there to support the fact that game states sometimes clear the
-// screen, and sometimes don't.  When they don't, they preserve the screen, and
-// currently the way to say "we preserve the screen" is to have it as both input
-// and output.  There is probably a better way to do this, but it needs thought.
-//
 
-vector routine
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+vector game_state_routine
   dispatch_game_state
 
 //
-// The constraints on these 2 vectors are kind-of sort-of big fibs.
-// They're only written this way so they can be compatible with our
-// routine.  In fact, CINV is an interrupt routine where it doesn't
-// really matter what you trash anyway, because all registers were
-/// saved by the caller (the KERNAL) and will be restored by the end
-// of the code of the saved origin cinv routine that we goto.
-//
-// I wonder if this could be arranged somehow to be less fibby, in
-// a future version of SixtyPical.
+// Interrupt vector.  Has same type as game states (see above.)
 //
 
-vector routine
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+vector game_state_routine
   cinv @ 788
 
-vector routine
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+//
+// Location to which the old interrupt vector is saved before replacement.
+//
+
+vector game_state_routine
   save_cinv
 
 // ----------------------------------------------------------------
@@ -383,14 +390,7 @@ routine enemy_logic
 // Because these all `goto save_cinv` at the end, they must have the same signature as that routine.
 //
 
-routine game_state_title_screen
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+define game_state_title_screen game_state_routine
 {
     ld y, 0
     repeat {
@@ -428,14 +428,7 @@ routine game_state_title_screen
     goto save_cinv
 }
 
-routine game_state_play
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+define game_state_play game_state_routine
 {
     ld x, 0
     repeat {
@@ -481,14 +474,7 @@ routine game_state_play
     goto save_cinv
 }
 
-routine game_state_game_over
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+define game_state_game_over game_state_routine
 {
     st off, c
     call check_button
@@ -518,14 +504,7 @@ routine game_state_game_over
 // * Main Game Loop Driver *
 // *************************
 
-routine our_cinv
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+define our_cinv game_state_routine
 {
     goto dispatch_game_state
 }
