@@ -501,11 +501,22 @@ The sense of the test can be inverted with `not`.
 Grammar
 -------
 
-    Program ::= {Defn} {Routine}.
+    Program ::= {TypeDefn} {Defn} {Routine}.
+    TypeDefn::= "typedef" Type Ident<new>.
     Defn    ::= Type Ident<new> [Constraints] (":" Literal | "@" LitWord).
-    Type    ::= "byte" ["table"] | "vector"
+    Type    ::= "(" Type ")" | TypeExpr ["table" TypeSize].
+    TypeExpr::= "byte"
+              | "word"
+              | "buffer" TypeSize
+              | "pointer"
+              | "vector" Type
+              | "routine" Constraints
+              .
+    TypeSize::= "[" LitWord "]".
     Constrnt::= ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs].
-    Routine ::= "routine" Ident<new> Constraints (Block | "@" LitWord).
+    Routine ::= "define" Ident<new> Type (Block | "@" LitWord).
+              | "routine" Ident<new> Constraints (Block | "@" LitWord)
+              .
     LocExprs::= LocExpr {"," LocExpr}.
     LocExpr ::= Register | Flag | Literal | Ident.
     Register::= "a" | "x" | "y".
