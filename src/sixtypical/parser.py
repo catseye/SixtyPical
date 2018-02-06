@@ -51,6 +51,7 @@ class Parser(object):
             if self.scanner.consume('define'):
                 name = self.scanner.token
                 self.scanner.scan()
+                routine = self.routine(name)
             else:
                 routine = self.legacy_routine()
                 name = routine.name
@@ -61,6 +62,8 @@ class Parser(object):
         self.scanner.check_type('EOF')
 
         # now backpatch the executable types.
+        #for type_name, type_ in self.typedefs.iteritems():
+        #    type_.backpatch_constraint_labels(lambda w: self.lookup(w))
         for defn in defns:
             defn.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
         for routine in routines:
@@ -192,9 +195,7 @@ class Parser(object):
             location=location
         )
 
-    def routine(self):
-        name = self.scanner.token
-        self.scanner.scan()
+    def routine(self, name):
         type_ = self.defn_type()
         # TODO assert that it's a routine
         if self.scanner.consume('@'):

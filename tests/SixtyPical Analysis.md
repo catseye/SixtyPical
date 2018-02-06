@@ -1941,7 +1941,7 @@ vector says it does.
     | }
     = ok
 
-### Vector tables ###
+### vector tables ###
 
 A vector can be copied into a vector table.
 
@@ -2037,3 +2037,81 @@ A vector in a vector table cannot be directly called.
     |     call many + x
     | }
     ? ValueError
+
+### typedef ###
+
+A typedef is a more-readable alias for a type.  "Alias" means
+that types have structural equivalence, not name equivalence.
+
+    | typedef routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     routine_type
+    | 
+    | vector routine_type vec
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+Routines can be defined in a new style.
+
+    | typedef routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     routine_type
+    | 
+    | vector routine_type vec
+    | 
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+The new style routine definitions support typedefs.
+
+    | typedef routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     routine_type
+    | 
+    | vector routine_type vec
+    | 
+    | define foo routine_type
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
