@@ -27,60 +27,73 @@ from sixtypical.compiler import Compiler
 if __name__ == '__main__':
     optparser = OptionParser(__doc__.strip())
 
-    optparser.add_option("--analyze",
+    optparser.add_option("--analyze-only",
                          action="store_true",
-                         help="")
+                         help="Only parse and analyze the program; do not compile it.")
     optparser.add_option("--basic-prelude",
                          action="store_true",
-                         help="")
-    optparser.add_option("--compile",
-                         action="store_true",
-                         help="")
+                         help="Insert a Commodore BASIC 2.0 snippet before the program "
+                              "so that it can be LOADed and RUN on Commodore platforms.")
     optparser.add_option("--debug",
                          action="store_true",
-                         help="")
+                         help="Display debugging information when analyzing and compiling.")
+    optparser.add_option("--parse-only",
+                         action="store_true",
+                         help="Only parse the program; do not analyze or compile it.")
     optparser.add_option("--traceback",
                          action="store_true",
-                         help="")
+                         help="When an error occurs, display a full Python traceback.")
 
     (options, args) = optparser.parse_args(sys.argv[1:])
 
     for filename in args:
         text = open(filename).read()
-        parser = Parser(text)
-        program = parser.program()
 
-        if options.analyze:
-            try:
-                analyzer = Analyzer(debug=options.debug)
-                analyzer.analyze_program(program)
-            except Exception as e:
-                if options.traceback:
-                    raise
-                else:
-                    traceback.print_exception(e.__class__, e, None)
-                    sys.exit(1)
-
-        if options.compile:
-            fh = sys.stdout
-            start_addr = 0xc000
-            prelude = []
-            if options.basic_prelude:
-                start_addr = 0x0801
-                prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
-                           0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
-
-            # we are outputting a .PRG, so we output the load address first
-            # we don't use the Emitter for this b/c not part of addr space
-            if not options.debug:
-                fh.write(Word(start_addr).serialize(0))
-
-            emitter = Emitter(start_addr)
-            for byte in prelude:
-                emitter.emit(Byte(byte))
-            compiler = Compiler(emitter)
-            compiler.compile_program(program)
-            if options.debug:
-                pprint(emitter.accum)
+        try:
+            parser = Parser(text)
+            program = parser.program()
+        except Exception as e:
+            if options.traceback:
+                raise
             else:
-                emitter.serialize(fh)
+                traceback.print_exception(e.__class__, e, None)
+                sys.exit(1)
+
+        if options.parse_only:
+            sys.exit(0)
+
+        try:
+            analyzer = Analyzer(debug=options.debug)
+            analyzer.analyze_program(program)
+        except Exception as e:
+            if options.traceback:
+                raise
+            else:
+                traceback.print_exception(e.__class__, e, None)
+                sys.exit(1)
+
+        if options.analyze_only:
+            sys.exit(0)
+
+        fh = sys.stdout
+        start_addr = 0xc000
+        prelude = []
+        if options.basic_prelude:
+            start_addr = 0x0801
+            prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
+                       0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
+
+        # we are outputting a .PRG, so we output the load address first
+        # we don't use the Emitter for this b/c not part of addr space
+        if not options.debug:
+            fh.write(Word(start_addr).serialize(0))
+
+        emitter = Emitter(start_addr)
+        for byte in prelude:
+            emitter.emit(Byte(byte))
+        compiler = Compiler(emitter)
+        compiler.compile_program(program)
+        if options.debug:
+            pprint(emitter.accum)
+        else:
+            emitter.serialize(fh)

@@ -85,7 +85,6 @@ If one branch trashes {`a`} and the other branch trashes {`b`} then the whole
 ### And at some point...
 
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
-*   always analyze before executing or compiling, unless told not to
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
 *   error messages that include the line number of the source code
 *   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.

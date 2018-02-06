@@ -7,7 +7,7 @@ SixtyPical to 6502 machine code.
 [Falderal]:     http://catseye.tc/node/Falderal
 
     -> Functionality "Compile SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --basic-prelude --compile %(test-body-file) | tests/appliances/bin/dcc6502-adapter"
+    -> shell command "bin/sixtypical --basic-prelude --traceback %(test-body-file) >/tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
 
     -> Tests for functionality "Compile SixtyPical program"
 
@@ -277,14 +277,16 @@ Compiling `if` without `else`.
     |   trashes a, x, y, z, n, c, v
     | {
     |     ld a, 0
+    |     ld y, 0
     |     if z {
     |         ld y, 1
     |     }
     | }
     = $080D   LDA #$00
-    = $080F   BNE $0813
-    = $0811   LDY #$01
-    = $0813   RTS
+    = $080F   LDY #$00
+    = $0811   BNE $0815
+    = $0813   LDY #$01
+    = $0815   RTS
 
 Compiling `repeat`.
 
@@ -495,7 +497,11 @@ Copy vector to vector.
 
 Copy routine to vector, inside an `interrupts off` block.
 
-    | vector routine bar
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
     | 
     | routine foo
     |   inputs x
@@ -506,7 +512,6 @@ Copy routine to vector, inside an `interrupts off` block.
     | }
     | 
     | routine main
-    |   inputs foo
     |   outputs bar
     |   trashes a, n, z
     | {
@@ -568,13 +573,22 @@ Copy word to word table and back, with both `x` and `y` as indexes.
 
 Indirect call.
 
-    | vector routine outputs x trashes z, n   foo
+    | vector routine
+    |   outputs x
+    |   trashes z, n
+    |     foo
     | 
-    | routine bar outputs x trashes z, n {
+    | routine bar
+    |   outputs x
+    |   trashes z, n
+    | {
     |     ld x, 200
     | }
     | 
-    | routine main inputs bar outputs x, foo trashes a, z, n {
+    | routine main
+    |   outputs x, foo
+    |   trashes a, z, n
+    | {
     |     copy bar, foo
     |     call foo
     | }
@@ -590,11 +604,18 @@ Indirect call.
 
 goto.
 
-    | routine bar outputs x trashes z, n {
+    | routine bar
+    |   inputs y
+    |   outputs x, y
+    |   trashes z, n
+    | {
     |     ld x, 200
     | }
     | 
-    | routine main outputs x trashes a, z, n {
+    | routine main
+    |   outputs x, y
+    |   trashes a, z, n
+    | {
     |     ld y, 200
     |     goto bar
     | }
@@ -841,39 +862,41 @@ Note that this is *not* range-checked.  (Yet.)
     | routine main
     |   inputs buf
     |   outputs y, foo, delta
-    |   trashes a, z, n, ptr
+    |   trashes a, c, v, z, n, ptr
     | {
     |     copy 619, delta
     |     ld y, 0
+    |     st off, c
     |     copy ^buf, ptr
     |     add ptr, delta
     |     add ptr, word 1
     |     copy [ptr] + y, foo
     | }
     = $080D   LDA #$6B
-    = $080F   STA $1042
+    = $080F   STA $1043
     = $0812   LDA #$02
-    = $0814   STA $1043
+    = $0814   STA $1044
     = $0817   LDY #$00
-    = $0819   LDA #$41
-    = $081B   STA $FE
-    = $081D   LDA #$08
-    = $081F   STA $FF
-    = $0821   LDA $FE
-    = $0823   ADC $1042
-    = $0826   STA $FE
-    = $0828   LDA $FF
-    = $082A   ADC $1043
-    = $082D   STA $FF
-    = $082F   LDA $FE
-    = $0831   ADC #$01
-    = $0833   STA $FE
-    = $0835   LDA $FF
-    = $0837   ADC #$00
-    = $0839   STA $FF
-    = $083B   LDA ($FE),Y
-    = $083D   STA $1041
-    = $0840   RTS
+    = $0819   CLC
+    = $081A   LDA #$42
+    = $081C   STA $FE
+    = $081E   LDA #$08
+    = $0820   STA $FF
+    = $0822   LDA $FE
+    = $0824   ADC $1043
+    = $0827   STA $FE
+    = $0829   LDA $FF
+    = $082B   ADC $1044
+    = $082E   STA $FF
+    = $0830   LDA $FE
+    = $0832   ADC #$01
+    = $0834   STA $FE
+    = $0836   LDA $FF
+    = $0838   ADC #$00
+    = $083A   STA $FF
+    = $083C   LDA ($FE),Y
+    = $083E   STA $1042
+    = $0841   RTS
 
 ### Trash
 

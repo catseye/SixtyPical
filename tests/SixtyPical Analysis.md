@@ -7,7 +7,7 @@ static analysis rules.
 [Falderal]:     http://catseye.tc/node/Falderal
 
     -> Functionality "Analyze SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --analyze --traceback %(test-body-file) && echo ok"
+    -> shell command "bin/sixtypical --analyze-only --traceback %(test-body-file) && echo ok"
 
     -> Tests for functionality "Analyze SixtyPical program"
 
@@ -236,7 +236,7 @@ Can't `st` a `word` type.
     |     ld a, 0
     |     st a, foo
     | }
-    ? TypeMismatchError: a and foo in main
+    ? TypeMismatchError
 
 ### tables ###
 
