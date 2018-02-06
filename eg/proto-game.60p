@@ -32,12 +32,12 @@
 
 typedef routine
   inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
+         actor_pos, pos, new_pos, actor_delta, delta, actor_logic,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
+          actor_pos, pos, new_pos, actor_delta, delta, actor_logic,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target, dispatch_logic
     game_state_routine
 
 //
@@ -86,6 +86,9 @@ word new_pos
 
 word table[256] actor_delta
 word delta
+
+vector (logic_routine) table[256] actor_logic
+vector logic_routine dispatch_logic
 
 byte button_down : 0  // effectively static-local to check_button
 byte table[32] press_fire_msg: "PRESS`FIRE`TO`PLAY"
@@ -239,8 +242,8 @@ routine check_new_position_in_bounds
 }
 
 routine init_game
-  inputs actor_pos, actor_delta
-  outputs actor_pos, actor_delta, pos
+  inputs actor_pos, actor_delta, actor_logic
+  outputs actor_pos, actor_delta, pos, actor_logic
   trashes a, y, z, n, c, v
 {
     ld y, 0
@@ -248,6 +251,7 @@ routine init_game
     repeat {
         copy pos, actor_pos + y
         copy word 40, actor_delta + y
+        copy forward enemy_logic, actor_logic + y
 
         st off, c
         add pos, word 7
@@ -259,6 +263,7 @@ routine init_game
     ld y, 0
     copy word 0, actor_pos + y
     copy word 0, actor_delta + y
+    copy forward player_logic, actor_logic + y
 }
 
 // ----------------------------------------------------------------
@@ -433,32 +438,18 @@ define game_state_play game_state_routine
 
         st x, save_x
 
-        // FIXME need VECTOR TABLEs to make this happen:
-        // copy actor_logic, x dispatch_logic
-        // call indirect_jsr_logic
-        // For now, just check the actor ID to see what type it is, and go from there.
-
-        cmp x, 0
-        if z {
-            call player_logic
-        } else {
-            call enemy_logic
-        }
+        copy actor_logic + x, dispatch_logic
+        call dispatch_logic
 
         if c {
             // Player died!  Want no dead!  Break out of the loop (this is a bit awkward.)
             call clear_screen
             copy forward game_state_game_over, dispatch_game_state
             ld x, 15
-            st x, save_x
-            trash n
-            trash z
-            trash x
         } else {
+            ld x, save_x
             trash c
         }
-
-        ld x, save_x
 
         copy pos, actor_pos + x
         copy delta, actor_delta + x

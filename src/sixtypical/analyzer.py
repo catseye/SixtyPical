@@ -420,7 +420,7 @@ class Analyzer(object):
                 context.assert_meaningful(src, dest.ref, dest.index)
                 context.set_written(dest.ref)
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
-                context.assert_meaningful(src.ref, src.index, dest)
+                context.assert_meaningful(src.ref, src.index)
                 context.set_touched(dest)
                 context.set_written(dest)
             else:

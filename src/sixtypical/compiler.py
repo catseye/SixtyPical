@@ -410,7 +410,7 @@ class Compiler(object):
                     self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
                     self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
                     self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
-                elif isinstance(src.type, VectorType) and isinstance(dest.ref.type, TableType) and isinstance(dest.ref.type.of_type, VectorType):
+                elif isinstance(src.type, (VectorType, RoutineType)) and isinstance(dest.ref.type, TableType) and isinstance(dest.ref.type.of_type, VectorType):
                     # FIXME this is the exact same as above - can this be simplified?
                     src_label = self.labels[src.name]
                     dest_label = self.labels[dest.ref.name]
