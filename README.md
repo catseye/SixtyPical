@@ -77,6 +77,11 @@ assumed to be meaningful.
 *   `copy x, [ptr] + y`
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
 
+### Union rule for trashes in `if`
+
+If one branch trashes {`a`} and the other branch trashes {`b`} then the whole
+`if` statement trashes {`a`, `b`}.
+
 ### And at some point...
 
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
