@@ -601,6 +601,7 @@ Indirect call.
     = $081B   LDX #$C8
     = $081D   RTS
     = $081E   JMP ($0821)
+    = $0821   RTS
 
 goto.
 
