@@ -650,29 +650,34 @@ Copying to and from a vector table.
     | {
     |     ld x, 0
     |     copy bar, one
+    |     copy bar, many + x
     |     copy one, many + x
     |     copy many + x, one
     |     call one
     | }
     = $080D   LDX #$00
-    = $080F   LDA #$35
-    = $0811   STA $083C
+    = $080F   LDA #$3F
+    = $0811   STA $0846
     = $0814   LDA #$08
-    = $0816   STA $083D
-    = $0819   LDA $083C
-    = $081C   STA $083E,X
-    = $081F   LDA $083D
-    = $0822   STA $093E,X
-    = $0825   LDA $083E,X
-    = $0828   STA $083C
-    = $082B   LDA $093E,X
-    = $082E   STA $083D
-    = $0831   JSR $0838
-    = $0834   RTS
-    = $0835   LDX #$C8
-    = $0837   RTS
-    = $0838   JMP ($083C)
-    = $083B   RTS
+    = $0816   STA $0847
+    = $0819   LDA #$3F
+    = $081B   STA $0848,X
+    = $081E   LDA #$08
+    = $0820   STA $0948,X
+    = $0823   LDA $0846
+    = $0826   STA $0848,X
+    = $0829   LDA $0847
+    = $082C   STA $0948,X
+    = $082F   LDA $0848,X
+    = $0832   STA $0846
+    = $0835   LDA $0948,X
+    = $0838   STA $0847
+    = $083B   JSR $0842
+    = $083E   RTS
+    = $083F   LDX #$C8
+    = $0841   RTS
+    = $0842   JMP ($0846)
+    = $0845   RTS
 
 ### word operations
 
