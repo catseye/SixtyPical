@@ -78,6 +78,7 @@ class Compiler(object):
         for location, label in self.trampolines.iteritems():
             self.emitter.resolve_label(label)
             self.emitter.emit(JMP(Indirect(self.labels[location.name])))
+            self.emitter.emit(RTS())
 
         # initialized data
         for defn in program.defns:

@@ -12,6 +12,7 @@ History of SixtyPical
 *   Added `define name routine {...}` syntax; `routine name {...}` is now legacy.
 *   Removed the evaluator.  The reference implementation only analyzes and compiles.
 *   Fixed bug where index register wasn't required to be initialized before table access.
+*   Fixed bug where trampolines for indirect calls weren't including a final `RTS`.
 
 0.10
 ----
