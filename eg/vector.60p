@@ -1,5 +1,6 @@
-vector print
+vector routine
   trashes a, z, n
+    print
 
 routine chrout
   inputs a
@@ -21,7 +22,6 @@ routine printb
 }
 
 routine main
-  inputs printa, printb
   trashes print, a, z, n
 {
     copy printa, print
