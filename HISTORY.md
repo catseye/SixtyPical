@@ -6,10 +6,12 @@ History of SixtyPical
 
 *   Each table has a specified size now (although, bounds checking is not performed.)
 *   Initialized `byte table` values need not have all 256 bytes initialized.
-*   Constraints for `vector` type come immediately after the type, not the variable.
-*   `vector table` storage, and ability to copy vectors in and out of same.
+*   Syntax for types has changed. `routine` (with constraints) is a type, while
+    `vector` is now a type constructor (taking `routine`s only) and `table` is
+    also a type constructor.  This permits a new `vector table` type.
 *   Added `typedef`, allowing the user to define type aliases for readability.
 *   Added `define name routine {...}` syntax; `routine name {...}` is now legacy.
+*   Ability to copy vectors and routines into vector tables, and vectors out of same.
 *   Removed the evaluator.  The reference implementation only analyzes and compiles.
 *   Fixed bug where index register wasn't required to be initialized before table access.
 *   Fixed bug where trampolines for indirect calls weren't including a final `RTS`.

@@ -39,12 +39,6 @@ Documentation
 TODO
 ----
 
-### Demo game
-
-Finish the little demo "game" where you can move a block around the screen with
-the joystick (i.e. bring it up to par with the original demo game that was written
-for SixtyPical)
-
 ### `low` and `high` address operators
 
 To turn `word` type into `byte`.
