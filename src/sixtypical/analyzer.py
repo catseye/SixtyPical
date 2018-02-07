@@ -2,7 +2,8 @@
 
 from sixtypical.ast import Program, Routine, Block, Instr
 from sixtypical.model import (
-    TYPE_BYTE, TYPE_WORD, TYPE_BYTE_TABLE, TYPE_WORD_TABLE, BufferType, PointerType, VectorType, ExecutableType,
+    TYPE_BYTE, TYPE_WORD,
+    TableType, BufferType, PointerType, VectorType, RoutineType,
     ConstantRef, LocationRef, IndirectRef, IndexedRef, AddressRef,
     REG_A, REG_Y, FLAG_Z, FLAG_N, FLAG_V, FLAG_C
 )
@@ -175,13 +176,18 @@ class Analyzer(object):
                     (location.name, self.current_routine.name)
                 )
 
-    def assert_affected_within(self, name, affected, limited_to):
+    def assert_affected_within(self, name, affecting_type, limiting_type):
+        assert name in ('inputs', 'outputs', 'trashes')
+        affected = getattr(affecting_type, name)
+        limited_to = getattr(limiting_type, name)
         overage = affected - limited_to
         if not overage:
             return
-        message = 'in %s: %s are %s but affects %s which exceeds it by: %s ' % (
+        message = 'in %s: %s for %s are %s\n\nbut %s affects %s\n\nwhich exceeds it by: %s ' % (
             self.current_routine.name, name,
-            LocationRef.format_set(limited_to), LocationRef.format_set(affected), LocationRef.format_set(overage)
+            limiting_type, LocationRef.format_set(limited_to),
+            affecting_type, LocationRef.format_set(affected),
+            LocationRef.format_set(overage)
         )
         raise IncompatibleConstraintsError(message)
 
@@ -231,12 +237,13 @@ class Analyzer(object):
     
         if opcode == 'ld':
             if instr.index:
-                if src.type == TYPE_BYTE_TABLE and dest.type == TYPE_BYTE:
+                if TableType.is_a_table_type(src.type, TYPE_BYTE) and dest.type == TYPE_BYTE:
                     pass
                 else:
                     raise TypeMismatchError('%s and %s in %s' %
                         (src.name, dest.name, self.current_routine.name)
                     )
+                context.assert_meaningful(instr.index)
             elif src.type != dest.type:
                 raise TypeMismatchError('%s and %s in %s' %
                     (src.name, dest.name, self.current_routine.name)
@@ -245,13 +252,14 @@ class Analyzer(object):
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
             if instr.index:
-                if src.type == TYPE_BYTE and dest.type == TYPE_BYTE_TABLE:
+                if src.type == TYPE_BYTE and TableType.is_a_table_type(dest.type, TYPE_BYTE):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
+                context.assert_meaningful(instr.index)
             elif src.type != dest.type:
-                raise TypeMismatchError('%s and %s in %s' %
-                    (src.name, dest.name, self.current_routine.name)
+                raise TypeMismatchError('%r and %r in %s' %
+                    (src, dest, self.current_routine.name)
                 )
             context.assert_meaningful(src)
             context.set_written(dest)
@@ -300,6 +308,8 @@ class Analyzer(object):
             context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
         elif opcode == 'call':
             type = instr.location.type
+            if isinstance(type, VectorType):
+                type = type.of_type
             for ref in type.inputs:
                 context.assert_meaningful(ref)
             for ref in type.outputs:
@@ -361,13 +371,22 @@ class Analyzer(object):
                     raise TypeMismatchError((src, dest))
 
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
-                if src.type == TYPE_WORD and dest.ref.type == TYPE_WORD_TABLE:
+                if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
+                    pass
+                elif (isinstance(src.type, VectorType) and isinstance(dest.ref.type, TableType) and
+                      RoutineType.executable_types_compatible(src.type.of_type, dest.ref.type.of_type)):
+                    pass
+                elif (isinstance(src.type, RoutineType) and isinstance(dest.ref.type, TableType) and
+                      RoutineType.executable_types_compatible(src.type, dest.ref.type.of_type)):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
 
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
-                if src.ref.type == TYPE_WORD_TABLE and dest.type == TYPE_WORD:
+                if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
+                    pass
+                elif (isinstance(src.ref.type, TableType) and isinstance(dest.type, VectorType) and
+                      RoutineType.executable_types_compatible(src.ref.type.of_type, dest.type.of_type)):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
@@ -375,10 +394,10 @@ class Analyzer(object):
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
                 if src.type == dest.type:
                     pass
-                elif isinstance(src.type, ExecutableType) and isinstance(dest.type, VectorType):
-                    self.assert_affected_within('inputs', src.type.inputs, dest.type.inputs)
-                    self.assert_affected_within('outputs', src.type.outputs, dest.type.outputs)
-                    self.assert_affected_within('trashes', src.type.trashes, dest.type.trashes)
+                elif isinstance(src.type, RoutineType) and isinstance(dest.type, VectorType):
+                    self.assert_affected_within('inputs', src.type, dest.type.of_type)
+                    self.assert_affected_within('outputs', src.type, dest.type.of_type)
+                    self.assert_affected_within('trashes', src.type, dest.type.of_type)
                 else:
                     raise TypeMismatchError((src, dest))
             else:
@@ -393,19 +412,16 @@ class Analyzer(object):
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, REG_Y)
                 # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
-                context.set_touched(src.ref)  # TODO and REG_Y?  if not, why not?
-                context.set_touched(dest)
                 context.set_written(dest)
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
-                context.set_touched(src)  # TODO and dest.index?
                 context.set_written(dest.ref)
             elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
                 context.set_written(dest.ref)
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
-                context.assert_meaningful(src.ref, src.index, dest)
-                context.set_touched(dest)  # TODO and src.index?
+                context.assert_meaningful(src.ref, src.index)
+                context.set_touched(dest)
                 context.set_written(dest)
             else:
                 context.assert_meaningful(src)
@@ -428,18 +444,20 @@ class Analyzer(object):
             location = instr.location
             type_ = location.type
     
-            if not isinstance(type_, ExecutableType):
+            if not isinstance(type_, (RoutineType, VectorType)):
                 raise TypeMismatchError(location)
     
             # assert that the dest routine's inputs are all initialized
+            if isinstance(type_, VectorType):
+                type_ = type_.of_type
             for ref in type_.inputs:
                 context.assert_meaningful(ref)
     
             # and that this routine's trashes and output constraints are a
             # superset of the called routine's
             current_type = self.current_routine.location.type
-            self.assert_affected_within('outputs', type_.outputs, current_type.outputs)
-            self.assert_affected_within('trashes', type_.trashes, current_type.trashes)
+            self.assert_affected_within('outputs', type_, current_type)
+            self.assert_affected_within('trashes', type_, current_type)
 
             self.has_encountered_goto = True
         elif opcode == 'trash':

@@ -1,9 +1,10 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.10,
-both its execution aspect and its static analysis aspect (even though
-these are, technically speaking, separate concepts.)
+This document describes the SixtyPical programming language version 0.11,
+both its static semantics (the capabilities and limits of the static
+analyses it defines) and its runtime semantics (with reference to the
+semantics of 6502 machine code.)
 
 This document is nominally normative, but the tests in the `tests` directory
 are even more normative.
@@ -14,20 +15,28 @@ the language.
 Types
 -----
 
-There are six *primitive types* in SixtyPical:
+There are five *primitive types* in SixtyPical:
 
 *   bit (2 possible values)
 *   byte (256 possible values)
 *   word (65536 possible values)
 *   routine (code stored somewhere in memory, read-only)
-*   vector (address of a routine)
 *   pointer (address of a byte in a buffer)
 
-There are also two *type constructors*:
+There are also three *type constructors*:
 
-*   T table (256 entries, each holding a value of type T, where T is either
-            `byte` or `word`)
+*   T table[N] (N is a power of 2, 1 ≤ N ≤ 256; each entry holds a value
+                of type T, where T is `byte`, `word`, or `vector`)
 *   buffer[N] (N entries; each entry is a byte; N is a power of 2, ≤ 64K)
+*   vector T (address of a value of type T; T must be a routine type)
+
+### User-defined ###
+
+A program may define its own types using the `typedef` feature.  Typedefs
+must occur before everything else in the program.  A typedef takes a
+type expression and an identifier which has not previously been used in
+the program.  It associates that identifer with that type.  This is merely
+a type alias; two types with different names will compare as equal.
 
 Memory locations
 ----------------
@@ -110,11 +119,11 @@ and `trashes` lists like a routine (see below), and it may only hold addresses
 of routines which are compatible.  (Meaning, the routine's inputs (resp. outputs,
 trashes) must be a subset of the vector's inputs (resp. outputs, trashes.))
 
-    vector actor_logic
-      inputs a, score
-      outputs x
-      trashes y
-      @ $c000
+    vector routine
+             inputs a, score
+             outputs x
+             trashes y
+      actor_logic @ $c000
 
 Note that in the code of a routine, if a memory location is named by a
 user-defined symbol, it is an address in memory, and can be read and written.
@@ -500,11 +509,22 @@ The sense of the test can be inverted with `not`.
 Grammar
 -------
 
-    Program ::= {Defn} {Routine}.
+    Program ::= {TypeDefn} {Defn} {Routine}.
+    TypeDefn::= "typedef" Type Ident<new>.
     Defn    ::= Type Ident<new> [Constraints] (":" Literal | "@" LitWord).
-    Type    ::= "byte" ["table"] | "vector"
+    Type    ::= "(" Type ")" | TypeExpr ["table" TypeSize].
+    TypeExpr::= "byte"
+              | "word"
+              | "buffer" TypeSize
+              | "pointer"
+              | "vector" Type
+              | "routine" Constraints
+              .
+    TypeSize::= "[" LitWord "]".
     Constrnt::= ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs].
-    Routine ::= "routine" Ident<new> Constraints (Block | "@" LitWord).
+    Routine ::= "define" Ident<new> Type (Block | "@" LitWord).
+              | "routine" Ident<new> Constraints (Block | "@" LitWord)
+              .
     LocExprs::= LocExpr {"," LocExpr}.
     LocExpr ::= Register | Flag | Literal | Ident.
     Register::= "a" | "x" | "y".

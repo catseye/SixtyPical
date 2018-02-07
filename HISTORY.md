@@ -1,6 +1,21 @@
 History of SixtyPical
 =====================
 
+0.11
+----
+
+*   Each table has a specified size now (although, bounds checking is not performed.)
+*   Initialized `byte table` values need not have all 256 bytes initialized.
+*   Syntax for types has changed. `routine` (with constraints) is a type, while
+    `vector` is now a type constructor (taking `routine`s only) and `table` is
+    also a type constructor.  This permits a new `vector table` type.
+*   Added `typedef`, allowing the user to define type aliases for readability.
+*   Added `define name routine {...}` syntax; `routine name {...}` is now legacy.
+*   Ability to copy vectors and routines into vector tables, and vectors out of same.
+*   Removed the evaluator.  The reference implementation only analyzes and compiles.
+*   Fixed bug where index register wasn't required to be initialized before table access.
+*   Fixed bug where trampolines for indirect calls weren't including a final `RTS`.
+
 0.10
 ----
 
@@ -12,6 +27,7 @@ History of SixtyPical
 *   Subtract word (constant or memory location) from word memory location.
 *   `trash` instruction explicitly indicates a value is no longer considered meaningful.
 *   `copy []+y, a` can indirectly read a byte value into the `a` register.
+*   Initialized `byte table` memory locations.
 *   Fixed bug which was preventing `if` branches to diverge in what they initialized,
     if it was already initialized when going into the `if`.
 *   Fixed a bug which was making it crash when trying to analyze `repeat forever` loops.

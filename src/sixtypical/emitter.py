@@ -48,12 +48,13 @@ class Word(Emittable):
 
 
 class Table(Emittable):
-    def __init__(self, value):
+    def __init__(self, value, size):
         # TODO: range-checking
         self.value = value
+        self._size = size
 
     def size(self):
-        return 256
+        return self._size
 
     def serialize(self, addr=None):
         bytes = []

@@ -6,7 +6,7 @@ if [ "X$1" = "X" ]; then
     exit 1
 fi
 OUT=/tmp/a-out.prg
-bin/sixtypical --traceback --analyze --compile --basic-prelude $SRC > $OUT || exit 1
+bin/sixtypical --traceback --basic-prelude $SRC > $OUT || exit 1
 if [ -e vicerc ]; then
     x64 -config vicerc $OUT
 else

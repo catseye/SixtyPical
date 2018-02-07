@@ -7,7 +7,7 @@ static analysis rules.
 [Falderal]:     http://catseye.tc/node/Falderal
 
     -> Functionality "Analyze SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --analyze --traceback %(test-body-file) && echo ok"
+    -> shell command "bin/sixtypical --analyze-only --traceback %(test-body-file) && echo ok"
 
     -> Tests for functionality "Analyze SixtyPical program"
 
@@ -236,14 +236,14 @@ Can't `st` a `word` type.
     |     ld a, 0
     |     st a, foo
     | }
-    ? TypeMismatchError: a and foo in main
+    ? TypeMismatchError
 
 ### tables ###
 
-Storing to a table, you must use an index, and vice-versa.
+Storing to a table, you must use an index.
 
     | byte one
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs one
@@ -256,7 +256,7 @@ Storing to a table, you must use an index, and vice-versa.
     = ok
 
     | byte one
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -269,7 +269,7 @@ Storing to a table, you must use an index, and vice-versa.
     ? TypeMismatchError
 
     | byte one
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs one
@@ -282,7 +282,7 @@ Storing to a table, you must use an index, and vice-versa.
     ? TypeMismatchError
 
     | byte one
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -294,7 +294,21 @@ Storing to a table, you must use an index, and vice-versa.
     | }
     = ok
 
-Reading from a table, you must use an index, and vice-versa.
+The index must be initialized.
+
+    | byte one
+    | byte table[256] many
+    | 
+    | routine main
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld a, 0
+    |     st a, many + x
+    | }
+    ? UnmeaningfulReadError: x
+
+Reading from a table, you must use an index.
 
     | byte one
     | 
@@ -320,7 +334,7 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     ? TypeMismatchError
 
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -333,7 +347,7 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     ? TypeMismatchError
 
-    | byte table many
+    | byte table[256] many
     | 
     | routine main
     |   outputs many
@@ -346,10 +360,35 @@ Reading from a table, you must use an index, and vice-versa.
     | }
     = ok
 
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, many + x
+    | }
+    = ok
+
+The index must be initialized.
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld a, many + x
+    | }
+    ? UnmeaningfulReadError: x
+
 Copying to and from a word table.
 
     | word one
-    | word table many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -363,7 +402,7 @@ Copying to and from a word table.
     = ok
 
     | word one
-    | word table many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -376,7 +415,7 @@ Copying to and from a word table.
     ? TypeMismatchError
 
     | word one
-    | word table many
+    | word table[256] many
     | 
     | routine main
     |   inputs one, many
@@ -390,7 +429,7 @@ Copying to and from a word table.
 
 You can also copy a literal word to a word table.
 
-    | word table many
+    | word table[256] many
     | 
     | routine main
     |   inputs many
@@ -1554,10 +1593,11 @@ Read through a pointer.
 Routines are constants.  You need not, and in fact cannot, specify a constant
 as an input to, an output of, or as a trashed value of a routine.
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1576,10 +1616,11 @@ as an input to, an output of, or as a trashed value of a routine.
     | }
     ? ConstantConstraintError: foo in main
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1597,10 +1638,11 @@ as an input to, an output of, or as a trashed value of a routine.
     | }
     ? ConstantConstraintError: foo in main
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1621,10 +1663,11 @@ as an input to, an output of, or as a trashed value of a routine.
 You can copy the address of a routine into a vector, if that vector is
 declared appropriately.
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1644,10 +1687,11 @@ declared appropriately.
 
 But not if the vector is declared inappropriately.
 
-    | vector vec
+    | vector routine
     |   inputs y
     |   outputs y
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1668,10 +1712,11 @@ But not if the vector is declared inappropriately.
 "Appropriately" means, if the routine affects no more than what is named
 in the input/output sets of the vector.
 
-    | vector vec
+    | vector routine
     |   inputs a, x
     |   outputs x
     |   trashes a, z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1691,10 +1736,11 @@ in the input/output sets of the vector.
 
 Routines are read-only.
 
-    | vector vec
+    | vector routine
     |   inputs x
     |   outputs x
     |   trashes z, n
+    |     vec
     | 
     | routine foo
     |   inputs x
@@ -1714,7 +1760,9 @@ Routines are read-only.
 
 Indirect call.
 
-    | vector foo outputs x trashes z, n
+    | vector routine
+    |   outputs x trashes z, n
+    |     foo
     | 
     | routine bar outputs x trashes z, n {
     |     ld x, 200
@@ -1728,7 +1776,7 @@ Indirect call.
 
 Calling the vector does indeed trash the things the vector says it does.
 
-    | vector foo trashes x, z, n
+    | vector routine trashes x, z, n foo
     | 
     | routine bar trashes x, z, n {
     |     ld x, 200
@@ -1828,7 +1876,7 @@ Can `goto` a routine that outputs or trashes less than the current routine.
 
 Indirect goto.
 
-    | vector foo outputs x trashes a, z, n
+    | vector routine outputs x trashes a, z, n foo
     | 
     | routine bar outputs x trashes a, z, n {
     |     ld x, 200
@@ -1843,8 +1891,9 @@ Indirect goto.
 Jumping through the vector does indeed trash, or output, the things the
 vector says it does.
 
-    | vector foo
+    | vector routine
     |   trashes a, x, z, n
+    |     foo
     | 
     | routine bar
     |   trashes a, x, z, n {
@@ -1866,9 +1915,9 @@ vector says it does.
     | }
     ? UnmeaningfulReadError: x in main
 
-    | vector foo
+    | vector routine
     |   outputs x
-    |   trashes a, z, n
+    |   trashes a, z, n  foo
     | 
     | routine bar
     |   outputs x
@@ -1889,5 +1938,154 @@ vector says it does.
     |   trashes foo, x, z, n {
     |     call sub
     |     ld a, x
+    | }
+    = ok
+
+### vector tables ###
+
+A vector can be copied into a vector table.
+
+    | vector routine
+    |   outputs x
+    |   trashes a, z, n
+    |     one
+    | vector (routine
+    |   outputs x
+    |   trashes a, z, n)
+    |     table[256] many
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy bar, one
+    |     copy one, many + x
+    | }
+    = ok
+
+A vector can be copied out of a vector table.
+
+    | vector routine
+    |   outputs x
+    |   trashes a, z, n
+    |     one
+    | vector (routine
+    |   outputs x
+    |   trashes a, z, n)
+    |     table[256] many
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy many + x, one
+    |     call one
+    | }
+    = ok
+
+A routine can be copied into a vector table.
+
+    | vector (routine
+    |     outputs x
+    |     trashes a, z, n)
+    |   table[256] many
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy bar, many + x
+    | }
+    = ok
+
+A vector in a vector table cannot be directly called.
+
+    | vector (routine
+    |     outputs x
+    |     trashes a, z, n)
+    |   table[256] many
+    | 
+    | routine bar outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy bar, many + x
+    |     call many + x
+    | }
+    ? ValueError
+
+### typedef ###
+
+A typedef is a more-readable alias for a type.  "Alias" means
+that types have structural equivalence, not name equivalence.
+
+    | typedef routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     routine_type
+    | 
+    | vector routine_type vec
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+The new style routine definitions support typedefs.
+
+    | typedef routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     routine_type
+    | 
+    | vector routine_type vec
+    | 
+    | define foo routine_type
+    | {
+    |   inc x
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
     | }
     = ok

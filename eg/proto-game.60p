@@ -3,21 +3,73 @@
 // ****************************
 
 // ----------------------------------------------------------------
+// Type Definitions
+// ----------------------------------------------------------------
+
+//
+// Type of routines (and vectors to those routines) which are called on each frame
+// to implement a certain state of the game (title screen, in play, game over, etc.)
+//
+// This type is also used as the type for the interrupt vector, even though
+// the interrupt routine saves and restores everything before being called and
+// thus clearly does not actually trash all the registers.  It is declared this
+// way so that the game state routines, which do trash these registers, can be
+// assigned to it.
+//
+// This type is also used as the type for the location the old interrupt vector
+// is backed up to, because all the game state routines `goto` the old handler
+// and the end of their own routines, so the type needs to be compatible.
+// (In a good sense, it is a continuation.)
+//
+// Further,
+//
+// It's very arguable that screen1/2/3/4 and colormap1/2/3/4 are not REALLY inputs.
+// They're only there to support the fact that game states sometimes clear the
+// screen, and sometimes don't.  When they don't, they preserve the screen, and
+// currently the way to say "we preserve the screen" is to have it as both input
+// and output.  There is probably a better way to do this, but it needs thought.
+//
+
+typedef routine
+  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
+         actor_pos, pos, new_pos, actor_delta, delta, actor_logic,
+         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs button_down, dispatch_game_state,
+          actor_pos, pos, new_pos, actor_delta, delta, actor_logic,
+          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target, dispatch_logic
+    game_state_routine
+
+//
+// Routines that are called to get the new state of each actor (player, enemy, etc.)
+//
+// Routines that conform to this type also follow this convention:
+//
+// Set carry if the player perished.  Carry clear otherwise.
+//
+
+typedef routine
+  inputs pos, delta, joy2, screen
+  outputs pos, delta, new_pos, screen, c
+  trashes a, x, y, z, n, v, ptr, compare_target
+    logic_routine
+
+// ----------------------------------------------------------------
 // System Locations
 // ----------------------------------------------------------------
 
 byte vic_border @ 53280
 byte vic_bg @ 53281
 
-byte table screen1 @ 1024
-byte table screen2 @ 1274
-byte table screen3 @ 1524
-byte table screen4 @ 1774
+byte table[256] screen1 @ 1024
+byte table[256] screen2 @ 1274
+byte table[256] screen3 @ 1524
+byte table[256] screen4 @ 1774
 
-byte table colormap1 @ 55296
-byte table colormap2 @ 55546
-byte table colormap3 @ 55796
-byte table colormap4 @ 56046
+byte table[256] colormap1 @ 55296
+byte table[256] colormap2 @ 55546
+byte table[256] colormap3 @ 55796
+byte table[256] colormap4 @ 56046
 
 buffer[2048] screen @ 1024
 byte joy2 @ $dc00
@@ -28,15 +80,18 @@ byte joy2 @ $dc00
 
 pointer ptr @ 254
 
-word table actor_pos
+word table[256] actor_pos
 word pos
 word new_pos
 
-word table actor_delta
+word table[256] actor_delta
 word delta
 
+vector (logic_routine) table[256] actor_logic
+vector logic_routine dispatch_logic
+
 byte button_down : 0  // effectively static-local to check_button
-byte table press_fire_msg: "PRESS`FIRE`TO`PLAY"
+byte table[32] press_fire_msg: "PRESS`FIRE`TO`PLAY"
 
 byte save_x
 word compare_target
@@ -44,52 +99,23 @@ word compare_target
 //
 // Points to the routine that implements the current game state.
 //
-// It's very arguable that screen1/2/3/4 and colormap1/2/3/4 are not REALLY inputs.
-// They're only there to support the fact that game states sometimes clear the
-// screen, and sometimes don't.  When they don't, they preserve the screen, and
-// currently the way to say "we preserve the screen" is to have it as both input
-// and output.  There is probably a better way to do this, but it needs thought.
-//
 
-vector dispatch_game_state
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+vector game_state_routine
+  dispatch_game_state
 
 //
-// The constraints on these 2 vectors are kind-of sort-of big fibs.
-// They're only written this way so they can be compatible with our
-// routine.  In fact, CINV is an interrupt routine where it doesn't
-// really matter what you trash anyway, because all registers were
-/// saved by the caller (the KERNAL) and will be restored by the end
-// of the code of the saved origin cinv routine that we goto.
-//
-// I wonder if this could be arranged somehow to be less fibby, in
-// a future version of SixtyPical.
+// Interrupt vector.  Has same type as game states (see above.)
 //
 
-vector cinv
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
-  @ 788
+vector game_state_routine
+  cinv @ 788
 
-vector save_cinv
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+//
+// Location to which the old interrupt vector is saved before replacement.
+//
+
+vector game_state_routine
+  save_cinv
 
 // ----------------------------------------------------------------
 // Utility Routines
@@ -216,8 +242,8 @@ routine check_new_position_in_bounds
 }
 
 routine init_game
-  inputs actor_pos, actor_delta
-  outputs actor_pos, actor_delta, pos
+  inputs actor_pos, actor_delta, actor_logic
+  outputs actor_pos, actor_delta, pos, actor_logic
   trashes a, y, z, n, c, v
 {
     ld y, 0
@@ -225,6 +251,7 @@ routine init_game
     repeat {
         copy pos, actor_pos + y
         copy word 40, actor_delta + y
+        copy forward enemy_logic, actor_logic + y
 
         st off, c
         add pos, word 7
@@ -236,20 +263,14 @@ routine init_game
     ld y, 0
     copy word 0, actor_pos + y
     copy word 0, actor_delta + y
+    copy forward player_logic, actor_logic + y
 }
 
 // ----------------------------------------------------------------
 // Actor Logics
 // ----------------------------------------------------------------
 
-//
-// Sets carry if the player perished.  Carry clear otherwise.
-//
-
-routine player_logic
-  inputs pos, delta, joy2, screen
-  outputs pos, delta, new_pos, screen, c
-  trashes a, x, y, z, n, v, ptr, compare_target
+define player_logic logic_routine
 {
     call read_stick
 
@@ -304,14 +325,7 @@ routine player_logic
     }
 }
 
-//
-// Sets carry if the player perished.  Carry clear otherwise.
-//
-
-routine enemy_logic
-  inputs pos, delta, screen
-  outputs pos, delta, new_pos, screen, c
-  trashes a, x, y, z, n, v, ptr, compare_target
+define enemy_logic logic_routine
 {
     call calculate_new_position
     call check_new_position_in_bounds
@@ -377,18 +391,7 @@ routine enemy_logic
 // Game States
 // ----------------------------------------------------------------
 
-//
-// Because these all `goto save_cinv` at the end, they must have the same signature as that routine.
-//
-
-routine game_state_title_screen
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+define game_state_title_screen game_state_routine
 {
     ld y, 0
     repeat {
@@ -426,14 +429,7 @@ routine game_state_title_screen
     goto save_cinv
 }
 
-routine game_state_play
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+define game_state_play game_state_routine
 {
     ld x, 0
     repeat {
@@ -442,32 +438,18 @@ routine game_state_play
 
         st x, save_x
 
-        // FIXME need VECTOR TABLEs to make this happen:
-        // copy actor_logic, x dispatch_logic
-        // call indirect_jsr_logic
-        // For now, just check the actor ID to see what type it is, and go from there.
-
-        cmp x, 0
-        if z {
-            call player_logic
-        } else {
-            call enemy_logic
-        }
+        copy actor_logic + x, dispatch_logic
+        call dispatch_logic
 
         if c {
             // Player died!  Want no dead!  Break out of the loop (this is a bit awkward.)
             call clear_screen
             copy forward game_state_game_over, dispatch_game_state
             ld x, 15
-            st x, save_x
-            trash n
-            trash z
-            trash x
         } else {
+            ld x, save_x
             trash c
         }
-
-        ld x, save_x
 
         copy pos, actor_pos + x
         copy delta, actor_delta + x
@@ -479,14 +461,7 @@ routine game_state_play
     goto save_cinv
 }
 
-routine game_state_game_over
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+define game_state_game_over game_state_routine
 {
     st off, c
     call check_button
@@ -516,14 +491,7 @@ routine game_state_game_over
 // * Main Game Loop Driver *
 // *************************
 
-routine our_cinv
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target
+define our_cinv game_state_routine
 {
     goto dispatch_game_state
 }

@@ -1,0 +1,58 @@
+vector routine
+  trashes a, z, n
+    print
+
+vector (routine
+  trashes a, z, n)
+    table[32] vectors
+
+routine chrout
+  inputs a
+  trashes a
+  @ 65490
+
+routine printa
+  trashes a, z, n
+{
+    ld a, 65
+    call chrout
+}
+
+routine printb
+  trashes a, z, n
+{
+    ld a, 66
+    call chrout
+}
+
+routine main
+  inputs vectors
+  outputs vectors
+  trashes print, a, x, z, n, c
+{
+    ld x, 0
+    copy printa, print
+    copy print, vectors + x
+    inc x
+    copy printa, print
+    copy print, vectors + x
+    inc x
+    copy printb, print
+    copy print, vectors + x
+    inc x
+    copy printa, print
+    copy print, vectors + x
+    inc x
+    copy printb, print
+    copy print, vectors + x
+
+    copy printa, print
+
+    ld x, 0
+    repeat {
+        copy vectors + x, print
+        call print
+        inc x
+        cmp x, 5
+    } until z
+}
