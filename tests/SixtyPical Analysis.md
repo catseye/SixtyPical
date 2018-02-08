@@ -1233,6 +1233,21 @@ input to the routine, and it is initialized in one branch, it need not
 be initialized in the other.
 
     | routine foo
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     cmp a, 42
+    |     if z {
+    |         ld x, 7
+    |     } else {
+    |         ld a, 23
+    |     }
+    | }
+    = ok
+
+    | routine foo
     |   inputs x
     |   outputs x
     |   trashes a, z, n, c
@@ -1286,6 +1301,46 @@ An `if` with a single block is analyzed as if it had an empty `else` block.
     |     }
     | }
     = ok
+
+The cardinal rule for trashes in an `if` is the "union rule": if one branch
+trashes {`a`} and the other branch trashes {`b`} then the whole `if` statement
+trashes {`a`, `b`}.
+
+    | routine foo
+    |   inputs a, x, z
+    |   trashes a, x
+    | {
+    |     if z {
+    |         trash a
+    |     } else {
+    |         trash x
+    |     }
+    | }
+    = ok
+
+    | routine foo
+    |   inputs a, x, z
+    |   trashes a
+    | {
+    |     if z {
+    |         trash a
+    |     } else {
+    |         trash x
+    |     }
+    | }
+    ? UnmeaningfulOutputError: x in foo
+
+    | routine foo
+    |   inputs a, x, z
+    |   trashes x
+    | {
+    |     if z {
+    |         trash a
+    |     } else {
+    |         trash x
+    |     }
+    | }
+    ? UnmeaningfulOutputError: a in foo
 
 ### repeat ###
 
