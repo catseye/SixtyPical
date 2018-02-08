@@ -89,6 +89,95 @@ If a routine modifies a location, it needs to either output it or trash it.
     | }
     = ok
 
+This is true regardless of whether it's an input or not.
+
+    | routine main
+    |   inputs x
+    | {
+    |     ld x, 0
+    | }
+    ? ForbiddenWriteError: x in main
+
+    | routine main
+    |   inputs x
+    |   outputs x, z, n
+    | {
+    |     ld x, 0
+    | }
+    = ok
+
+    | routine main
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    | }
+    = ok
+
+If a routine trashes a location, this must be declared.
+
+    | routine foo
+    |   trashes x
+    | {
+    |     trash x
+    | }
+    = ok
+
+    | routine foo
+    | {
+    |     trash x
+    | }
+    ? UnmeaningfulOutputError: x in foo
+
+    | routine foo
+    |   outputs x
+    | {
+    |     trash x
+    | }
+    ? UnmeaningfulOutputError: x in foo
+
+If a routine causes a location to be trashed, this must be declared in the caller.
+
+    | routine trash_x
+    |   trashes x, z, n
+    | {
+    |   ld x, 0
+    | }
+    | 
+    | routine foo
+    |   trashes x, z, n
+    | {
+    |     call trash_x
+    | }
+    = ok
+
+    | routine trash_x
+    |   trashes x, z, n
+    | {
+    |   ld x, 0
+    | }
+    | 
+    | routine foo
+    |   trashes z, n
+    | {
+    |     call trash_x
+    | }
+    ? UnmeaningfulOutputError: x in foo
+
+    | routine trash_x
+    |   trashes x, z, n
+    | {
+    |   ld x, 0
+    | }
+    | 
+    | routine foo
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     call trash_x
+    | }
+    ? UnmeaningfulOutputError: x in foo
+
 If a routine reads or writes a user-define memory location, it needs to declare that too.
 
     | byte b1 @ 60000
