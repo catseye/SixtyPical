@@ -1,0 +1,22 @@
+// SixtyPical 0.11 introduced a new syntax for defining routines
+// (routine was made into a type, and you can now say: define name type.)
+
+typedef routine
+  inputs x
+  outputs x
+  trashes z, n
+    routine_type
+
+vector routine_type vec
+
+define foo routine_type
+{
+  inc x
+}
+
+define main routine
+  outputs vec
+  trashes a, z, n
+{
+    copy foo, vec
+}
