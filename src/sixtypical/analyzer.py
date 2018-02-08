@@ -101,13 +101,6 @@ class Context(object):
         c._writeable = set(self._writeable)
         return c
 
-    def set_from(self, c):
-        assert c.routines == self.routines
-        assert c.routine == self.routine
-        self._touched = set(c._touched)
-        self._meaningful = set(c._meaningful)
-        self._writeable = set(c._writeable)
-
     def each_meaningful(self):
         for ref in self._meaningful:
             yield ref
@@ -330,25 +323,44 @@ class Analyzer(object):
                 context.set_touched(ref)
                 context.set_unmeaningful(ref)
         elif opcode == 'if':
+            incoming_meaningful = set(context.each_meaningful())
+
             context1 = context.clone()
             context2 = context.clone()
             self.analyze_block(instr.block1, context1)
             if instr.block2 is not None:
                 self.analyze_block(instr.block2, context2)
+
+            outgoing_meaningful = set(context1.each_meaningful()) & set(context2.each_meaningful())
+            outgoing_trashes = incoming_meaningful - outgoing_meaningful
+
             # TODO may we need to deal with touched separately here too?
             # probably not; if it wasn't meaningful in the first place, it
             # doesn't really matter if you modified it or not, coming out.
             for ref in context1.each_meaningful():
+                if ref in outgoing_trashes:
+                    continue
                 context2.assert_meaningful(
                     ref, exception_class=InconsistentInitializationError,
                     message='initialized in block 1 but not in block 2 of `if {}`'.format(src)
                 )
             for ref in context2.each_meaningful():
+                if ref in outgoing_trashes:
+                    continue
                 context1.assert_meaningful(
                     ref, exception_class=InconsistentInitializationError,
                     message='initialized in block 2 but not in block 1 of `if {}`'.format(src)
                 )
-            context.set_from(context1)
+
+            # merge the contexts.  this used to be a method called `set_from`
+            context._touched = set(context1._touched) | set(context2._touched)
+            context._meaningful = outgoing_meaningful
+            context._writeable = set(context1._writeable) | set(context2._writeable)
+
+            for ref in outgoing_trashes:
+                context.set_touched(ref)
+                context.set_unmeaningful(ref)
+
         elif opcode == 'repeat':
             # it will always be executed at least once, so analyze it having
             # been executed the first time.

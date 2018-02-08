@@ -67,11 +67,6 @@ that call this routine.
 These might be forced to specify an initial value so that they can always be
 assumed to be meaningful.
 
-### Union rule for trashes in `if`
-
-If one branch trashes {`a`} and the other branch trashes {`b`} then the whole
-`if` statement trashes {`a`, `b`}.
-
 ### Re-order routines and optimize tail-calls to fallthroughs
 
 Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally

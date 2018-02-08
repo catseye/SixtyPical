@@ -1417,7 +1417,7 @@ trashes {`a`, `b`}.
     |         trash x
     |     }
     | }
-    ? UnmeaningfulOutputError: x in foo
+    ? ForbiddenWriteError: x in foo
 
     | routine foo
     |   inputs a, x, z
@@ -1429,7 +1429,7 @@ trashes {`a`, `b`}.
     |         trash x
     |     }
     | }
-    ? UnmeaningfulOutputError: a in foo
+    ? ForbiddenWriteError: a in foo
 
 ### repeat ###
 
