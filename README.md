@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-_Version 0.11.  Work-in-progress, everything is subject to change._
+_Version 0.12.  Work-in-progress, everything is subject to change._
 
 SixtyPical is a very low-level programming language, similar to 6502 assembly,
 with static analysis through abstract interpretation.

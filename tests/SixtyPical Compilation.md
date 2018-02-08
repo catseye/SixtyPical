@@ -846,7 +846,7 @@ Read through a pointer, into a byte storage location, or the `a` register.
     |     ld y, 0
     |     copy ^buf, ptr
     |     copy [ptr] + y, foo
-    |     copy [ptr] + y, a
+    |     ld a, [ptr] + y
     | }
     = $080D   LDY #$00
     = $080F   LDA #$1F

@@ -127,6 +127,9 @@ class Context(object):
                     if kwargs.get('message'):
                         message += ' (%s)' % kwargs['message']
                     raise exception_class(message)
+            elif isinstance(ref, IndexedRef):
+                self.assert_meaningful(ref.ref, **kwargs)
+                self.assert_meaningful(ref.index, **kwargs)
             else:
                 raise NotImplementedError(ref)
 
@@ -236,14 +239,16 @@ class Analyzer(object):
         src = instr.src
     
         if opcode == 'ld':
-            if instr.index:
-                if TableType.is_a_table_type(src.type, TYPE_BYTE) and dest.type == TYPE_BYTE:
+            if isinstance(src, IndexedRef):
+                if TableType.is_a_table_type(src.ref.type, TYPE_BYTE) and dest.type == TYPE_BYTE:
                     pass
                 else:
                     raise TypeMismatchError('%s and %s in %s' %
-                        (src.name, dest.name, self.current_routine.name)
+                        (src.ref.name, dest.name, self.current_routine.name)
                     )
-                context.assert_meaningful(instr.index)
+                context.assert_meaningful(src.index)
+            elif isinstance(src, IndirectRef):
+                raise NotImplementedError
             elif src.type != dest.type:
                 raise TypeMismatchError('%s and %s in %s' %
                     (src.name, dest.name, self.current_routine.name)
@@ -352,6 +357,9 @@ class Analyzer(object):
                 context.assert_meaningful(src)
 
         elif opcode == 'copy':
+            if dest == REG_A:
+                raise ForbiddenWriteError("{} cannot be used as destination for copy".format(dest))
+
             # 1. check that their types are compatible
 
             if isinstance(src, AddressRef) and isinstance(dest, LocationRef):

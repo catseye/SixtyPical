@@ -131,9 +131,9 @@ class Compiler(object):
                     self.emitter.emit(TYA())
                 elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDA(Immediate(Byte(src.value))))
-                elif instr.index == REG_X:
+                elif isinstance(src, IndexedRef) and src.index == REG_X:
                     self.emitter.emit(LDA(AbsoluteX(self.labels[src.name])))
-                elif instr.index == REG_Y:
+                elif isinstance(src, IndexedRef) and src.index == REG_Y:
                     self.emitter.emit(LDA(AbsoluteY(self.labels[src.name])))
                 else:
                     self.emitter.emit(LDA(Absolute(self.labels[src.name])))
@@ -142,7 +142,7 @@ class Compiler(object):
                     self.emitter.emit(TAX())
                 elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDX(Immediate(Byte(src.value))))
-                elif instr.index == REG_Y:
+                elif isinstance(src, IndexedRef) and src.index == REG_Y:
                     self.emitter.emit(LDX(AbsoluteY(self.labels[src.name])))
                 else:
                     self.emitter.emit(LDX(Absolute(self.labels[src.name])))
@@ -151,7 +151,7 @@ class Compiler(object):
                     self.emitter.emit(TAY())
                 elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDY(Immediate(Byte(src.value))))
-                elif instr.index == REG_X:
+                elif isinstance(src, IndexedRef) and src.index == REG_X:
                     self.emitter.emit(LDY(AbsoluteX(self.labels[src.name])))
                 else:
                     self.emitter.emit(LDY(Absolute(self.labels[src.name])))

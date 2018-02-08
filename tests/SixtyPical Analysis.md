@@ -1462,6 +1462,21 @@ Can `copy` from a `byte` to a `byte`.
     | }
     = ok
 
+The understanding is that, because `copy` trashes `a`, `a` cannot be used
+as the destination of a `copy`.
+
+    | byte source : 0
+    | byte dest
+    | 
+    | routine main
+    |   inputs source
+    |   outputs dest
+    |   trashes a, z, n
+    | {
+    |     copy source, a
+    | }
+    ? ForbiddenWriteError
+
 Can `copy` from a `word` to a `word`.
 
     | word source : 0
@@ -1504,9 +1519,7 @@ Can't `copy` from a `word` to a `byte`.
     | }
     ? TypeMismatchError
 
-### copy[] ###
-
-Buffers and pointers.
+### Buffers and pointers ###
 
 Note that `^buf` is a constant value, so it by itself does not require `buf` to be
 listed in any input/output sets.
@@ -1585,6 +1598,24 @@ Read through a pointer.
     |     ld y, 0
     |     copy ^buf, ptr
     |     copy [ptr] + y, foo
+    | }
+    = ok
+
+Read through a pointer to the `a` register.  Note that
+this is done with `ld`, not `copy`.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | byte foo
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs foo
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     ld a, [ptr] + y
     | }
     = ok
 

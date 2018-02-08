@@ -316,7 +316,15 @@ class Parser(object):
                 self.scanner.expect('forever')
             return Instr(opcode='repeat', dest=None, src=src,
                          block=block, inverted=inverted)
-        elif self.scanner.token in ("ld", "add", "sub", "cmp", "and", "or", "xor"):
+        elif self.scanner.token in ("ld",):
+            # the same as add, sub, cmp etc below, except supports an indlocexpr for the src
+            opcode = self.scanner.token
+            self.scanner.scan()
+            dest = self.locexpr()
+            self.scanner.expect(',')
+            src = self.indlocexpr()
+            return Instr(opcode=opcode, dest=dest, src=src, index=None)
+        elif self.scanner.token in ("add", "sub", "cmp", "and", "or", "xor"):
             opcode = self.scanner.token
             self.scanner.scan()
             dest = self.locexpr()
