@@ -307,18 +307,14 @@ define player_logic logic_routine
             st off, c
         } else {
             st on, c
-            trash n
-            trash a
-            trash z
         }
 
         // FIXME these trashes, strictly speaking, probably shouldn't be needed,
-        // but currently the compiler cares too much about values that are
-        // initialized in one branch of an `if`, but not the other, but trashed
+        // but currently the compiler cares a little too much about values that are
+        // initialized in one branch of an `if`, but not the other, but are trashed
         // at the end of the routine anyway.
         trash ptr
         trash y
-        trash a
         trash v
     } else {
         st off, c
@@ -360,9 +356,6 @@ define enemy_logic logic_routine
             st off, c
         } else {
             st on, c
-            trash n
-            trash a
-            trash z
         }
 
         // FIXME these trashes, strictly speaking, probably shouldn't be needed,
@@ -371,7 +364,6 @@ define enemy_logic logic_routine
         // at the end of the routine anyway.
         trash ptr
         trash y
-        trash a
     } else {
         copy delta, compare_target
         st on, c
@@ -412,18 +404,6 @@ define game_state_title_screen game_state_routine
         call clear_screen
         call init_game
         copy forward game_state_play, dispatch_game_state
-
-        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
-        // but currently the compiler cares too much about values that are
-        // initialized in one branch of an `if`, but not the other, but trashed
-        // at the end of the routine anyway.
-        trash a
-        trash n
-        trash z
-    } else {
-        trash y
-        trash c
-        trash v
     }
 
     goto save_cinv
@@ -448,7 +428,6 @@ define game_state_play game_state_routine
             ld x, 15
         } else {
             ld x, save_x
-            trash c
         }
 
         copy pos, actor_pos + x
@@ -470,18 +449,6 @@ define game_state_game_over game_state_routine
         call clear_screen
         call init_game
         copy game_state_title_screen, dispatch_game_state
-
-        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
-        // but currently the compiler cares too much about values that are
-        // initialized in one branch of an `if`, but not the other, but trashed
-        // at the end of the routine anyway.
-        trash a
-        trash n
-        trash z
-    } else {
-        trash y
-        trash c
-        trash v
     }
 
     goto save_cinv
