@@ -127,7 +127,7 @@ If a routine trashes a location, this must be declared.
     | {
     |     trash x
     | }
-    ? UnmeaningfulOutputError: x in foo
+    ? ForbiddenWriteError: x in foo
 
     | routine foo
     |   outputs x
@@ -162,7 +162,7 @@ If a routine causes a location to be trashed, this must be declared in the calle
     | {
     |     call trash_x
     | }
-    ? UnmeaningfulOutputError: x in foo
+    ? ForbiddenWriteError: x in foo
 
     | routine trash_x
     |   trashes x, z, n

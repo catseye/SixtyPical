@@ -207,8 +207,8 @@ class Analyzer(object):
         if routine.block is None:
             # it's an extern, that's fine
             return
-        type = routine.location.type
-        context = Context(self.routines, routine, type.inputs, type.outputs, type.trashes)
+        type_ = routine.location.type
+        context = Context(self.routines, routine, type_.inputs, type_.outputs, type_.trashes)
         if self.debug:
             print "at start of routine `{}`:".format(routine.name)
             print context
@@ -217,10 +217,10 @@ class Analyzer(object):
             print "at end of routine `{}`:".format(routine.name)
             print context
         if not self.has_encountered_goto:
-            for ref in type.outputs:
+            for ref in type_.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
             for ref in context.each_touched():
-                if ref not in type.outputs and ref not in type.trashes:
+                if ref not in type_.outputs and ref not in type_.trashes:
                     message = '%s in %s' % (ref.name, routine.name)
                     raise ForbiddenWriteError(message)
         self.current_routine = None
@@ -466,6 +466,7 @@ class Analyzer(object):
 
             self.has_encountered_goto = True
         elif opcode == 'trash':
+            context.set_touched(instr.dest)
             context.set_unmeaningful(instr.dest)
         else:
             raise NotImplementedError(opcode)
