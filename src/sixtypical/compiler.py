@@ -135,6 +135,10 @@ class Compiler(object):
                     self.emitter.emit(LDA(AbsoluteX(self.labels[src.name])))
                 elif isinstance(src, IndexedRef) and src.index == REG_Y:
                     self.emitter.emit(LDA(AbsoluteY(self.labels[src.name])))
+                elif isinstance(src, IndirectRef) and isinstance(src.ref.type, PointerType):
+                    self.emitter.emit(LDA(IndirectY(self.labels[src.ref.name])))
+                elif isinstance(src, IndirectRef) and src.index == REG_Y:
+                    self.emitter.emit(LDA(AbsoluteY(self.labels[src.name])))
                 else:
                     self.emitter.emit(LDA(Absolute(self.labels[src.name])))
             elif dest == REG_X:
@@ -385,10 +389,7 @@ class Compiler(object):
                 else:
                     raise NotImplementedError((src, dest))
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
-                if dest == REG_A and isinstance(src.ref.type, PointerType):
-                    src_label = self.labels[src.ref.name]
-                    self.emitter.emit(LDA(IndirectY(src_label)))
-                elif dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
+                if dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
                     src_label = self.labels[src.ref.name]
                     dest_label = self.labels[dest.name]
                     self.emitter.emit(LDA(IndirectY(src_label)))

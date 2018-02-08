@@ -1,6 +1,12 @@
 History of SixtyPical
 =====================
 
+0.12
+----
+
+*   `copy` is now understood to trash `a`, thus `copy ..., a` is not valid.
+    Indirect addressing is supported in `ld`, as in `ld a, [ptr] + y`, to compensate.
+
 0.11
 ----
 

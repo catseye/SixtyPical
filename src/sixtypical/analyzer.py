@@ -246,14 +246,20 @@ class Analyzer(object):
                     raise TypeMismatchError('%s and %s in %s' %
                         (src.ref.name, dest.name, self.current_routine.name)
                     )
-                context.assert_meaningful(src.index)
+                context.assert_meaningful(src, src.index)
             elif isinstance(src, IndirectRef):
-                raise NotImplementedError
+                # copying this analysis from the matching branch in `copy`, below
+                if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+                context.assert_meaningful(src.ref, REG_Y)
             elif src.type != dest.type:
                 raise TypeMismatchError('%s and %s in %s' %
                     (src.name, dest.name, self.current_routine.name)
                 )
-            context.assert_meaningful(src)
+            else:
+                context.assert_meaningful(src)
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
             if instr.index:
@@ -419,7 +425,6 @@ class Analyzer(object):
                 context.set_written(dest.ref)
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, REG_Y)
-                # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
                 context.set_written(dest)
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
@@ -436,15 +441,7 @@ class Analyzer(object):
                 context.set_written(dest)
 
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
-            context.set_unmeaningful(FLAG_Z, FLAG_N)
-
-            # FIXME: this is just to support "copy [foo] + y, a".  consider disallowing `a` as something
-            # that can be used in `copy`.  should be using `st` or `ld` instead, probably.
-            if dest == REG_A:
-                context.set_touched(REG_A)
-                context.set_written(REG_A)
-            else:
-                context.set_unmeaningful(REG_A)
+            context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
 
         elif opcode == 'with-sei':
             self.analyze_block(instr.block, context)

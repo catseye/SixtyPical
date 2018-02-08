@@ -1601,8 +1601,8 @@ Read through a pointer.
     | }
     = ok
 
-Read through a pointer to the `a` register.  Note that
-this is done with `ld`, not `copy`.
+Read through a pointer to the `a` register.  Note that this is done with `ld`,
+not `copy`.
 
     | buffer[2048] buf
     | pointer ptr
@@ -1610,8 +1610,8 @@ this is done with `ld`, not `copy`.
     | 
     | routine main
     |   inputs buf
-    |   outputs foo
-    |   trashes a, y, z, n, ptr
+    |   outputs a
+    |   trashes y, z, n, ptr
     | {
     |     ld y, 0
     |     copy ^buf, ptr
