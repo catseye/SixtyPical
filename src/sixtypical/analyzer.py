@@ -202,13 +202,31 @@ class Analyzer(object):
             return
         type_ = routine.location.type
         context = Context(self.routines, routine, type_.inputs, type_.outputs, type_.trashes)
+
         if self.debug:
             print "at start of routine `{}`:".format(routine.name)
             print context
+
         self.analyze_block(routine.block, context)
+        trashed = set(context.each_touched()) - context._meaningful
+
         if self.debug:
             print "at end of routine `{}`:".format(routine.name)
             print context
+            print "trashed: ", LocationRef.format_set(trashed)
+            print "outputs: ", LocationRef.format_set(type_.outputs)
+            trashed_outputs = type_.outputs & trashed
+            if trashed_outputs:
+                print "TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs)
+            print ''
+            print '-' * 79
+            print ''
+
+        # even if we goto another routine, we can't trash an output.
+        for ref in trashed:
+            if ref in type_.outputs:
+                raise UnmeaningfulOutputError('%s in %s' % (ref.name, routine.name))
+
         if not self.has_encountered_goto:
             for ref in type_.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)

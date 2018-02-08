@@ -35,9 +35,9 @@ typedef routine
          actor_pos, actor_delta, actor_logic,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta, actor_logic,
+          actor_pos, actor_delta, actor_logic,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target, dispatch_logic
+  trashes a, x, y, c, z, n, v, pos, new_pos, delta, ptr, save_x, compare_target, dispatch_logic
     game_state_routine
 
 //
@@ -402,12 +402,7 @@ define game_state_title_screen game_state_routine
 
     if c {
         call clear_screen
-
-        // FIXME: this seems wrong and we need to investigate it.
-        // init_game trashes `pos` (this is reasonable.)  But pos is declared
-        // as an output to `game_state_routine`.  This should be an error...
         call init_game
-
         copy forward game_state_play, dispatch_game_state
     }
 
