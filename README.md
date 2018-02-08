@@ -56,6 +56,9 @@ But if you add a value ≥ N to it, it becomes invalid.
 This should be tracked in the abstract interpretation.
 (If only because abstract interpretation is the major point of this project!)
 
+Range-checking buffers might be too difficult.  Range checking tables will be easier.
+If a value is ANDed with 15, its range must be 0-15, etc.
+
 ### Routine-local static memory locations
 
 These would not need to appear in the inputs/outputs/trashes sets of the routines
@@ -64,17 +67,15 @@ that call this routine.
 These might be forced to specify an initial value so that they can always be
 assumed to be meaningful.
 
-### More modes for `copy`
-
-*   don't allow `copy foo, a` probably.  insist on `ld a, foo` for this.
-*   have `copy` instruction able to copy a byte to a user-def mem loc, etc.
-*   `copy x, [ptr] + y`
-*   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
-
 ### Union rule for trashes in `if`
 
 If one branch trashes {`a`} and the other branch trashes {`b`} then the whole
 `if` statement trashes {`a`, `b`}.
+
+### Re-order routines and optimize tail-calls to fallthroughs
+
+Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally
+is probably NP-complete.  But doing it adeuqately is probably not that hard.
 
 ### And at some point...
 
@@ -82,6 +83,15 @@ If one branch trashes {`a`} and the other branch trashes {`b`} then the whole
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
 *   error messages that include the line number of the source code
 *   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
-*   check and disallow recursion.
 *   automatic tail-call optimization (could be tricky, w/constraints?)
-*   re-order routines and optimize tail-calls to fallthroughs
+*   `st a, [ptr] + y`, possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`
+*   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
+
+Things it will not do
+---------------------
+
+(this will be moved to a FAQ document at some point)
+
+*   Check that a vector is initialized before it's called.
+*   Check for recursive calls, or prevent bad things happening because of recursive calls.
+    (You can always recursively call yourself through a vector.)
