@@ -31,10 +31,10 @@
 //
 
 typedef routine
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state,
+  inputs joy2, press_fire_msg, dispatch_game_state,
          actor_pos, actor_delta, actor_logic,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
+  outputs dispatch_game_state,
           actor_pos, actor_delta, actor_logic,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, pos, new_pos, delta, ptr, dispatch_logic
@@ -90,7 +90,6 @@ word delta
 vector (logic_routine) table[256] actor_logic
 vector logic_routine dispatch_logic
 
-byte button_down : 0  // effectively static-local to check_button
 byte table[32] press_fire_msg: "PRESS`FIRE`TO`PLAY"
 
 //
@@ -155,10 +154,11 @@ routine read_stick
 // call this routine.
 // Upon return, if carry is set, the button was pressed then released.
 
-routine check_button
-  inputs joy2, button_down
-  outputs c, button_down
+define check_button routine
+  inputs joy2
+  outputs c
   trashes a, z, n
+  static byte button_down : 0
 {
     ld a, button_down
     if z {
