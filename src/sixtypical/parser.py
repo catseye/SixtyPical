@@ -14,6 +14,9 @@ class SymEntry(object):
         self.ast_node = ast_node
         self.model = model
 
+    def __repr__(self):
+        return "%s(%r, %r)" % (self.__class__.__name__, self.ast_node, self.model)
+
 
 class Parser(object):
     def __init__(self, text):
@@ -221,12 +224,7 @@ class Parser(object):
         else:
             statics = self.statics()
 
-            self.current_statics = {}
-            for defn in statics:
-                name = defn.name
-                if name in self.symbols or name in self.current_statics:
-                    raise SyntaxError('Symbol "%s" already declared' % name)
-                self.current_statics[name] = SymEntry(defn, defn.location)
+            self.current_statics = self.compose_statics_dict(statics)
             block = self.block()
             self.current_statics = {}
 
@@ -236,6 +234,15 @@ class Parser(object):
             name=name, block=block, addr=addr,
             location=location, statics=statics
         )
+
+    def compose_statics_dict(self, statics):
+        c = {}
+        for defn in statics:
+            name = defn.name
+            if name in self.symbols or name in self.current_statics:
+                raise SyntaxError('Symbol "%s" already declared' % name)
+            c[name] = SymEntry(defn, defn.location)
+        return c
 
     def labels(self):
         accum = []

@@ -53,6 +53,12 @@ class IncompatibleConstraintsError(ConstraintsError):
     pass
 
 
+def routine_has_static(routine, ref):
+    if not hasattr(routine, 'statics'):
+        return False
+    return ref in [static.location for static in routine.statics]
+
+
 class Context(object):
     """
     A location is touched if it was changed (or even potentially
@@ -112,6 +118,9 @@ class Context(object):
     def assert_meaningful(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', UnmeaningfulReadError)
         for ref in refs:
+            # statics are always meaningful
+            if routine_has_static(self.routine, ref):
+                continue
             if ref.is_constant() or ref in self.routines:
                 pass
             elif isinstance(ref, LocationRef):
@@ -129,6 +138,9 @@ class Context(object):
     def assert_writeable(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', ForbiddenWriteError)
         for ref in refs:
+            # statics are always writeable
+            if routine_has_static(self.routine, ref):
+                continue
             if ref not in self._writeable:
                 message = '%s in %s' % (ref.name, self.routine.name)
                 if kwargs.get('message'):
@@ -231,7 +243,7 @@ class Analyzer(object):
             for ref in type_.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
             for ref in context.each_touched():
-                if ref not in type_.outputs and ref not in type_.trashes:
+                if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
                     message = '%s in %s' % (ref.name, routine.name)
                     raise ForbiddenWriteError(message)
         self.current_routine = None
