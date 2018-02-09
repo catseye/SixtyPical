@@ -18,8 +18,9 @@ class SymEntry(object):
 class Parser(object):
     def __init__(self, text):
         self.scanner = Scanner(text)
-        self.symbols = {}  # token -> SymEntry
-        self.typedefs = {}  # token -> Type AST
+        self.symbols = {}          # token -> SymEntry
+        self.current_statics = {}  # token -> SymEntry
+        self.typedefs = {}         # token -> Type AST
         for token in ('a', 'x', 'y'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
         for token in ('c', 'z', 'n', 'v'):
@@ -27,6 +28,8 @@ class Parser(object):
         self.backpatch_instrs = []
 
     def lookup(self, name):
+        if name in self.current_statics:
+            return self.current_statics[name].model
         if name not in self.symbols:
             raise SyntaxError('Undefined symbol "%s"' % name)
         return self.symbols[name].model
@@ -209,18 +212,29 @@ class Parser(object):
         type_ = self.defn_type()
         if not isinstance(type_, RoutineType):
             raise SyntaxError("Can only define a routine, not %r" % type_)
+        statics = []
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
             block = None
             addr = int(self.scanner.token)
             self.scanner.scan()
         else:
+            statics = self.statics()
+
+            self.current_statics = {}
+            for defn in statics:
+                name = defn.name
+                if name in self.symbols or name in self.current_statics:
+                    raise SyntaxError('Symbol "%s" already declared' % name)
+                self.current_statics[name] = SymEntry(defn, defn.location)
             block = self.block()
+            self.current_statics = {}
+
             addr = None
         location = LocationRef(type_, name)
         return Routine(
             name=name, block=block, addr=addr,
-            location=location
+            location=location, statics=statics
         )
 
     def labels(self):
@@ -283,6 +297,15 @@ class Parser(object):
                 index = self.locexpr()
                 loc = IndexedRef(loc, index)
             return loc
+
+    def statics(self):
+        defns = []
+        while self.scanner.consume('static'):
+            defn = self.defn()
+            if defn.initial is None:
+                raise SyntaxError("Static definition {} must have initial value".format(defn))
+            defns.append(defn)
+        return defns
 
     def block(self):
         instrs = []

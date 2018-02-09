@@ -529,3 +529,68 @@ Only routines can be defined in the new style.
     |     ld a, 0
     | }
     ? SyntaxError
+
+Memory locations can be defined static to a routine.
+
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t : 0
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    | 
+    | define main routine
+    |   trashes a, x, z, n
+    |   static byte t : 0
+    | {
+    |   ld x, t
+    |   call foo
+    | }
+    = ok
+
+Static memory locations must always be given an initial value.
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
+
+Name of a static cannot shadow an existing global or static.
+
+    | byte t
+    | 
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t
+    |   static byte t
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
