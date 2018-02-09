@@ -956,7 +956,7 @@ just the same as initialized global storage locations are.
     |   inputs x
     |   outputs x
     |   trashes z, n
-    |   static byte t : 7
+    |   static byte t : 255
     | {
     |   st x, t
     |   inc t
@@ -965,9 +965,17 @@ just the same as initialized global storage locations are.
     | 
     | define main routine
     |   trashes a, x, z, n
-    |   static byte t : 77
+    |   static byte t : 7
     | {
     |   ld x, t
     |   call foo
     | }
-    = ???
+    = $080D   LDX $081F
+    = $0810   JSR $0814
+    = $0813   RTS
+    = $0814   STX $081E
+    = $0817   INC $081E
+    = $081A   LDX $081E
+    = $081D   RTS
+    = $081E   .byte $FF
+    = $081F   .byte $07

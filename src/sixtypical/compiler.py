@@ -28,9 +28,10 @@ class UnsupportedOpcodeError(KeyError):
 class Compiler(object):
     def __init__(self, emitter):
         self.emitter = emitter
-        self.routines = {}
-        self.labels = {}
-        self.trampolines = {}   # Location -> Label
+        self.routines = {}           # routine.name -> Routine
+        self.routine_statics = {}    # routine.name -> { static.name -> Label }
+        self.labels = {}             # global.name -> Label  ("global" includes routines)
+        self.trampolines = {}        # Location -> Label
         self.current_routine = None
 
     # helper methods
@@ -59,10 +60,10 @@ class Compiler(object):
         return length
 
     def get_label(self, name):
-        if self.current_routine and hasattr(self.current_routine, 'statics'):
-            for static in self.current_routine.statics:
-                if static.location.name == name:
-                    raise NotImplementedError("static " + name)
+        if self.current_routine:
+            static_label = self.routine_statics.get(self.current_routine.name, {}).get(name)
+            if static_label:
+                return static_label
         return self.labels[name]
 
     # visitor methods
@@ -70,9 +71,13 @@ class Compiler(object):
     def compile_program(self, program):
         assert isinstance(program, Program)
 
+        defn_labels = []
+
         for defn in program.defns:
             length = self.compute_length_of_defn(defn)
-            self.labels[defn.name] = Label(defn.name, addr=defn.addr, length=length)
+            label = Label(defn.name, addr=defn.addr, length=length)
+            self.labels[defn.name] = label
+            defn_labels.append((defn, label))
 
         for routine in program.routines:
             self.routines[routine.name] = routine
@@ -80,6 +85,15 @@ class Compiler(object):
             if routine.addr is not None:
                 label.set_addr(routine.addr)
             self.labels[routine.name] = label
+
+            if hasattr(routine, 'statics'):
+                static_labels = {}
+                for defn in routine.statics:
+                    length = self.compute_length_of_defn(defn)
+                    label = Label(defn.name, addr=defn.addr, length=length)
+                    static_labels[defn.name] = label
+                    defn_labels.append((defn, label))
+                self.routine_statics[routine.name] = static_labels
 
         self.compile_routine(self.routines['main'])
         for routine in program.routines:
@@ -92,9 +106,8 @@ class Compiler(object):
             self.emitter.emit(RTS())
 
         # initialized data
-        for defn in program.defns:
+        for defn, label in defn_labels:
             if defn.initial is not None:
-                label = self.get_label(defn.name)
                 initial_data = None
                 type_ = defn.location.type
                 if type_ == TYPE_BYTE:
@@ -110,11 +123,9 @@ class Compiler(object):
                 self.emitter.emit(initial_data)
 
         # uninitialized, "BSS" data
-        for defn in program.defns:
+        for defn, label in defn_labels:
             if defn.initial is None and defn.addr is None:
-                label = self.get_label(defn.name)
                 self.emitter.resolve_bss_label(label)
-
 
     def compile_routine(self, routine):
         self.current_routine = routine
