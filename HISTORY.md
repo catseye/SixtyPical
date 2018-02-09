@@ -9,6 +9,7 @@ History of SixtyPical
     as `ld a, [ptr] + y` and `st a, [ptr] + y`.
 *   Implements the "union rule for trashes" when analyzing `if` blocks.
 *   Even if we `goto` another routine, we can't trash an output.
+*   `static` storage locations local to routines can now be defined within routines.
 *   Fixed bug where `trash` was not marking the location as being virtually altered.
 
 0.11

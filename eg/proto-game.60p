@@ -37,7 +37,7 @@ typedef routine
   outputs button_down, dispatch_game_state,
           actor_pos, actor_delta, actor_logic,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, pos, new_pos, delta, ptr, save_x, compare_target, dispatch_logic
+  trashes a, x, y, c, z, n, v, pos, new_pos, delta, ptr, compare_target, dispatch_logic
     game_state_routine
 
 //
@@ -93,7 +93,6 @@ vector logic_routine dispatch_logic
 byte button_down : 0  // effectively static-local to check_button
 byte table[32] press_fire_msg: "PRESS`FIRE`TO`PLAY"
 
-byte save_x
 word compare_target
 
 //
@@ -410,6 +409,7 @@ define game_state_title_screen game_state_routine
 }
 
 define game_state_play game_state_routine
+static byte save_x : 0
 {
     ld x, 0
     repeat {

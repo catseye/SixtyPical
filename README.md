@@ -59,14 +59,6 @@ This should be tracked in the abstract interpretation.
 Range-checking buffers might be too difficult.  Range checking tables will be easier.
 If a value is ANDed with 15, its range must be 0-15, etc.
 
-### Routine-local static memory locations
-
-These would not need to appear in the inputs/outputs/trashes sets of the routines
-that call this routine.
-
-These might be forced to specify an initial value so that they can always be
-assumed to be meaningful.
-
 ### Re-order routines and optimize tail-calls to fallthroughs
 
 Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally
