@@ -946,3 +946,28 @@ Trash does nothing except indicate that we do not care about the value anymore.
     = $080D   TAX
     = $080E   LDA #$00
     = $0810   RTS
+
+### static ###
+
+Memory locations defined static to a routine are allocated
+just the same as initialized global storage locations are.
+
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t : 7
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    | 
+    | define main routine
+    |   trashes a, x, z, n
+    |   static byte t : 77
+    | {
+    |   ld x, t
+    |   call foo
+    | }
+    = ???
