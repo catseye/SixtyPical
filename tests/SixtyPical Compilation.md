@@ -858,6 +858,31 @@ Read through a pointer, into a byte storage location, or the `a` register.
     = $081C   LDA ($FE),Y
     = $081E   RTS
 
+Write the `a` register through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | byte foo
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     ld a, 255
+    |     st a, [ptr] + y
+    | }
+    = $080D   LDY #$00
+    = $080F   LDA #$1C
+    = $0811   STA $FE
+    = $0813   LDA #$08
+    = $0815   STA $FF
+    = $0817   LDA #$FF
+    = $0819   STA ($FE),Y
+    = $081B   RTS
+
 Add a word memory location, and a literal word, to a pointer, and then read through it.
 Note that this is *not* range-checked.  (Yet.)
 

@@ -273,18 +273,28 @@ class Analyzer(object):
                 context.assert_meaningful(src)
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
-            if instr.index:
-                if src.type == TYPE_BYTE and TableType.is_a_table_type(dest.type, TYPE_BYTE):
+            if isinstance(dest, IndexedRef):
+                if src.type == TYPE_BYTE and TableType.is_a_table_type(dest.ref.type, TYPE_BYTE):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
-                context.assert_meaningful(instr.index)
+                context.assert_meaningful(dest.index)
+                context.set_written(dest.ref)
+            elif isinstance(dest, IndirectRef):
+                # copying this analysis from the matching branch in `copy`, below
+                if isinstance(dest.ref.type, PointerType) and src.type == TYPE_BYTE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+                context.assert_meaningful(dest.ref, REG_Y)
+                context.set_written(dest.ref)
             elif src.type != dest.type:
                 raise TypeMismatchError('%r and %r in %s' %
                     (src, dest, self.current_routine.name)
                 )
+            else:
+                context.set_written(dest)
             context.assert_meaningful(src)
-            context.set_written(dest)
         elif opcode == 'add':
             context.assert_meaningful(src, dest, FLAG_C)
             if src.type == TYPE_BYTE:

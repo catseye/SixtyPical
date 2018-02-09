@@ -137,8 +137,6 @@ class Compiler(object):
                     self.emitter.emit(LDA(AbsoluteY(self.labels[src.name])))
                 elif isinstance(src, IndirectRef) and isinstance(src.ref.type, PointerType):
                     self.emitter.emit(LDA(IndirectY(self.labels[src.ref.name])))
-                elif isinstance(src, IndirectRef) and src.index == REG_Y:
-                    self.emitter.emit(LDA(AbsoluteY(self.labels[src.name])))
                 else:
                     self.emitter.emit(LDA(Absolute(self.labels[src.name])))
             elif dest == REG_X:
@@ -172,14 +170,23 @@ class Compiler(object):
                     REG_X: STX,
                     REG_Y: STY
                 }.get(src, None)
-                mode_cls = {
-                    REG_X: AbsoluteX,
-                    REG_Y: AbsoluteY,
-                    None: Absolute
-                }.get(instr.index, None)
+
+                if isinstance(dest, IndexedRef):
+                    mode_cls = {
+                        REG_X: AbsoluteX,
+                        REG_Y: AbsoluteY,
+                    }[dest.index]
+                    label = self.labels[dest.ref.name]
+                elif isinstance(dest, IndirectRef) and isinstance(dest.ref.type, PointerType):
+                    mode_cls = IndirectY
+                    label = self.labels[dest.ref.name]
+                else:
+                    mode_cls = Absolute
+                    label = self.labels[dest.name]
+
                 if op_cls is None or mode_cls is None:
                     raise UnsupportedOpcodeError(instr)
-                self.emitter.emit(op_cls(mode_cls(self.labels[dest.name])))
+                self.emitter.emit(op_cls(mode_cls(label)))
         elif opcode == 'add':
             if dest == REG_A:
                 if isinstance(src, ConstantRef):

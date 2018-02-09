@@ -4,8 +4,9 @@ History of SixtyPical
 0.12
 ----
 
-*   `copy` is now understood to trash `a`, thus `copy ..., a` is not valid.
-    Indirect addressing is supported in `ld`, as in `ld a, [ptr] + y`, to compensate.
+*   `copy` is now understood to trash `a`, thus it is not valid to use it in `copy`.
+    To compensate, indirect addressing is supported in `ld` and `st`, for example,
+    as `ld a, [ptr] + y` and `st a, [ptr] + y`.
 *   Implements the "union rule for trashes" when analyzing `if` blocks.
 *   Even if we `goto` another routine, we can't trash an output.
 *   Fixed bug where `trash` was not marking the location as being virtually altered.

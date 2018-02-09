@@ -1763,6 +1763,25 @@ not `copy`.
     | }
     = ok
 
+Write the `a` register through a pointer.  Note that this is done with `st`,
+not `copy`.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | byte foo
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     ld a, 255
+    |     st a, [ptr] + y
+    | }
+    = ok
+
 ### routines ###
 
 Routines are constants.  You need not, and in fact cannot, specify a constant

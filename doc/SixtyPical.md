@@ -240,7 +240,7 @@ underlying opcodes.
 
 There is another mode of `ld` which reads into `a` indirectly through a pointer.
 
-    copy [<src-memory-location>] + y, <dest-memory-location>
+    ld a, [<src-memory-location>] + y
 
 The memory location in this syntax must be a pointer.
 
@@ -265,6 +265,19 @@ After execution, dest is considered initialized.  No flags are
 changed by this instruction (unless of course dest is a flag.)
 
 If and only if dest is a byte table, the index-memory-location must be given.
+
+There is another mode of `st` which write `a` into memory, indirectly through
+a pointer.
+
+    st a, [<dest-memory-location>] + y
+
+The memory location in this syntax must be a pointer.
+
+This syntax copies the constents of the `a` register into
+the contents of memory at the pointer (offset by the `y` register).
+
+In addition to the constraints above, `y` must be initialized before
+this mode is used.
 
 ### copy ###
 

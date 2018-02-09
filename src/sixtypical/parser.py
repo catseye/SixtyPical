@@ -339,11 +339,8 @@ class Parser(object):
             self.scanner.scan()
             src = self.locexpr()
             self.scanner.expect(',')
-            dest = self.locexpr()
-            index = None
-            if self.scanner.consume('+'):
-                index = self.locexpr()
-            return Instr(opcode=opcode, dest=dest, src=src, index=index)
+            dest = self.indlocexpr()
+            return Instr(opcode=opcode, dest=dest, src=src, index=None)
         elif self.scanner.token in ("shl", "shr", "inc", "dec"):
             opcode = self.scanner.token
             self.scanner.scan()
