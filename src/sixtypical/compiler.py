@@ -31,6 +31,7 @@ class Compiler(object):
         self.routines = {}
         self.labels = {}
         self.trampolines = {}   # Location -> Label
+        self.current_routine = None
 
     # helper methods
 
@@ -58,6 +59,10 @@ class Compiler(object):
         return length
 
     def get_label(self, name):
+        if self.current_routine and hasattr(self.current_routine, 'statics'):
+            for static in self.current_routine.statics:
+                if static.location.name == name:
+                    raise NotImplementedError("static " + name)
         return self.labels[name]
 
     # visitor methods
@@ -112,11 +117,13 @@ class Compiler(object):
 
 
     def compile_routine(self, routine):
+        self.current_routine = routine
         assert isinstance(routine, Routine)
         if routine.block:
             self.emitter.resolve_label(self.get_label(routine.name))
             self.compile_block(routine.block)
             self.emitter.emit(RTS())
+        self.current_routine = None
 
     def compile_block(self, block):
         assert isinstance(block, Block)
