@@ -10,6 +10,7 @@ if [ "X$1" = "X" ]; then
 fi
 OUT=/tmp/a-out.prg
 bin/sixtypical --traceback --basic-prelude $SRC > $OUT || exit 1
+ls -la $OUT
 if [ -e vicerc ]; then
     $X64 -config vicerc $OUT
 else

@@ -37,7 +37,7 @@ typedef routine
   outputs button_down, dispatch_game_state,
           actor_pos, actor_delta, actor_logic,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, pos, new_pos, delta, ptr, compare_target, dispatch_logic
+  trashes a, x, y, c, z, n, v, pos, new_pos, delta, ptr, dispatch_logic
     game_state_routine
 
 //
@@ -51,7 +51,7 @@ typedef routine
 typedef routine
   inputs pos, delta, joy2, screen
   outputs pos, delta, new_pos, screen, c
-  trashes a, x, y, z, n, v, ptr, compare_target
+  trashes a, x, y, z, n, v, ptr
     logic_routine
 
 // ----------------------------------------------------------------
@@ -92,8 +92,6 @@ vector logic_routine dispatch_logic
 
 byte button_down : 0  // effectively static-local to check_button
 byte table[32] press_fire_msg: "PRESS`FIRE`TO`PLAY"
-
-word compare_target
 
 //
 // Points to the routine that implements the current game state.
@@ -217,10 +215,11 @@ routine calculate_new_position
     add new_pos, delta
 }
 
-routine check_new_position_in_bounds
+define check_new_position_in_bounds routine
   inputs new_pos
   outputs c
-  trashes compare_target, a, z, n, v
+  trashes a, z, n, v
+  static word compare_target : 0
 {
     copy 1000, compare_target
     st on, c
@@ -321,6 +320,7 @@ define player_logic logic_routine
 }
 
 define enemy_logic logic_routine
+  static word compare_target : 0
 {
     call calculate_new_position
     call check_new_position_in_bounds
@@ -372,7 +372,6 @@ define enemy_logic logic_routine
         } else {
             copy $ffd8, delta
         }
-        trash compare_target
     }
 
     st off, c

@@ -56,7 +56,10 @@ class IncompatibleConstraintsError(ConstraintsError):
 def routine_has_static(routine, ref):
     if not hasattr(routine, 'statics'):
         return False
-    return ref in [static.location for static in routine.statics]
+    for static in routine.statics:
+        if static.location == ref:
+            return True
+    return False
 
 
 class Context(object):
