@@ -74,12 +74,15 @@ is probably NP-complete.  But doing it adeuqately is probably not that hard.
 
 ### And at some point...
 
+*   `const`s, that can be used in defining the size of tables, etc
+*   Remove the need for `forward` and `vector () table` (make grammar changes)
+*   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
 *   error messages that include the line number of the source code
 *   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
 *   automatic tail-call optimization (could be tricky, w/constraints?)
-*   `st a, [ptr] + y`, possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`
+*   possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
 
 Things it will not do

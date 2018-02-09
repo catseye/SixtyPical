@@ -2283,3 +2283,29 @@ The new style routine definitions support typedefs.
     |     copy foo, vec
     | }
     = ok
+
+### static ###
+
+When memory locations are defined static to a routine, they cannot be
+directly input, nor directly output; and since they are always initialized,
+they cannot be trashed.  Thus, they really don't participate in the analysis.
+
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t : 0
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    | 
+    | define main routine
+    |   trashes a, x, z, n
+    |   static byte t : 0
+    | {
+    |   ld x, t
+    |   call foo
+    | }
+    = ok
