@@ -537,13 +537,14 @@ Grammar
     Program ::= {TypeDefn} {Defn} {Routine}.
     TypeDefn::= "typedef" Type Ident<new>.
     Defn    ::= Type Ident<new> [Constraints] (":" Literal | "@" LitWord).
-    Type    ::= "(" Type ")" | TypeExpr ["table" TypeSize].
+    Type    ::= TypeTerm ["table" TypeSize].
     TypeExpr::= "byte"
               | "word"
               | "buffer" TypeSize
               | "pointer"
-              | "vector" Type
+              | "vector" TypeTerm
               | "routine" Constraints
+              | "(" Type ")"
               .
     TypeSize::= "[" LitWord "]".
     Constrnt::= ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs].

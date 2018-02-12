@@ -67,11 +67,12 @@ is probably NP-complete.  But doing it adeuqately is probably not that hard.
 ### And at some point...
 
 *   `const`s that can be used in defining the size of tables, etc.
-*   Remove the need for `forward` and `vector () table` (make grammar changes)
+*   Remove the need for `forward` (lots of backpatching)
 *   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
     (Associate each pointer with the buffer it points into.)
 *   `static` pointers -- currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.
+*   Question the value of the "consistent initialization" principle for `if` statement analysis.
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
 *   Error messages that include the line number of the source code.
 *   Add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.

@@ -136,6 +136,15 @@ class Parser(object):
         return size
 
     def defn_type(self):
+        type_ = self.defn_type_term()
+
+        if self.scanner.consume('table'):
+            size = self.defn_size()
+            type_ = TableType(type_, size)
+
+        return type_
+
+    def defn_type_term(self):
         type_ = None
 
         if self.scanner.consume('('):
@@ -148,7 +157,7 @@ class Parser(object):
         elif self.scanner.consume('word'):
             type_ = TYPE_WORD
         elif self.scanner.consume('vector'):
-            type_ = self.defn_type()
+            type_ = self.defn_type_term()
             if not isinstance(type_, RoutineType):
                 raise SyntaxError("Vectors can only be of a routine, not %r" % type_)
             type_ = VectorType(type_)
@@ -166,10 +175,6 @@ class Parser(object):
             if type_name not in self.typedefs:
                 raise SyntaxError("Undefined type '%s'" % type_name)
             type_ = self.typedefs[type_name]
-
-        if self.scanner.consume('table'):
-            size = self.defn_size()
-            type_ = TableType(type_, size)
 
         return type_
 

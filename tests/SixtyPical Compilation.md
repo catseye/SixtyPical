@@ -634,9 +634,9 @@ Copying to and from a vector table.
     |   outputs x
     |   trashes a, z, n
     |     one
-    | vector (routine
+    | vector routine
     |   outputs x
-    |   trashes a, z, n)
+    |   trashes a, z, n
     |     table[256] many
     | 
     | routine bar outputs x trashes a, z, n {

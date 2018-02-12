@@ -87,7 +87,7 @@ word new_pos
 word table[256] actor_delta
 word delta
 
-vector (logic_routine) table[256] actor_logic
+vector logic_routine table[256] actor_logic
 vector logic_routine dispatch_logic
 
 byte table[32] press_fire_msg: "PRESS`FIRE`TO`PLAY"
