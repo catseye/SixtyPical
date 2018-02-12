@@ -39,10 +39,6 @@ Documentation
 TODO
 ----
 
-### `low` and `high` address operators
-
-To turn `word` type into `byte`.
-
 ### Save registers on stack
 
 This preserves them, so that, semantically, they can be used later even though they
@@ -66,8 +62,10 @@ is probably NP-complete.  But doing it adeuqately is probably not that hard.
 
 ### And at some point...
 
+*   `low` and `high` address operators - to turn `word` type into `byte`.
 *   `const`s that can be used in defining the size of tables, etc.
 *   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
+*   Related: can we simply view a (small) part of a buffer as a byte table?  If not, why not?
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
     (Associate each pointer with the buffer it points into.)
 *   `static` pointers -- currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.
