@@ -408,8 +408,9 @@ A vector can name itself in its inputs, outputs, and trashes.
     | }
     = ok
 
-A routine can be copied into a vector before the routine appears in the program,
-*however*, it must be marked as such with the keyword `forward`.
+A routine can be copied into a vector before the routine appears in the program.
+This is known as a "forward reference".  You are only allowed to make forward
+references in the source of a `copy` instruction.
 
     | vector routine
     |   inputs cinv, a
@@ -419,22 +420,6 @@ A routine can be copied into a vector before the routine appears in the program,
     | routine main {
     |     with interrupts off {
     |         copy foo, cinv
-    |     }
-    |     call cinv
-    | }
-    | routine foo {
-    |     ld a, 0
-    | }
-    ? SyntaxError: Undefined symbol
-
-    | vector routine
-    |   inputs cinv, a
-    |   outputs cinv, x
-    |   trashes a, x, z, n
-    |   cinv @ 788
-    | routine main {
-    |     with interrupts off {
-    |         copy forward foo, cinv
     |     }
     |     call cinv
     | }

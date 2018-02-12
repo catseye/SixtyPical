@@ -10,8 +10,9 @@ History of SixtyPical
 *   Implements the "union rule for trashes" when analyzing `if` blocks.
 *   Even if we `goto` another routine, we can't trash an output.
 *   `static` storage locations local to routines can now be defined within routines.
-*   Small grammar change that obviates the need for parentheses in the type expression
-    `vector (routine ...) table`.
+*   Small grammar changes that obviate:
+    *   the need for parentheses in the type expression `vector (routine ...) table`#
+    *   the need for `forward` in forward references in source of `copy` instruction
 *   Fixed bug where `trash` was not marking the location as being virtually altered.
 
 0.11

@@ -249,7 +249,7 @@ routine init_game
     repeat {
         copy pos, actor_pos + y
         copy word 40, actor_delta + y
-        copy forward enemy_logic, actor_logic + y
+        copy enemy_logic, actor_logic + y
 
         st off, c
         add pos, word 7
@@ -261,7 +261,7 @@ routine init_game
     ld y, 0
     copy word 0, actor_pos + y
     copy word 0, actor_delta + y
-    copy forward player_logic, actor_logic + y
+    copy player_logic, actor_logic + y
 }
 
 // ----------------------------------------------------------------
@@ -401,7 +401,7 @@ define game_state_title_screen game_state_routine
     if c {
         call clear_screen
         call init_game
-        copy forward game_state_play, dispatch_game_state
+        copy game_state_play, dispatch_game_state
     }
 
     goto save_cinv
@@ -423,7 +423,7 @@ static byte save_x : 0
         if c {
             // Player died!  Want no dead!  Break out of the loop (this is a bit awkward.)
             call clear_screen
-            copy forward game_state_game_over, dispatch_game_state
+            copy game_state_game_over, dispatch_game_state
             ld x, 15
         } else {
             ld x, save_x

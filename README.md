@@ -67,7 +67,6 @@ is probably NP-complete.  But doing it adeuqately is probably not that hard.
 ### And at some point...
 
 *   `const`s that can be used in defining the size of tables, etc.
-*   Remove the need for `forward` (lots of backpatching)
 *   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
     (Associate each pointer with the buffer it points into.)

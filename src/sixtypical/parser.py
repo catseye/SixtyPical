@@ -30,12 +30,18 @@ class Parser(object):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BIT, token))
         self.backpatch_instrs = []
 
-    def lookup(self, name):
+    def soft_lookup(self, name):
         if name in self.current_statics:
             return self.current_statics[name].model
-        if name not in self.symbols:
+        if name in self.symbols:
+            return self.symbols[name].model
+        return None
+
+    def lookup(self, name):
+        model = self.soft_lookup(name)
+        if model is None:
             raise SyntaxError('Undefined symbol "%s"' % name)
-        return self.symbols[name].model
+        return model
 
     # --- grammar productions
 
@@ -270,7 +276,7 @@ class Parser(object):
             accum.append(self.locexpr())
         return accum
 
-    def locexpr(self):
+    def locexpr(self, forward=False):
         if self.scanner.token in ('on', 'off'):
             loc = ConstantRef(TYPE_BIT, 1 if self.scanner.token == 'on' else 0)
             self.scanner.scan()
@@ -285,15 +291,21 @@ class Parser(object):
             loc = ConstantRef(TYPE_WORD, int(self.scanner.token))
             self.scanner.scan()
             return loc
+        elif forward:
+            name = self.scanner.token
+            self.scanner.scan()
+            loc = self.soft_lookup(name)
+            if loc is not None:
+                return loc
+            else:
+                return name
         else:
             loc = self.lookup(self.scanner.token)
             self.scanner.scan()
             return loc
 
-    def indlocexpr(self):
-        if self.scanner.consume('forward'):
-            return self.label()
-        elif self.scanner.consume('['):
+    def indlocexpr(self, forward=False):
+        if self.scanner.consume('['):
             loc = self.locexpr()
             self.scanner.expect(']')
             self.scanner.expect('+')
@@ -303,11 +315,12 @@ class Parser(object):
             loc = self.locexpr()
             return AddressRef(loc)
         else:
-            loc = self.locexpr()
-            index = None
-            if self.scanner.consume('+'):
-                index = self.locexpr()
-                loc = IndexedRef(loc, index)
+            loc = self.locexpr(forward=forward)
+            if not isinstance(loc, basestring):
+                index = None
+                if self.scanner.consume('+'):
+                    index = self.locexpr()
+                    loc = IndexedRef(loc, index)
             return loc
 
     def statics(self):
@@ -392,7 +405,7 @@ class Parser(object):
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token
             self.scanner.scan()
-            src = self.indlocexpr()
+            src = self.indlocexpr(forward=True)
             self.scanner.expect(',')
             dest = self.indlocexpr()
             instr = Instr(opcode=opcode, dest=dest, src=src)

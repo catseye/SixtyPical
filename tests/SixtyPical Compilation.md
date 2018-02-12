@@ -529,6 +529,36 @@ Copy routine to vector, inside an `interrupts off` block.
     = $081A   INX
     = $081B   RTS
 
+Copy routine (by forward reference) to vector.
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | routine main
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |     copy foo, bar
+    | }
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    = $080D   LDA #$18
+    = $080F   STA $081A
+    = $0812   LDA #$08
+    = $0814   STA $081B
+    = $0817   RTS
+    = $0818   INX
+    = $0819   RTS
+
 Copy word to word table and back, with both `x` and `y` as indexes.
 
     | word one
