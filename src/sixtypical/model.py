@@ -202,8 +202,7 @@ class IndexedRef(Ref):
 
     @property
     def name(self):
-        return self.ref.name
-        #return '{}+{}'.format(self.ref.name, self.index.name)
+        return '{}+{}'.format(self.ref.name, self.index.name)
 
     def is_constant(self):
         return False

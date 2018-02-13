@@ -156,9 +156,9 @@ class Compiler(object):
                 elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDA(Immediate(Byte(src.value))))
                 elif isinstance(src, IndexedRef) and src.index == REG_X:
-                    self.emitter.emit(LDA(AbsoluteX(self.get_label(src.name))))
+                    self.emitter.emit(LDA(AbsoluteX(self.get_label(src.ref.name))))
                 elif isinstance(src, IndexedRef) and src.index == REG_Y:
-                    self.emitter.emit(LDA(AbsoluteY(self.get_label(src.name))))
+                    self.emitter.emit(LDA(AbsoluteY(self.get_label(src.ref.name))))
                 elif isinstance(src, IndirectRef) and isinstance(src.ref.type, PointerType):
                     self.emitter.emit(LDA(IndirectY(self.get_label(src.ref.name))))
                 else:
@@ -169,7 +169,7 @@ class Compiler(object):
                 elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDX(Immediate(Byte(src.value))))
                 elif isinstance(src, IndexedRef) and src.index == REG_Y:
-                    self.emitter.emit(LDX(AbsoluteY(self.get_label(src.name))))
+                    self.emitter.emit(LDX(AbsoluteY(self.get_label(src.ref.name))))
                 else:
                     self.emitter.emit(LDX(Absolute(self.get_label(src.name))))
             elif dest == REG_Y:
@@ -178,7 +178,7 @@ class Compiler(object):
                 elif isinstance(src, ConstantRef):
                     self.emitter.emit(LDY(Immediate(Byte(src.value))))
                 elif isinstance(src, IndexedRef) and src.index == REG_X:
-                    self.emitter.emit(LDY(AbsoluteX(self.get_label(src.name))))
+                    self.emitter.emit(LDY(AbsoluteX(self.get_label(src.ref.name))))
                 else:
                     self.emitter.emit(LDY(Absolute(self.get_label(src.name))))
             else:
