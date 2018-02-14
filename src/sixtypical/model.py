@@ -131,10 +131,10 @@ class Ref(object):
         """read-only means that the program cannot change the value
         of a location.  constant means that the value of the location
         will not change during the lifetime of the program.""" 
-        raise NotImplementedError
+        raise NotImplementedError("class {} must implement is_constant()".format(self.__class__.__name__))
 
     def max_range(self):
-        raise NotImplementedError
+        raise NotImplementedError("class {} must implement max_range()".format(self.__class__.__name__))
 
 
 class LocationRef(Ref):
@@ -286,6 +286,9 @@ class ConstantRef(Ref):
 
     def is_constant(self):
         return True
+
+    def max_range(self):
+        return (self.value, self.value)
 
     def high_byte(self):
         return (self.value >> 8) & 255

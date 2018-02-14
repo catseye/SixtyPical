@@ -188,7 +188,8 @@ class Context(object):
 
     def set_meaningful(self, *refs):
         for ref in refs:
-            self._range[ref] = ref.max_range()
+            if ref not in self._range:
+                self._range[ref] = ref.max_range()
 
     def set_top_of_range(self, ref, top):
         self.assert_meaningful(ref)
@@ -201,6 +202,14 @@ class Context(object):
         self.assert_meaningful(ref)
         (_, top) = self._range[ref]
         return top
+
+    def copy_range(self, src, dest):
+        self.assert_meaningful(src)
+        if src in self._range:
+            src_range = self._range[src]
+        else:
+            src_range = src.max_range()
+        self._range[dest] = src_range
 
     def set_unmeaningful(self, *refs):
         for ref in refs:
@@ -331,6 +340,7 @@ class Analyzer(object):
                 )
             else:
                 context.assert_meaningful(src)
+                context.copy_range(src, dest)
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
             if isinstance(dest, IndexedRef):
