@@ -2,8 +2,9 @@
 
 
 class Type(object):
-    def __init__(self, name):
+    def __init__(self, name, max_range=None):
         self.name = name
+        self.max_range = max_range
 
     def __repr__(self):
         return 'Type(%r)' % self.name
@@ -32,9 +33,9 @@ class Type(object):
             self.trashes = set([resolve(w) for w in self.trashes])
 
 
-TYPE_BIT = Type('bit')
-TYPE_BYTE = Type('byte')
-TYPE_WORD = Type('word')
+TYPE_BIT = Type('bit', max_range=(0, 1))
+TYPE_BYTE = Type('byte', max_range=(0, 255))
+TYPE_WORD = Type('word', max_range=(0, 65535))
 
 
 
@@ -132,6 +133,9 @@ class Ref(object):
         will not change during the lifetime of the program.""" 
         raise NotImplementedError
 
+    def max_range(self):
+        raise NotImplementedError
+
 
 class LocationRef(Ref):
     def __init__(self, type, name):
@@ -159,6 +163,12 @@ class LocationRef(Ref):
 
     def is_constant(self):
         return isinstance(self.type, RoutineType)
+
+    def max_range(self):
+        try:
+            return self.type.max_range
+        except:
+            return (0, 0)
 
     @classmethod
     def format_set(cls, location_refs):

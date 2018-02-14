@@ -66,11 +66,17 @@ class Context(object):
     """
     A location is touched if it was changed (or even potentially
     changed) during this routine, or some routine called by this routine.
-    
+
     A location is meaningful if it was an input to this routine,
     or if it was set to a meaningful value by some operation in this
-    routine (or some routine called by this routine.
-    
+    routine (or some routine called by this routine).
+
+    If a location is meaningful, it has a range.  This range represents
+    the lowest and highest values that it might possibly be (i.e. we know
+    it cannot possibly be below the lowest or above the highest.)  In the
+    absence of any usage information, the range of a byte, is 0..255 and
+    the range of a word is 0..65535.
+
     A location is writeable if it was listed in the outputs and trashes
     lists of this routine.
     """
@@ -78,13 +84,13 @@ class Context(object):
         self.routines = routines    # Location -> AST node
         self.routine = routine
         self._touched = set()
-        self._meaningful = set()
+        self._range = dict()
         self._writeable = set()
 
         for ref in inputs:
             if ref.is_constant():
                 raise ConstantConstraintError('%s in %s' % (ref.name, routine.name))
-            self._meaningful.add(ref)
+            self._range[ref] = ref.max_range()
         output_names = set()
         for ref in outputs:
             if ref.is_constant():
@@ -99,19 +105,19 @@ class Context(object):
             self._writeable.add(ref)
 
     def __str__(self):
-        return "Context(\n  _touched={},\n  _meaningful={},\n  _writeable={}\n)".format(
-            LocationRef.format_set(self._touched), LocationRef.format_set(self._meaningful), LocationRef.format_set(self._writeable)
+        return "Context(\n  _touched={},\n  _range={},\n  _writeable={}\n)".format(
+            LocationRef.format_set(self._touched), LocationRef.format_set(self._range), LocationRef.format_set(self._writeable)
         )
 
     def clone(self):
         c = Context(self.routines, self.routine, [], [], [])
         c._touched = set(self._touched)
-        c._meaningful = set(self._meaningful)
+        c._range = dict(self._range)
         c._writeable = set(self._writeable)
         return c
 
     def each_meaningful(self):
-        for ref in self._meaningful:
+        for ref in self._range.keys():
             yield ref
 
     def each_touched(self):
@@ -127,7 +133,7 @@ class Context(object):
             if ref.is_constant() or ref in self.routines:
                 pass
             elif isinstance(ref, LocationRef):
-                if ref not in self._meaningful:
+                if ref not in self._range:
                     message = '%s in %s' % (ref.name, self.routine.name)
                     if kwargs.get('message'):
                         message += ' (%s)' % kwargs['message']
@@ -156,12 +162,12 @@ class Context(object):
 
     def set_meaningful(self, *refs):
         for ref in refs:
-            self._meaningful.add(ref)
+            self._range[ref] = ref.max_range()
 
     def set_unmeaningful(self, *refs):
         for ref in refs:
-            if ref in self._meaningful:
-                self._meaningful.remove(ref)
+            if ref in self._range:
+                del self._range[ref]
 
     def set_written(self, *refs):
         """A "helper" method which does the following common sequence for
@@ -223,7 +229,7 @@ class Analyzer(object):
             print context
 
         self.analyze_block(routine.block, context)
-        trashed = set(context.each_touched()) - context._meaningful
+        trashed = set(context.each_touched()) - set(context.each_meaningful())
 
         if self.debug:
             print "at end of routine `{}`:".format(routine.name)
@@ -397,7 +403,7 @@ class Analyzer(object):
 
             # merge the contexts.  this used to be a method called `set_from`
             context._touched = set(context1._touched) | set(context2._touched)
-            context._meaningful = outgoing_meaningful
+            context.set_meaningful(*list(outgoing_meaningful))
             context._writeable = set(context1._writeable) | set(context2._writeable)
 
             for ref in outgoing_trashes:
