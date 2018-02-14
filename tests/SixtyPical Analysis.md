@@ -533,34 +533,6 @@ You can also copy a literal word to a word table.
 
 #### tables: range checking ####
 
-A table may not have more than 256 entries.
-
-    | word table[512] many
-    | 
-    | routine main
-    |   inputs many
-    |   outputs many
-    |   trashes a, x, n, z
-    | {
-    |     ld x, 0
-    |     copy 9999, many + x
-    | }
-    ? zzzzz
-
-The number of entries in a table must be a power of two.
-
-    | word table[48] many
-    | 
-    | routine main
-    |   inputs many
-    |   outputs many
-    |   trashes a, x, n, z
-    | {
-    |     ld x, 0
-    |     copy 9999, many + x
-    | }
-    ? zzzz
-
 If a table has fewer than 256 entries, it cannot be read or written
 beyond the maximum number of entries it has.
 
