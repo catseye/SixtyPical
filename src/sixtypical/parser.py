@@ -14,22 +14,34 @@ class SymEntry(object):
         self.ast_node = ast_node
         self.model = model
 
+    def __repr__(self):
+        return "%s(%r, %r)" % (self.__class__.__name__, self.ast_node, self.model)
+
 
 class Parser(object):
     def __init__(self, text):
         self.scanner = Scanner(text)
-        self.symbols = {}  # token -> SymEntry
-        self.typedefs = {}  # token -> Type AST
+        self.symbols = {}          # token -> SymEntry
+        self.current_statics = {}  # token -> SymEntry
+        self.typedefs = {}         # token -> Type AST
         for token in ('a', 'x', 'y'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
         for token in ('c', 'z', 'n', 'v'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BIT, token))
         self.backpatch_instrs = []
 
+    def soft_lookup(self, name):
+        if name in self.current_statics:
+            return self.current_statics[name].model
+        if name in self.symbols:
+            return self.symbols[name].model
+        return None
+
     def lookup(self, name):
-        if name not in self.symbols:
+        model = self.soft_lookup(name)
+        if model is None:
             raise SyntaxError('Undefined symbol "%s"' % name)
-        return self.symbols[name].model
+        return model
 
     # --- grammar productions
 
@@ -130,6 +142,15 @@ class Parser(object):
         return size
 
     def defn_type(self):
+        type_ = self.defn_type_term()
+
+        if self.scanner.consume('table'):
+            size = self.defn_size()
+            type_ = TableType(type_, size)
+
+        return type_
+
+    def defn_type_term(self):
         type_ = None
 
         if self.scanner.consume('('):
@@ -142,7 +163,7 @@ class Parser(object):
         elif self.scanner.consume('word'):
             type_ = TYPE_WORD
         elif self.scanner.consume('vector'):
-            type_ = self.defn_type()
+            type_ = self.defn_type_term()
             if not isinstance(type_, RoutineType):
                 raise SyntaxError("Vectors can only be of a routine, not %r" % type_)
             type_ = VectorType(type_)
@@ -160,10 +181,6 @@ class Parser(object):
             if type_name not in self.typedefs:
                 raise SyntaxError("Undefined type '%s'" % type_name)
             type_ = self.typedefs[type_name]
-
-        if self.scanner.consume('table'):
-            size = self.defn_size()
-            type_ = TableType(type_, size)
 
         return type_
 
@@ -209,19 +226,34 @@ class Parser(object):
         type_ = self.defn_type()
         if not isinstance(type_, RoutineType):
             raise SyntaxError("Can only define a routine, not %r" % type_)
+        statics = []
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
             block = None
             addr = int(self.scanner.token)
             self.scanner.scan()
         else:
+            statics = self.statics()
+
+            self.current_statics = self.compose_statics_dict(statics)
             block = self.block()
+            self.current_statics = {}
+
             addr = None
         location = LocationRef(type_, name)
         return Routine(
             name=name, block=block, addr=addr,
-            location=location
+            location=location, statics=statics
         )
+
+    def compose_statics_dict(self, statics):
+        c = {}
+        for defn in statics:
+            name = defn.name
+            if name in self.symbols or name in self.current_statics:
+                raise SyntaxError('Symbol "%s" already declared' % name)
+            c[name] = SymEntry(defn, defn.location)
+        return c
 
     def labels(self):
         accum = []
@@ -244,7 +276,7 @@ class Parser(object):
             accum.append(self.locexpr())
         return accum
 
-    def locexpr(self):
+    def locexpr(self, forward=False):
         if self.scanner.token in ('on', 'off'):
             loc = ConstantRef(TYPE_BIT, 1 if self.scanner.token == 'on' else 0)
             self.scanner.scan()
@@ -259,15 +291,21 @@ class Parser(object):
             loc = ConstantRef(TYPE_WORD, int(self.scanner.token))
             self.scanner.scan()
             return loc
+        elif forward:
+            name = self.scanner.token
+            self.scanner.scan()
+            loc = self.soft_lookup(name)
+            if loc is not None:
+                return loc
+            else:
+                return name
         else:
             loc = self.lookup(self.scanner.token)
             self.scanner.scan()
             return loc
 
-    def indlocexpr(self):
-        if self.scanner.consume('forward'):
-            return self.label()
-        elif self.scanner.consume('['):
+    def indlocexpr(self, forward=False):
+        if self.scanner.consume('['):
             loc = self.locexpr()
             self.scanner.expect(']')
             self.scanner.expect('+')
@@ -277,12 +315,22 @@ class Parser(object):
             loc = self.locexpr()
             return AddressRef(loc)
         else:
-            loc = self.locexpr()
-            index = None
-            if self.scanner.consume('+'):
-                index = self.locexpr()
-                loc = IndexedRef(loc, index)
+            loc = self.locexpr(forward=forward)
+            if not isinstance(loc, basestring):
+                index = None
+                if self.scanner.consume('+'):
+                    index = self.locexpr()
+                    loc = IndexedRef(loc, index)
             return loc
+
+    def statics(self):
+        defns = []
+        while self.scanner.consume('static'):
+            defn = self.defn()
+            if defn.initial is None:
+                raise SyntaxError("Static definition {} must have initial value".format(defn))
+            defns.append(defn)
+        return defns
 
     def block(self):
         instrs = []
@@ -316,7 +364,15 @@ class Parser(object):
                 self.scanner.expect('forever')
             return Instr(opcode='repeat', dest=None, src=src,
                          block=block, inverted=inverted)
-        elif self.scanner.token in ("ld", "add", "sub", "cmp", "and", "or", "xor"):
+        elif self.scanner.token in ("ld",):
+            # the same as add, sub, cmp etc below, except supports an indlocexpr for the src
+            opcode = self.scanner.token
+            self.scanner.scan()
+            dest = self.locexpr()
+            self.scanner.expect(',')
+            src = self.indlocexpr()
+            return Instr(opcode=opcode, dest=dest, src=src, index=None)
+        elif self.scanner.token in ("add", "sub", "cmp", "and", "or", "xor"):
             opcode = self.scanner.token
             self.scanner.scan()
             dest = self.locexpr()
@@ -331,11 +387,8 @@ class Parser(object):
             self.scanner.scan()
             src = self.locexpr()
             self.scanner.expect(',')
-            dest = self.locexpr()
-            index = None
-            if self.scanner.consume('+'):
-                index = self.locexpr()
-            return Instr(opcode=opcode, dest=dest, src=src, index=index)
+            dest = self.indlocexpr()
+            return Instr(opcode=opcode, dest=dest, src=src, index=None)
         elif self.scanner.token in ("shl", "shr", "inc", "dec"):
             opcode = self.scanner.token
             self.scanner.scan()
@@ -352,7 +405,7 @@ class Parser(object):
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token
             self.scanner.scan()
-            src = self.indlocexpr()
+            src = self.indlocexpr(forward=True)
             self.scanner.expect(',')
             dest = self.indlocexpr()
             instr = Instr(opcode=opcode, dest=dest, src=src)

@@ -26,6 +26,31 @@ to spend a lot of time debugging.
 The intent is not to make it absolutely impossible to make such errors,
 just harder.
 
+### Things it will Not Do ###
+
+To emphasize the point, the intent is not to make it impossible to make
+data-usage (and other) errors, just harder.
+
+Here are some things SixtyPical will not try to detect or prevent you
+from doing:
+
+*   Check that a vector is initialized before it's called.
+*   Check that the stack has enough room on it.
+*   Prevent bad things happening (e.g. clobbering a static storage
+    location) because of a recursive call.  (You can always recursively
+    call yourself through a vector.)
+*   Check that reads and writes to a buffer are in bounds.  (This may
+    happen someday, but it's difficult.  It's more likely that this
+    will happen for tables, than for buffers.)
+
+At one point I wanted to do a call-tree analysis to find sets of
+routines that would never be called together (i.e. would never be on
+the call stack at the same time) and allow any static storage locations
+defined within them to occupy the same addresses, i.e. allow storage
+to be re-used across these routines.  But, in the presence of vectors,
+this becomes difficult (see "Prevent bad things happening", above.)
+Also, it would usually only save a few bytes of storage space.
+
 ### Some Background ###
 
 The ideas in SixtyPical came from a couple of places.

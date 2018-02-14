@@ -53,6 +53,15 @@ class IncompatibleConstraintsError(ConstraintsError):
     pass
 
 
+def routine_has_static(routine, ref):
+    if not hasattr(routine, 'statics'):
+        return False
+    for static in routine.statics:
+        if static.location == ref:
+            return True
+    return False
+
+
 class Context(object):
     """
     A location is touched if it was changed (or even potentially
@@ -101,13 +110,6 @@ class Context(object):
         c._writeable = set(self._writeable)
         return c
 
-    def set_from(self, c):
-        assert c.routines == self.routines
-        assert c.routine == self.routine
-        self._touched = set(c._touched)
-        self._meaningful = set(c._meaningful)
-        self._writeable = set(c._writeable)
-
     def each_meaningful(self):
         for ref in self._meaningful:
             yield ref
@@ -119,6 +121,9 @@ class Context(object):
     def assert_meaningful(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', UnmeaningfulReadError)
         for ref in refs:
+            # statics are always meaningful
+            if routine_has_static(self.routine, ref):
+                continue
             if ref.is_constant() or ref in self.routines:
                 pass
             elif isinstance(ref, LocationRef):
@@ -127,12 +132,18 @@ class Context(object):
                     if kwargs.get('message'):
                         message += ' (%s)' % kwargs['message']
                     raise exception_class(message)
+            elif isinstance(ref, IndexedRef):
+                self.assert_meaningful(ref.ref, **kwargs)
+                self.assert_meaningful(ref.index, **kwargs)
             else:
                 raise NotImplementedError(ref)
 
     def assert_writeable(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', ForbiddenWriteError)
         for ref in refs:
+            # statics are always writeable
+            if routine_has_static(self.routine, ref):
+                continue
             if ref not in self._writeable:
                 message = '%s in %s' % (ref.name, self.routine.name)
                 if kwargs.get('message'):
@@ -204,20 +215,38 @@ class Analyzer(object):
         if routine.block is None:
             # it's an extern, that's fine
             return
-        type = routine.location.type
-        context = Context(self.routines, routine, type.inputs, type.outputs, type.trashes)
+        type_ = routine.location.type
+        context = Context(self.routines, routine, type_.inputs, type_.outputs, type_.trashes)
+
         if self.debug:
             print "at start of routine `{}`:".format(routine.name)
             print context
+
         self.analyze_block(routine.block, context)
+        trashed = set(context.each_touched()) - context._meaningful
+
         if self.debug:
             print "at end of routine `{}`:".format(routine.name)
             print context
+            print "trashed: ", LocationRef.format_set(trashed)
+            print "outputs: ", LocationRef.format_set(type_.outputs)
+            trashed_outputs = type_.outputs & trashed
+            if trashed_outputs:
+                print "TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs)
+            print ''
+            print '-' * 79
+            print ''
+
+        # even if we goto another routine, we can't trash an output.
+        for ref in trashed:
+            if ref in type_.outputs:
+                raise UnmeaningfulOutputError('%s in %s' % (ref.name, routine.name))
+
         if not self.has_encountered_goto:
-            for ref in type.outputs:
+            for ref in type_.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
             for ref in context.each_touched():
-                if ref not in type.outputs and ref not in type.trashes:
+                if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
                     message = '%s in %s' % (ref.name, routine.name)
                     raise ForbiddenWriteError(message)
         self.current_routine = None
@@ -236,33 +265,51 @@ class Analyzer(object):
         src = instr.src
     
         if opcode == 'ld':
-            if instr.index:
-                if TableType.is_a_table_type(src.type, TYPE_BYTE) and dest.type == TYPE_BYTE:
+            if isinstance(src, IndexedRef):
+                if TableType.is_a_table_type(src.ref.type, TYPE_BYTE) and dest.type == TYPE_BYTE:
                     pass
                 else:
                     raise TypeMismatchError('%s and %s in %s' %
-                        (src.name, dest.name, self.current_routine.name)
+                        (src.ref.name, dest.name, self.current_routine.name)
                     )
-                context.assert_meaningful(instr.index)
+                context.assert_meaningful(src, src.index)
+            elif isinstance(src, IndirectRef):
+                # copying this analysis from the matching branch in `copy`, below
+                if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+                context.assert_meaningful(src.ref, REG_Y)
             elif src.type != dest.type:
                 raise TypeMismatchError('%s and %s in %s' %
                     (src.name, dest.name, self.current_routine.name)
                 )
-            context.assert_meaningful(src)
+            else:
+                context.assert_meaningful(src)
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
-            if instr.index:
-                if src.type == TYPE_BYTE and TableType.is_a_table_type(dest.type, TYPE_BYTE):
+            if isinstance(dest, IndexedRef):
+                if src.type == TYPE_BYTE and TableType.is_a_table_type(dest.ref.type, TYPE_BYTE):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
-                context.assert_meaningful(instr.index)
+                context.assert_meaningful(dest.index)
+                context.set_written(dest.ref)
+            elif isinstance(dest, IndirectRef):
+                # copying this analysis from the matching branch in `copy`, below
+                if isinstance(dest.ref.type, PointerType) and src.type == TYPE_BYTE:
+                    pass
+                else:
+                    raise TypeMismatchError((src, dest))
+                context.assert_meaningful(dest.ref, REG_Y)
+                context.set_written(dest.ref)
             elif src.type != dest.type:
                 raise TypeMismatchError('%r and %r in %s' %
                     (src, dest, self.current_routine.name)
                 )
+            else:
+                context.set_written(dest)
             context.assert_meaningful(src)
-            context.set_written(dest)
         elif opcode == 'add':
             context.assert_meaningful(src, dest, FLAG_C)
             if src.type == TYPE_BYTE:
@@ -319,25 +366,44 @@ class Analyzer(object):
                 context.set_touched(ref)
                 context.set_unmeaningful(ref)
         elif opcode == 'if':
+            incoming_meaningful = set(context.each_meaningful())
+
             context1 = context.clone()
             context2 = context.clone()
             self.analyze_block(instr.block1, context1)
             if instr.block2 is not None:
                 self.analyze_block(instr.block2, context2)
+
+            outgoing_meaningful = set(context1.each_meaningful()) & set(context2.each_meaningful())
+            outgoing_trashes = incoming_meaningful - outgoing_meaningful
+
             # TODO may we need to deal with touched separately here too?
             # probably not; if it wasn't meaningful in the first place, it
             # doesn't really matter if you modified it or not, coming out.
             for ref in context1.each_meaningful():
+                if ref in outgoing_trashes:
+                    continue
                 context2.assert_meaningful(
                     ref, exception_class=InconsistentInitializationError,
                     message='initialized in block 1 but not in block 2 of `if {}`'.format(src)
                 )
             for ref in context2.each_meaningful():
+                if ref in outgoing_trashes:
+                    continue
                 context1.assert_meaningful(
                     ref, exception_class=InconsistentInitializationError,
                     message='initialized in block 2 but not in block 1 of `if {}`'.format(src)
                 )
-            context.set_from(context1)
+
+            # merge the contexts.  this used to be a method called `set_from`
+            context._touched = set(context1._touched) | set(context2._touched)
+            context._meaningful = outgoing_meaningful
+            context._writeable = set(context1._writeable) | set(context2._writeable)
+
+            for ref in outgoing_trashes:
+                context.set_touched(ref)
+                context.set_unmeaningful(ref)
+
         elif opcode == 'repeat':
             # it will always be executed at least once, so analyze it having
             # been executed the first time.
@@ -352,6 +418,9 @@ class Analyzer(object):
                 context.assert_meaningful(src)
 
         elif opcode == 'copy':
+            if dest == REG_A:
+                raise ForbiddenWriteError("{} cannot be used as destination for copy".format(dest))
+
             # 1. check that their types are compatible
 
             if isinstance(src, AddressRef) and isinstance(dest, LocationRef):
@@ -411,7 +480,6 @@ class Analyzer(object):
                 context.set_written(dest.ref)
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, REG_Y)
-                # TODO this will need to be more sophisticated.  the thing ref points to is touched, as well.
                 context.set_written(dest)
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
@@ -428,15 +496,7 @@ class Analyzer(object):
                 context.set_written(dest)
 
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
-            context.set_unmeaningful(FLAG_Z, FLAG_N)
-
-            # FIXME: this is just to support "copy [foo] + y, a".  consider disallowing `a` as something
-            # that can be used in `copy`.  should be using `st` or `ld` instead, probably.
-            if dest == REG_A:
-                context.set_touched(REG_A)
-                context.set_written(REG_A)
-            else:
-                context.set_unmeaningful(REG_A)
+            context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
 
         elif opcode == 'with-sei':
             self.analyze_block(instr.block, context)
@@ -461,6 +521,7 @@ class Analyzer(object):
 
             self.has_encountered_goto = True
         elif opcode == 'trash':
+            context.set_touched(instr.dest)
             context.set_unmeaningful(instr.dest)
         else:
             raise NotImplementedError(opcode)

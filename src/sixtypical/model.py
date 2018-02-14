@@ -145,7 +145,7 @@ class LocationRef(Ref):
         # just to be sure.
         equal = isinstance(other, self.__class__) and other.name == self.name
         if equal:
-            assert other.type == self.type
+            assert other.type == self.type, repr((self, other))
         return equal
 
     def __hash__(self):

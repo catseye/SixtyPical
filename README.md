@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-_Version 0.11.  Work-in-progress, everything is subject to change._
+_Version 0.12.  Work-in-progress, everything is subject to change._
 
 SixtyPical is a very low-level programming language, similar to 6502 assembly,
 with static analysis through abstract interpretation.
@@ -39,10 +39,6 @@ Documentation
 TODO
 ----
 
-### `low` and `high` address operators
-
-To turn `word` type into `byte`.
-
 ### Save registers on stack
 
 This preserves them, so that, semantically, they can be used later even though they
@@ -56,32 +52,27 @@ But if you add a value ≥ N to it, it becomes invalid.
 This should be tracked in the abstract interpretation.
 (If only because abstract interpretation is the major point of this project!)
 
-### Routine-local static memory locations
+Range-checking buffers might be too difficult.  Range checking tables will be easier.
+If a value is ANDed with 15, its range must be 0-15, etc.
 
-These would not need to appear in the inputs/outputs/trashes sets of the routines
-that call this routine.
+### Re-order routines and optimize tail-calls to fallthroughs
 
-These might be forced to specify an initial value so that they can always be
-assumed to be meaningful.
-
-### More modes for `copy`
-
-*   don't allow `copy foo, a` probably.  insist on `ld a, foo` for this.
-*   have `copy` instruction able to copy a byte to a user-def mem loc, etc.
-*   `copy x, [ptr] + y`
-*   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
-
-### Union rule for trashes in `if`
-
-If one branch trashes {`a`} and the other branch trashes {`b`} then the whole
-`if` statement trashes {`a`, `b`}.
+Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally
+is probably NP-complete.  But doing it adeuqately is probably not that hard.
 
 ### And at some point...
 
+*   `low` and `high` address operators - to turn `word` type into `byte`.
+*   `const`s that can be used in defining the size of tables, etc.
+*   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
+*   Related: can we simply view a (small) part of a buffer as a byte table?  If not, why not?
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
+    (Associate each pointer with the buffer it points into.)
+*   `static` pointers -- currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.
+*   Question the value of the "consistent initialization" principle for `if` statement analysis.
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
-*   error messages that include the line number of the source code
-*   add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
-*   check and disallow recursion.
-*   automatic tail-call optimization (could be tricky, w/constraints?)
-*   re-order routines and optimize tail-calls to fallthroughs
+*   Error messages that include the line number of the source code.
+*   Add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
+*   Automatic tail-call optimization (could be tricky, w/constraints?)
+*   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
+*   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!

@@ -89,6 +89,95 @@ If a routine modifies a location, it needs to either output it or trash it.
     | }
     = ok
 
+This is true regardless of whether it's an input or not.
+
+    | routine main
+    |   inputs x
+    | {
+    |     ld x, 0
+    | }
+    ? ForbiddenWriteError: x in main
+
+    | routine main
+    |   inputs x
+    |   outputs x, z, n
+    | {
+    |     ld x, 0
+    | }
+    = ok
+
+    | routine main
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    | }
+    = ok
+
+If a routine trashes a location, this must be declared.
+
+    | routine foo
+    |   trashes x
+    | {
+    |     trash x
+    | }
+    = ok
+
+    | routine foo
+    | {
+    |     trash x
+    | }
+    ? ForbiddenWriteError: x in foo
+
+    | routine foo
+    |   outputs x
+    | {
+    |     trash x
+    | }
+    ? UnmeaningfulOutputError: x in foo
+
+If a routine causes a location to be trashed, this must be declared in the caller.
+
+    | routine trash_x
+    |   trashes x, z, n
+    | {
+    |   ld x, 0
+    | }
+    | 
+    | routine foo
+    |   trashes x, z, n
+    | {
+    |     call trash_x
+    | }
+    = ok
+
+    | routine trash_x
+    |   trashes x, z, n
+    | {
+    |   ld x, 0
+    | }
+    | 
+    | routine foo
+    |   trashes z, n
+    | {
+    |     call trash_x
+    | }
+    ? ForbiddenWriteError: x in foo
+
+    | routine trash_x
+    |   trashes x, z, n
+    | {
+    |   ld x, 0
+    | }
+    | 
+    | routine foo
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     call trash_x
+    | }
+    ? UnmeaningfulOutputError: x in foo
+
 If a routine reads or writes a user-define memory location, it needs to declare that too.
 
     | byte b1 @ 60000
@@ -1233,6 +1322,21 @@ input to the routine, and it is initialized in one branch, it need not
 be initialized in the other.
 
     | routine foo
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     cmp a, 42
+    |     if z {
+    |         ld x, 7
+    |     } else {
+    |         ld a, 23
+    |     }
+    | }
+    = ok
+
+    | routine foo
     |   inputs x
     |   outputs x
     |   trashes a, z, n, c
@@ -1286,6 +1390,46 @@ An `if` with a single block is analyzed as if it had an empty `else` block.
     |     }
     | }
     = ok
+
+The cardinal rule for trashes in an `if` is the "union rule": if one branch
+trashes {`a`} and the other branch trashes {`b`} then the whole `if` statement
+trashes {`a`, `b`}.
+
+    | routine foo
+    |   inputs a, x, z
+    |   trashes a, x
+    | {
+    |     if z {
+    |         trash a
+    |     } else {
+    |         trash x
+    |     }
+    | }
+    = ok
+
+    | routine foo
+    |   inputs a, x, z
+    |   trashes a
+    | {
+    |     if z {
+    |         trash a
+    |     } else {
+    |         trash x
+    |     }
+    | }
+    ? ForbiddenWriteError: x in foo
+
+    | routine foo
+    |   inputs a, x, z
+    |   trashes x
+    | {
+    |     if z {
+    |         trash a
+    |     } else {
+    |         trash x
+    |     }
+    | }
+    ? ForbiddenWriteError: a in foo
 
 ### repeat ###
 
@@ -1462,6 +1606,21 @@ Can `copy` from a `byte` to a `byte`.
     | }
     = ok
 
+The understanding is that, because `copy` trashes `a`, `a` cannot be used
+as the destination of a `copy`.
+
+    | byte source : 0
+    | byte dest
+    | 
+    | routine main
+    |   inputs source
+    |   outputs dest
+    |   trashes a, z, n
+    | {
+    |     copy source, a
+    | }
+    ? ForbiddenWriteError
+
 Can `copy` from a `word` to a `word`.
 
     | word source : 0
@@ -1504,9 +1663,7 @@ Can't `copy` from a `word` to a `byte`.
     | }
     ? TypeMismatchError
 
-### copy[] ###
-
-Buffers and pointers.
+### Buffers and pointers ###
 
 Note that `^buf` is a constant value, so it by itself does not require `buf` to be
 listed in any input/output sets.
@@ -1585,6 +1742,43 @@ Read through a pointer.
     |     ld y, 0
     |     copy ^buf, ptr
     |     copy [ptr] + y, foo
+    | }
+    = ok
+
+Read through a pointer to the `a` register.  Note that this is done with `ld`,
+not `copy`.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | byte foo
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs a
+    |   trashes y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     ld a, [ptr] + y
+    | }
+    = ok
+
+Write the `a` register through a pointer.  Note that this is done with `st`,
+not `copy`.
+
+    | buffer[2048] buf
+    | pointer ptr
+    | byte foo
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     ld a, 255
+    |     st a, [ptr] + y
     | }
     = ok
 
@@ -2087,5 +2281,31 @@ The new style routine definitions support typedefs.
     |   trashes a, z, n
     | {
     |     copy foo, vec
+    | }
+    = ok
+
+### static ###
+
+When memory locations are defined static to a routine, they cannot be
+directly input, nor directly output; and since they are always initialized,
+they cannot be trashed.  Thus, they really don't participate in the analysis.
+
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t : 0
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    | 
+    | define main routine
+    |   trashes a, x, z, n
+    |   static byte t : 0
+    | {
+    |   ld x, t
+    |   call foo
     | }
     = ok

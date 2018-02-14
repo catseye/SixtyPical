@@ -408,8 +408,9 @@ A vector can name itself in its inputs, outputs, and trashes.
     | }
     = ok
 
-A routine can be copied into a vector before the routine appears in the program,
-*however*, it must be marked as such with the keyword `forward`.
+A routine can be copied into a vector before the routine appears in the program.
+This is known as a "forward reference".  You are only allowed to make forward
+references in the source of a `copy` instruction.
 
     | vector routine
     |   inputs cinv, a
@@ -419,22 +420,6 @@ A routine can be copied into a vector before the routine appears in the program,
     | routine main {
     |     with interrupts off {
     |         copy foo, cinv
-    |     }
-    |     call cinv
-    | }
-    | routine foo {
-    |     ld a, 0
-    | }
-    ? SyntaxError: Undefined symbol
-
-    | vector routine
-    |   inputs cinv, a
-    |   outputs cinv, x
-    |   trashes a, x, z, n
-    |   cinv @ 788
-    | routine main {
-    |     with interrupts off {
-    |         copy forward foo, cinv
     |     }
     |     call cinv
     | }
@@ -527,5 +512,70 @@ Only routines can be defined in the new style.
     |   trashes a, z, n
     | {
     |     ld a, 0
+    | }
+    ? SyntaxError
+
+Memory locations can be defined static to a routine.
+
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t : 0
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    | 
+    | define main routine
+    |   trashes a, x, z, n
+    |   static byte t : 0
+    | {
+    |   ld x, t
+    |   call foo
+    | }
+    = ok
+
+Static memory locations must always be given an initial value.
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
+
+Name of a static cannot shadow an existing global or static.
+
+    | byte t
+    | 
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t
+    |   static byte t
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
     | }
     ? SyntaxError

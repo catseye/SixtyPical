@@ -529,6 +529,36 @@ Copy routine to vector, inside an `interrupts off` block.
     = $081A   INX
     = $081B   RTS
 
+Copy routine (by forward reference) to vector.
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | routine main
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |     copy foo, bar
+    | }
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    = $080D   LDA #$18
+    = $080F   STA $081A
+    = $0812   LDA #$08
+    = $0814   STA $081B
+    = $0817   RTS
+    = $0818   INX
+    = $0819   RTS
+
 Copy word to word table and back, with both `x` and `y` as indexes.
 
     | word one
@@ -634,9 +664,9 @@ Copying to and from a vector table.
     |   outputs x
     |   trashes a, z, n
     |     one
-    | vector (routine
+    | vector routine
     |   outputs x
-    |   trashes a, z, n)
+    |   trashes a, z, n
     |     table[256] many
     | 
     | routine bar outputs x trashes a, z, n {
@@ -846,7 +876,7 @@ Read through a pointer, into a byte storage location, or the `a` register.
     |     ld y, 0
     |     copy ^buf, ptr
     |     copy [ptr] + y, foo
-    |     copy [ptr] + y, a
+    |     ld a, [ptr] + y
     | }
     = $080D   LDY #$00
     = $080F   LDA #$1F
@@ -857,6 +887,31 @@ Read through a pointer, into a byte storage location, or the `a` register.
     = $0819   STA $101F
     = $081C   LDA ($FE),Y
     = $081E   RTS
+
+Write the `a` register through a pointer.
+
+    | buffer[2048] buf
+    | pointer ptr @ 254
+    | byte foo
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptr
+    |     ld a, 255
+    |     st a, [ptr] + y
+    | }
+    = $080D   LDY #$00
+    = $080F   LDA #$1C
+    = $0811   STA $FE
+    = $0813   LDA #$08
+    = $0815   STA $FF
+    = $0817   LDA #$FF
+    = $0819   STA ($FE),Y
+    = $081B   RTS
 
 Add a word memory location, and a literal word, to a pointer, and then read through it.
 Note that this is *not* range-checked.  (Yet.)
@@ -921,3 +976,36 @@ Trash does nothing except indicate that we do not care about the value anymore.
     = $080D   TAX
     = $080E   LDA #$00
     = $0810   RTS
+
+### static ###
+
+Memory locations defined static to a routine are allocated
+just the same as initialized global storage locations are.
+
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t : 255
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    | 
+    | define main routine
+    |   trashes a, x, z, n
+    |   static byte t : 7
+    | {
+    |   ld x, t
+    |   call foo
+    | }
+    = $080D   LDX $081F
+    = $0810   JSR $0814
+    = $0813   RTS
+    = $0814   STX $081E
+    = $0817   INC $081E
+    = $081A   LDX $081E
+    = $081D   RTS
+    = $081E   .byte $FF
+    = $081F   .byte $07

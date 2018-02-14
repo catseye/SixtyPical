@@ -148,7 +148,7 @@ buffer pointed to is implemented with "indirect indexed" addressing, as in
     LDA ($02), Y
     STA ($02), Y
 
-There are extended modes of `copy` for using these types of memory location.
+There are extended instruction modes for using these types of memory location.
 See `copy` below, but here is some illustrative example code:
 
     copy ^buf, ptr           // this is the only way to initialize a pointer
@@ -238,6 +238,18 @@ If and only if src is a byte table, the index-memory-location must be given.
 Some combinations, such as `ld x, y`, are illegal because they do not map to
 underlying opcodes.
 
+There is another mode of `ld` which reads into `a` indirectly through a pointer.
+
+    ld a, [<src-memory-location>] + y
+
+The memory location in this syntax must be a pointer.
+
+This syntax copies the contents of memory at the pointer (offset by the `y`
+register) into a register (which must be the `a` register.)
+
+In addition to the constraints above, `y` must be initialized before
+this mode is used.
+
 ### st ###
 
     st <src-memory-location>, <dest-memory-location> [+ <index-memory-location>]
@@ -253,6 +265,19 @@ After execution, dest is considered initialized.  No flags are
 changed by this instruction (unless of course dest is a flag.)
 
 If and only if dest is a byte table, the index-memory-location must be given.
+
+There is another mode of `st` which write `a` into memory, indirectly through
+a pointer.
+
+    st a, [<dest-memory-location>] + y
+
+The memory location in this syntax must be a pointer.
+
+This syntax copies the constents of the `a` register into
+the contents of memory at the pointer (offset by the `y` register).
+
+In addition to the constraints above, `y` must be initialized before
+this mode is used.
 
 ### copy ###
 
@@ -512,13 +537,14 @@ Grammar
     Program ::= {TypeDefn} {Defn} {Routine}.
     TypeDefn::= "typedef" Type Ident<new>.
     Defn    ::= Type Ident<new> [Constraints] (":" Literal | "@" LitWord).
-    Type    ::= "(" Type ")" | TypeExpr ["table" TypeSize].
+    Type    ::= TypeTerm ["table" TypeSize].
     TypeExpr::= "byte"
               | "word"
               | "buffer" TypeSize
               | "pointer"
-              | "vector" Type
+              | "vector" TypeTerm
               | "routine" Constraints
+              | "(" Type ")"
               .
     TypeSize::= "[" LitWord "]".
     Constrnt::= ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs].

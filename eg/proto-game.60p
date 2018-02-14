@@ -31,13 +31,13 @@
 //
 
 typedef routine
-  inputs joy2, button_down, press_fire_msg, dispatch_game_state, save_x,
-         actor_pos, pos, new_pos, actor_delta, delta, actor_logic,
+  inputs joy2, press_fire_msg, dispatch_game_state,
+         actor_pos, actor_delta, actor_logic,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  outputs button_down, dispatch_game_state,
-          actor_pos, pos, new_pos, actor_delta, delta, actor_logic,
+  outputs dispatch_game_state,
+          actor_pos, actor_delta, actor_logic,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
-  trashes a, x, y, c, z, n, v, ptr, save_x, compare_target, dispatch_logic
+  trashes a, x, y, c, z, n, v, pos, new_pos, delta, ptr, dispatch_logic
     game_state_routine
 
 //
@@ -51,7 +51,7 @@ typedef routine
 typedef routine
   inputs pos, delta, joy2, screen
   outputs pos, delta, new_pos, screen, c
-  trashes a, x, y, z, n, v, ptr, compare_target
+  trashes a, x, y, z, n, v, ptr
     logic_routine
 
 // ----------------------------------------------------------------
@@ -87,14 +87,10 @@ word new_pos
 word table[256] actor_delta
 word delta
 
-vector (logic_routine) table[256] actor_logic
+vector logic_routine table[256] actor_logic
 vector logic_routine dispatch_logic
 
-byte button_down : 0  // effectively static-local to check_button
 byte table[32] press_fire_msg: "PRESS`FIRE`TO`PLAY"
-
-byte save_x
-word compare_target
 
 //
 // Points to the routine that implements the current game state.
@@ -158,10 +154,11 @@ routine read_stick
 // call this routine.
 // Upon return, if carry is set, the button was pressed then released.
 
-routine check_button
-  inputs joy2, button_down
-  outputs c, button_down
+define check_button routine
+  inputs joy2
+  outputs c
   trashes a, z, n
+  static byte button_down : 0
 {
     ld a, button_down
     if z {
@@ -218,10 +215,11 @@ routine calculate_new_position
     add new_pos, delta
 }
 
-routine check_new_position_in_bounds
+define check_new_position_in_bounds routine
   inputs new_pos
   outputs c
-  trashes compare_target, a, z, n, v
+  trashes a, z, n, v
+  static word compare_target : 0
 {
     copy 1000, compare_target
     st on, c
@@ -243,15 +241,15 @@ routine check_new_position_in_bounds
 
 routine init_game
   inputs actor_pos, actor_delta, actor_logic
-  outputs actor_pos, actor_delta, pos, actor_logic
-  trashes a, y, z, n, c, v
+  outputs actor_pos, actor_delta, actor_logic
+  trashes pos, a, y, z, n, c, v
 {
     ld y, 0
     copy word 0, pos
     repeat {
         copy pos, actor_pos + y
         copy word 40, actor_delta + y
-        copy forward enemy_logic, actor_logic + y
+        copy enemy_logic, actor_logic + y
 
         st off, c
         add pos, word 7
@@ -263,7 +261,7 @@ routine init_game
     ld y, 0
     copy word 0, actor_pos + y
     copy word 0, actor_delta + y
-    copy forward player_logic, actor_logic + y
+    copy player_logic, actor_logic + y
 }
 
 // ----------------------------------------------------------------
@@ -284,7 +282,7 @@ define player_logic logic_routine
         ld y, 0
 
         // check collision.
-        copy [ptr] + y, a
+        ld a, [ptr] + y
         // if "collision" is with your own self, treat it as if it's blank space!
         cmp a, 81
         if z {
@@ -307,18 +305,14 @@ define player_logic logic_routine
             st off, c
         } else {
             st on, c
-            trash n
-            trash a
-            trash z
         }
 
         // FIXME these trashes, strictly speaking, probably shouldn't be needed,
-        // but currently the compiler cares too much about values that are
-        // initialized in one branch of an `if`, but not the other, but trashed
+        // but currently the compiler cares a little too much about values that are
+        // initialized in one branch of an `if`, but not the other, but are trashed
         // at the end of the routine anyway.
         trash ptr
         trash y
-        trash a
         trash v
     } else {
         st off, c
@@ -326,6 +320,7 @@ define player_logic logic_routine
 }
 
 define enemy_logic logic_routine
+  static word compare_target : 0
 {
     call calculate_new_position
     call check_new_position_in_bounds
@@ -337,7 +332,7 @@ define enemy_logic logic_routine
         ld y, 0
 
         // check collision.
-        copy [ptr] + y, a
+        ld a, [ptr] + y
         // if "collision" is with your own self, treat it as if it's blank space!
         cmp a, 82
         if z {
@@ -360,9 +355,6 @@ define enemy_logic logic_routine
             st off, c
         } else {
             st on, c
-            trash n
-            trash a
-            trash z
         }
 
         // FIXME these trashes, strictly speaking, probably shouldn't be needed,
@@ -371,7 +363,6 @@ define enemy_logic logic_routine
         // at the end of the routine anyway.
         trash ptr
         trash y
-        trash a
     } else {
         copy delta, compare_target
         st on, c
@@ -381,7 +372,6 @@ define enemy_logic logic_routine
         } else {
             copy $ffd8, delta
         }
-        trash compare_target
     }
 
     st off, c
@@ -411,25 +401,14 @@ define game_state_title_screen game_state_routine
     if c {
         call clear_screen
         call init_game
-        copy forward game_state_play, dispatch_game_state
-
-        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
-        // but currently the compiler cares too much about values that are
-        // initialized in one branch of an `if`, but not the other, but trashed
-        // at the end of the routine anyway.
-        trash a
-        trash n
-        trash z
-    } else {
-        trash y
-        trash c
-        trash v
+        copy game_state_play, dispatch_game_state
     }
 
     goto save_cinv
 }
 
 define game_state_play game_state_routine
+static byte save_x : 0
 {
     ld x, 0
     repeat {
@@ -444,11 +423,10 @@ define game_state_play game_state_routine
         if c {
             // Player died!  Want no dead!  Break out of the loop (this is a bit awkward.)
             call clear_screen
-            copy forward game_state_game_over, dispatch_game_state
+            copy game_state_game_over, dispatch_game_state
             ld x, 15
         } else {
             ld x, save_x
-            trash c
         }
 
         copy pos, actor_pos + x
@@ -470,18 +448,6 @@ define game_state_game_over game_state_routine
         call clear_screen
         call init_game
         copy game_state_title_screen, dispatch_game_state
-
-        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
-        // but currently the compiler cares too much about values that are
-        // initialized in one branch of an `if`, but not the other, but trashed
-        // at the end of the routine anyway.
-        trash a
-        trash n
-        trash z
-    } else {
-        trash y
-        trash c
-        trash v
     }
 
     goto save_cinv

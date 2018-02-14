@@ -1,3 +1,8 @@
+//
+// Demonstrates vector tables.
+// Prints "AABAB".
+//
+
 vector routine
   trashes a, z, n
     print
@@ -31,8 +36,7 @@ routine main
   trashes print, a, x, z, n, c
 {
     ld x, 0
-    copy printa, print
-    copy print, vectors + x
+    copy printa, vectors + x
     inc x
     copy printa, print
     copy print, vectors + x
@@ -40,13 +44,9 @@ routine main
     copy printb, print
     copy print, vectors + x
     inc x
-    copy printa, print
-    copy print, vectors + x
+    copy printa, vectors + x
     inc x
-    copy printb, print
-    copy print, vectors + x
-
-    copy printa, print
+    copy printb, vectors + x
 
     ld x, 0
     repeat {
