@@ -164,6 +164,18 @@ class Context(object):
         for ref in refs:
             self._range[ref] = ref.max_range()
 
+    def set_top_of_range(self, ref, top):
+        self.assert_meaningful(ref)
+        (bottom, _) = self._range[ref]
+        self._range[ref] = (bottom, top)
+
+    def get_top_of_range(self, ref):
+        if isinstance(ref, ConstantRef):
+            return ref.value
+        self.assert_meaningful(ref)
+        (_, top) = self._range[ref]
+        return top
+
     def set_unmeaningful(self, *refs):
         for ref in refs:
             if ref in self._range:
@@ -351,7 +363,15 @@ class Analyzer(object):
             self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
             context.set_written(FLAG_Z, FLAG_N, FLAG_C)
-        elif opcode in ('and', 'or', 'xor'):
+        elif opcode == 'and':
+            self.assert_type(TYPE_BYTE, src, dest)
+            context.assert_meaningful(src, dest)
+            context.set_written(dest, FLAG_Z, FLAG_N)
+            # If you AND the A register with a value V, the resulting value of A
+            # cannot exceed the value of V; i.e. the maximum value of A becomes
+            # the maximum value of V.
+            context.set_top_of_range(dest, context.get_top_of_range(src))
+        elif opcode in ('or', 'xor'):
             self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
             context.set_written(dest, FLAG_Z, FLAG_N)
