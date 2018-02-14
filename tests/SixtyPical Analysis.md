@@ -559,7 +559,7 @@ beyond the maximum number of entries it has.
     |     ld x, 32
     |     ld a, many + x
     | }
-    ? RangeError
+    ? RangeExceededError
 
     | byte table[32] many
     | 
@@ -572,7 +572,7 @@ beyond the maximum number of entries it has.
     |     ld a, 0
     |     st a, many + x
     | }
-    ? RangeError
+    ? RangeExceededError
 
 ### add ###
 

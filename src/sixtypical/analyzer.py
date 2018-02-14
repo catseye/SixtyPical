@@ -37,7 +37,12 @@ class IllegalJumpError(StaticAnalysisError):
     pass
 
 
+class RangeExceededError(StaticAnalysisError):
+    pass
+
+
 class ConstraintsError(StaticAnalysisError):
+    """The constraints of a routine (inputs, outputs, trashes) have been violated."""
     pass
 
 
@@ -155,6 +160,27 @@ class Context(object):
                 if kwargs.get('message'):
                     message += ' (%s)' % kwargs['message']
                 raise exception_class(message)
+
+    def assert_in_range(self, inside, outside):
+        # FIXME there's a bit of I'm-not-sure-the-best-way-to-do-this-ness, here...
+
+        # inside should always be meaningful
+        inside_range = self._range[inside]
+
+        # outside might not be meaningful, so default to max range if necessary
+        if outside in self._range:
+            outside_range = self._range[outside]
+        else:
+            outside_range = outside.max_range()
+        if isinstance(outside.type, TableType):
+            outside_range = (0, outside.type.size-1)
+
+        if inside_range[0] < outside_range[0] or inside_range[1] > outside_range[1]:
+            raise RangeExceededError(
+                "Possible range of {} {} exceeds acceptable range of {} {}".format(
+                    inside, inside_range, outside, outside_range
+                )
+            )
 
     def set_touched(self, *refs):
         for ref in refs:
@@ -291,6 +317,7 @@ class Analyzer(object):
                         (src.ref.name, dest.name, self.current_routine.name)
                     )
                 context.assert_meaningful(src, src.index)
+                context.assert_in_range(src.index, src.ref)
             elif isinstance(src, IndirectRef):
                 # copying this analysis from the matching branch in `copy`, below
                 if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
@@ -312,6 +339,7 @@ class Analyzer(object):
                 else:
                     raise TypeMismatchError((src, dest))
                 context.assert_meaningful(dest.index)
+                context.assert_in_range(dest.index, dest.ref)
                 context.set_written(dest.ref)
             elif isinstance(dest, IndirectRef):
                 # copying this analysis from the matching branch in `copy`, below
