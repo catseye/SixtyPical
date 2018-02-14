@@ -517,8 +517,9 @@ Copying to and from a word table.
     ? TypeMismatchError
 
 You can also copy a literal word to a word table.
+(Even if the table has fewer than 256 entries.)
 
-    | word table[256] many
+    | word table[32] many
     | 
     | routine main
     |   inputs many
@@ -529,6 +530,77 @@ You can also copy a literal word to a word table.
     |     copy 9999, many + x
     | }
     = ok
+
+#### tables: range checking ####
+
+A table may not have more than 256 entries.
+
+    | word table[512] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 9999, many + x
+    | }
+    ? zzzzz
+
+The number of entries in a table must be a power of two.
+
+    | word table[48] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 9999, many + x
+    | }
+    ? zzzz
+
+If a table has fewer than 256 entries, it cannot be read or written
+beyond the maximum number of entries it has.
+
+    | byte table[32] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 31
+    |     ld a, many + x
+    |     st a, many + x
+    | }
+    = ok
+
+    | byte table[32] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 32
+    |     ld a, many + x
+    | }
+    ? RangeError
+
+    | byte table[32] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 32
+    |     ld a, 0
+    |     st a, many + x
+    | }
+    ? RangeError
 
 ### add ###
 
