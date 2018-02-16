@@ -1,6 +1,14 @@
 History of SixtyPical
 =====================
 
+0.13
+----
+
+*   It is a static analysis error if it cannot be proven that a read or write
+    to a table falls within the defined size of that table.
+*   The reference analyzer's ability to prove this is currently fairly weak,
+    but it does exist.
+
 0.12
 ----
 

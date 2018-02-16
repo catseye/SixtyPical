@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-_Version 0.12.  Work-in-progress, everything is subject to change._
+_Version 0.13.  Work-in-progress, everything is subject to change._
 
 SixtyPical is a very low-level programming language, similar to 6502 assembly,
 with static analysis through abstract interpretation.
@@ -44,17 +44,6 @@ TODO
 This preserves them, so that, semantically, they can be used later even though they
 are trashed inside the block.
 
-### Range checking in the abstract interpretation
-
-If you copy the address of a buffer (say it is size N) to a pointer, it is valid.
-If you add a value from 0 to N-1 to the pointer, it is still valid.
-But if you add a value ≥ N to it, it becomes invalid.
-This should be tracked in the abstract interpretation.
-(If only because abstract interpretation is the major point of this project!)
-
-Range-checking buffers might be too difficult.  Range checking tables will be easier.
-If a value is ANDed with 15, its range must be 0-15, etc.
-
 ### Re-order routines and optimize tail-calls to fallthroughs
 
 Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally
@@ -62,6 +51,7 @@ is probably NP-complete.  But doing it adeuqately is probably not that hard.
 
 ### And at some point...
 
+*   Confirm that `and` can be used to restrict the range of table reads/writes.
 *   `low` and `high` address operators - to turn `word` type into `byte`.
 *   `const`s that can be used in defining the size of tables, etc.
 *   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
