@@ -533,8 +533,15 @@ You can also copy a literal word to a word table.
 
 #### tables: range checking ####
 
-If a table has fewer than 256 entries, it cannot be read or written
-beyond the maximum number of entries it has.
+It is a static analysis error if it cannot be proven that a read or write
+to a table falls within the defined size of that table.
+
+(If a table has 256 entries, then there is never a problem, because a byte
+cannot index any entry outside of 0..255.)
+
+A SixtyPical implementation must be able to prove that the index is inside
+the range of the table in various ways.  The simplest is to show that a
+constant value falls inside or outside the range of the table.
 
     | byte table[32] many
     | 
@@ -571,6 +578,48 @@ beyond the maximum number of entries it has.
     |     ld x, 32
     |     ld a, 0
     |     st a, many + x
+    | }
+    ? RangeExceededError
+
+This applies to `copy` as well.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 31
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    = ok
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 32
+    |     copy many + x, one
+    | }
+    ? RangeExceededError
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 32
+    |     copy one, many + x
     | }
     ? RangeExceededError
 
