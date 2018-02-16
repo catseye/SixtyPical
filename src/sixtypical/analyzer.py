@@ -514,6 +514,7 @@ class Analyzer(object):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
+                context.assert_in_range(dest.index, dest.ref)
 
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
@@ -523,6 +524,7 @@ class Analyzer(object):
                     pass
                 else:
                     raise TypeMismatchError((src, dest))
+                context.assert_in_range(src.index, src.ref)
 
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
                 if src.type == dest.type:
