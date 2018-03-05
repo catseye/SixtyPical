@@ -352,8 +352,7 @@ class Parser(object):
             block2 = None
             if self.scanner.consume('else'):
                 block2 = self.block()
-            return IfOp(opcode='if', dest=None, src=src,
-                        block1=block1, block2=block2, inverted=inverted)
+            return IfOp(src=src, block1=block1, block2=block2, inverted=inverted)
         elif self.scanner.consume('repeat'):
             inverted = False
             src = None
@@ -364,8 +363,7 @@ class Parser(object):
                 src = self.locexpr()
             else:
                 self.scanner.expect('forever')
-            return BlockOp(opcode='repeat', dest=None, src=src,
-                         block=block, inverted=inverted)
+            return BlockOp(opcode='repeat', src=src, block=block, inverted=inverted)
         elif self.scanner.token in ("ld",):
             # the same as add, sub, cmp etc below, except supports an indlocexpr for the src
             opcode = self.scanner.token
@@ -417,7 +415,7 @@ class Parser(object):
             self.scanner.expect("interrupts")
             self.scanner.expect("off")
             block = self.block()
-            return BlockOp(opcode='with-sei', dest=None, src=None, block=block)
+            return BlockOp(opcode='with-sei', src=None, block=block)
         elif self.scanner.consume("trash"):
             dest = self.locexpr()
             return SingleOp(opcode='trash', src=None, dest=dest)

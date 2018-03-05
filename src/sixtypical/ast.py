@@ -73,10 +73,10 @@ class SingleOp(Instr):
 
 
 class BlockOp(Instr):
-    value_attrs = ('opcode', 'dest', 'src', 'inverted')
+    value_attrs = ('opcode', 'src', 'inverted')
     child_attrs = ('block',)
 
 
 class IfOp(Instr):
-    value_attrs = ('opcode', 'dest', 'src', 'inverted')
+    value_attrs = ('src', 'inverted')
     child_attrs = ('block1', 'block2',)

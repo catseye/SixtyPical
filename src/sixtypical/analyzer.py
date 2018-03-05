@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, BlockOp, IfOp
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
     TableType, BufferType, PointerType, VectorType, RoutineType,
@@ -312,7 +312,17 @@ class Analyzer(object):
             self.analyze_instr(i, context)
 
     def analyze_instr(self, instr, context):
-        assert isinstance(instr, Instr)
+        if isinstance(instr, SingleOp):
+            return self.analyze_single_op(instr, context)
+        elif isinstance(instr, BlockOp):
+            return self.analyze_block_op(instr, context)
+        elif isinstance(instr, IfOp):
+            return self.analyze_if_op(instr, context)
+        else:
+            raise NotImplementedError
+
+    def analyze_single_op(self, instr, context):
+
         opcode = instr.opcode
         dest = instr.dest
         src = instr.src
@@ -429,58 +439,6 @@ class Analyzer(object):
                 context.assert_writeable(ref)
                 context.set_touched(ref)
                 context.set_unmeaningful(ref)
-        elif opcode == 'if':
-            incoming_meaningful = set(context.each_meaningful())
-
-            context1 = context.clone()
-            context2 = context.clone()
-            self.analyze_block(instr.block1, context1)
-            if instr.block2 is not None:
-                self.analyze_block(instr.block2, context2)
-
-            outgoing_meaningful = set(context1.each_meaningful()) & set(context2.each_meaningful())
-            outgoing_trashes = incoming_meaningful - outgoing_meaningful
-
-            # TODO may we need to deal with touched separately here too?
-            # probably not; if it wasn't meaningful in the first place, it
-            # doesn't really matter if you modified it or not, coming out.
-            for ref in context1.each_meaningful():
-                if ref in outgoing_trashes:
-                    continue
-                context2.assert_meaningful(
-                    ref, exception_class=InconsistentInitializationError,
-                    message='initialized in block 1 but not in block 2 of `if {}`'.format(src)
-                )
-            for ref in context2.each_meaningful():
-                if ref in outgoing_trashes:
-                    continue
-                context1.assert_meaningful(
-                    ref, exception_class=InconsistentInitializationError,
-                    message='initialized in block 2 but not in block 1 of `if {}`'.format(src)
-                )
-
-            # merge the contexts.  this used to be a method called `set_from`
-            context._touched = set(context1._touched) | set(context2._touched)
-            context.set_meaningful(*list(outgoing_meaningful))
-            context._writeable = set(context1._writeable) | set(context2._writeable)
-
-            for ref in outgoing_trashes:
-                context.set_touched(ref)
-                context.set_unmeaningful(ref)
-
-        elif opcode == 'repeat':
-            # it will always be executed at least once, so analyze it having
-            # been executed the first time.
-            self.analyze_block(instr.block, context)
-            if src is not None:  # None indicates 'repeat forever'
-                context.assert_meaningful(src)
-
-            # now analyze it having been executed a second time, with the context
-            # of it having already been executed.
-            self.analyze_block(instr.block, context)
-            if src is not None:
-                context.assert_meaningful(src)
-
         elif opcode == 'copy':
             if dest == REG_A:
                 raise ForbiddenWriteError("{} cannot be used as destination for copy".format(dest))
@@ -563,9 +521,6 @@ class Analyzer(object):
 
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
             context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
-
-        elif opcode == 'with-sei':
-            self.analyze_block(instr.block, context)
         elif opcode == 'goto':
             location = instr.location
             type_ = location.type
@@ -589,5 +544,62 @@ class Analyzer(object):
         elif opcode == 'trash':
             context.set_touched(instr.dest)
             context.set_unmeaningful(instr.dest)
+        else:
+            raise NotImplementedError(opcode)
+
+    def analyze_if_op(self, instr, context):
+        incoming_meaningful = set(context.each_meaningful())
+
+        context1 = context.clone()
+        context2 = context.clone()
+        self.analyze_block(instr.block1, context1)
+        if instr.block2 is not None:
+            self.analyze_block(instr.block2, context2)
+
+        outgoing_meaningful = set(context1.each_meaningful()) & set(context2.each_meaningful())
+        outgoing_trashes = incoming_meaningful - outgoing_meaningful
+
+        # TODO may we need to deal with touched separately here too?
+        # probably not; if it wasn't meaningful in the first place, it
+        # doesn't really matter if you modified it or not, coming out.
+        for ref in context1.each_meaningful():
+            if ref in outgoing_trashes:
+                continue
+            context2.assert_meaningful(
+                ref, exception_class=InconsistentInitializationError,
+                message='initialized in block 1 but not in block 2 of `if {}`'.format(instr.src)
+            )
+        for ref in context2.each_meaningful():
+            if ref in outgoing_trashes:
+                continue
+            context1.assert_meaningful(
+                ref, exception_class=InconsistentInitializationError,
+                message='initialized in block 2 but not in block 1 of `if {}`'.format(instr.src)
+            )
+
+        # merge the contexts.  this used to be a method called `set_from`
+        context._touched = set(context1._touched) | set(context2._touched)
+        context.set_meaningful(*list(outgoing_meaningful))
+        context._writeable = set(context1._writeable) | set(context2._writeable)
+
+        for ref in outgoing_trashes:
+            context.set_touched(ref)
+            context.set_unmeaningful(ref)
+
+    def analyze_block_op(self, instr, context):
+        if instr.opcode == 'repeat':
+            # it will always be executed at least once, so analyze it having
+            # been executed the first time.
+            self.analyze_block(instr.block, context)
+            if instr.src is not None:  # None indicates 'repeat forever'
+                context.assert_meaningful(instr.src)
+
+            # now analyze it having been executed a second time, with the context
+            # of it having already been executed.
+            self.analyze_block(instr.block, context)
+            if instr.src is not None:
+                context.assert_meaningful(instr.src)
+        elif instr.opcode == 'with-sei':
+            self.analyze_block(instr.block, context)
         else:
             raise NotImplementedError(opcode)
