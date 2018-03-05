@@ -147,7 +147,7 @@ class Parser(object):
         if self.scanner.consume('table'):
             size = self.defn_size()
             if size <= 0 or size > 256:
-                raise SyntaxError("Table size must be a power of two, 0 < size <= 256")
+                raise SyntaxError("Table size must be > 0 and <= 256")
             type_ = TableType(type_, size)
 
         return type_
