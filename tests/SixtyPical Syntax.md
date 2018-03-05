@@ -153,22 +153,10 @@ Tables of different types.
     | }
     = ok
 
-The number of entries in a table must be a power of two
-which is greater than 0 and less than or equal to 256.
+The number of entries in a table must be
+greater than 0 and less than or equal to 256.
 
     | word table[512] many
-    | 
-    | routine main
-    |   inputs many
-    |   outputs many
-    |   trashes a, x, n, z
-    | {
-    |     ld x, 0
-    |     copy 9999, many + x
-    | }
-    ? SyntaxError
-
-    | word table[48] many
     | 
     | routine main
     |   inputs many
@@ -191,6 +179,18 @@ which is greater than 0 and less than or equal to 256.
     |     copy 9999, many + x
     | }
     ? SyntaxError
+
+    | word table[48] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 9999, many + x
+    | }
+    = ok
 
 Typedefs of different types.
 
