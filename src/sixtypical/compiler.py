@@ -396,17 +396,13 @@ class Compiler(object):
                     raise NotImplementedError((src, dest))
             else:
                 raise NotImplementedError((src, dest))
-        elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
-            if dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
-                ### copy [ptr] + y, b
-                src_label = self.get_label(src.ref.name)
-                dest_label = self.get_label(dest.name)
-                self.emitter.emit(LDA(IndirectY(src_label)))
-                self.emitter.emit(STA(Absolute(dest_label)))
-            else:
-                raise NotImplementedError((src, dest))
-        elif isinstance(src, AddressRef) and isinstance(dest, LocationRef) and \
-             isinstance(src.ref.type, BufferType) and isinstance(dest.type, PointerType):
+        elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef) and dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
+            ### copy [ptr] + y, b
+            src_label = self.get_label(src.ref.name)
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(IndirectY(src_label)))
+            self.emitter.emit(STA(Absolute(dest_label)))
+        elif isinstance(src, AddressRef) and isinstance(dest, LocationRef) and isinstance(src.ref.type, BufferType) and isinstance(dest.type, PointerType):
             ### copy ^buf, ptr
             src_label = self.get_label(src.ref.name)
             dest_label = self.get_label(dest.name)
@@ -414,92 +410,76 @@ class Compiler(object):
             self.emitter.emit(STA(ZeroPage(dest_label)))
             self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
             self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
-        elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
-            if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
-                ### copy w, wtab + y
-                src_label = self.get_label(src.name)
-                dest_label = self.get_label(dest.ref.name)
-                self.emitter.emit(LDA(Absolute(src_label)))
-                self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
-                self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
-                self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
-            elif isinstance(src.type, VectorType) and isinstance(dest.ref.type, TableType) and isinstance(dest.ref.type.of_type, VectorType):
-                ### copy vec, vtab + y
-                # FIXME this is the exact same as above - can this be simplified?
-                src_label = self.get_label(src.name)
-                dest_label = self.get_label(dest.ref.name)
-                self.emitter.emit(LDA(Absolute(src_label)))
-                self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
-                self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
-                self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
-            elif isinstance(src.type, RoutineType) and isinstance(dest.ref.type, TableType) and isinstance(dest.ref.type.of_type, VectorType):
-                ### copy routine, vtab + y
-                src_label = self.get_label(src.name)
-                dest_label = self.get_label(dest.ref.name)
-                self.emitter.emit(LDA(Immediate(HighAddressByte(src_label))))
-                self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
-                self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
-                self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
-            else:
-                raise NotImplementedError
-        elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef):
-            if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
-                ### copy 9999, wtab + y
-                dest_label = self.get_label(dest.ref.name)
-                self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
-                self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
-                self.emitter.emit(LDA(Immediate(Byte(src.high_byte()))))
-                self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
-            else:
-                raise NotImplementedError
-        elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
-            if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
-                ### copy wtab + y, w
-                src_label = self.get_label(src.ref.name)
-                dest_label = self.get_label(dest.name)
-                self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))
-                self.emitter.emit(STA(Absolute(dest_label)))
-                self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(Offset(src_label, 256))))
-                self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
-            elif isinstance(dest.type, VectorType) and isinstance(src.ref.type, TableType) and isinstance(src.ref.type.of_type, VectorType):
-                ### copy vtab + y, vec
-                # FIXME this is the exact same as above - can this be simplified?
-                src_label = self.get_label(src.ref.name)
-                dest_label = self.get_label(dest.name)
-                self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))
-                self.emitter.emit(STA(Absolute(dest_label)))
-                self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(Offset(src_label, 256))))
-                self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
-            else:
-                raise NotImplementedError
-
-        elif not isinstance(src, (ConstantRef, LocationRef)) or not isinstance(dest, LocationRef):
-            raise NotImplementedError((src, dest))
-        elif src.type == TYPE_BYTE and dest.type == TYPE_BYTE:
-            if isinstance(src, ConstantRef):
-                raise NotImplementedError
-            else:
-                ### copy b1, b2
-                src_label = self.get_label(src.name)
-                dest_label = self.get_label(dest.name)
-                self.emitter.emit(LDA(Absolute(src_label)))
-                self.emitter.emit(STA(Absolute(dest_label)))
-        elif src.type == TYPE_WORD and dest.type == TYPE_WORD:
-            if isinstance(src, ConstantRef):
-                ### copy 9999, w
-                dest_label = self.get_label(dest.name)
-                self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
-                self.emitter.emit(STA(Absolute(dest_label)))
-                self.emitter.emit(LDA(Immediate(Byte(src.high_byte()))))
-                self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
-            else:
-                ### copy w1, w2
-                src_label = self.get_label(src.name)
-                dest_label = self.get_label(dest.name)
-                self.emitter.emit(LDA(Absolute(src_label)))
-                self.emitter.emit(STA(Absolute(dest_label)))
-                self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
-                self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+        elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef) and src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
+            ### copy w, wtab + y
+            src_label = self.get_label(src.name)
+            dest_label = self.get_label(dest.ref.name)
+            self.emitter.emit(LDA(Absolute(src_label)))
+            self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
+            self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
+            self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
+        elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef) and isinstance(src.type, VectorType) and isinstance(dest.ref.type, TableType) and isinstance(dest.ref.type.of_type, VectorType):
+            ### copy vec, vtab + y
+            # FIXME this is the exact same as above - can this be simplified?
+            src_label = self.get_label(src.name)
+            dest_label = self.get_label(dest.ref.name)
+            self.emitter.emit(LDA(Absolute(src_label)))
+            self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
+            self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
+            self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
+        elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef) and isinstance(src.type, RoutineType) and isinstance(dest.ref.type, TableType) and isinstance(dest.ref.type.of_type, VectorType):
+            ### copy routine, vtab + y
+            src_label = self.get_label(src.name)
+            dest_label = self.get_label(dest.ref.name)
+            self.emitter.emit(LDA(Immediate(HighAddressByte(src_label))))
+            self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
+            self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
+            self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
+        elif isinstance(src, ConstantRef) and isinstance(dest, IndexedRef) and src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
+            ### copy 9999, wtab + y
+            dest_label = self.get_label(dest.ref.name)
+            self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
+            self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(dest_label)))
+            self.emitter.emit(LDA(Immediate(Byte(src.high_byte()))))
+            self.emitter.emit(STA(self.addressing_mode_for_index(dest.index)(Offset(dest_label, 256))))
+        elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef) and TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
+            ### copy wtab + y, w
+            src_label = self.get_label(src.ref.name)
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))
+            self.emitter.emit(STA(Absolute(dest_label)))
+            self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(Offset(src_label, 256))))
+            self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+        elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef) and isinstance(dest.type, VectorType) and isinstance(src.ref.type, TableType) and isinstance(src.ref.type.of_type, VectorType):
+            ### copy vtab + y, vec
+            # FIXME this is the exact same as above - can this be simplified?
+            src_label = self.get_label(src.ref.name)
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(src_label)))
+            self.emitter.emit(STA(Absolute(dest_label)))
+            self.emitter.emit(LDA(self.addressing_mode_for_index(src.index)(Offset(src_label, 256))))
+            self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+        elif src.type == TYPE_BYTE and dest.type == TYPE_BYTE and not isinstance(src, ConstantRef):
+            ### copy b1, b2
+            src_label = self.get_label(src.name)
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(Absolute(src_label)))
+            self.emitter.emit(STA(Absolute(dest_label)))
+        elif src.type == TYPE_WORD and dest.type == TYPE_WORD and isinstance(src, ConstantRef):
+            ### copy 9999, w
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(Immediate(Byte(src.low_byte()))))
+            self.emitter.emit(STA(Absolute(dest_label)))
+            self.emitter.emit(LDA(Immediate(Byte(src.high_byte()))))
+            self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
+        elif src.type == TYPE_WORD and dest.type == TYPE_WORD and not isinstance(src, ConstantRef):
+            ### copy w1, w2
+            src_label = self.get_label(src.name)
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(Absolute(src_label)))
+            self.emitter.emit(STA(Absolute(dest_label)))
+            self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
+            self.emitter.emit(STA(Absolute(Offset(dest_label, 1))))
         elif isinstance(src.type, VectorType) and isinstance(dest.type, VectorType):
             ### copy v1, v2
             src_label = self.get_label(src.name)
