@@ -379,23 +379,17 @@ class Compiler(object):
         dest = instr.dest
         src = instr.src
 
-        if isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndirectRef):
-            if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
-                if isinstance(src, ConstantRef):
-                    ### copy 123, [ptr] + y
-                    dest_label = self.get_label(dest.ref.name)
-                    self.emitter.emit(LDA(Immediate(Byte(src.value))))
-                    self.emitter.emit(STA(IndirectY(dest_label)))
-                elif isinstance(src, LocationRef):
-                    ### copy b, [ptr] + y
-                    src_label = self.get_label(src.name)
-                    dest_label = self.get_label(dest.ref.name)
-                    self.emitter.emit(LDA(Absolute(src_label)))
-                    self.emitter.emit(STA(IndirectY(dest_label)))
-                else:
-                    raise NotImplementedError((src, dest))
-            else:
-                raise NotImplementedError((src, dest))
+        if isinstance(src, ConstantRef) and isinstance(dest, IndirectRef) and src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
+            ### copy 123, [ptr] + y
+            dest_label = self.get_label(dest.ref.name)
+            self.emitter.emit(LDA(Immediate(Byte(src.value))))
+            self.emitter.emit(STA(IndirectY(dest_label)))
+        elif isinstance(src, LocationRef) and isinstance(dest, IndirectRef) and src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
+            ### copy b, [ptr] + y
+            src_label = self.get_label(src.name)
+            dest_label = self.get_label(dest.ref.name)
+            self.emitter.emit(LDA(Absolute(src_label)))
+            self.emitter.emit(STA(IndirectY(dest_label)))
         elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef) and dest.type == TYPE_BYTE and isinstance(src.ref.type, PointerType):
             ### copy [ptr] + y, b
             src_label = self.get_label(src.ref.name)
