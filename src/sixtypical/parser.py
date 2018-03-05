@@ -317,13 +317,16 @@ class Parser(object):
             loc = self.locexpr()
             return AddressRef(loc)
         else:
-            loc = self.locexpr(forward=forward)
-            if not isinstance(loc, basestring):
-                index = None
-                if self.scanner.consume('+'):
-                    index = self.locexpr()
-                    loc = IndexedRef(loc, index)
-            return loc
+            return self.indexed_locexpr(forward=forward)
+
+    def indexed_locexpr(self, forward=False):
+        loc = self.locexpr(forward=forward)
+        if not isinstance(loc, basestring):
+            index = None
+            if self.scanner.consume('+'):
+                index = self.locexpr()
+                loc = IndexedRef(loc, index)
+        return loc
 
     def statics(self):
         defns = []
@@ -371,24 +374,21 @@ class Parser(object):
             dest = self.locexpr()
             self.scanner.expect(',')
             src = self.indlocexpr()
-            return SingleOp(opcode=opcode, dest=dest, src=src, index=None)
+            return SingleOp(opcode=opcode, dest=dest, src=src)
         elif self.scanner.token in ("add", "sub", "cmp", "and", "or", "xor"):
             opcode = self.scanner.token
             self.scanner.scan()
             dest = self.locexpr()
             self.scanner.expect(',')
-            src = self.locexpr()
-            index = None
-            if self.scanner.consume('+'):
-                index = self.locexpr()
-            return SingleOp(opcode=opcode, dest=dest, src=src, index=index)
+            src = self.indexed_locexpr()
+            return SingleOp(opcode=opcode, dest=dest, src=src)
         elif self.scanner.token in ("st",):
             opcode = self.scanner.token
             self.scanner.scan()
             src = self.locexpr()
             self.scanner.expect(',')
             dest = self.indlocexpr()
-            return SingleOp(opcode=opcode, dest=dest, src=src, index=None)
+            return SingleOp(opcode=opcode, dest=dest, src=src)
         elif self.scanner.token in ("shl", "shr", "inc", "dec"):
             opcode = self.scanner.token
             self.scanner.scan()

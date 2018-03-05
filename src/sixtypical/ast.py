@@ -69,7 +69,7 @@ class Instr(AST):
 
 
 class SingleOp(Instr):
-    value_attrs = ('opcode', 'dest', 'src', 'index', 'location',)
+    value_attrs = ('opcode', 'dest', 'src', 'location',)
 
 
 class BlockOp(Instr):
