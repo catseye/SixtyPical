@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Defn, Routine, Block, Instr
+from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, BlockOp, IfOp
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
     RoutineType, VectorType, TableType, BufferType, PointerType,
@@ -352,8 +352,8 @@ class Parser(object):
             block2 = None
             if self.scanner.consume('else'):
                 block2 = self.block()
-            return Instr(opcode='if', dest=None, src=src,
-                         block1=block1, block2=block2, inverted=inverted)
+            return IfOp(opcode='if', dest=None, src=src,
+                        block1=block1, block2=block2, inverted=inverted)
         elif self.scanner.consume('repeat'):
             inverted = False
             src = None
@@ -364,7 +364,7 @@ class Parser(object):
                 src = self.locexpr()
             else:
                 self.scanner.expect('forever')
-            return Instr(opcode='repeat', dest=None, src=src,
+            return BlockOp(opcode='repeat', dest=None, src=src,
                          block=block, inverted=inverted)
         elif self.scanner.token in ("ld",):
             # the same as add, sub, cmp etc below, except supports an indlocexpr for the src
@@ -373,7 +373,7 @@ class Parser(object):
             dest = self.locexpr()
             self.scanner.expect(',')
             src = self.indlocexpr()
-            return Instr(opcode=opcode, dest=dest, src=src, index=None)
+            return SingleOp(opcode=opcode, dest=dest, src=src, index=None)
         elif self.scanner.token in ("add", "sub", "cmp", "and", "or", "xor"):
             opcode = self.scanner.token
             self.scanner.scan()
@@ -383,25 +383,25 @@ class Parser(object):
             index = None
             if self.scanner.consume('+'):
                 index = self.locexpr()
-            return Instr(opcode=opcode, dest=dest, src=src, index=index)
+            return SingleOp(opcode=opcode, dest=dest, src=src, index=index)
         elif self.scanner.token in ("st",):
             opcode = self.scanner.token
             self.scanner.scan()
             src = self.locexpr()
             self.scanner.expect(',')
             dest = self.indlocexpr()
-            return Instr(opcode=opcode, dest=dest, src=src, index=None)
+            return SingleOp(opcode=opcode, dest=dest, src=src, index=None)
         elif self.scanner.token in ("shl", "shr", "inc", "dec"):
             opcode = self.scanner.token
             self.scanner.scan()
             dest = self.locexpr()
-            return Instr(opcode=opcode, dest=dest, src=None)
+            return SingleOp(opcode=opcode, dest=dest, src=None)
         elif self.scanner.token in ("call", "goto"):
             opcode = self.scanner.token
             self.scanner.scan()
             name = self.scanner.token
             self.scanner.scan()
-            instr = Instr(opcode=opcode, location=name, dest=None, src=None)
+            instr = SingleOp(opcode=opcode, location=name, dest=None, src=None)
             self.backpatch_instrs.append(instr)
             return instr
         elif self.scanner.token in ("copy",):
@@ -410,16 +410,16 @@ class Parser(object):
             src = self.indlocexpr(forward=True)
             self.scanner.expect(',')
             dest = self.indlocexpr()
-            instr = Instr(opcode=opcode, dest=dest, src=src)
+            instr = SingleOp(opcode=opcode, dest=dest, src=src)
             self.backpatch_instrs.append(instr)
             return instr
         elif self.scanner.consume("with"):
             self.scanner.expect("interrupts")
             self.scanner.expect("off")
             block = self.block()
-            return Instr(opcode='with-sei', dest=None, src=None, block=block)
+            return BlockOp(opcode='with-sei', dest=None, src=None, block=block)
         elif self.scanner.consume("trash"):
             dest = self.locexpr()
-            return Instr(opcode='trash', src=None, dest=dest)
+            return SingleOp(opcode='trash', src=None, dest=dest)
         else:
             raise ValueError('bad opcode "%s"' % self.scanner.token)
