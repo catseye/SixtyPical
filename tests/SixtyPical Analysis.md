@@ -2323,7 +2323,7 @@ A vector in a vector table cannot be directly called.
     |     copy bar, many + x
     |     call many + x
     | }
-    ? ValueError
+    ? SyntaxError
 
 ### typedef ###
 

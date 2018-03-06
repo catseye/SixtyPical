@@ -5,7 +5,8 @@ class AST(object):
     child_attrs = ()
     value_attrs = ()
 
-    def __init__(self, **kwargs):
+    def __init__(self, line_number, **kwargs):
+        self.line_number = line_number
         self.attrs = {}
         for attr in self.children_attrs:
             self.attrs[attr] = kwargs.pop(attr, [])
