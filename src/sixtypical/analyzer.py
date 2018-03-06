@@ -194,6 +194,7 @@ class Context(object):
     def set_touched(self, *refs):
         for ref in refs:
             self._touched.add(ref)
+            # TODO: it might be possible to invalidate the range here
 
     def set_meaningful(self, *refs):
         for ref in refs:
@@ -219,6 +220,10 @@ class Context(object):
         else:
             src_range = src.max_range()
         self._range[dest] = src_range
+
+    def invalidate_range(self, ref):
+        self.assert_meaningful(ref)
+        self._range[ref] = ref.max_range()
 
     def set_unmeaningful(self, *refs):
         for ref in refs:
@@ -377,6 +382,7 @@ class Analyzer(object):
                 raise TypeMismatchError(instr, '{} and {}'.format(src, name))
             else:
                 context.set_written(dest)
+                # FIXME: context.copy_range(src, dest)   ?
             context.assert_meaningful(src)
         elif opcode == 'add':
             context.assert_meaningful(src, dest, FLAG_C)
@@ -395,6 +401,7 @@ class Analyzer(object):
                     context.set_unmeaningful(REG_A)
                 else:
                     self.assert_type(TYPE_WORD, dest)
+            context.invalidate_range(dest)
         elif opcode == 'sub':
             context.assert_meaningful(src, dest, FLAG_C)
             if src.type == TYPE_BYTE:
@@ -405,10 +412,12 @@ class Analyzer(object):
                 context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
                 context.set_touched(REG_A)
                 context.set_unmeaningful(REG_A)
+            context.invalidate_range(dest)
         elif opcode in ('inc', 'dec'):
             self.assert_type(TYPE_BYTE, dest)
             context.assert_meaningful(dest)
             context.set_written(dest, FLAG_Z, FLAG_N)
+            context.invalidate_range(dest)
         elif opcode == 'cmp':
             self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
@@ -425,10 +434,12 @@ class Analyzer(object):
             self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
             context.set_written(dest, FLAG_Z, FLAG_N)
+            context.invalidate_range(dest)
         elif opcode in ('shl', 'shr'):
             self.assert_type(TYPE_BYTE, dest)
             context.assert_meaningful(dest, FLAG_C)
             context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
+            context.invalidate_range(dest)
         elif opcode == 'call':
             type = instr.location.type
             if isinstance(type, VectorType):

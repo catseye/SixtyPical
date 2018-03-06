@@ -623,6 +623,62 @@ This applies to `copy` as well.
     | }
     ? RangeExceededError
 
+`AND`'ing a register with a value ensures the range of the
+register will not exceed the range of the value.  This can
+be used to "clip" the range of an index so that it fits in
+a table.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 31
+    |     ld x, a
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    = ok
+
+Test for "clipping", but not enough.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 63
+    |     ld x, a
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    ? RangeExceededError
+
+If you alter the value after "clipping" it, the range can
+no longer be guaranteed.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 31
+    |     ld x, a
+    |     inc x
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    ? RangeExceededError
+
 ### add ###
 
 Can't `add` from or to a memory location that isn't initialized.

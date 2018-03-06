@@ -31,7 +31,6 @@ Documentation
 *   [SixtyPical specification](doc/SixtyPical.md)
 *   [SixtyPical revision history](HISTORY.md)
 *   [Literate test suite for SixtyPical syntax](tests/SixtyPical%20Syntax.md)
-*   [Literate test suite for SixtyPical execution](tests/SixtyPical%20Execution.md)
 *   [Literate test suite for SixtyPical analysis](tests/SixtyPical%20Analysis.md)
 *   [Literate test suite for SixtyPical compilation](tests/SixtyPical%20Compilation.md)
 *   [6502 Opcodes used/not used in SixtyPical](doc/6502%20Opcodes.md)
@@ -78,11 +77,14 @@ are trashed inside the block.
 ### Re-order routines and optimize tail-calls to fallthroughs
 
 Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally
-is probably NP-complete.  But doing it adeuqately is probably not that hard.
+is probably NP-complete.  But doing it adequately is probably not that hard.
+
+### Different preludes for different architectures
+
+`--prelude=c64-basic`
 
 ### And at some point...
 
-*   Confirm that `and` can be used to restrict the range of table reads/writes.
 *   `low` and `high` address operators - to turn `word` type into `byte`.
 *   `const`s that can be used in defining the size of tables, etc.
 *   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
