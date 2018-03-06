@@ -7,7 +7,15 @@ History of SixtyPical
 *   It is a static analysis error if it cannot be proven that a read or write
     to a table falls within the defined size of that table.
 *   The reference analyzer's ability to prove this is currently fairly weak,
-    but it does exist.
+    but it does exist:
+    *   Loading a constant into a memory location means we know the range
+        is exactly that one constant value.
+    *   `AND`ing a memory location with a value means the range of the
+        memory location cannot exceed the range of the value.
+    *   Doing arithmetic on a memory location invalidates our knowledge
+        of its range.
+    *   Copying a value from one memory location to another copies the
+        known range as well.
 *   Cleaned up the internals of the reference implementation (incl. the AST)
     and re-organized the example programs in the `eg` subdirectory.
 *   Most errors produced by the reference implementation now include a line number.
