@@ -385,6 +385,13 @@ define game_state_title_screen game_state_routine
 {
     ld y, 0
     repeat {
+
+        // First we "clip" the index to 0-31 to ensure we don't
+        // read outside the bounds of the table:
+        ld a, y
+        and a, 31
+        ld y, a
+
         ld a, press_fire_msg + y
 
         st on, c
