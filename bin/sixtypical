@@ -37,10 +37,11 @@ if __name__ == '__main__':
         help="Only parse and analyze the program; do not compile it."
     )
     argparser.add_argument(
-        "--basic-prelude",
-        action="store_true",
-        help="Insert a Commodore BASIC 2.0 snippet before the program "
-             "so that it can be LOADed and RUN on Commodore platforms."
+        "--prelude", type=str,
+        help="Insert a snippet before the compiled program "
+             "so that it can be LOADed and RUN on a certain platforms. "
+             "Also sets the origin. "
+             "Options are: c64 or vic20."
     )
     argparser.add_argument(
         "--debug",
@@ -93,10 +94,16 @@ if __name__ == '__main__':
         fh = sys.stdout
         start_addr = 0xc000
         prelude = []
-        if options.basic_prelude:
+        if options.prelude == 'c64':
             start_addr = 0x0801
             prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
                        0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
+        elif options.prelude == 'vic20':
+            start_addr = 0x1001
+            prelude = [0x0b, 0x10, 0xc9, 0x07, 0x9e, 0x34,
+                       0x31, 0x30, 0x39, 0x00, 0x00, 0x00]
+        else:
+            raise NotImplementedError
 
         # we are outputting a .PRG, so we output the load address first
         # we don't use the Emitter for this b/c not part of addr space

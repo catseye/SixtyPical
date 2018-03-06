@@ -79,10 +79,6 @@ are trashed inside the block.
 Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally
 is probably NP-complete.  But doing it adequately is probably not that hard.
 
-### Different preludes for different architectures
-
-`--prelude=c64-basic`
-
 ### And at some point...
 
 *   `low` and `high` address operators - to turn `word` type into `byte`.
