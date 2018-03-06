@@ -10,11 +10,16 @@ from sixtypical.model import (
 
 
 class StaticAnalysisError(ValueError):
-    def __init__(self, line_number, message):
-        super(StaticAnalysisError, self).__init__(line_number, message)
+    def __init__(self, ast, message):
+        super(StaticAnalysisError, self).__init__(ast, message)
 
     def __str__(self):
-        return "{} (Line {})".format(self.args[1], self.args[0])
+        ast = self.args[0]
+        message = self.args[1]
+        if isinstance(ast, Routine):
+            return "{} (in {}, line {})".format(message, ast.name, ast.line_number)
+        else:
+            return "{} (line {})".format(message, ast.line_number)
 
 
 class UnmeaningfulReadError(StaticAnalysisError):
@@ -98,19 +103,19 @@ class Context(object):
 
         for ref in inputs:
             if ref.is_constant():
-                raise ConstantConstraintError(self.routine.line_number, '%s in %s' % (ref.name, routine.name))
+                raise ConstantConstraintError(self.routine, ref.name)
             self._range[ref] = ref.max_range()
         output_names = set()
         for ref in outputs:
             if ref.is_constant():
-                raise ConstantConstraintError(self.routine.line_number, '%s in %s' % (ref.name, routine.name))
+                raise ConstantConstraintError(self.routine, ref.name)
             output_names.add(ref.name)
             self._writeable.add(ref)
         for ref in trashes:
             if ref.is_constant():
-                raise ConstantConstraintError(self.routine.line_number, '%s in %s' % (ref.name, routine.name))
+                raise ConstantConstraintError(self.routine, ref.name)
             if ref.name in output_names:
-                raise InconsistentConstraintsError(self.routine.line_number, '%s in %s' % (ref.name, routine.name))
+                raise InconsistentConstraintsError(self.routine, ref.name)
             self._writeable.add(ref)
 
     def __str__(self):
@@ -143,10 +148,10 @@ class Context(object):
                 pass
             elif isinstance(ref, LocationRef):
                 if ref not in self._range:
-                    message = '%s in %s' % (ref.name, self.routine.name)
+                    message = ref.name
                     if kwargs.get('message'):
                         message += ' (%s)' % kwargs['message']
-                    raise exception_class(self.routine.line_number, message)
+                    raise exception_class(self.routine, message)
             elif isinstance(ref, IndexedRef):
                 self.assert_meaningful(ref.ref, **kwargs)
                 self.assert_meaningful(ref.index, **kwargs)
@@ -160,10 +165,10 @@ class Context(object):
             if routine_has_static(self.routine, ref):
                 continue
             if ref not in self._writeable:
-                message = '%s in %s' % (ref.name, self.routine.name)
+                message = ref.name
                 if kwargs.get('message'):
                     message += ' (%s)' % kwargs['message']
-                raise exception_class(self.routine.line_number, message)
+                raise exception_class(self.routine, message)
 
     def assert_in_range(self, inside, outside):
         # FIXME there's a bit of I'm-not-sure-the-best-way-to-do-this-ness, here...
@@ -180,7 +185,7 @@ class Context(object):
             outside_range = (0, outside.type.size-1)
 
         if inside_range[0] < outside_range[0] or inside_range[1] > outside_range[1]:
-            raise RangeExceededError(self.routine.line_number,
+            raise RangeExceededError(self.routine,
                 "Possible range of {} {} exceeds acceptable range of {} {}".format(
                     inside, inside_range, outside, outside_range
                 )
@@ -240,9 +245,7 @@ class Analyzer(object):
     def assert_type(self, type, *locations):
         for location in locations:
             if location.type != type:
-                raise TypeMismatchError(self.current_routine.line_number, '%s in %s' %
-                    (location.name, self.current_routine.name)
-                )
+                raise TypeMismatchError(self.current_routine, location.name)
 
     def assert_affected_within(self, name, affecting_type, limiting_type):
         assert name in ('inputs', 'outputs', 'trashes')
@@ -251,13 +254,13 @@ class Analyzer(object):
         overage = affected - limited_to
         if not overage:
             return
-        message = 'in %s: %s for %s are %s\n\nbut %s affects %s\n\nwhich exceeds it by: %s ' % (
-            self.current_routine.name, name,
+        message = '%s for %s are %s\n\nbut %s affects %s\n\nwhich exceeds it by: %s ' % (
+            name,
             limiting_type, LocationRef.format_set(limited_to),
             affecting_type, LocationRef.format_set(affected),
             LocationRef.format_set(overage)
         )
-        raise IncompatibleConstraintsError(message)
+        raise IncompatibleConstraintsError(self.current_routine, message)
 
     def analyze_program(self, program):
         assert isinstance(program, Program)
@@ -297,22 +300,21 @@ class Analyzer(object):
         # even if we goto another routine, we can't trash an output.
         for ref in trashed:
             if ref in type_.outputs:
-                raise UnmeaningfulOutputError(routine.line_number, '%s in %s' % (ref.name, routine.name))
+                raise UnmeaningfulOutputError(routine, ref.name)
 
         if not self.has_encountered_goto:
             for ref in type_.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
             for ref in context.each_touched():
                 if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
-                    message = '%s in %s' % (ref.name, routine.name)
-                    raise ForbiddenWriteError(routine.line_number, message)
+                    raise ForbiddenWriteError(routine, ref.name)
         self.current_routine = None
 
     def analyze_block(self, block, context):
         assert isinstance(block, Block)
         for i in block.instrs:
             if self.has_encountered_goto:
-                raise IllegalJumpError(i)
+                raise IllegalJumpError(i, i)
             self.analyze_instr(i, context)
 
     def analyze_instr(self, instr, context):
@@ -338,9 +340,7 @@ class Analyzer(object):
                 if TableType.is_a_table_type(src.ref.type, TYPE_BYTE) and dest.type == TYPE_BYTE:
                     pass
                 else:
-                    raise TypeMismatchError(instr.line_number, '%s and %s in %s' %
-                        (src.ref.name, dest.name, self.current_routine.name)
-                    )
+                    raise TypeMismatchError(instr, '{} and {}'.format(src.ref.name, dest.name))
                 context.assert_meaningful(src, src.index)
                 context.assert_in_range(src.index, src.ref)
             elif isinstance(src, IndirectRef):
@@ -348,12 +348,10 @@ class Analyzer(object):
                 if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
                     pass
                 else:
-                    raise TypeMismatchError(instr.line_number, (src, dest))
+                    raise TypeMismatchError(instr, (src, dest))
                 context.assert_meaningful(src.ref, REG_Y)
             elif src.type != dest.type:
-                raise TypeMismatchError(instr.line_number, '%s and %s in %s' %
-                    (src.name, dest.name, self.current_routine.name)
-                )
+                raise TypeMismatchError(instr, '{} and {}'.format(src.name, dest.name))
             else:
                 context.assert_meaningful(src)
                 context.copy_range(src, dest)
@@ -363,7 +361,7 @@ class Analyzer(object):
                 if src.type == TYPE_BYTE and TableType.is_a_table_type(dest.ref.type, TYPE_BYTE):
                     pass
                 else:
-                    raise TypeMismatchError(instr.line_number, (src, dest))
+                    raise TypeMismatchError(instr, (src, dest))
                 context.assert_meaningful(dest.index)
                 context.assert_in_range(dest.index, dest.ref)
                 context.set_written(dest.ref)
@@ -372,13 +370,11 @@ class Analyzer(object):
                 if isinstance(dest.ref.type, PointerType) and src.type == TYPE_BYTE:
                     pass
                 else:
-                    raise TypeMismatchError(instr.line_number, (src, dest))
+                    raise TypeMismatchError(instr, (src, dest))
                 context.assert_meaningful(dest.ref, REG_Y)
                 context.set_written(dest.ref)
             elif src.type != dest.type:
-                raise TypeMismatchError(instr.line_number, '%r and %r in %s' %
-                    (src, dest, self.current_routine.name)
-                )
+                raise TypeMismatchError(instr, '{} and {}'.format(src, name))
             else:
                 context.set_written(dest)
             context.assert_meaningful(src)
@@ -447,7 +443,7 @@ class Analyzer(object):
                 context.set_unmeaningful(ref)
         elif opcode == 'copy':
             if dest == REG_A:
-                raise ForbiddenWriteError(instr.line_number, "{} cannot be used as destination for copy".format(dest))
+                raise ForbiddenWriteError(instr, "{} cannot be used as destination for copy".format(dest))
 
             # 1. check that their types are compatible
 
@@ -455,17 +451,17 @@ class Analyzer(object):
                 if isinstance(src.ref.type, BufferType) and isinstance(dest.type, PointerType):
                     pass
                 else:
-                    raise TypeMismatchError(instr.line_number, (src, dest))
+                    raise TypeMismatchError(instr, (src, dest))
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndirectRef):
                 if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
                     pass
                 else:
-                    raise TypeMismatchError(instr.line_number, (src, dest))
+                    raise TypeMismatchError(instr, (src, dest))
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
                     pass
                 else:
-                    raise TypeMismatchError(instr.line_number, (src, dest))
+                    raise TypeMismatchError(instr, (src, dest))
 
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
                 if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
@@ -477,7 +473,7 @@ class Analyzer(object):
                       RoutineType.executable_types_compatible(src.type, dest.ref.type.of_type)):
                     pass
                 else:
-                    raise TypeMismatchError(instr.line_number, (src, dest))
+                    raise TypeMismatchError(instr, (src, dest))
                 context.assert_in_range(dest.index, dest.ref)
 
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
@@ -487,7 +483,7 @@ class Analyzer(object):
                       RoutineType.executable_types_compatible(src.ref.type.of_type, dest.type.of_type)):
                     pass
                 else:
-                    raise TypeMismatchError(instr.line_number, (src, dest))
+                    raise TypeMismatchError(instr, (src, dest))
                 context.assert_in_range(src.index, src.ref)
 
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
@@ -498,9 +494,9 @@ class Analyzer(object):
                     self.assert_affected_within('outputs', src.type, dest.type.of_type)
                     self.assert_affected_within('trashes', src.type, dest.type.of_type)
                 else:
-                    raise TypeMismatchError(instr.line_number, (src, dest))
+                    raise TypeMismatchError(instr, (src, dest))
             else:
-                raise TypeMismatchError(instr.line_number, (src, dest))
+                raise TypeMismatchError(instr, (src, dest))
 
             # 2. check that the context is meaningful
 
@@ -532,7 +528,7 @@ class Analyzer(object):
             type_ = location.type
     
             if not isinstance(type_, (RoutineType, VectorType)):
-                raise TypeMismatchError(instr.line_number, location)
+                raise TypeMismatchError(instr, location)
     
             # assert that the dest routine's inputs are all initialized
             if isinstance(type_, VectorType):

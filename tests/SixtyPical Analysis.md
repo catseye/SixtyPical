@@ -42,7 +42,7 @@ If a routine declares it outputs a location, that location should be initialized
     | {
     |     ld x, 0
     | }
-    ? UnmeaningfulOutputError: a in main
+    ? UnmeaningfulOutputError: a
 
     | routine main
     |   inputs a
@@ -73,7 +73,7 @@ If a routine modifies a location, it needs to either output it or trash it.
     | {
     |     ld x, 0
     | }
-    ? ForbiddenWriteError: x in main
+    ? ForbiddenWriteError: x
 
     | routine main
     |   outputs x, z, n
@@ -96,7 +96,7 @@ This is true regardless of whether it's an input or not.
     | {
     |     ld x, 0
     | }
-    ? ForbiddenWriteError: x in main
+    ? ForbiddenWriteError: x
 
     | routine main
     |   inputs x
@@ -127,14 +127,14 @@ If a routine trashes a location, this must be declared.
     | {
     |     trash x
     | }
-    ? ForbiddenWriteError: x in foo
+    ? ForbiddenWriteError: x
 
     | routine foo
     |   outputs x
     | {
     |     trash x
     | }
-    ? UnmeaningfulOutputError: x in foo
+    ? UnmeaningfulOutputError: x
 
 If a routine causes a location to be trashed, this must be declared in the caller.
 
@@ -162,7 +162,7 @@ If a routine causes a location to be trashed, this must be declared in the calle
     | {
     |     call trash_x
     | }
-    ? ForbiddenWriteError: x in foo
+    ? ForbiddenWriteError: x
 
     | routine trash_x
     |   trashes x, z, n
@@ -176,7 +176,7 @@ If a routine causes a location to be trashed, this must be declared in the calle
     | {
     |     call trash_x
     | }
-    ? UnmeaningfulOutputError: x in foo
+    ? UnmeaningfulOutputError: x (in foo, line 12)
 
 If a routine reads or writes a user-define memory location, it needs to declare that too.
 
@@ -214,7 +214,7 @@ Can't `ld` from a memory location that isn't initialized.
     | {
     |     ld a, x
     | }
-    ? UnmeaningfulReadError: x in main
+    ? UnmeaningfulReadError: x
 
 Can't `ld` to a memory location that doesn't appear in (outputs ∪ trashes).
 
@@ -246,14 +246,14 @@ Can't `ld` to a memory location that doesn't appear in (outputs ∪ trashes).
     | {
     |     ld a, 0
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
     | routine main
     |   trashes a, n
     | {
     |     ld a, 0
     | }
-    ? ForbiddenWriteError: z in main
+    ? ForbiddenWriteError: z
 
 Can't `ld` a `word` type.
 
@@ -265,7 +265,7 @@ Can't `ld` a `word` type.
     | {
     |     ld a, foo
     | }
-    ? TypeMismatchError: foo and a in main
+    ? TypeMismatchError: foo and a
 
 ### st ###
 
@@ -286,7 +286,7 @@ Can't `st` from a memory location that isn't initialized.
     | {
     |     st x, lives
     | }
-    ? UnmeaningfulReadError: x in main
+    ? UnmeaningfulReadError: x
 
 Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
 
@@ -312,7 +312,7 @@ Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
     | {
     |     st 0, lives
     | }
-    ? ForbiddenWriteError: lives in main
+    ? ForbiddenWriteError: lives
 
 Can't `st` a `word` type.
 
@@ -646,7 +646,7 @@ Can't `add` from or to a memory location that isn't initialized.
     |     st off, c
     |     add a, lives
     | }
-    ? UnmeaningfulReadError: lives in main
+    ? UnmeaningfulReadError: lives
 
     | byte lives
     | routine main
@@ -657,7 +657,7 @@ Can't `add` from or to a memory location that isn't initialized.
     |     st off, c
     |     add a, lives
     | }
-    ? UnmeaningfulReadError: a in main
+    ? UnmeaningfulReadError: a
 
 Can't `add` to a memory location that isn't writeable.
 
@@ -668,7 +668,7 @@ Can't `add` to a memory location that isn't writeable.
     |     st off, c
     |     add a, 0
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
 You can `add` a word constant to a word memory location.
 
@@ -694,7 +694,7 @@ You can `add` a word constant to a word memory location.
     |     st off, c
     |     add score, 1999
     | }
-    ? UnmeaningfulOutputError: a in main
+    ? UnmeaningfulOutputError: a
 
 To be sure, `add`ing a word constant to a word memory location trashes `a`.
 
@@ -707,7 +707,7 @@ To be sure, `add`ing a word constant to a word memory location trashes `a`.
     |     st off, c
     |     add score, 1999
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
 You can `add` a word memory location to another word memory location.
 
@@ -735,7 +735,7 @@ You can `add` a word memory location to another word memory location.
     |     st off, c
     |     add score, delta
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
 You can `add` a word memory location, or a constant, to a pointer.
 
@@ -765,7 +765,7 @@ You can `add` a word memory location, or a constant, to a pointer.
     |     add ptr, delta
     |     add ptr, word 1
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
 ### sub ###
 
@@ -790,7 +790,7 @@ Can't `sub` from or to a memory location that isn't initialized.
     |     st off, c
     |     sub a, lives
     | }
-    ? UnmeaningfulReadError: lives in main
+    ? UnmeaningfulReadError: lives
 
     | byte lives
     | routine main
@@ -801,7 +801,7 @@ Can't `sub` from or to a memory location that isn't initialized.
     |     st off, c
     |     sub a, lives
     | }
-    ? UnmeaningfulReadError: a in main
+    ? UnmeaningfulReadError: a
 
 Can't `sub` to a memory location that isn't writeable.
 
@@ -812,7 +812,7 @@ Can't `sub` to a memory location that isn't writeable.
     |     st off, c
     |     sub a, 0
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
 You can `sub` a word constant from a word memory location.
 
@@ -838,7 +838,7 @@ You can `sub` a word constant from a word memory location.
     |     st on, c
     |     sub score, 1999
     | }
-    ? UnmeaningfulOutputError: a in main
+    ? UnmeaningfulOutputError: a
 
 You can `sub` a word memory location from another word memory location.
 
@@ -866,7 +866,7 @@ You can `sub` a word memory location from another word memory location.
     |     st off, c
     |     sub score, delta
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
 ### inc ###
 
@@ -878,7 +878,7 @@ Location must be initialized and writeable.
     | {
     |     inc x
     | }
-    ? UnmeaningfulReadError: x in main
+    ? UnmeaningfulReadError: x
 
     | routine main
     |   inputs x
@@ -886,7 +886,7 @@ Location must be initialized and writeable.
     | {
     |     inc x
     | }
-    ? ForbiddenWriteError: x in main
+    ? ForbiddenWriteError: x
 
     | routine main
     |   inputs x
@@ -908,7 +908,7 @@ Can't `inc` a `word` type.
     | {
     |     inc foo
     | }
-    ? TypeMismatchError: foo in main
+    ? TypeMismatchError: foo
 
 ### dec ###
 
@@ -920,7 +920,7 @@ Location must be initialized and writeable.
     | {
     |     dec x
     | }
-    ? UnmeaningfulReadError: x in main
+    ? UnmeaningfulReadError: x
 
     | routine main
     |   inputs x
@@ -928,7 +928,7 @@ Location must be initialized and writeable.
     | {
     |     dec x
     | }
-    ? ForbiddenWriteError: x in main
+    ? ForbiddenWriteError: x
 
     | routine main
     |   inputs x
@@ -950,7 +950,7 @@ Can't `dec` a `word` type.
     | {
     |     dec foo
     | }
-    ? TypeMismatchError: foo in main
+    ? TypeMismatchError: foo
 
 ### cmp ###
 
@@ -970,14 +970,14 @@ Some rudimentary tests for cmp.
     | {
     |     cmp a, 4
     | }
-    ? ForbiddenWriteError: c in main
+    ? ForbiddenWriteError: c
 
     | routine main
     |   trashes z, c, n
     | {
     |     cmp a, 4
     | }
-    ? UnmeaningfulReadError: a in main
+    ? UnmeaningfulReadError: a
 
 ### and ###
 
@@ -997,14 +997,14 @@ Some rudimentary tests for and.
     | {
     |     and a, 4
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
     | routine main
     |   trashes z, n
     | {
     |     and a, 4
     | }
-    ? UnmeaningfulReadError: a in main
+    ? UnmeaningfulReadError: a
 
 ### or ###
 
@@ -1024,14 +1024,14 @@ Writing unit tests on a train.  Wow.
     | {
     |     or a, 4
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
     | routine main
     |   trashes z, n
     | {
     |     or a, 4
     | }
-    ? UnmeaningfulReadError: a in main
+    ? UnmeaningfulReadError: a
 
 ### xor ###
 
@@ -1051,14 +1051,14 @@ Writing unit tests on a train.  Wow.
     | {
     |     xor a, 4
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
     | routine main
     |   trashes z, n
     | {
     |     xor a, 4
     | }
-    ? UnmeaningfulReadError: a in main
+    ? UnmeaningfulReadError: a
 
 ### shl ###
 
@@ -1078,7 +1078,7 @@ Some rudimentary tests for shl.
     | {
     |     shl a
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
     | routine main
     |   inputs a
@@ -1086,7 +1086,7 @@ Some rudimentary tests for shl.
     | {
     |     shl a
     | }
-    ? UnmeaningfulReadError: c in main
+    ? UnmeaningfulReadError: c
 
 ### shr ###
 
@@ -1106,7 +1106,7 @@ Some rudimentary tests for shr.
     | {
     |     shr a
     | }
-    ? ForbiddenWriteError: a in main
+    ? ForbiddenWriteError: a
 
     | routine main
     |   inputs a
@@ -1114,7 +1114,7 @@ Some rudimentary tests for shr.
     | {
     |     shr a
     | }
-    ? UnmeaningfulReadError: c in main
+    ? UnmeaningfulReadError: c
 
 ### call ###
 
@@ -1134,7 +1134,7 @@ initialized.
     | {
     |     call foo
     | }
-    ? UnmeaningfulReadError: x in main
+    ? UnmeaningfulReadError: x
 
 Note that if you call a routine that trashes a location, you also trash it.
 
@@ -1153,7 +1153,7 @@ Note that if you call a routine that trashes a location, you also trash it.
     |     ld x, 0
     |     call foo
     | }
-    ? ForbiddenWriteError: lives in main
+    ? ForbiddenWriteError: lives
 
     | byte lives
     | 
@@ -1190,7 +1190,7 @@ You can't output a value that the thing you called trashed.
     |     ld x, 0
     |     call foo
     | }
-    ? UnmeaningfulOutputError: lives in main
+    ? UnmeaningfulOutputError: lives
 
 ...unless you write to it yourself afterwards.
 
@@ -1241,7 +1241,7 @@ calling it.
     |     call foo
     |     ld a, x
     | }
-    ? UnmeaningfulReadError: x in main
+    ? UnmeaningfulReadError: x
 
 If a routine trashes locations, they are uninitialized in the caller after
 calling it.
@@ -1266,7 +1266,7 @@ calling it.
     |     call foo
     |     ld a, x
     | }
-    ? UnmeaningfulReadError: x in main
+    ? UnmeaningfulReadError: x
 
 Calling an extern is just the same as calling a defined routine with the
 same constraints.
@@ -1294,7 +1294,7 @@ same constraints.
     | {
     |     call chrout
     | }
-    ? UnmeaningfulReadError: a in main
+    ? UnmeaningfulReadError: a
 
     | routine chrout
     |   inputs a
@@ -1308,7 +1308,7 @@ same constraints.
     |     call chrout
     |     ld x, a
     | }
-    ? UnmeaningfulReadError: a in main
+    ? UnmeaningfulReadError: a
 
 ### trash ###
 
@@ -1334,7 +1334,7 @@ Trash does nothing except indicate that we do not care about the value anymore.
     |     ld a, 0
     |     trash a
     | }
-    ? UnmeaningfulOutputError: a in foo
+    ? UnmeaningfulOutputError: a
 
     | routine foo
     |   inputs a
@@ -1345,7 +1345,7 @@ Trash does nothing except indicate that we do not care about the value anymore.
     |     trash a
     |     st a, x
     | }
-    ? UnmeaningfulReadError: a in foo
+    ? UnmeaningfulReadError: a
 
 ### if ###
 
@@ -1510,7 +1510,7 @@ trashes {`a`, `b`}.
     |         trash x
     |     }
     | }
-    ? ForbiddenWriteError: x in foo
+    ? ForbiddenWriteError: x (in foo, line 10)
 
     | routine foo
     |   inputs a, x, z
@@ -1522,7 +1522,7 @@ trashes {`a`, `b`}.
     |         trash x
     |     }
     | }
-    ? ForbiddenWriteError: a in foo
+    ? ForbiddenWriteError: a (in foo, line 10)
 
 ### repeat ###
 
@@ -1575,7 +1575,7 @@ initialized at the start.
     |         cmp x, 10
     |     } until z
     | }
-    ? UnmeaningfulReadError: y in main
+    ? UnmeaningfulReadError: y
 
 And if you trash the test expression (i.e. `z` in the below) inside the loop,
 this is an error too.
@@ -1592,7 +1592,7 @@ this is an error too.
     |         copy one, two
     |     } until z
     | }
-    ? UnmeaningfulReadError: z in main
+    ? UnmeaningfulReadError: z
 
 The body of `repeat forever` can be empty.
 
@@ -1624,7 +1624,7 @@ Can't `copy` from a memory location that isn't initialized.
     | {
     |     copy x, lives
     | }
-    ? UnmeaningfulReadError: x in main
+    ? UnmeaningfulReadError: x
 
 Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
 
@@ -1652,7 +1652,7 @@ Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
     | {
     |     copy 0, lives
     | }
-    ? ForbiddenWriteError: lives in main
+    ? ForbiddenWriteError: lives
 
 a, z, and n are trashed, and must be declared as such
 
@@ -1662,7 +1662,7 @@ a, z, and n are trashed, and must be declared as such
     | {
     |     copy 0, lives
     | }
-    ? ForbiddenWriteError: n in main
+    ? ForbiddenWriteError: n
 
 a, z, and n are trashed, and must not be declared as outputs.
 
@@ -1672,7 +1672,7 @@ a, z, and n are trashed, and must not be declared as outputs.
     | {
     |     copy 0, lives
     | }
-    ? UnmeaningfulOutputError: n in main
+    ? UnmeaningfulOutputError: n
 
 Unless of course you subsequently initialize them.
 
@@ -1901,7 +1901,7 @@ as an input to, an output of, or as a trashed value of a routine.
     | {
     |     copy foo, vec
     | }
-    ? ConstantConstraintError: foo in main
+    ? ConstantConstraintError: foo
 
     | vector routine
     |   inputs x
@@ -1923,7 +1923,7 @@ as an input to, an output of, or as a trashed value of a routine.
     | {
     |     copy foo, vec
     | }
-    ? ConstantConstraintError: foo in main
+    ? ConstantConstraintError: foo
 
     | vector routine
     |   inputs x
@@ -1945,7 +1945,7 @@ as an input to, an output of, or as a trashed value of a routine.
     | {
     |     copy foo, vec
     | }
-    ? ConstantConstraintError: foo in main
+    ? ConstantConstraintError: foo
 
 You can copy the address of a routine into a vector, if that vector is
 declared appropriately.
@@ -2074,7 +2074,7 @@ Calling the vector does indeed trash the things the vector says it does.
     |     copy bar, foo
     |     call foo
     | }
-    ? UnmeaningfulOutputError: x in main
+    ? UnmeaningfulOutputError: x
 
 `goto`, if present, must be in tail position (the final instruction in a routine.)
 
@@ -2200,7 +2200,7 @@ vector says it does.
     |     call sub
     |     ld a, x
     | }
-    ? UnmeaningfulReadError: x in main
+    ? UnmeaningfulReadError: x
 
     | vector routine
     |   outputs x
