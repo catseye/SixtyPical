@@ -8,6 +8,9 @@ History of SixtyPical
     to a table falls within the defined size of that table.
 *   The reference analyzer's ability to prove this is currently fairly weak,
     but it does exist.
+*   Cleaned up the internals of the reference implementation (incl. the AST)
+    and re-organized the example programs in the `eg` subdirectory.
+*   Most errors produced by the reference implementation now include a line number.
 
 0.12
 ----

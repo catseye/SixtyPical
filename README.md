@@ -92,7 +92,6 @@ is probably NP-complete.  But doing it adeuqately is probably not that hard.
 *   `static` pointers -- currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.
 *   Question the value of the "consistent initialization" principle for `if` statement analysis.
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
-*   Error messages that include the line number of the source code.
 *   Add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
 *   Automatic tail-call optimization (could be tricky, w/constraints?)
 *   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
