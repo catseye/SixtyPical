@@ -1,0 +1,9 @@
+byte table[8] message : "WHAT?"
+
+routine main
+  inputs message
+  outputs x, a, z, n
+{
+  ld x, 9
+  ld a, message + x
+}
