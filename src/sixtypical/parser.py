@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, BlockOp, IfOp
+from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, If, Repeat, WithInterruptsOff
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
     RoutineType, VectorType, TableType, BufferType, PointerType,
@@ -355,7 +355,7 @@ class Parser(object):
             block2 = None
             if self.scanner.consume('else'):
                 block2 = self.block()
-            return IfOp(src=src, block1=block1, block2=block2, inverted=inverted)
+            return If(src=src, block1=block1, block2=block2, inverted=inverted)
         elif self.scanner.consume('repeat'):
             inverted = False
             src = None
@@ -366,7 +366,7 @@ class Parser(object):
                 src = self.locexpr()
             else:
                 self.scanner.expect('forever')
-            return BlockOp(opcode='repeat', src=src, block=block, inverted=inverted)
+            return Repeat(src=src, block=block, inverted=inverted)
         elif self.scanner.token in ("ld",):
             # the same as add, sub, cmp etc below, except supports an indlocexpr for the src
             opcode = self.scanner.token
@@ -415,7 +415,7 @@ class Parser(object):
             self.scanner.expect("interrupts")
             self.scanner.expect("off")
             block = self.block()
-            return BlockOp(opcode='with-sei', src=None, block=block)
+            return WithInterruptsOff(block=block)
         elif self.scanner.consume("trash"):
             dest = self.locexpr()
             return SingleOp(opcode='trash', src=None, dest=dest)

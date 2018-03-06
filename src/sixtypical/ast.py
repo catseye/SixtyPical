@@ -72,11 +72,15 @@ class SingleOp(Instr):
     value_attrs = ('opcode', 'dest', 'src', 'location',)
 
 
-class BlockOp(Instr):
-    value_attrs = ('opcode', 'src', 'inverted')
+class If(Instr):
+    value_attrs = ('src', 'inverted')
+    child_attrs = ('block1', 'block2',)
+
+
+class Repeat(Instr):
+    value_attrs = ('src', 'inverted')
     child_attrs = ('block',)
 
 
-class IfOp(Instr):
-    value_attrs = ('src', 'inverted')
-    child_attrs = ('block1', 'block2',)
+class WithInterruptsOff(Instr):
+    child_attrs = ('block',)

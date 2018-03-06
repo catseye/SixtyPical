@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, BlockOp, IfOp
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, WithInterruptsOff
 from sixtypical.model import (
     ConstantRef, LocationRef, IndexedRef, IndirectRef, AddressRef,
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
@@ -144,10 +144,12 @@ class Compiler(object):
     def compile_instr(self, instr):
         if isinstance(instr, SingleOp):
             return self.compile_single_op(instr)
-        elif isinstance(instr, BlockOp):
-            return self.compile_block_op(instr)
-        elif isinstance(instr, IfOp):
-            return self.compile_if_op(instr)
+        elif isinstance(instr, If):
+            return self.compile_if(instr)
+        elif isinstance(instr, Repeat):
+            return self.compile_repeat(instr)
+        elif isinstance(instr, WithInterruptsOff):
+            return self.compile_with_interrupts_off(instr)
         else:
             raise NotImplementedError
 
@@ -493,7 +495,7 @@ class Compiler(object):
         else:
             raise NotImplementedError(src.type)
 
-    def compile_if_op(self, instr):
+    def compile_if(self, instr):
         cls = {
             False: {
                 'c': BCC,
@@ -518,29 +520,27 @@ class Compiler(object):
         else:
             self.emitter.resolve_label(else_label)
 
-    def compile_block_op(self, instr):
-        if instr.opcode == 'repeat':
-            top_label = self.emitter.make_label()
-            self.compile_block(instr.block)
-            if instr.src is None:  # indicates 'repeat forever'
-                self.emitter.emit(JMP(Absolute(top_label)))
-            else:
-                cls = {
-                    False: {
-                        'c': BCC,
-                        'z': BNE,
-                    },
-                    True: {
-                        'c': BCS,
-                        'z': BEQ,
-                    },
-                }[instr.inverted].get(instr.src.name)
-                if cls is None:
-                    raise UnsupportedOpcodeError(instr)
-                self.emitter.emit(cls(Relative(top_label)))
-        elif instr.opcode == 'with-sei':
-            self.emitter.emit(SEI())
-            self.compile_block(instr.block)
-            self.emitter.emit(CLI())
+    def compile_repeat(self, instr):
+        top_label = self.emitter.make_label()
+        self.compile_block(instr.block)
+        if instr.src is None:  # indicates 'repeat forever'
+            self.emitter.emit(JMP(Absolute(top_label)))
         else:
-            raise NotImplementedError(opcode)
+            cls = {
+                False: {
+                    'c': BCC,
+                    'z': BNE,
+                },
+                True: {
+                    'c': BCS,
+                    'z': BEQ,
+                },
+            }[instr.inverted].get(instr.src.name)
+            if cls is None:
+                raise UnsupportedOpcodeError(instr)
+            self.emitter.emit(cls(Relative(top_label)))
+
+    def compile_with_interrupts_off(self, instr):
+        self.emitter.emit(SEI())
+        self.compile_block(instr.block)
+        self.emitter.emit(CLI())

@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, BlockOp, IfOp
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, WithInterruptsOff
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
     TableType, BufferType, PointerType, VectorType, RoutineType,
@@ -313,11 +313,13 @@ class Analyzer(object):
 
     def analyze_instr(self, instr, context):
         if isinstance(instr, SingleOp):
-            return self.analyze_single_op(instr, context)
-        elif isinstance(instr, BlockOp):
-            return self.analyze_block_op(instr, context)
-        elif isinstance(instr, IfOp):
-            return self.analyze_if_op(instr, context)
+            self.analyze_single_op(instr, context)
+        elif isinstance(instr, If):
+            self.analyze_if(instr, context)
+        elif isinstance(instr, Repeat):
+            self.analyze_repeat(instr, context)
+        elif isinstance(instr, WithInterruptsOff):
+            self.analyze_block(instr.block, context)
         else:
             raise NotImplementedError
 
@@ -547,7 +549,7 @@ class Analyzer(object):
         else:
             raise NotImplementedError(opcode)
 
-    def analyze_if_op(self, instr, context):
+    def analyze_if(self, instr, context):
         incoming_meaningful = set(context.each_meaningful())
 
         context1 = context.clone()
@@ -586,20 +588,15 @@ class Analyzer(object):
             context.set_touched(ref)
             context.set_unmeaningful(ref)
 
-    def analyze_block_op(self, instr, context):
-        if instr.opcode == 'repeat':
-            # it will always be executed at least once, so analyze it having
-            # been executed the first time.
-            self.analyze_block(instr.block, context)
-            if instr.src is not None:  # None indicates 'repeat forever'
-                context.assert_meaningful(instr.src)
+    def analyze_repeat(self, instr, context):
+        # it will always be executed at least once, so analyze it having
+        # been executed the first time.
+        self.analyze_block(instr.block, context)
+        if instr.src is not None:  # None indicates 'repeat forever'
+            context.assert_meaningful(instr.src)
 
-            # now analyze it having been executed a second time, with the context
-            # of it having already been executed.
-            self.analyze_block(instr.block, context)
-            if instr.src is not None:
-                context.assert_meaningful(instr.src)
-        elif instr.opcode == 'with-sei':
-            self.analyze_block(instr.block, context)
-        else:
-            raise NotImplementedError(opcode)
+        # now analyze it having been executed a second time, with the context
+        # of it having already been executed.
+        self.analyze_block(instr.block, context)
+        if instr.src is not None:
+            context.assert_meaningful(instr.src)
