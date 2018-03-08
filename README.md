@@ -38,6 +38,21 @@ based on common machine-language programming idioms, such as
 The reference implementation can analyze and compile SixtyPical programs to
 6502 machine code.
 
+Quick Start
+-----------
+
+If you have the [VICE][] emulator installed, from this directory, you can run
+
+    ./loadngo.sh c64 eg/c64/hearts.60p
+
+and it will compile the [hearts.60p source code](eg/c64/hearts.60p) and
+automatically start it in the `x64` emulator, and you should see:
+
+![Screenshot of result of running hearts.60p](https://raw.github.com/catseye/SixtyPical/master/images/hearts.png)
+
+You can try the `loadngo.sh` script on other sources in the `eg` directory
+tree.  There is an entire small game(-like program) in [demo-game.60p](eg/c64/demo-game.60p).
+
 Documentation
 -------------
 
@@ -108,3 +123,5 @@ is probably NP-complete.  But doing it adequately is probably not that hard.
 *   Automatic tail-call optimization (could be tricky, w/constraints?)
 *   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
+
+[VICE]: http://vice-emu.sourceforge.net/
