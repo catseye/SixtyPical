@@ -8,7 +8,7 @@ static analysis.
 
 "6502-assembly-like" means that it has similar restrictions as programming
 in 6502 assembly (e.g. the programmer must choose the registers that
-values will be stored in) and is concomittantly easy for a compiler to
+values will be stored in) and is concomitantly easy for a compiler to
 translate it to 6502 machine language code.
 
 "Advanced static analysis" includes _abstract interpretation_, where we
@@ -26,8 +26,8 @@ In practice, this means it catches things like
 *   you tried to write the address of something that was not a routine, to
     a jump vector
 
-and suchlike.  It also provides some convenient operations and abstractions
-based on common machine-language programming idioms, such as
+and suchlike.  It also provides some convenient operations based on
+machine-language programming idioms, such as
 
 *   copying values from one register to another (via a third register when
     there are no underlying instructions that directly support it); this
