@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# script that allows the binary output of sixtypical --basic-prelude --compile to be
+# script that allows the binary output of sixtypical --prelude=c64 --compile to be
 # disassembled by https://github.com/tcarmelveilleux/dcc6502
 
 import sys

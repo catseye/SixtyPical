@@ -25,9 +25,9 @@ There are five *primitive types* in SixtyPical:
 
 There are also three *type constructors*:
 
-*   T table[N] (N is a power of 2, 1 ≤ N ≤ 256; each entry holds a value
+*   T table[N] (N entries, 1 ≤ N ≤ 256; each entry holds a value
                 of type T, where T is `byte`, `word`, or `vector`)
-*   buffer[N] (N entries; each entry is a byte; N is a power of 2, ≤ 64K)
+*   buffer[N] (N entries; each entry is a byte; 1 ≤ N ≤ 65536)
 *   vector T (address of a value of type T; T must be a routine type)
 
 ### User-defined ###

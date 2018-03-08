@@ -1,19 +1,41 @@
 #!/bin/sh
 
-if [ "X$X64" = "X" ]; then
-    X64=x64
-fi
-SRC=$1
-if [ "X$1" = "X" ]; then
-    echo "Usage: ./loadngo.sh <source.60p>"
-    exit 1
-fi
-OUT=/tmp/a-out.prg
-bin/sixtypical --traceback --basic-prelude $SRC > $OUT || exit 1
-ls -la $OUT
-if [ -e vicerc ]; then
-    $X64 -config vicerc $OUT
+usage="Usage: loadngo.sh (c64|vic20) [--dry-run] <source.60p>"
+
+arch="$1"
+shift 1
+if [ "X$arch" = "Xc64" ]; then
+  prelude='c64'
+  if [ -e vicerc ]; then
+    emu="x64 -config vicerc"
+  else
+    emu="x64"
+  fi
+elif [ "X$arch" = "Xvic20" ]; then
+  prelude='vic20'
+  if [ -e vicerc ]; then
+    emu="xvic -config vicerc"
+  else
+    emu="xvic"
+  fi
 else
-    $X64 $OUT
+  echo $usage && exit 1
 fi
-rm -f $OUT
+
+if [ "X$1" = "X--dry-run" ]; then
+  shift 1
+  emu='echo'
+fi
+
+src="$1"
+if [ "X$src" = "X" ]; then
+  echo $usage && exit 1
+fi
+
+### do it ###
+
+out=/tmp/a-out.prg
+bin/sixtypical --traceback --prelude=$prelude $src > $out || exit 1
+ls -la $out
+$emu $out
+rm -f $out

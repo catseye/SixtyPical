@@ -1,7 +1,7 @@
 // Displays 256 hearts at the top of the Commodore 64's screen.
 
 // Define where the screen starts in memory:
-byte table screen @ 1024
+byte table[256] screen @ 1024
 
 routine main
   // These are the values that will be written to by this routine:

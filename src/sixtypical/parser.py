@@ -1,12 +1,12 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Defn, Routine, Block, Instr
+from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, If, Repeat, WithInterruptsOff
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
     RoutineType, VectorType, TableType, BufferType, PointerType,
     LocationRef, ConstantRef, IndirectRef, IndexedRef, AddressRef,
 )
-from sixtypical.scanner import Scanner
+from sixtypical.scanner import Scanner, SixtyPicalSyntaxError
 
 
 class SymEntry(object):
@@ -30,6 +30,9 @@ class Parser(object):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BIT, token))
         self.backpatch_instrs = []
 
+    def syntax_error(self, msg):
+        raise SixtyPicalSyntaxError(self.scanner.line_number, msg)
+
     def soft_lookup(self, name):
         if name in self.current_statics:
             return self.current_statics[name].model
@@ -40,7 +43,7 @@ class Parser(object):
     def lookup(self, name):
         model = self.soft_lookup(name)
         if model is None:
-            raise SyntaxError('Undefined symbol "%s"' % name)
+            self.syntax_error('Undefined symbol "{}"'.format(name))
         return model
 
     # --- grammar productions
@@ -56,7 +59,7 @@ class Parser(object):
             defn = self.defn()
             name = defn.name
             if name in self.symbols:
-                raise SyntaxError('Symbol "%s" already declared' % name)
+                self.syntax_error('Symbol "%s" already declared' % name)
             self.symbols[name] = SymEntry(defn, defn.location)
             defns.append(defn)
         while self.scanner.on('define', 'routine'):
@@ -68,7 +71,7 @@ class Parser(object):
                 routine = self.legacy_routine()
                 name = routine.name
             if name in self.symbols:
-                raise SyntaxError('Symbol "%s" already declared' % name)
+                self.syntax_error('Symbol "%s" already declared' % name)
             self.symbols[name] = SymEntry(routine, routine.location)
             routines.append(routine)
         self.scanner.check_type('EOF')
@@ -84,26 +87,26 @@ class Parser(object):
             if instr.opcode in ('call', 'goto'):
                 name = instr.location
                 if name not in self.symbols:
-                    raise SyntaxError('Undefined routine "%s"' % name)
+                    self.syntax_error('Undefined routine "%s"' % name)
                 if not isinstance(self.symbols[name].model.type, (RoutineType, VectorType)):
-                    raise SyntaxError('Illegal call of non-executable "%s"' % name)
+                    self.syntax_error('Illegal call of non-executable "%s"' % name)
                 instr.location = self.symbols[name].model
             if instr.opcode in ('copy',) and isinstance(instr.src, basestring):
                 name = instr.src
                 if name not in self.symbols:
-                    raise SyntaxError('Undefined routine "%s"' % name)
+                    self.syntax_error('Undefined routine "%s"' % name)
                 if not isinstance(self.symbols[name].model.type, (RoutineType, VectorType)):
-                    raise SyntaxError('Illegal copy of non-executable "%s"' % name)
+                    self.syntax_error('Illegal copy of non-executable "%s"' % name)
                 instr.src = self.symbols[name].model
 
-        return Program(defns=defns, routines=routines)
+        return Program(self.scanner.line_number, defns=defns, routines=routines)
 
     def typedef(self):
         self.scanner.expect('typedef')
         type_ = self.defn_type()
         name = self.defn_name()
         if name in self.typedefs:
-            raise SyntaxError('Type "%s" already declared' % name)
+            self.syntax_error('Type "%s" already declared' % name)
         self.typedefs[name] = type_
         return type_
 
@@ -127,11 +130,11 @@ class Parser(object):
             self.scanner.scan()
 
         if initial is not None and addr is not None:
-            raise SyntaxError("Definition cannot have both initial value and explicit address")
+            self.syntax_error("Definition cannot have both initial value and explicit address")
 
         location = LocationRef(type_, name)
 
-        return Defn(name=name, addr=addr, initial=initial, location=location)
+        return Defn(self.scanner.line_number, name=name, addr=addr, initial=initial, location=location)
 
     def defn_size(self):
         self.scanner.expect('[')
@@ -146,6 +149,8 @@ class Parser(object):
 
         if self.scanner.consume('table'):
             size = self.defn_size()
+            if size <= 0 or size > 256:
+                self.syntax_error("Table size must be > 0 and <= 256")
             type_ = TableType(type_, size)
 
         return type_
@@ -165,7 +170,7 @@ class Parser(object):
         elif self.scanner.consume('vector'):
             type_ = self.defn_type_term()
             if not isinstance(type_, RoutineType):
-                raise SyntaxError("Vectors can only be of a routine, not %r" % type_)
+                self.syntax_error("Vectors can only be of a routine, not %r" % type_)
             type_ = VectorType(type_)
         elif self.scanner.consume('routine'):
             (inputs, outputs, trashes) = self.constraints()
@@ -179,7 +184,7 @@ class Parser(object):
             type_name = self.scanner.token
             self.scanner.scan()
             if type_name not in self.typedefs:
-                raise SyntaxError("Undefined type '%s'" % type_name)
+                self.syntax_error("Undefined type '%s'" % type_name)
             type_ = self.typedefs[type_name]
 
         return type_
@@ -218,6 +223,7 @@ class Parser(object):
             addr = None
         location = LocationRef(type_, name)
         return Routine(
+            self.scanner.line_number,
             name=name, block=block, addr=addr,
             location=location
         )
@@ -225,7 +231,7 @@ class Parser(object):
     def routine(self, name):
         type_ = self.defn_type()
         if not isinstance(type_, RoutineType):
-            raise SyntaxError("Can only define a routine, not %r" % type_)
+            self.syntax_error("Can only define a routine, not %r" % type_)
         statics = []
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
@@ -242,6 +248,7 @@ class Parser(object):
             addr = None
         location = LocationRef(type_, name)
         return Routine(
+            self.scanner.line_number,
             name=name, block=block, addr=addr,
             location=location, statics=statics
         )
@@ -251,7 +258,7 @@ class Parser(object):
         for defn in statics:
             name = defn.name
             if name in self.symbols or name in self.current_statics:
-                raise SyntaxError('Symbol "%s" already declared' % name)
+                self.syntax_error('Symbol "%s" already declared' % name)
             c[name] = SymEntry(defn, defn.location)
         return c
 
@@ -315,20 +322,23 @@ class Parser(object):
             loc = self.locexpr()
             return AddressRef(loc)
         else:
-            loc = self.locexpr(forward=forward)
-            if not isinstance(loc, basestring):
-                index = None
-                if self.scanner.consume('+'):
-                    index = self.locexpr()
-                    loc = IndexedRef(loc, index)
-            return loc
+            return self.indexed_locexpr(forward=forward)
+
+    def indexed_locexpr(self, forward=False):
+        loc = self.locexpr(forward=forward)
+        if not isinstance(loc, basestring):
+            index = None
+            if self.scanner.consume('+'):
+                index = self.locexpr()
+                loc = IndexedRef(loc, index)
+        return loc
 
     def statics(self):
         defns = []
         while self.scanner.consume('static'):
             defn = self.defn()
             if defn.initial is None:
-                raise SyntaxError("Static definition {} must have initial value".format(defn))
+                self.syntax_error("Static definition {} must have initial value".format(defn))
             defns.append(defn)
         return defns
 
@@ -338,7 +348,7 @@ class Parser(object):
         while not self.scanner.on('}'):
             instrs.append(self.instr())
         self.scanner.expect('}')
-        return Block(instrs=instrs)
+        return Block(self.scanner.line_number, instrs=instrs)
 
     def instr(self):
         if self.scanner.consume('if'):
@@ -350,8 +360,7 @@ class Parser(object):
             block2 = None
             if self.scanner.consume('else'):
                 block2 = self.block()
-            return Instr(opcode='if', dest=None, src=src,
-                         block1=block1, block2=block2, inverted=inverted)
+            return If(self.scanner.line_number, src=src, block1=block1, block2=block2, inverted=inverted)
         elif self.scanner.consume('repeat'):
             inverted = False
             src = None
@@ -362,8 +371,7 @@ class Parser(object):
                 src = self.locexpr()
             else:
                 self.scanner.expect('forever')
-            return Instr(opcode='repeat', dest=None, src=src,
-                         block=block, inverted=inverted)
+            return Repeat(self.scanner.line_number, src=src, block=block, inverted=inverted)
         elif self.scanner.token in ("ld",):
             # the same as add, sub, cmp etc below, except supports an indlocexpr for the src
             opcode = self.scanner.token
@@ -371,35 +379,32 @@ class Parser(object):
             dest = self.locexpr()
             self.scanner.expect(',')
             src = self.indlocexpr()
-            return Instr(opcode=opcode, dest=dest, src=src, index=None)
+            return SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=src)
         elif self.scanner.token in ("add", "sub", "cmp", "and", "or", "xor"):
             opcode = self.scanner.token
             self.scanner.scan()
             dest = self.locexpr()
             self.scanner.expect(',')
-            src = self.locexpr()
-            index = None
-            if self.scanner.consume('+'):
-                index = self.locexpr()
-            return Instr(opcode=opcode, dest=dest, src=src, index=index)
+            src = self.indexed_locexpr()
+            return SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=src)
         elif self.scanner.token in ("st",):
             opcode = self.scanner.token
             self.scanner.scan()
             src = self.locexpr()
             self.scanner.expect(',')
             dest = self.indlocexpr()
-            return Instr(opcode=opcode, dest=dest, src=src, index=None)
+            return SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=src)
         elif self.scanner.token in ("shl", "shr", "inc", "dec"):
             opcode = self.scanner.token
             self.scanner.scan()
             dest = self.locexpr()
-            return Instr(opcode=opcode, dest=dest, src=None)
+            return SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=None)
         elif self.scanner.token in ("call", "goto"):
             opcode = self.scanner.token
             self.scanner.scan()
             name = self.scanner.token
             self.scanner.scan()
-            instr = Instr(opcode=opcode, location=name, dest=None, src=None)
+            instr = SingleOp(self.scanner.line_number, opcode=opcode, location=name, dest=None, src=None)
             self.backpatch_instrs.append(instr)
             return instr
         elif self.scanner.token in ("copy",):
@@ -408,16 +413,16 @@ class Parser(object):
             src = self.indlocexpr(forward=True)
             self.scanner.expect(',')
             dest = self.indlocexpr()
-            instr = Instr(opcode=opcode, dest=dest, src=src)
+            instr = SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=src)
             self.backpatch_instrs.append(instr)
             return instr
         elif self.scanner.consume("with"):
             self.scanner.expect("interrupts")
             self.scanner.expect("off")
             block = self.block()
-            return Instr(opcode='with-sei', dest=None, src=None, block=block)
+            return WithInterruptsOff(self.scanner.line_number, block=block)
         elif self.scanner.consume("trash"):
             dest = self.locexpr()
-            return Instr(opcode='trash', src=None, dest=dest)
+            return SingleOp(self.scanner.line_number, opcode='trash', src=None, dest=dest)
         else:
-            raise ValueError('bad opcode "%s"' % self.scanner.token)
+            self.syntax_error('bad opcode "%s"' % self.scanner.token)

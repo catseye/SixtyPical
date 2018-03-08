@@ -7,7 +7,7 @@ SixtyPical to 6502 machine code.
 [Falderal]:     http://catseye.tc/node/Falderal
 
     -> Functionality "Compile SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --basic-prelude --traceback %(test-body-file) >/tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
+    -> shell command "bin/sixtypical --prelude=c64 --traceback %(test-body-file) >/tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
 
     -> Tests for functionality "Compile SixtyPical program"
 

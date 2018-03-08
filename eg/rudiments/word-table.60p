@@ -1,5 +1,5 @@
 word one
-word table many
+word table[256] many
 
 routine main
   inputs one, many
