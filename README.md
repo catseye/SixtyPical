@@ -3,13 +3,26 @@ SixtyPical
 
 _Version 0.13.  Work-in-progress, everything is subject to change._
 
-SixtyPical is a very low-level programming language, similar to 6502 assembly,
-with static analysis through abstract interpretation.
+**SixtyPical** is a 6502-assembly-like programming language with advanced
+static analysis.
+
+"6502-assembly-like" means that it has similar restrictions as programming
+in 6502 assembly (e.g. the programmer must choose the registers that
+values will be stored in) and is concomittantly easy for a compiler to
+translate it to 6502 machine language code.
+
+"Advanced static analysis" includes _abstract interpretation_, where we
+go through the program step by step, tracking not just the changes that
+happen during a _specific_ execution of the program, but _sets_ of changes
+that could _possibly_ happen in any run of the program.  This lets us
+determine that certain things can never happen, which we can present as
+safety guarantees.
 
 In practice, this means it catches things like
 
 *   you forgot to clear carry before adding something to the accumulator
 *   a subroutine that you call trashes a register you thought was preserved
+*   you tried to read or write a byte beyond the end of a byte array
 *   you tried to write the address of something that was not a routine, to
     a jump vector
 
@@ -17,7 +30,8 @@ and suchlike.  It also provides some convenient operations and abstractions
 based on common machine-language programming idioms, such as
 
 *   copying values from one register to another (via a third register when
-    there are no underlying instructions that directly support it)
+    there are no underlying instructions that directly support it); this
+    includes 16-bit values, which are copied in two steps
 *   explicit tail calls
 *   indirect subroutine calls
 

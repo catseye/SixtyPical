@@ -19,6 +19,8 @@ History of SixtyPical
 *   Cleaned up the internals of the reference implementation (incl. the AST)
     and re-organized the example programs in the `eg` subdirectory.
 *   Most errors produced by the reference implementation now include a line number.
+*   Compiler supports multiple preludes, specifically both Commodore 64 and
+    Commodore VIC-20; the `loadngo.sh` script supports both architectures too.
 
 0.12
 ----
