@@ -92,7 +92,8 @@ class Context(object):
     the range of a word is 0..65535.
 
     A location is writeable if it was listed in the outputs and trashes
-    lists of this routine.
+    lists of this routine.  A location can also be temporarily marked
+    unwriteable in certain contexts, such as `for` loops.
     """
     def __init__(self, routines, routine, inputs, outputs, trashes):
         self.routines = routines    # Location -> AST node
@@ -237,6 +238,10 @@ class Context(object):
         self.assert_writeable(*refs)
         self.set_touched(*refs)
         self.set_meaningful(*refs)
+
+    def set_unwriteable(self, *refs):
+        for ref in refs:
+            self._writeable.remove(ref)
 
 
 class Analyzer(object):
@@ -617,8 +622,8 @@ class Analyzer(object):
     def analyze_for(self, instr, context):
         # TODO: find the range of the loop variable in context, make sure it fits
 
-        # TODO: set the loop variable as 'not writeable' in the context
-
-        self.analyze_block(instr.block, context)
+        subcontext = context.clone()
+        subcontext.set_unwriteable(instr.dest)
+        self.analyze_block(instr.block, subcontext)
 
         # TODO: at the end of the loop, we know the new range of the loop variable
