@@ -1659,6 +1659,56 @@ The body of `repeat forever` can be empty.
     | }
     = ok
 
+### for ###
+
+Basic "open-faced for" loop.  We'll start with the "upto" variant.
+
+In a "for" loop, we know the exact range the loop variable takes on.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x upto 15 {
+    |         ld a, tab + x
+    |     }
+    | }
+    = ok
+
+    | byte table[15] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x upto 15 {
+    |         ld a, tab + x
+    |     }
+    | }
+    ? RangeExceededError
+
+You cannot modify the loop variable in a "for" loop.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x upto 15 {
+    |         ld x, 0
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+If the range isn't known to be smaller than the final value, you can't go up to it.
+
+    | byte table[32] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 16
+    |     for x upto 15 {
+    |         ld a, tab + x
+    |     }
+    | }
+    ? RangeExceededError
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.

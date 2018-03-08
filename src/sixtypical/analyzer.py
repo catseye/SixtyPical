@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, WithInterruptsOff
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
     TableType, BufferType, PointerType, VectorType, RoutineType,
@@ -329,6 +329,8 @@ class Analyzer(object):
             self.analyze_if(instr, context)
         elif isinstance(instr, Repeat):
             self.analyze_repeat(instr, context)
+        elif isinstance(instr, For):
+            self.analyze_for(instr, context)
         elif isinstance(instr, WithInterruptsOff):
             self.analyze_block(instr.block, context)
         else:
@@ -611,3 +613,12 @@ class Analyzer(object):
         self.analyze_block(instr.block, context)
         if instr.src is not None:
             context.assert_meaningful(instr.src)
+
+    def analyze_for(self, instr, context):
+        # TODO: find the range of the loop variable in context, make sure it fits
+
+        # TODO: set the loop variable as 'not writeable' in the context
+
+        self.analyze_block(instr.block, context)
+
+        # TODO: at the end of the loop, we know the new range of the loop variable
