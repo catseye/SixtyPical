@@ -83,5 +83,10 @@ class Repeat(Instr):
     child_attrs = ('block',)
 
 
+class For(Instr):
+    value_attrs = ('dest', 'direction', 'final')
+    child_attrs = ('block',)
+
+
 class WithInterruptsOff(Instr):
     child_attrs = ('block',)

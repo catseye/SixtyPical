@@ -131,6 +131,22 @@ Repeat with not
     | }
     = ok
 
+Basic "open-faced for" loops, up and down.
+
+    | byte table[256] tab
+    | 
+    | routine foo trashes a, x, c, z, v {
+    |     ld x, 0
+    |     for x upto 15 {
+    |         ld a, tab + x
+    |     }
+    |     ld x, 15
+    |     for x downto 0 {
+    |         ld a, tab + x
+    |     }
+    | }
+    = ok
+
 User-defined memory addresses of different types.
 
     | byte byt

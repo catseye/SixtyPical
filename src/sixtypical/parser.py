@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, If, Repeat, WithInterruptsOff
+from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
     RoutineType, VectorType, TableType, BufferType, PointerType,
@@ -136,11 +136,15 @@ class Parser(object):
 
         return Defn(self.scanner.line_number, name=name, addr=addr, initial=initial, location=location)
 
+    def literal_int(self):
+         self.scanner.check_type('integer literal')
+         c = int(self.scanner.token)
+         self.scanner.scan()
+         return c
+
     def defn_size(self):
         self.scanner.expect('[')
-        self.scanner.check_type('integer literal')
-        size = int(self.scanner.token)
-        self.scanner.scan()
+        size = self.literal_int()
         self.scanner.expect(']')
         return size
 
@@ -372,6 +376,17 @@ class Parser(object):
             else:
                 self.scanner.expect('forever')
             return Repeat(self.scanner.line_number, src=src, block=block, inverted=inverted)
+        elif self.scanner.consume('for'):
+            dest = self.locexpr()
+            if self.scanner.consume('downto'):
+                direction = -1
+            elif self.scanner.consume('upto'):
+                direction = 1
+            else:
+                self.syntax_error('expected "upto" or "downto", found "%s"' % self.scanner.token)
+            final = self.literal_int()
+            block = self.block()
+            return For(self.scanner.line_number, dest=dest, direction=direction, final=final, block=block)
         elif self.scanner.token in ("ld",):
             # the same as add, sub, cmp etc below, except supports an indlocexpr for the src
             opcode = self.scanner.token
