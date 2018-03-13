@@ -1709,6 +1709,52 @@ If the range isn't known to be smaller than the final value, you can't go up to 
     | }
     ? RangeExceededError
 
+In a "for" loop (downto variant), we know the exact range the loop variable takes on.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 15
+    |     for x downto 0 {
+    |         ld a, tab + x
+    |     }
+    | }
+    = ok
+
+    | byte table[15] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 15
+    |     for x downto 0 {
+    |         ld a, tab + x
+    |     }
+    | }
+    ? RangeExceededError
+
+You cannot modify the loop variable in a "for" loop (downto variant).
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 15
+    |     for x downto 0 {
+    |         ld x, 0
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+If the range isn't known to be larger than the final value, you can't go down to it.
+
+    | byte table[32] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x downto 0 {
+    |         ld a, tab + x
+    |     }
+    | }
+    ? RangeExceededError
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
