@@ -101,6 +101,7 @@ class Context(object):
         self._touched = set()
         self._range = dict()
         self._writeable = set()
+        self._has_encountered_goto = False
 
         for ref in inputs:
             if ref.is_constant():
@@ -243,12 +244,17 @@ class Context(object):
         for ref in refs:
             self._writeable.remove(ref)
 
+    def set_encountered_goto(self):
+        self._has_encountered_goto = True
+
+    def has_encountered_goto(self):
+        return self._has_encountered_goto
+
 
 class Analyzer(object):
 
     def __init__(self, debug=False):
         self.current_routine = None
-        self.has_encountered_goto = False
         self.routines = {}
         self.debug = debug
 
@@ -281,7 +287,6 @@ class Analyzer(object):
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
         self.current_routine = routine
-        self.has_encountered_goto = False
         if routine.block is None:
             # it's an extern, that's fine
             return
@@ -312,7 +317,7 @@ class Analyzer(object):
             if ref in type_.outputs:
                 raise UnmeaningfulOutputError(routine, ref.name)
 
-        if not self.has_encountered_goto:
+        if not context.has_encountered_goto():
             for ref in type_.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
             for ref in context.each_touched():
@@ -323,8 +328,6 @@ class Analyzer(object):
     def analyze_block(self, block, context):
         assert isinstance(block, Block)
         for i in block.instrs:
-            if self.has_encountered_goto:
-                raise IllegalJumpError(i, i)
             self.analyze_instr(i, context)
 
     def analyze_instr(self, instr, context):
@@ -346,7 +349,10 @@ class Analyzer(object):
         opcode = instr.opcode
         dest = instr.dest
         src = instr.src
-    
+
+        if context.has_encountered_goto():
+            raise IllegalJumpError(instr, instr)
+
         if opcode == 'ld':
             if isinstance(src, IndexedRef):
                 if TableType.is_a_table_type(src.ref.type, TYPE_BYTE) and dest.type == TYPE_BYTE:
@@ -560,7 +566,7 @@ class Analyzer(object):
             self.assert_affected_within('outputs', type_, current_type)
             self.assert_affected_within('trashes', type_, current_type)
 
-            self.has_encountered_goto = True
+            context.set_encountered_goto()
         elif opcode == 'trash':
             context.set_touched(instr.dest)
             context.set_unmeaningful(instr.dest)
@@ -601,6 +607,8 @@ class Analyzer(object):
         context._touched = set(context1._touched) | set(context2._touched)
         context.set_meaningful(*list(outgoing_meaningful))
         context._writeable = set(context1._writeable) | set(context2._writeable)
+        if context1.has_encountered_goto() or context2.has_encountered_goto():
+            context.set_encountered_goto()
 
         for ref in outgoing_trashes:
             context.set_touched(ref)

@@ -5,6 +5,8 @@ History of SixtyPical
 ----
 
 *   `--origin` and `--output-format` options added to reference compiler.
+*   "Tail position" is now more correctly determined for the purposes of
+    insisting that `goto` only appears in it.
 *   Fixed bug when `--prelude` option was missing.
 *   Fixed bug when reporting line numbers of scanner-level syntax errors.
 
