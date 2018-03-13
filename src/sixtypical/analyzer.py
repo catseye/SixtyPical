@@ -208,12 +208,35 @@ class Context(object):
         (bottom, _) = self._range[ref]
         self._range[ref] = (bottom, top)
 
+    def set_bottom_of_range(self, ref, bottom):
+        self.assert_meaningful(ref)
+        (top, _) = self._range[ref]
+        self._range[ref] = (bottom, top)
+
+    def set_range(self, ref, bottom, top):
+        self.assert_meaningful(ref)
+        self._range[ref] = (bottom, top)
+
     def get_top_of_range(self, ref):
         if isinstance(ref, ConstantRef):
             return ref.value
         self.assert_meaningful(ref)
         (_, top) = self._range[ref]
         return top
+
+    def get_bottom_of_range(self, ref):
+        if isinstance(ref, ConstantRef):
+            return ref.value
+        self.assert_meaningful(ref)
+        (bottom, _) = self._range[ref]
+        return bottom
+
+    def get_range(self, ref):
+        if isinstance(ref, ConstantRef):
+            return (ref.value, ref.value)
+        self.assert_meaningful(ref)
+        (bottom, top) = self._range[ref]
+        return bottom, top
 
     def copy_range(self, src, dest):
         self.assert_meaningful(src)
@@ -628,10 +651,27 @@ class Analyzer(object):
             context.assert_meaningful(instr.src)
 
     def analyze_for(self, instr, context):
-        # TODO: find the range of the loop variable in context, make sure it fits
+        context.assert_meaningful(instr.dest)
+
+        bottom, top = context.get_range(instr.dest)
+
+        if instr.direction > 0:
+            if top >= instr.final:
+                raise RangeExceededError(self.routine, "Top of range of {} is {} but must be lower than {}".format(
+                    instr.dest, top, instr.final
+                ))
+            top = instr.final
+
+        if instr.direction < 0:
+            if bottom <= instr.final:
+                raise RangeExceededError(self.routine, "Bottom of range of {} is {} but must be higher than {}".format(
+                    instr.dest, bottom, instr.final
+                ))
+            bottom = instr.final
 
         subcontext = context.clone()
+        subcontext.set_range(instr.dest, bottom, top)
         subcontext.set_unwriteable(instr.dest)
         self.analyze_block(instr.block, subcontext)
 
-        # TODO: at the end of the loop, we know the new range of the loop variable
+        context.set_range(instr.dest, instr.final, instr.final)
