@@ -37,10 +37,20 @@ if __name__ == '__main__':
         help="Only parse and analyze the program; do not compile it."
     )
     argparser.add_argument(
+        "--origin", type=str, default='0xc000',
+        help="Location in memory where the `main` routine will be "
+        "located. Default: 0xc000."
+    )
+    argparser.add_argument(
+        "--output-format", type=str, default='prg',
+        help="Executable format to produce. Options are: prg (.PRG file "
+        "for Commodore 8-bit). Default: prg."
+    )
+    argparser.add_argument(
         "--prelude", type=str,
         help="Insert a snippet before the compiled program "
              "so that it can be LOADed and RUN on a certain platforms. "
-             "Also sets the origin. "
+             "Also sets the origin and format. "
              "Options are: c64 or vic20."
     )
     argparser.add_argument(
@@ -92,22 +102,31 @@ if __name__ == '__main__':
             sys.exit(0)
 
         fh = sys.stdout
-        start_addr = 0xc000
+
+        if options.origin.startswith('0x'):
+            start_addr = int(options.origin, 16)
+        else:
+            start_addr = int(options.origin, 10)
+
+        output_format = options.output_format
+
         prelude = []
         if options.prelude == 'c64':
+            output_format = 'prg'
             start_addr = 0x0801
             prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
                        0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
         elif options.prelude == 'vic20':
+            output_format = 'prg'
             start_addr = 0x1001
             prelude = [0x0b, 0x10, 0xc9, 0x07, 0x9e, 0x34,
                        0x31, 0x30, 0x39, 0x00, 0x00, 0x00]
-        else:
-            raise NotImplementedError
+        elif options.prelude:
+            raise NotImplementedError("Unknown prelude: {}".format(options.prelude))
 
-        # we are outputting a .PRG, so we output the load address first
-        # we don't use the Emitter for this b/c not part of addr space
-        if not options.debug:
+        # If we are outputting a .PRG, we output the load address first.
+        # We don't use the Emitter for this b/c not part of addr space.
+        if output_format == 'prg':
             fh.write(Word(start_addr).serialize(0))
 
         emitter = Emitter(start_addr)

@@ -1,6 +1,13 @@
 History of SixtyPical
 =====================
 
+0.14
+----
+
+*   `--origin` and `--output-format` options added to reference compiler.
+*   Fixed bug when `--prelude` option was missing.
+*   Fixed bug when reporting line numbers of scanner-level syntax errors.
+
 0.13
 ----
 
