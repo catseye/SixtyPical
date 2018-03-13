@@ -2231,6 +2231,22 @@ Calling the vector does indeed trash the things the vector says it does.
     | }
     ? IllegalJumpError
 
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |         goto bar
+    |     }
+    | }
+    = ok
+
 Can't `goto` a routine that outputs or trashes more than the current routine.
 
     | routine bar trashes x, y, z, n {
