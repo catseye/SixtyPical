@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-_Version 0.13.  Work-in-progress, everything is subject to change._
+_Version 0.14.  Work-in-progress, everything is subject to change._
 
 **SixtyPical** is a 6502-assembly-like programming language with advanced
 static analysis.
@@ -51,7 +51,7 @@ automatically start it in the `x64` emulator, and you should see:
 ![Screenshot of result of running hearts.60p](https://raw.github.com/catseye/SixtyPical/master/images/hearts.png)
 
 You can try the `loadngo.sh` script on other sources in the `eg` directory
-tree.  There is an entire small game(-like program) in [demo-game.60p](eg/c64/demo-game.60p).
+tree.  There is an entire small game(-like program) in [demo-game.60p](eg/c64/demo-game/demo-game.60p).
 
 Documentation
 -------------

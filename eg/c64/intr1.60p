@@ -12,16 +12,17 @@ byte vic_border @ 53280
 // a future version of SixtyPical.
 //
 
-vector cinv
+vector routine
   inputs vic_border
   outputs vic_border
   trashes z, n
-  @ 788
+    cinv @ 788
 
-vector save_cinv
+vector routine
   inputs vic_border
   outputs vic_border
   trashes z, n
+    save_cinv
 
 routine our_cinv
   inputs vic_border
