@@ -296,6 +296,20 @@ class ConstantRef(Ref):
     def low_byte(self):
         return self.value & 255
 
+    def pred(self):
+        assert self.type == TYPE_BYTE
+        value = self.value - 1
+        while value < 0:
+            value += 256
+        return ConstantRef(self.type, value)
+
+    def succ(self):
+        assert self.type == TYPE_BYTE
+        value = self.value + 1
+        while value > 255:
+            value -= 256
+        return ConstantRef(self.type, value)
+
 
 REG_A = LocationRef(TYPE_BYTE, 'a')
 REG_X = LocationRef(TYPE_BYTE, 'x')

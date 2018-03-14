@@ -556,9 +556,11 @@ class Compiler(object):
 
         if instr.direction > 0:
             self.compile_inc(instr, instr.dest)
+            final = instr.final.succ()
         elif instr.direction < 0:
             self.compile_dec(instr, instr.dest)
-        self.compile_cmp(instr, instr.final, instr.dest)
+            final = instr.final.pred()
+        self.compile_cmp(instr, final, instr.dest)
         self.emitter.emit(BNE(Relative(top_label)))
 
     def compile_with_interrupts_off(self, instr):
