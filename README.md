@@ -67,37 +67,6 @@ Documentation
 TODO
 ----
 
-### `for`-like loop
-
-We have range-checking in the abstract analysis now, but we lack practical ways
-to use it.
-
-We can `and` a value to ensure it is within a certain range.  However, in the 6502
-ISA the only register you can `and` is `A`, while loops are done with `X` or `Y`.
-Insisting this as the way to do it would result in a lot of `TXA`s and `TAX`s.
-
-What would be better is a dedicated `for` loop, like
-
-    for x in 0 to 15 {
-        // in here, we know the range of x is exactly 0-15 inclusive
-        // also in here: we are disallowed from changing x
-    }
-
-However, this is slightly restrictive, and hides a lot.
-
-However however, options which do not hide a lot, require a lot of looking at
-(to ensure: did you increment the loop variable? only once? etc.)
-
-The leading compromise so far is an "open-faced for loop", like
-
-    ld x, 15
-    for x downto 0 {
-        // same as above
-    }
-
-This makes it a little more explicit, at least, even though the loop
-decrementation is still hidden.
-
 ### Save registers on stack
 
 This preserves them, so that, semantically, they can be used later even though they
@@ -123,5 +92,6 @@ is probably NP-complete.  But doing it adequately is probably not that hard.
 *   Automatic tail-call optimization (could be tricky, w/constraints?)
 *   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
+*   Optimize `ld a, z` and `st a, z` to zero-page operations if address of z < 256.
 
 [VICE]: http://vice-emu.sourceforge.net/
