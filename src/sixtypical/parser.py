@@ -378,12 +378,13 @@ class Parser(object):
             return Repeat(self.scanner.line_number, src=src, block=block, inverted=inverted)
         elif self.scanner.consume('for'):
             dest = self.locexpr()
-            if self.scanner.consume('downto'):
+            if self.scanner.consume('down'):
                 direction = -1
-            elif self.scanner.consume('upto'):
+            elif self.scanner.consume('up'):
                 direction = 1
             else:
-                self.syntax_error('expected "upto" or "downto", found "%s"' % self.scanner.token)
+                self.syntax_error('expected "up" or "down", found "%s"' % self.scanner.token)
+            self.scanner.expect('to')
             final = self.literal_int()
             block = self.block()
             return For(self.scanner.line_number, dest=dest, direction=direction, final=final, block=block)

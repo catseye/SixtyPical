@@ -137,11 +137,11 @@ Basic "open-faced for" loops, up and down.
     | 
     | routine foo trashes a, x, c, z, v {
     |     ld x, 0
-    |     for x upto 15 {
+    |     for x up to 15 {
     |         ld a, tab + x
     |     }
     |     ld x, 15
-    |     for x downto 0 {
+    |     for x down to 0 {
     |         ld a, tab + x
     |     }
     | }

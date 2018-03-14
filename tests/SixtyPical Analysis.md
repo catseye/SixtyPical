@@ -1669,7 +1669,7 @@ In a "for" loop, we know the exact range the loop variable takes on.
     | 
     | define foo routine inputs tab trashes a, x, c, z, v, n {
     |     ld x, 0
-    |     for x upto 15 {
+    |     for x up to 15 {
     |         ld a, tab + x
     |     }
     | }
@@ -1679,7 +1679,7 @@ In a "for" loop, we know the exact range the loop variable takes on.
     | 
     | define foo routine inputs tab trashes a, x, c, z, v, n {
     |     ld x, 0
-    |     for x upto 15 {
+    |     for x up to 15 {
     |         ld a, tab + x
     |     }
     | }
@@ -1691,7 +1691,7 @@ You cannot modify the loop variable in a "for" loop.
     | 
     | define foo routine inputs tab trashes a, x, c, z, v, n {
     |     ld x, 0
-    |     for x upto 15 {
+    |     for x up to 15 {
     |         ld x, 0
     |     }
     | }
@@ -1703,19 +1703,19 @@ If the range isn't known to be smaller than the final value, you can't go up to 
     | 
     | define foo routine inputs tab trashes a, x, c, z, v, n {
     |     ld x, 16
-    |     for x upto 15 {
+    |     for x up to 15 {
     |         ld a, tab + x
     |     }
     | }
     ? RangeExceededError
 
-In a "for" loop (downto variant), we know the exact range the loop variable takes on.
+In a "for" loop (downward-counting variant), we know the exact range the loop variable takes on.
 
     | byte table[16] tab
     | 
     | define foo routine inputs tab trashes a, x, c, z, v, n {
     |     ld x, 15
-    |     for x downto 0 {
+    |     for x down to 0 {
     |         ld a, tab + x
     |     }
     | }
@@ -1725,19 +1725,19 @@ In a "for" loop (downto variant), we know the exact range the loop variable take
     | 
     | define foo routine inputs tab trashes a, x, c, z, v, n {
     |     ld x, 15
-    |     for x downto 0 {
+    |     for x down to 0 {
     |         ld a, tab + x
     |     }
     | }
     ? RangeExceededError
 
-You cannot modify the loop variable in a "for" loop (downto variant).
+You cannot modify the loop variable in a "for" loop (downward variant).
 
     | byte table[16] tab
     | 
     | define foo routine inputs tab trashes a, x, c, z, v, n {
     |     ld x, 15
-    |     for x downto 0 {
+    |     for x down to 0 {
     |         ld x, 0
     |     }
     | }
@@ -1749,7 +1749,7 @@ If the range isn't known to be larger than the final value, you can't go down to
     | 
     | define foo routine inputs tab trashes a, x, c, z, v, n {
     |     ld x, 0
-    |     for x downto 0 {
+    |     for x down to 0 {
     |         ld a, tab + x
     |     }
     | }
