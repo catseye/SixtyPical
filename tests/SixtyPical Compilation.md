@@ -351,6 +351,46 @@ The body of `repeat forever` can be empty.
     = $080D   JMP $080D
     = $0810   RTS
 
+Compiling `for ... up to`.
+
+    | byte table[256] tab
+    | 
+    | define main routine
+    |   inputs tab
+    |   trashes a, x, c, z, v, n
+    | {
+    |     ld x, 0
+    |     for x up to 15 {
+    |         ld a, tab + x
+    |     }
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA $0818,X
+    = $0812   INX
+    = $0813   CPX #$10
+    = $0815   BNE $080F
+    = $0817   RTS
+
+Compiling `for ... down to`.
+
+    | byte table[256] tab
+    | 
+    | define main routine
+    |   inputs tab
+    |   trashes a, x, c, z, v, n
+    | {
+    |     ld x, 15
+    |     for x down to 0 {
+    |         ld a, tab + x
+    |     }
+    | }
+    = $080D   LDX #$0F
+    = $080F   LDA $0818,X
+    = $0812   DEX
+    = $0813   CPX #$FF
+    = $0815   BNE $080F
+    = $0817   RTS
+
 Indexed access.
 
     | byte one

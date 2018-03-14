@@ -654,20 +654,21 @@ class Analyzer(object):
         context.assert_meaningful(instr.dest)
 
         bottom, top = context.get_range(instr.dest)
+        final = instr.final.value
 
         if instr.direction > 0:
-            if top >= instr.final:
-                raise RangeExceededError(self.routine, "Top of range of {} is {} but must be lower than {}".format(
-                    instr.dest, top, instr.final
+            if top >= final:
+                raise RangeExceededError(instr, "Top of range of {} is {} but must be lower than {}".format(
+                    instr.dest, top, final
                 ))
-            top = instr.final
+            top = final
 
         if instr.direction < 0:
-            if bottom <= instr.final:
-                raise RangeExceededError(self.routine, "Bottom of range of {} is {} but must be higher than {}".format(
-                    instr.dest, bottom, instr.final
+            if bottom <= final:
+                raise RangeExceededError(instr, "Bottom of range of {} is {} but must be higher than {}".format(
+                    instr.dest, bottom, final
                 ))
-            bottom = instr.final
+            bottom = final
 
         subcontext = context.clone()
         subcontext.set_range(instr.dest, bottom, top)
