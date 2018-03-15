@@ -1,0 +1,54 @@
+// petulant.60p - The PETulant Cursor, a "display hack" for the Commodore 64
+// Originally written by Chris Pressey sometime in the late 1980's
+// Rewritten in P65 assembly and released March 2008
+// Rewritten in SixtyPical in March 2018
+// This work is part of the public domain.
+
+// ----- Types -----
+
+typedef routine
+  inputs border, blnon, color, background
+  outputs border
+  trashes a, z, n
+    irq_handler
+
+// ----- Addresses -----
+
+vector irq_handler cinv @ $314  // hw irq interrupt, 60x per second
+
+byte blnon            @ $cf     // was last cursor blink on or off?
+byte color            @ $286    // current foreground colour for text
+
+byte border           @ $d020   // colour of border of the screen
+byte background       @ $d021   // colour of background of the screen
+
+// ----- Variables -----
+
+vector irq_handler save_cinv
+
+// ----- Interrupt Handler -----
+
+define our_cinv irq_handler
+{
+    ld a, blnon
+    if not z {
+        ld a, color
+    } else {
+        ld a, background
+    }
+    st a, border
+    goto save_cinv
+}
+
+// ----- Main Program -----
+
+define main routine
+  inputs cinv
+  outputs cinv, save_cinv
+  trashes a, n, z
+{
+    with interrupts off {
+        copy cinv, save_cinv
+        copy our_cinv, cinv
+    }
+}

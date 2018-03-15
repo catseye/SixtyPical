@@ -1,0 +1,291 @@
+; ribos.p65 - p65 assembly source for RIBOS:
+; Demonstration of the VIC-II raster interrupt on the Commodore 64:
+; Alter the border colour in the middle part of the screen only.
+; Original (hardware IRQ vector) version.
+; By Chris Pressey, Cat's Eye Technologies.
+; This work has been placed in the public domain.
+
+; ----- BEGIN ribos.p65 -----
+
+; This source file is intented to be assembled to produce a PRG file
+; which can be loaded into the C64's memory from a peripheral device.
+; All C64 PRG files start with a 16-bit word which represents the
+; location in memory to which they will be loaded.  We can provide this
+; using p65 directives as follows:
+
+.org 0
+.word $C000
+
+; Now the actual assembly starts (at memory location 49152.)
+
+.org $C000
+
+; ----- Constants -----
+
+; We first define some symbolic constants to add some clarity to our
+; references to hardware registers and other locations in memory.
+; Descriptions of the registers follow those given in the 'Commodore 64
+; Programmer's Reference Guide'.
+
+; The CIA #1 chip.
+
+.alias cia1             $dc00        ; pp. 328-331
+.alias intr_ctrl        cia1+$d      ; "CIA Interrupt Control Register
+                                     ; (Read IRQs/Write Mask)"
+
+; The VIC-II chip.
+
+.alias vic              $d000        ; Appendix G:
+.alias vic_ctrl         vic+$11      ; "Y SCROLL MODE"
+.alias vic_raster       vic+$12      ; "RASTER"
+.alias vic_intr         vic+$19      ; "Interrupt Request's" (sic)
+.alias vic_intr_enable  vic+$1a      ; "Interrupt Request MASKS"
+.alias border_color     vic+$20      ; "BORDER COLOR"
+
+; The address at which the IRQ vector is stored.
+
+.alias irq_vec          $fffe        ; p. 411
+
+; The zero-page address of the 6510's I/O register.
+
+.alias io_ctrl          $01          ; p. 310, "6510 On-Chip 8-Bit
+                                     ; Input/Output Register"
+
+; KERNAL and BASIC ROMs, p. 320
+
+.alias kernal           $e000
+.alias basic            $a000
+
+; Zero-page addresses that the memory-copy routine uses for
+; scratch space: "FREKZP", p. 316
+
+.alias zp               $fb
+.alias stop_at          $fd
+
+; ----- Main Routine -----
+
+; This routine is intended to be called by the user (by, e.g., SYS 49152).
+; It installs the raster interrupt handler and returns to the caller.
+
+; Key to installing the interrupt handler is altering the IRQ service
+; vector.  However, under normal circumstances, the address at which
+; this vector is stored ($ffffe) maps to the C64's KERNAL ROM, which
+; cannot be changed.  So, in order to alter the vector, we must enable
+; the RAM that underlies the ROM (i.e. the RAM that maps to the same
+; address space as the KERNAL ROM.)  If we were writing a bare-metal
+; game, and didn't need any KERNAL routines or support, we could just
+; switch it off.  But for this demo, we'd like the raster effect to
+; occur in the background as we use BASIC and whatnot, so we need to
+; continue to have access to the KERNAL ROM.  So what we do is copy the
+; KERNAL ROM to the underlying RAM, then switch the RAM for the ROM.
+
+                jsr copy_rom_to_ram
+
+; Interrupts can occur at any time.  If one were to occur while we were
+; changing the interrupt vector - for example, after we have stored the
+; low byte of the address but before we have stored the high byte -
+; unpredictable behaviour would result.  To be safe, we disable interrupts
+; with the 'sei' instruction before changing anything.
+
+                sei
+
+; We obtain the address of the current IRQ service routine and save it
+; in the variable 'saved_irq_vec'.
+
+                lda irq_vec   ; save low byte
+                sta saved_irq_vec
+                lda irq_vec+1 ; save high byte
+                sta saved_irq_vec+1
+
+; We then store the address of our IRQ service routine in its place.
+
+                lda #<our_service_routine
+                sta irq_vec
+                lda #>our_service_routine
+                sta irq_vec+1
+
+; Now we must specify the raster line at which the interrupt gets called.
+
+                lda scanline
+                sta vic_raster
+
+; Note that the position of the raster line is given by a 9-bit value,
+; and we can't just assume that, because the raster line we want is less
+; than 256, that the high bit will automatically be set to zero, because
+; it won't.  We have to explicitly set it high or low.  It is found as
+; the most significant bit of a VIC-II control register which has many
+; different functions, so we must be careful to preserve all other bits.
+
+                lda vic_ctrl
+                and #%01111111
+                sta vic_ctrl
+
+; Then we enable the raster interrupt on the VIC-II chip.
+
+                lda #$01
+                sta vic_intr_enable
+
+; The article at everything2 suggests that we read the interrupt control
+; port of the CIA #1 chip, presumably to acknowledge any pending IRQ and
+; avoid the problem of having some sort of lockup due to a spurious IRQ.
+; I've tested leaving this out, and the interrupt handler still seems get
+; installed alright.  But, I haven't tested it very demandingly, and it's
+; likely to open up a race condition that I just haven't encountered (much
+; like if we were to forget to execute the 'sei' instruction, above.)
+; So, to play it safe, we read the port here.
+
+                lda intr_ctrl
+
+; We re-enable interrupts to resume normal operation - normal, that is,
+; except that our raster interrupt service routine will be called the next
+; time the raster reaches the line stored in the 'vic_raster' register of
+; the VIC-II chip.
+
+                cli
+
+; Finally, we return to the caller.
+
+                rts
+
+; ----- Raster Interrupt Service Routine ------
+
+our_service_routine:
+
+; This is an interrupt service routine (a.k.a. interrupt handler,) and as
+; such, it can be called from anywhere.  Since the code that was interrupted
+; likely cares deeply about the values in its registers, we must be careful
+; to save any that we change, and restore them before switching back to it.
+; In this case, we only affect the processor flags and the accumulator, so
+; we push them onto the stack.
+
+                php
+                pha
+
+; The interrupt service routine on the Commodore 64 is very general-purpose,
+; and may be invoked by any number of different kinds of interrupts.  We,
+; however, only care about a certain kind - the VIC-II's raster interrupt.
+; We check to see if the current interrupt was caused by the raster by
+; looking at the low bit of the VIC-II interrupt register.  Note that we
+; immediately store back the value found there before testing it.  This is
+; to acknowledge to the VIC-II chip that we got the interrupt.  If we don't
+; do this, it won't send us another interrupt next time.
+
+                lda vic_intr
+                sta vic_intr
+                and #$01
+                cmp #$01
+                beq we_handle_it
+
+; If the interrupt was not caused by the raster, we restore the values
+; of the registers from the stack, and continue execution as normal with
+; the existing interrupt service routine.
+
+                pla
+                plp
+                jmp (saved_irq_vec)
+
+we_handle_it:
+
+; If we got here, the interrupt _was_ caused by the raster.  So, we get
+; to do our thing.  To keep things simple, we just invert the border colour.
+
+                lda border_color
+                eor #$ff
+                sta border_color
+
+; Now, we make the interrupt trigger on a different scan line so that we'll
+; invert the colour back to normal lower down on the screen.
+
+                lda scanline
+                eor #$ff
+                sta scanline
+                sta vic_raster
+
+; Restore the registers that we saved at the beginning of this routine.
+
+                pla
+                plp
+
+; Return to normal operation.  Note that we must issue an 'rti' instruction
+; here, not 'rts', as we are returning from an interrupt.
+
+		rti
+
+
+; ----- Utility Routine: copy KERNAL ROM to underlying RAM -----
+
+copy_rom_to_ram:
+
+; This is somewhat more involved than I let on above.  The memory mapping
+; facilities of the C64 are a bit convoluted.  The Programmer's Reference
+; Guide states on page 261 that the way to map out the KERNAL ROM, and
+; map in the RAM underlying it, is to set the HIRAM signal on the 6510's
+; I/O line (which is memory-mapped to address $0001) to 0.  This is true.
+; However, it is not the whole story: setting HIRAM to 0 *also* maps out
+; BASIC ROM and maps in the RAM underlying *it*.  I suppose this makes
+; sense from a design point of view; after all, BASIC uses the KERNAL, so
+; there wouldn't be much sense leaving it mapped when the KERNAL is mapped
+; out.  Anyway, what this means for us is that we must copy both of these
+; ROMs to their respective underlying RAMs if we want to survive returning
+; to BASIC.
+
+                ldx #>basic
+                ldy #$c0
+                jsr copy_block
+
+                ldx #>kernal
+                ldy #$00
+                jsr copy_block
+
+; To actually substitute the RAM for the ROM in the memory map, we
+; set HIRAM (the second least significant bit) to 0.
+
+                lda io_ctrl
+                and #%11111101
+                sta io_ctrl
+
+                rts
+
+
+; ----- Utility Routine: copy a ROM memory block to the underlying RAM -----
+
+; Input: x register = high byte of start address (low byte = #$00)
+;        y register = high byte of end address (stops at address $yy00 - 1)
+
+; This subroutine is a fairly straightforward memory copy loop.  A somewhat
+; counter-intuitive feature is that we immediately store each byte in the
+; same location where we just read it from.  We can do this because, even
+; when the KERNAL or BASIC ROM is mapped in, writes to those locations still
+; go to the underlying RAM.
+
+copy_block:     stx zp+1
+                sty stop_at
+                ldy #$00
+                sty zp
+
+copy_loop:      lda (zp), y
+                sta (zp), y
+                iny
+                cpy #$00
+                bne copy_loop
+                ldx zp+1
+                inx
+                stx zp+1
+                cpx stop_at
+                bne copy_loop
+                rts
+
+; ----- Variables -----
+
+; 'scanline' stores the raster line that we want the interrupt to trigger
+; on; it gets loaded into the VIC-II's 'vic_raster' register.  
+
+scanline: .byte %01010101
+
+; We also reserve space to store the address of the interrupt service
+; routine that we are replacing in the IRQ vector, so that we can transfer
+; control to it at the end of our routine.
+
+.space saved_irq_vec 2
+
+; ----- END of ribos.p65 -----

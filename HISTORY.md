@@ -11,6 +11,8 @@ History of SixtyPical
     insisting that `goto` only appears in it.
 *   Fixed bug when `--prelude` option was missing.
 *   Fixed bug when reporting line numbers of scanner-level syntax errors.
+*   Translated the small demo project Ribos and "The PETulant Cursor"
+    to SixtyPical and added them to the `eg/c64/` section of the repo.
 
 0.13
 ----

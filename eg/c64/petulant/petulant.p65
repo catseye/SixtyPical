@@ -1,0 +1,52 @@
+; petulant.p65 - The PETulant Cursor, a "display hack" for the Commodore 64
+; Originally written by Chris Pressey sometime in the late 1980's
+; Rewritten in P65 assembly and released March 2008
+; This work is part of the public domain.
+
+; ----- BEGIN petulant.p65 -----
+
+; PRG file header
+
+.org 0
+.word $02a7
+.org $02a7
+
+; ----- Constants -----
+
+.alias cinv             $0314   ; hw irq interrupt, 60x per second
+.alias blnon            $cf     ; was last cursor blink on or off?
+.alias color            $286    ; current foreground colour for text
+
+.alias vic              $d000   ; base address of VIC-II chip
+.alias border           vic+$20 ; colour of border of the screen
+.alias background       vic+$21 ; colour of background of the screen
+
+; ----- Start of Program -----
+
+start:          sei             ; disable interrupts
+                lda cinv        ; save low byte of existing handler
+                sta savecinv
+                lda cinv+1      ; save high byte
+                sta savecinv+1
+
+                lda #<newcinv   ; install new interrupt handler
+                sta cinv
+                lda #>newcinv
+                sta cinv+1
+
+                cli             ; re-enable interrupts
+                rts
+
+newcinv:        lda blnon       ; is the cursor on?
+                beq cursor_off
+cursor_on:      lda color       ; yes, get its colour
+                jmp egress
+cursor_off:     lda background  ; no, get the background colour
+egress:         sta border      ; colour the border
+                jmp (savecinv)  ; continue pre-existing interrupt handler
+
+; ----- Uninitialized Data -----
+
+.space savecinv 2
+
+; ----- END of petulant.p65 -----
