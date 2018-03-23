@@ -531,6 +531,22 @@ The sense of the test can be inverted with `not`.
         }
     } until not z
 
+### for ###
+
+    for <dest-memory-location> (up|down) to <literal-byte> {
+        <block>
+    }
+
+Executes the block repeatedly, incrementing or decrementing the
+dest-memory-location at the end of the block, until the value of
+the dest-memory-location has gone past the literal-byte.
+
+The block is always executed as least once.
+
+*   It is illegal if any memory location is uninitialized at the exit of
+    the loop when that memory location is initialized at the start of
+    the loop.
+
 Grammar
 -------
 

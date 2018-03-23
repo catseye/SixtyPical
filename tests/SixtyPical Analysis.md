@@ -1755,6 +1755,40 @@ If the range isn't known to be larger than the final value, you can't go down to
     | }
     ? RangeExceededError
 
+You can initialize something inside the loop that was uninitialized outside.
+
+    | routine main
+    |   outputs x, y, n, z
+    |   trashes c
+    | {
+    |     ld x, 0
+    |     for x up to 15 {
+    |         ld y, 15
+    |     }
+    | }
+    = ok
+
+But you can't UNinitialize something at the end of the loop that you need
+initialized at the start of that loop.
+
+    | routine foo
+    |   trashes y
+    | {
+    | }
+    | 
+    | routine main
+    |   outputs x, y, n, z
+    |   trashes c
+    | {
+    |     ld x, 0
+    |     ld y, 15
+    |     for x up to 15 {
+    |         inc y
+    |         call foo
+    |     }
+    | }
+    ? UnmeaningfulReadError: y
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
