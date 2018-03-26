@@ -6,13 +6,13 @@ History of SixtyPical
 
 *   Added the so-called "open-faced `for` loop", which spans a loop
     variable over a range, the end of which is fixed.
-*   `--origin` and `--output-format` options added to reference compiler.
 *   "Tail position" is now more correctly determined for the purposes of
     insisting that `goto` only appears in it.
+*   New `--origin` and `--output-format` options added to the compiler.
 *   Fixed bug when `--prelude` option was missing.
 *   Fixed bug when reporting line numbers of scanner-level syntax errors.
-*   Translated the small demo project Ribos and "The PETulant Cursor"
-    to SixtyPical and added them to the `eg/c64/` section of the repo.
+*   Translated the small demo projects Ribos and "The PETulant Cursor" to
+    SixtyPical, and added them to the `eg/c64/` section of the repo.
 
 0.13
 ----

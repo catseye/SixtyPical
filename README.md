@@ -3,10 +3,10 @@ SixtyPical
 
 _Version 0.14.  Work-in-progress, everything is subject to change._
 
-**SixtyPical** is a 6502-assembly-like programming language with advanced
+**SixtyPical** is a 6502-like programming language with advanced
 static analysis.
 
-"6502-assembly-like" means that it has similar restrictions as programming
+"6502-like" means that it has similar restrictions as programming
 in 6502 assembly (e.g. the programmer must choose the registers that
 values will be stored in) and is concomitantly easy for a compiler to
 translate it to 6502 machine language code.
@@ -15,8 +15,8 @@ translate it to 6502 machine language code.
 go through the program step by step, tracking not just the changes that
 happen during a _specific_ execution of the program, but _sets_ of changes
 that could _possibly_ happen in any run of the program.  This lets us
-determine that certain things can never happen, which we can present as
-safety guarantees.
+determine that certain things can never happen, which we can then formulate
+as safety checks.
 
 In practice, this means it catches things like
 
@@ -51,7 +51,8 @@ automatically start it in the `x64` emulator, and you should see:
 ![Screenshot of result of running hearts.60p](https://raw.github.com/catseye/SixtyPical/master/images/hearts.png)
 
 You can try the `loadngo.sh` script on other sources in the `eg` directory
-tree.  There is an entire small game(-like program) in [demo-game.60p](eg/c64/demo-game/demo-game.60p).
+tree, which contains more extensive examples, including an entire
+game(-like program); see [eg/README.md](eg/README.md) for a listing.
 
 Documentation
 -------------
