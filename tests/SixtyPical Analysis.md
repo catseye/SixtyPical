@@ -1685,6 +1685,17 @@ In a "for" loop, we know the exact range the loop variable takes on.
     | }
     ? RangeExceededError
 
+You need to initialize the loop variable before the loop.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     for x up to 15 {
+    |         ld a, 0
+    |     }
+    | }
+    ? UnmeaningfulReadError
+
 You cannot modify the loop variable in a "for" loop.
 
     | byte table[16] tab
@@ -1730,6 +1741,17 @@ In a "for" loop (downward-counting variant), we know the exact range the loop va
     |     }
     | }
     ? RangeExceededError
+
+You need to initialize the loop variable before a "for" loop  (downward variant).
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     for x down to 15 {
+    |         ld a, 0
+    |     }
+    | }
+    ? UnmeaningfulReadError
 
 You cannot modify the loop variable in a "for" loop (downward variant).
 

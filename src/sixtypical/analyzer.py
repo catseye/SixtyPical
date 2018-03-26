@@ -264,8 +264,14 @@ class Context(object):
         self.set_meaningful(*refs)
 
     def set_unwriteable(self, *refs):
+        """Intended to be used for implementing analyzing `for`."""
         for ref in refs:
             self._writeable.remove(ref)
+
+    def set_writeable(self, *refs):
+        """Intended to be used for implementing analyzing `for`."""
+        for ref in refs:
+            self._writeable.add(ref)
 
     def set_encountered_goto(self):
         self._has_encountered_goto = True
@@ -670,9 +676,18 @@ class Analyzer(object):
                 ))
             bottom = final
 
-        subcontext = context.clone()
-        subcontext.set_range(instr.dest, bottom, top)
-        subcontext.set_unwriteable(instr.dest)
-        self.analyze_block(instr.block, subcontext)
+        # inside the block, the loop variable cannot be modified, and we know its range.
+        context.set_range(instr.dest, bottom, top)
+        context.set_unwriteable(instr.dest)
 
+        # it will always be executed at least once, so analyze it having
+        # been executed the first time.
+        self.analyze_block(instr.block, context)
+
+        # now analyze it having been executed a second time, with the context
+        # of it having already been executed.
+        self.analyze_block(instr.block, context)
+
+        # after it is executed, we know the range of the loop variable.
         context.set_range(instr.dest, instr.final, instr.final)
+        context.set_writeable(instr.dest)
