@@ -84,6 +84,7 @@ is probably NP-complete.  But doing it adequately is probably not that hard.
 *   `const`s that can be used in defining the size of tables, etc.
 *   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
 *   Related: can we simply view a (small) part of a buffer as a byte table?  If not, why not?
+*   Related: add constant to buffer to get new buffer.  (Or to table, but... well, maybe.)
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
     (Associate each pointer with the buffer it points into.)
 *   `static` pointers -- currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.
@@ -94,5 +95,6 @@ is probably NP-complete.  But doing it adequately is probably not that hard.
 *   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
 *   Optimize `ld a, z` and `st a, z` to zero-page operations if address of z < 256.
+*   Include files?
 
 [VICE]: http://vice-emu.sourceforge.net/

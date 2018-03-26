@@ -1,0 +1,16 @@
+// Displays 256 hearts at the top of the VIC-20's screen.
+
+// Define where the screen starts in memory:
+byte table[256] screen @ 7680
+
+routine main
+  // These are the values that will be written to by this routine:
+  trashes a, x, z, n, screen
+{
+    ld x, 0
+    ld a, 83    // 83 = screen code for heart
+    repeat {
+        st a, screen + x
+        inc x
+    } until z   // this flag will be set when x wraps around from 255 to 0
+}
