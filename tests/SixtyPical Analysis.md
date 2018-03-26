@@ -1708,6 +1708,52 @@ You cannot modify the loop variable in a "for" loop.
     | }
     ? ForbiddenWriteError
 
+This includes nesting a loop on the same variable.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x up to 8 {
+    |         for x up to 15 {
+    |             ld a, 0
+    |         }
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+But nesting with two different variables is okay.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, y, c, z, v, n {
+    |     ld x, 0
+    |     for x up to 8 {
+    |         ld a, x
+    |         ld y, a
+    |         for y up to 15 {
+    |             ld a, 0
+    |         }
+    |     }
+    | }
+    = ok
+
+Inside the inner loop, the outer variable is still not writeable.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, y, c, z, v, n {
+    |     ld x, 0
+    |     for x up to 8 {
+    |         ld a, x
+    |         ld y, a
+    |         for y up to 15 {
+    |             ld x, 0
+    |         }
+    |     }
+    | }
+    ? ForbiddenWriteError
+
 If the range isn't known to be smaller than the final value, you can't go up to it.
 
     | byte table[32] tab

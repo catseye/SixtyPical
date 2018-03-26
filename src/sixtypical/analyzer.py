@@ -658,6 +658,7 @@ class Analyzer(object):
 
     def analyze_for(self, instr, context):
         context.assert_meaningful(instr.dest)
+        context.assert_writeable(instr.dest)
 
         bottom, top = context.get_range(instr.dest)
         final = instr.final.value
