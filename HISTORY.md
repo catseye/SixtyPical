@@ -5,7 +5,7 @@ History of SixtyPical
 ----
 
 *   Added the so-called "open-faced `for` loop", which spans a loop
-    variable over a range, the end of which is fixed.
+    variable over a finite range, the end of which is fixed.
 *   "Tail position" is now more correctly determined for the purposes of
     insisting that `goto` only appears in it.
 *   New `--origin` and `--output-format` options added to the compiler.
@@ -13,6 +13,7 @@ History of SixtyPical
 *   Fixed bug when reporting line numbers of scanner-level syntax errors.
 *   Translated the small demo projects Ribos and "The PETulant Cursor" to
     SixtyPical, and added them to the `eg/c64/` section of the repo.
+*   Added a `eg/vic20` example directory, with one VIC-20 example program.
 
 0.13
 ----
