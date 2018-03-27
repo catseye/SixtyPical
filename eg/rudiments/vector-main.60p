@@ -1,0 +1,19 @@
+vector routine
+  trashes a, z, n
+    print
+
+// routine printb
+//   trashes a, z, n
+// {
+//     ld a, 66
+//     call chrout
+// }
+
+routine main
+  trashes print, a, z, n
+{
+    copy printa, print
+    call print
+    copy printb, print
+    call print
+}

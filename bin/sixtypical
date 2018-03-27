@@ -18,26 +18,42 @@ from pprint import pprint
 import sys
 import traceback
 
-from sixtypical.parser import Parser
+from sixtypical.parser import Parser, ParsingContext
 from sixtypical.analyzer import Analyzer
 from sixtypical.emitter import Emitter, Byte, Word
 from sixtypical.compiler import Compiler
 
 
+def merge_programs(programs):
+    """Assumes that the programs do not have any conflicts."""
+
+    from sixtypical.ast import Program
+
+    full = Program(1, defns=[], routines=[])
+    for p in programs:
+        full.defns.extend(p.defns)
+        full.routines.extend(p.routines)
+
+    return full
+
+
 def process_input_files(filenames, options):
+    context = ParsingContext()
+
     programs = []
 
     for filename in options.filenames:
         text = open(filename).read()
-        parser = Parser(text, filename)
+        parser = Parser(context, text, filename)
+        if options.debug:
+            print(context)
         program = parser.program()
         programs.append(program)
 
     if options.parse_only:
         return
 
-    #program = merge_programs(programs)
-    program = programs[0]
+    program = merge_programs(programs)
 
     analyzer = Analyzer(debug=options.debug)
     analyzer.analyze_program(program)

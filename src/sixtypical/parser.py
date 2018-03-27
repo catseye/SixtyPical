@@ -18,27 +18,36 @@ class SymEntry(object):
         return "%s(%r, %r)" % (self.__class__.__name__, self.ast_node, self.model)
 
 
-class Parser(object):
-    def __init__(self, text, filename):
-        self.scanner = Scanner(text, filename)
+class ParsingContext(object):
+    def __init__(self):
         self.symbols = {}          # token -> SymEntry
-        self.current_statics = {}  # token -> SymEntry
+        self.statics = {}          # token -> SymEntry
         self.typedefs = {}         # token -> Type AST
         self.consts = {}           # token -> Loc
+
         for token in ('a', 'x', 'y'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
         for token in ('c', 'z', 'n', 'v'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BIT, token))
+
+    def __str__(self):
+        return "Symbols: {}\nStatics: {}\nTypedefs: {}\nConsts: {}".format(self.symbols, self.statics, self.typedefs, self.consts)
+
+
+class Parser(object):
+    def __init__(self, context, text, filename):
+        self.context = context
+        self.scanner = Scanner(text, filename)
         self.backpatch_instrs = []
 
     def syntax_error(self, msg):
         self.scanner.syntax_error(msg)
 
     def soft_lookup(self, name):
-        if name in self.current_statics:
-            return self.current_statics[name].model
-        if name in self.symbols:
-            return self.symbols[name].model
+        if name in self.context.statics:
+            return self.context.statics[name].model
+        if name in self.context.symbols:
+            return self.context.symbols[name].model
         return None
 
     def lookup(self, name):
@@ -58,13 +67,13 @@ class Parser(object):
             if self.scanner.on('const'):
                 self.defn_const()
         typenames = ['byte', 'word', 'table', 'vector', 'buffer', 'pointer']  # 'routine',
-        typenames.extend(self.typedefs.keys())
+        typenames.extend(self.context.typedefs.keys())
         while self.scanner.on(*typenames):
             defn = self.defn()
             name = defn.name
-            if name in self.symbols:
+            if name in self.context.symbols:
                 self.syntax_error('Symbol "%s" already declared' % name)
-            self.symbols[name] = SymEntry(defn, defn.location)
+            self.context.symbols[name] = SymEntry(defn, defn.location)
             defns.append(defn)
         while self.scanner.on('define', 'routine'):
             if self.scanner.consume('define'):
@@ -74,14 +83,14 @@ class Parser(object):
             else:
                 routine = self.legacy_routine()
                 name = routine.name
-            if name in self.symbols:
+            if name in self.context.symbols:
                 self.syntax_error('Symbol "%s" already declared' % name)
-            self.symbols[name] = SymEntry(routine, routine.location)
+            self.context.symbols[name] = SymEntry(routine, routine.location)
             routines.append(routine)
         self.scanner.check_type('EOF')
 
         # now backpatch the executable types.
-        #for type_name, type_ in self.typedefs.iteritems():
+        #for type_name, type_ in self.context.typedefs.iteritems():
         #    type_.backpatch_constraint_labels(lambda w: self.lookup(w))
         for defn in defns:
             defn.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
@@ -90,18 +99,18 @@ class Parser(object):
         for instr in self.backpatch_instrs:
             if instr.opcode in ('call', 'goto'):
                 name = instr.location
-                if name not in self.symbols:
+                if name not in self.context.symbols:
                     self.syntax_error('Undefined routine "%s"' % name)
-                if not isinstance(self.symbols[name].model.type, (RoutineType, VectorType)):
+                if not isinstance(self.context.symbols[name].model.type, (RoutineType, VectorType)):
                     self.syntax_error('Illegal call of non-executable "%s"' % name)
-                instr.location = self.symbols[name].model
+                instr.location = self.context.symbols[name].model
             if instr.opcode in ('copy',) and isinstance(instr.src, basestring):
                 name = instr.src
-                if name not in self.symbols:
+                if name not in self.context.symbols:
                     self.syntax_error('Undefined routine "%s"' % name)
-                if not isinstance(self.symbols[name].model.type, (RoutineType, VectorType)):
+                if not isinstance(self.context.symbols[name].model.type, (RoutineType, VectorType)):
                     self.syntax_error('Illegal copy of non-executable "%s"' % name)
-                instr.src = self.symbols[name].model
+                instr.src = self.context.symbols[name].model
 
         return Program(self.scanner.line_number, defns=defns, routines=routines)
 
@@ -109,18 +118,18 @@ class Parser(object):
         self.scanner.expect('typedef')
         type_ = self.defn_type()
         name = self.defn_name()
-        if name in self.typedefs:
+        if name in self.context.typedefs:
             self.syntax_error('Type "%s" already declared' % name)
-        self.typedefs[name] = type_
+        self.context.typedefs[name] = type_
         return type_
 
     def defn_const(self):
         self.scanner.expect('const')
         name = self.defn_name()
-        if name in self.consts:
+        if name in self.context.consts:
             self.syntax_error('Const "%s" already declared' % name)
         loc = self.const()
-        self.consts[name] = loc
+        self.context.consts[name] = loc
         return loc
 
     def defn(self):
@@ -163,8 +172,8 @@ class Parser(object):
             loc = ConstantRef(TYPE_WORD, int(self.scanner.token))
             self.scanner.scan()
             return loc
-        elif self.scanner.token in self.consts:
-            loc = self.consts[self.scanner.token]
+        elif self.scanner.token in self.context.consts:
+            loc = self.context.consts[self.scanner.token]
             self.scanner.scan()
             return loc
         else:
@@ -215,9 +224,9 @@ class Parser(object):
         else:
             type_name = self.scanner.token
             self.scanner.scan()
-            if type_name not in self.typedefs:
+            if type_name not in self.context.typedefs:
                 self.syntax_error("Undefined type '%s'" % type_name)
-            type_ = self.typedefs[type_name]
+            type_ = self.context.typedefs[type_name]
 
         return type_
 
@@ -273,9 +282,9 @@ class Parser(object):
         else:
             statics = self.statics()
 
-            self.current_statics = self.compose_statics_dict(statics)
+            self.context.statics = self.compose_statics_dict(statics)
             block = self.block()
-            self.current_statics = {}
+            self.context.statics = {}
 
             addr = None
         location = LocationRef(type_, name)
@@ -289,7 +298,7 @@ class Parser(object):
         c = {}
         for defn in statics:
             name = defn.name
-            if name in self.symbols or name in self.current_statics:
+            if name in self.context.symbols or name in self.context.statics:
                 self.syntax_error('Symbol "%s" already declared' % name)
             c[name] = SymEntry(defn, defn.location)
         return c
@@ -316,7 +325,7 @@ class Parser(object):
         return accum
 
     def locexpr(self, forward=False):
-        if self.scanner.token in ('on', 'off', 'word') or self.scanner.token in self.consts or self.scanner.on_type('integer literal'):
+        if self.scanner.token in ('on', 'off', 'word') or self.scanner.token in self.context.consts or self.scanner.on_type('integer literal'):
             return self.const()
         elif forward:
             name = self.scanner.token
