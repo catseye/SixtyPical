@@ -1659,6 +1659,204 @@ The body of `repeat forever` can be empty.
     | }
     = ok
 
+### for ###
+
+Basic "open-faced for" loop.  We'll start with the "upto" variant.
+
+In a "for" loop, we know the exact range the loop variable takes on.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x up to 15 {
+    |         ld a, tab + x
+    |     }
+    | }
+    = ok
+
+    | byte table[15] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x up to 15 {
+    |         ld a, tab + x
+    |     }
+    | }
+    ? RangeExceededError
+
+You need to initialize the loop variable before the loop.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     for x up to 15 {
+    |         ld a, 0
+    |     }
+    | }
+    ? UnmeaningfulReadError
+
+You cannot modify the loop variable in a "for" loop.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x up to 15 {
+    |         ld x, 0
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+This includes nesting a loop on the same variable.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x up to 8 {
+    |         for x up to 15 {
+    |             ld a, 0
+    |         }
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+But nesting with two different variables is okay.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, y, c, z, v, n {
+    |     ld x, 0
+    |     for x up to 8 {
+    |         ld a, x
+    |         ld y, a
+    |         for y up to 15 {
+    |             ld a, 0
+    |         }
+    |     }
+    | }
+    = ok
+
+Inside the inner loop, the outer variable is still not writeable.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, y, c, z, v, n {
+    |     ld x, 0
+    |     for x up to 8 {
+    |         ld a, x
+    |         ld y, a
+    |         for y up to 15 {
+    |             ld x, 0
+    |         }
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+If the range isn't known to be smaller than the final value, you can't go up to it.
+
+    | byte table[32] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 16
+    |     for x up to 15 {
+    |         ld a, tab + x
+    |     }
+    | }
+    ? RangeExceededError
+
+In a "for" loop (downward-counting variant), we know the exact range the loop variable takes on.
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 15
+    |     for x down to 0 {
+    |         ld a, tab + x
+    |     }
+    | }
+    = ok
+
+    | byte table[15] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 15
+    |     for x down to 0 {
+    |         ld a, tab + x
+    |     }
+    | }
+    ? RangeExceededError
+
+You need to initialize the loop variable before a "for" loop  (downward variant).
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     for x down to 15 {
+    |         ld a, 0
+    |     }
+    | }
+    ? UnmeaningfulReadError
+
+You cannot modify the loop variable in a "for" loop (downward variant).
+
+    | byte table[16] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 15
+    |     for x down to 0 {
+    |         ld x, 0
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+If the range isn't known to be larger than the final value, you can't go down to it.
+
+    | byte table[32] tab
+    | 
+    | define foo routine inputs tab trashes a, x, c, z, v, n {
+    |     ld x, 0
+    |     for x down to 0 {
+    |         ld a, tab + x
+    |     }
+    | }
+    ? RangeExceededError
+
+You can initialize something inside the loop that was uninitialized outside.
+
+    | routine main
+    |   outputs x, y, n, z
+    |   trashes c
+    | {
+    |     ld x, 0
+    |     for x up to 15 {
+    |         ld y, 15
+    |     }
+    | }
+    = ok
+
+But you can't UNinitialize something at the end of the loop that you need
+initialized at the start of that loop.
+
+    | routine foo
+    |   trashes y
+    | {
+    | }
+    | 
+    | routine main
+    |   outputs x, y, n, z
+    |   trashes c
+    | {
+    |     ld x, 0
+    |     ld y, 15
+    |     for x up to 15 {
+    |         inc y
+    |         call foo
+    |     }
+    | }
+    ? UnmeaningfulReadError: y
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
@@ -2178,6 +2376,52 @@ Calling the vector does indeed trash the things the vector says it does.
     |         goto bar
     |     }
     |     ld x, 0
+    | }
+    ? IllegalJumpError
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |         goto bar
+    |     }
+    | }
+    = ok
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    | }
+    = ok
+
+For the purposes of `goto`, the end of a loop is never tail position.
+
+    | routine bar trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | routine main trashes x, z, n {
+    |     ld x, 0
+    |     repeat {
+    |         inc x
+    |         goto bar
+    |     } until z
     | }
     ? IllegalJumpError
 

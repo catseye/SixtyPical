@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.11,
+This document describes the SixtyPical programming language version 0.14,
 both its static semantics (the capabilities and limits of the static
 analyses it defines) and its runtime semantics (with reference to the
 semantics of 6502 machine code.)
@@ -234,9 +234,12 @@ changed by this instruction; they must be named in the WRITES, and they
 are considered initialized after it has executed.
 
 If and only if src is a byte table, the index-memory-location must be given.
+In this case, it is illegal if the value of the index-memory-location falls
+outside of the range of the table.
 
 Some combinations, such as `ld x, y`, are illegal because they do not map to
-underlying opcodes.
+underlying opcodes.  (For an instruction which maps more flexibly to underlying
+opcodes, see `copy`.)
 
 There is another mode of `ld` which reads into `a` indirectly through a pointer.
 
@@ -265,6 +268,8 @@ After execution, dest is considered initialized.  No flags are
 changed by this instruction (unless of course dest is a flag.)
 
 If and only if dest is a byte table, the index-memory-location must be given.
+In this case, it is illegal if the value of the index-memory-location falls
+outside of the range of the table.
 
 There is another mode of `st` which write `a` into memory, indirectly through
 a pointer.
@@ -531,6 +536,22 @@ The sense of the test can be inverted with `not`.
         }
     } until not z
 
+### for ###
+
+    for <dest-memory-location> (up|down) to <literal-byte> {
+        <block>
+    }
+
+Executes the block repeatedly, incrementing or decrementing the
+dest-memory-location at the end of the block, until the value of
+the dest-memory-location has gone past the literal-byte.
+
+The block is always executed as least once.
+
+*   It is illegal if any memory location is uninitialized at the exit of
+    the loop when that memory location is initialized at the start of
+    the loop.
+
 Grammar
 -------
 
@@ -555,9 +576,10 @@ Grammar
     LocExpr ::= Register | Flag | Literal | Ident.
     Register::= "a" | "x" | "y".
     Flag    ::= "c" | "z" | "n" | "v".
-    Literal ::= LitByte | LitWord.
+    Literal ::= LitByte | LitWord | LitBit.
     LitByte ::= "0" ... "255".
     LitWord ::= "0" ... "65535".
+    LitBit  ::= "on" | "off".
     Block   ::= "{" {Instr} "}".
     Instr   ::= "ld" LocExpr "," LocExpr ["+" LocExpr]
               | "st" LocExpr "," LocExpr ["+" LocExpr]
@@ -573,7 +595,9 @@ Grammar
               | "dec" LocExpr
               | "call" Ident<routine>
               | "goto" Ident<executable>
+              | "copy" LocExpr "," LocExpr ["+" LocExpr]
               | "if" ["not"] LocExpr Block ["else" Block]
               | "repeat" Block ("until" ["not"] LocExpr | "forever")
-              | "copy" LocExpr "," LocExpr ["+" LocExpr]
+              | "for" LocExpr ("up"|"down") "to" Literal Block
+              | "with" "interrupts" LitBit Block
               .

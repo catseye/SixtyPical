@@ -74,12 +74,17 @@ class SingleOp(Instr):
 
 
 class If(Instr):
-    value_attrs = ('src', 'inverted')
+    value_attrs = ('src', 'inverted',)
     child_attrs = ('block1', 'block2',)
 
 
 class Repeat(Instr):
-    value_attrs = ('src', 'inverted')
+    value_attrs = ('src', 'inverted',)
+    child_attrs = ('block',)
+
+
+class For(Instr):
+    value_attrs = ('dest', 'direction', 'final',)
     child_attrs = ('block',)
 
 

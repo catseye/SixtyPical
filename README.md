@@ -1,12 +1,12 @@
 SixtyPical
 ==========
 
-_Version 0.13.  Work-in-progress, everything is subject to change._
+_Version 0.14.  Work-in-progress, everything is subject to change._
 
-**SixtyPical** is a 6502-assembly-like programming language with advanced
+**SixtyPical** is a 6502-like programming language with advanced
 static analysis.
 
-"6502-assembly-like" means that it has similar restrictions as programming
+"6502-like" means that it has similar restrictions as programming
 in 6502 assembly (e.g. the programmer must choose the registers that
 values will be stored in) and is concomitantly easy for a compiler to
 translate it to 6502 machine language code.
@@ -15,8 +15,8 @@ translate it to 6502 machine language code.
 go through the program step by step, tracking not just the changes that
 happen during a _specific_ execution of the program, but _sets_ of changes
 that could _possibly_ happen in any run of the program.  This lets us
-determine that certain things can never happen, which we can present as
-safety guarantees.
+determine that certain things can never happen, which we can then formulate
+as safety checks.
 
 In practice, this means it catches things like
 
@@ -51,7 +51,8 @@ automatically start it in the `x64` emulator, and you should see:
 ![Screenshot of result of running hearts.60p](https://raw.github.com/catseye/SixtyPical/master/images/hearts.png)
 
 You can try the `loadngo.sh` script on other sources in the `eg` directory
-tree.  There is an entire small game(-like program) in [demo-game.60p](eg/c64/demo-game.60p).
+tree, which contains more extensive examples, including an entire
+game(-like program); see [eg/README.md](eg/README.md) for a listing.
 
 Documentation
 -------------
@@ -66,37 +67,6 @@ Documentation
 
 TODO
 ----
-
-### `for`-like loop
-
-We have range-checking in the abstract analysis now, but we lack practical ways
-to use it.
-
-We can `and` a value to ensure it is within a certain range.  However, in the 6502
-ISA the only register you can `and` is `A`, while loops are done with `X` or `Y`.
-Insisting this as the way to do it would result in a lot of `TXA`s and `TAX`s.
-
-What would be better is a dedicated `for` loop, like
-
-    for x in 0 to 15 {
-        // in here, we know the range of x is exactly 0-15 inclusive
-        // also in here: we are disallowed from changing x
-    }
-
-However, this is slightly restrictive, and hides a lot.
-
-However however, options which do not hide a lot, require a lot of looking at
-(to ensure: did you increment the loop variable? only once? etc.)
-
-The leading compromise so far is an "open-faced for loop", like
-
-    ld x, 15
-    for x downto 0 {
-        // same as above
-    }
-
-This makes it a little more explicit, at least, even though the loop
-decrementation is still hidden.
 
 ### Save registers on stack
 
@@ -114,6 +84,7 @@ is probably NP-complete.  But doing it adequately is probably not that hard.
 *   `const`s that can be used in defining the size of tables, etc.
 *   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
 *   Related: can we simply view a (small) part of a buffer as a byte table?  If not, why not?
+*   Related: add constant to buffer to get new buffer.  (Or to table, but... well, maybe.)
 *   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
     (Associate each pointer with the buffer it points into.)
 *   `static` pointers -- currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.
@@ -123,5 +94,7 @@ is probably NP-complete.  But doing it adequately is probably not that hard.
 *   Automatic tail-call optimization (could be tricky, w/constraints?)
 *   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
+*   Optimize `ld a, z` and `st a, z` to zero-page operations if address of z < 256.
+*   Include files?
 
 [VICE]: http://vice-emu.sourceforge.net/

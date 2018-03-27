@@ -62,7 +62,7 @@ class Scanner(object):
         if self.token == token:
             self.scan()
         else:
-            raise SixtyPicalSyntaxError(self.scanner.line_number, "Expected '{}', but found '{}'".format(
+            raise SixtyPicalSyntaxError(self.line_number, "Expected '{}', but found '{}'".format(
                 token, self.token
             ))
 
@@ -74,7 +74,7 @@ class Scanner(object):
 
     def check_type(self, type):
         if not self.type == type:
-            raise SixtyPicalSyntaxError(self.scanner.line_number, "Expected {}, but found '{}'".format(
+            raise SixtyPicalSyntaxError(self.line_number, "Expected {}, but found '{}'".format(
                 self.type, self.token
             ))
 

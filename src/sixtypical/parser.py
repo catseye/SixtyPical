@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, If, Repeat, WithInterruptsOff
+from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
     RoutineType, VectorType, TableType, BufferType, PointerType,
@@ -136,11 +136,21 @@ class Parser(object):
 
         return Defn(self.scanner.line_number, name=name, addr=addr, initial=initial, location=location)
 
+    def literal_int(self):
+        self.scanner.check_type('integer literal')
+        c = int(self.scanner.token)
+        self.scanner.scan()
+        return c
+
+    def literal_int_const(self):
+        value = self.literal_int()
+        type_ = TYPE_WORD if value > 255 else TYPE_BYTE
+        loc = ConstantRef(type_, value)
+        return loc
+
     def defn_size(self):
         self.scanner.expect('[')
-        self.scanner.check_type('integer literal')
-        size = int(self.scanner.token)
-        self.scanner.scan()
+        size = self.literal_int()
         self.scanner.expect(']')
         return size
 
@@ -289,11 +299,7 @@ class Parser(object):
             self.scanner.scan()
             return loc
         elif self.scanner.on_type('integer literal'):
-            value = int(self.scanner.token)
-            type_ = TYPE_WORD if value > 255 else TYPE_BYTE
-            loc = ConstantRef(type_, value)
-            self.scanner.scan()
-            return loc
+            return self.literal_int_const()
         elif self.scanner.consume('word'):
             loc = ConstantRef(TYPE_WORD, int(self.scanner.token))
             self.scanner.scan()
@@ -372,6 +378,18 @@ class Parser(object):
             else:
                 self.scanner.expect('forever')
             return Repeat(self.scanner.line_number, src=src, block=block, inverted=inverted)
+        elif self.scanner.consume('for'):
+            dest = self.locexpr()
+            if self.scanner.consume('down'):
+                direction = -1
+            elif self.scanner.consume('up'):
+                direction = 1
+            else:
+                self.syntax_error('expected "up" or "down", found "%s"' % self.scanner.token)
+            self.scanner.expect('to')
+            final = self.literal_int_const()
+            block = self.block()
+            return For(self.scanner.line_number, dest=dest, direction=direction, final=final, block=block)
         elif self.scanner.token in ("ld",):
             # the same as add, sub, cmp etc below, except supports an indlocexpr for the src
             opcode = self.scanner.token

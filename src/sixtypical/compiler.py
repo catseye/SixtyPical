@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, WithInterruptsOff
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff
 from sixtypical.model import (
     ConstantRef, LocationRef, IndexedRef, IndirectRef, AddressRef,
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
@@ -148,6 +148,8 @@ class Compiler(object):
             return self.compile_if(instr)
         elif isinstance(instr, Repeat):
             return self.compile_repeat(instr)
+        elif isinstance(instr, For):
+            return self.compile_for(instr)
         elif isinstance(instr, WithInterruptsOff):
             return self.compile_with_interrupts_off(instr)
         else:
@@ -300,31 +302,11 @@ class Compiler(object):
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'inc':
-            if dest == REG_X:
-                self.emitter.emit(INX())
-            elif dest == REG_Y:
-                self.emitter.emit(INY())
-            else:
-                self.emitter.emit(INC(Absolute(self.get_label(dest.name))))
+            self.compile_inc(instr, instr.dest)
         elif opcode == 'dec':
-            if dest == REG_X:
-                self.emitter.emit(DEX())
-            elif dest == REG_Y:
-                self.emitter.emit(DEY())
-            else:
-                self.emitter.emit(DEC(Absolute(self.get_label(dest.name))))
+            self.compile_dec(instr, instr.dest)
         elif opcode == 'cmp':
-            cls = {
-                'a': CMP,
-                'x': CPX,
-                'y': CPY,
-            }.get(dest.name)
-            if cls is None:
-                raise UnsupportedOpcodeError(instr)
-            if isinstance(src, ConstantRef):
-                self.emitter.emit(cls(Immediate(Byte(src.value))))
-            else:
-                self.emitter.emit(cls(Absolute(self.get_label(src.name))))
+            self.compile_cmp(instr, instr.src, instr.dest)
         elif opcode in ('and', 'or', 'xor',):
             cls = {
                 'and': AND,
@@ -369,18 +351,45 @@ class Compiler(object):
             else:
                 raise NotImplementedError
         elif opcode == 'copy':
-            self.compile_copy_op(instr)
+            self.compile_copy(instr, instr.src, instr.dest)
         elif opcode == 'trash':
             pass
         else:
             raise NotImplementedError(opcode)
 
-    def compile_copy_op(self, instr):
+    def compile_cmp(self, instr, src, dest):
+        """`instr` is only for reporting purposes"""
+        cls = {
+            'a': CMP,
+            'x': CPX,
+            'y': CPY,
+        }.get(dest.name)
+        if cls is None:
+            raise UnsupportedOpcodeError(instr)
+        if isinstance(src, ConstantRef):
+            self.emitter.emit(cls(Immediate(Byte(src.value))))
+        else:
+            self.emitter.emit(cls(Absolute(self.get_label(src.name))))
 
-        opcode = instr.opcode
-        dest = instr.dest
-        src = instr.src
+    def compile_inc(self, instr, dest):
+        """`instr` is only for reporting purposes"""
+        if dest == REG_X:
+            self.emitter.emit(INX())
+        elif dest == REG_Y:
+            self.emitter.emit(INY())
+        else:
+            self.emitter.emit(INC(Absolute(self.get_label(dest.name))))
 
+    def compile_dec(self, instr, dest):
+        """`instr` is only for reporting purposes"""
+        if dest == REG_X:
+            self.emitter.emit(DEX())
+        elif dest == REG_Y:
+            self.emitter.emit(DEY())
+        else:
+            self.emitter.emit(DEC(Absolute(self.get_label(dest.name))))
+
+    def compile_copy(self, instr, src, dest):
         if isinstance(src, ConstantRef) and isinstance(dest, IndirectRef) and src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
             ### copy 123, [ptr] + y
             dest_label = self.get_label(dest.ref.name)
@@ -539,6 +548,20 @@ class Compiler(object):
             if cls is None:
                 raise UnsupportedOpcodeError(instr)
             self.emitter.emit(cls(Relative(top_label)))
+
+    def compile_for(self, instr):
+        top_label = self.emitter.make_label()
+
+        self.compile_block(instr.block)
+
+        if instr.direction > 0:
+            self.compile_inc(instr, instr.dest)
+            final = instr.final.succ()
+        elif instr.direction < 0:
+            self.compile_dec(instr, instr.dest)
+            final = instr.final.pred()
+        self.compile_cmp(instr, final, instr.dest)
+        self.emitter.emit(BNE(Relative(top_label)))
 
     def compile_with_interrupts_off(self, instr):
         self.emitter.emit(SEI())

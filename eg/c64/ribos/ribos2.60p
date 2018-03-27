@@ -1,0 +1,103 @@
+// ribos2.60p - SixtyPical source for RIBOS2:
+// Demonstration of the VIC-II raster interrupt on the Commodore 64:
+// Alter the border colour in the middle part of the screen only,
+// Simplified (KERNAL IRQ vector) version.
+// By Chris Pressey, Cat's Eye Technologies.
+// This work has been placed in the public domain.
+
+// For comments, see ribos2.p65.
+
+// ----- Types -----
+
+typedef routine
+  inputs border_color, vic_intr, scanline
+  outputs border_color, vic_intr, scanline
+  trashes a, z, n, c, vic_raster
+    irq_handler
+
+// ----- Addresses -----
+
+// The CIA #1 chip.
+
+byte cia1             @ $dc00       // pp. 328-331
+byte intr_ctrl        @ $dc0d       // "CIA Interrupt Control Register
+                                    // (Read IRQs/Write Mask)"
+
+// The VIC-II chip.
+
+byte vic              @ $d000       // Appendix G:
+byte vic_ctrl         @ $d011       // "Y SCROLL MODE"
+byte vic_raster       @ $d012       // "RASTER"
+byte vic_intr         @ $d019       // "Interrupt Request's" (sic)
+byte vic_intr_enable  @ $d01a       // "Interrupt Request MASKS"
+byte border_color     @ $d020       // "BORDER COLOR"
+
+// The address at which the IRQ vector is stored.
+
+vector irq_handler cinv @ $314      // p. 319, "Vector: Hardware
+                                    // IRQ Interrupt"
+
+// ----- Variables -----
+
+vector irq_handler saved_irq_vec
+byte scanline : 85  //   %01010101
+
+// ----- Externals ------
+
+// An address in ROM which contains "PLA TAY PLA TAX RTI".
+// ribos2.p65 just contains these instructions itself, but
+// generating them as part of a SixtyPical program would not
+// be practical.  So we just jump to this location instead.
+
+routine pla_tay_pla_tax_pla_rti
+  inputs a
+  trashes a
+    @ $EA81
+
+// ----- Interrupt Handler -----
+
+define our_service_routine irq_handler
+{
+    ld a, vic_intr
+    st a, vic_intr
+    and a, 1
+    cmp a, 1
+    if not z {
+        goto saved_irq_vec
+    } else {
+        ld a, border_color
+        xor a, $ff
+        st a, border_color
+
+        ld a, scanline
+        xor a, $ff
+        st a, scanline
+        st a, vic_raster
+
+        trash vic_raster
+
+        goto pla_tay_pla_tax_pla_rti
+    }
+}
+
+// ----- Main Program -----
+
+define main routine
+  inputs cinv, scanline, vic_ctrl, intr_ctrl
+  outputs cinv, saved_irq_vec, vic_ctrl, vic_intr_enable
+  trashes a, n, z, vic_raster
+{
+    with interrupts off {
+        copy cinv, saved_irq_vec
+        copy our_service_routine, cinv
+
+        ld a, scanline
+        st a, vic_raster
+        ld a, vic_ctrl
+        and a, 127
+        st a, vic_ctrl
+        ld a, 1
+        st a, vic_intr_enable
+        ld a, intr_ctrl
+    }
+}
