@@ -1,6 +1,12 @@
 History of SixtyPical
 =====================
 
+0.15
+----
+
+*   Symbolic constants can be defined with the `const` keyword, and can
+    be used in most places where literal values can be used.
+
 0.14
 ----
 

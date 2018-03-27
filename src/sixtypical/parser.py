@@ -24,6 +24,7 @@ class Parser(object):
         self.symbols = {}          # token -> SymEntry
         self.current_statics = {}  # token -> SymEntry
         self.typedefs = {}         # token -> Type AST
+        self.consts = {}           # token -> Loc
         for token in ('a', 'x', 'y'):
             self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
         for token in ('c', 'z', 'n', 'v'):
@@ -51,8 +52,11 @@ class Parser(object):
     def program(self):
         defns = []
         routines = []
-        while self.scanner.on('typedef'):
-            typedef = self.typedef()
+        while self.scanner.on('typedef', 'const'):
+            if self.scanner.on('typedef'):
+                self.typedef()
+            if self.scanner.on('const'):
+                self.defn_const()
         typenames = ['byte', 'word', 'table', 'vector', 'buffer', 'pointer']  # 'routine',
         typenames.extend(self.typedefs.keys())
         while self.scanner.on(*typenames):
@@ -110,6 +114,15 @@ class Parser(object):
         self.typedefs[name] = type_
         return type_
 
+    def defn_const(self):
+        self.scanner.expect('const')
+        name = self.defn_name()
+        if name in self.consts:
+            self.syntax_error('Const "%s" already declared' % name)
+        loc = self.const()
+        self.consts[name] = loc
+        return loc
+
     def defn(self):
         type_ = self.defn_type()
         name = self.defn_name()
@@ -118,10 +131,9 @@ class Parser(object):
         if self.scanner.consume(':'):
             if isinstance(type_, TableType) and self.scanner.on_type('string literal'):
                 initial = self.scanner.token
+                self.scanner.scan()
             else:
-                self.scanner.check_type('integer literal')
-                initial = int(self.scanner.token)
-            self.scanner.scan()
+                initial = self.const().value
 
         addr = None
         if self.scanner.consume('@'):
@@ -136,21 +148,31 @@ class Parser(object):
 
         return Defn(self.scanner.line_number, name=name, addr=addr, initial=initial, location=location)
 
-    def literal_int(self):
-        self.scanner.check_type('integer literal')
-        c = int(self.scanner.token)
-        self.scanner.scan()
-        return c
-
-    def literal_int_const(self):
-        value = self.literal_int()
-        type_ = TYPE_WORD if value > 255 else TYPE_BYTE
-        loc = ConstantRef(type_, value)
-        return loc
+    def const(self):
+        if self.scanner.token in ('on', 'off'):
+            loc = ConstantRef(TYPE_BIT, 1 if self.scanner.token == 'on' else 0)
+            self.scanner.scan()
+            return loc
+        elif self.scanner.on_type('integer literal'):
+            value = int(self.scanner.token)
+            self.scanner.scan()
+            type_ = TYPE_WORD if value > 255 else TYPE_BYTE
+            loc = ConstantRef(type_, value)
+            return loc
+        elif self.scanner.consume('word'):
+            loc = ConstantRef(TYPE_WORD, int(self.scanner.token))
+            self.scanner.scan()
+            return loc
+        elif self.scanner.token in self.consts:
+            loc = self.consts[self.scanner.token]
+            self.scanner.scan()
+            return loc
+        else:
+            self.syntax_error('bad constant "%s"' % self.scanner.token)
 
     def defn_size(self):
         self.scanner.expect('[')
-        size = self.literal_int()
+        size = self.const().value
         self.scanner.expect(']')
         return size
 
@@ -294,16 +316,8 @@ class Parser(object):
         return accum
 
     def locexpr(self, forward=False):
-        if self.scanner.token in ('on', 'off'):
-            loc = ConstantRef(TYPE_BIT, 1 if self.scanner.token == 'on' else 0)
-            self.scanner.scan()
-            return loc
-        elif self.scanner.on_type('integer literal'):
-            return self.literal_int_const()
-        elif self.scanner.consume('word'):
-            loc = ConstantRef(TYPE_WORD, int(self.scanner.token))
-            self.scanner.scan()
-            return loc
+        if self.scanner.token in ('on', 'off', 'word') or self.scanner.token in self.consts or self.scanner.on_type('integer literal'):
+            return self.const()
         elif forward:
             name = self.scanner.token
             self.scanner.scan()
@@ -387,7 +401,7 @@ class Parser(object):
             else:
                 self.syntax_error('expected "up" or "down", found "%s"' % self.scanner.token)
             self.scanner.expect('to')
-            final = self.literal_int_const()
+            final = self.const()
             block = self.block()
             return For(self.scanner.line_number, dest=dest, direction=direction, final=final, block=block)
         elif self.scanner.token in ("ld",):

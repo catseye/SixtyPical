@@ -81,7 +81,6 @@ is probably NP-complete.  But doing it adequately is probably not that hard.
 ### And at some point...
 
 *   `low` and `high` address operators - to turn `word` type into `byte`.
-*   `const`s that can be used in defining the size of tables, etc.
 *   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
 *   Related: can we simply view a (small) part of a buffer as a byte table?  If not, why not?
 *   Related: add constant to buffer to get new buffer.  (Or to table, but... well, maybe.)

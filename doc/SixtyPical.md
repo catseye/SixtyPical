@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.14,
+This document describes the SixtyPical programming language version 0.15,
 both its static semantics (the capabilities and limits of the static
 analyses it defines) and its runtime semantics (with reference to the
 semantics of 6502 machine code.)
@@ -555,9 +555,10 @@ The block is always executed as least once.
 Grammar
 -------
 
-    Program ::= {TypeDefn} {Defn} {Routine}.
+    Program ::= {ConstDefn | TypeDefn} {Defn} {Routine}.
+    ConstDefn::= "const" Ident<new> Const.
     TypeDefn::= "typedef" Type Ident<new>.
-    Defn    ::= Type Ident<new> [Constraints] (":" Literal | "@" LitWord).
+    Defn    ::= Type Ident<new> [Constraints] (":" Const | "@" LitWord).
     Type    ::= TypeTerm ["table" TypeSize].
     TypeExpr::= "byte"
               | "word"
@@ -573,12 +574,13 @@ Grammar
               | "routine" Ident<new> Constraints (Block | "@" LitWord)
               .
     LocExprs::= LocExpr {"," LocExpr}.
-    LocExpr ::= Register | Flag | Literal | Ident.
+    LocExpr ::= Register | Flag | Const | Ident.
     Register::= "a" | "x" | "y".
     Flag    ::= "c" | "z" | "n" | "v".
+    Const   ::= Literal | Ident<const>.
     Literal ::= LitByte | LitWord | LitBit.
     LitByte ::= "0" ... "255".
-    LitWord ::= "0" ... "65535".
+    LitWord ::= ["word"] "0" ... "65535".
     LitBit  ::= "on" | "off".
     Block   ::= "{" {Instr} "}".
     Instr   ::= "ld" LocExpr "," LocExpr ["+" LocExpr]
@@ -598,6 +600,6 @@ Grammar
               | "copy" LocExpr "," LocExpr ["+" LocExpr]
               | "if" ["not"] LocExpr Block ["else" Block]
               | "repeat" Block ("until" ["not"] LocExpr | "forever")
-              | "for" LocExpr ("up"|"down") "to" Literal Block
+              | "for" LocExpr ("up"|"down") "to" Const Block
               | "with" "interrupts" LitBit Block
               .

@@ -228,6 +228,31 @@ Can't have two typedefs with the same name.
     | }
     ? SyntaxError
 
+Constants.
+
+    | const lives 3
+    | const days lives
+    | const w1 1000
+    | const w2 word 0
+    | 
+    | typedef byte table[days] them
+    | 
+    | byte lark: lives
+    | 
+    | routine main {
+    |   ld a, lives
+    | }
+    = ok
+
+Can't have two constants with the same name.
+
+    | const w1 1000
+    | const w1 word 0
+    | 
+    | routine main {
+    | }
+    ? SyntaxError
+
 Explicit memory address.
 
     | byte screen @ 1024
