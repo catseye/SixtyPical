@@ -6,7 +6,7 @@ from sixtypical.model import (
     RoutineType, VectorType, TableType, BufferType, PointerType,
     LocationRef, ConstantRef, IndirectRef, IndexedRef, AddressRef,
 )
-from sixtypical.scanner import Scanner, SixtyPicalSyntaxError
+from sixtypical.scanner import Scanner
 
 
 class SymEntry(object):
@@ -19,8 +19,8 @@ class SymEntry(object):
 
 
 class Parser(object):
-    def __init__(self, text):
-        self.scanner = Scanner(text)
+    def __init__(self, text, filename):
+        self.scanner = Scanner(text, filename)
         self.symbols = {}          # token -> SymEntry
         self.current_statics = {}  # token -> SymEntry
         self.typedefs = {}         # token -> Type AST
@@ -32,7 +32,7 @@ class Parser(object):
         self.backpatch_instrs = []
 
     def syntax_error(self, msg):
-        raise SixtyPicalSyntaxError(self.scanner.line_number, msg)
+        self.scanner.syntax_error(msg)
 
     def soft_lookup(self, name):
         if name in self.current_statics:

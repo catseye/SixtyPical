@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-_Version 0.14.  Work-in-progress, everything is subject to change._
+_Version 0.15.  Work-in-progress, everything is subject to change._
 
 **SixtyPical** is a 6502-like programming language with advanced
 static analysis.
