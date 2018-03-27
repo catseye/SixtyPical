@@ -78,6 +78,16 @@ are trashed inside the block.
 Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally
 is probably NP-complete.  But doing it adequately is probably not that hard.
 
+> Every routine is falled through to by zero or more routines.
+> Don't consider the main routine.
+> For each routine α that is finally-falled through to by a set of routines R(α),
+> pick a movable routine β from R, move β in front of α, remove the `jmp` at the end of β and
+> mark β as unmovable.
+> Note this only works if β finally-falls through.  If there are multiple tail
+> positions, we can't eliminate all the `jmp`s.
+> Note that if β finally-falls through to α it can't finally-fall through to anything
+> else, so the sets R(α) should be disjoint for every α. (Right?)
+
 ### And at some point...
 
 *   `low` and `high` address operators - to turn `word` type into `byte`.
