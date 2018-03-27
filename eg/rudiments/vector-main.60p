@@ -1,3 +1,6 @@
+// This will not compile on its own, because `printa` and `printb` are not defined.
+// But `vector-inc.60p` and this together will compile.
+
 vector routine
   trashes a, z, n
     print
