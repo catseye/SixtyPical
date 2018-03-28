@@ -186,3 +186,14 @@ class Emitter(object):
         advance the address for the next label, but don't emit anything."""
         self.resolve_label(label)
         self.addr += label.length
+
+    def size(self):
+        return sum(emittable.size() for emittable in self.accum)
+
+    def pad_to_size(self, size):
+        self_size = self.size()
+        if self_size > size:
+            raise IndexError("Emitter size {} exceeds pad size {}".format(self_size, size))
+        num_bytes = size - self_size
+        if num_bytes > 0:
+            self.accum.extend([Byte(0)] * num_bytes)

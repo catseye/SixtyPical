@@ -1,0 +1,168 @@
+// atari-2600-example.60p - SixtyPical translation of atari-2600-example.oph
+
+byte VSYNC         @ $00
+byte VBLANK        @ $01
+byte WSYNC         @ $02
+byte NUSIZ0        @ $04
+byte NUSIZ1        @ $05
+byte COLUPF        @ $08
+byte COLUBK        @ $09
+byte PF0           @ $0D
+byte PF1           @ $0E
+byte PF2           @ $0F
+byte SWCHA         @ $280
+byte INTIM         @ $284
+byte TIM64T        @ $296
+byte CTRLPF        @ $0A
+byte COLUP0        @ $06
+byte COLUP1        @ $07
+byte GP0           @ $1B
+byte GP1           @ $1C
+byte HMOVE         @ $2a
+byte RESP0         @ $10
+byte RESP1         @ $11
+
+byte colour @ $80
+byte luminosity @ $81
+byte joystick_delay @ $82
+
+byte table[8] image_data : "ZZZZUUUU"
+        // %01111110 
+        // %10000001
+        // %10011001
+        // %10100101
+        // %10000001
+        // %10100101
+        // %10000001
+        // %01111110
+
+
+define vertical_blank routine
+  outputs VSYNC, WSYNC, TIM64T
+  trashes a, x, z, n
+{
+    ld x, $00
+    ld a, $02
+    st a, WSYNC
+    st a, WSYNC
+    st a, WSYNC
+    st a, VSYNC
+    st a, WSYNC
+    st a, WSYNC
+    ld a, $2C
+    st a, TIM64T
+    ld a, $00
+    st a, WSYNC
+    st a, VSYNC
+}
+
+define display_frame routine
+  inputs INTIM, image_data
+  outputs WSYNC, HMOVE, VBLANK, RESP0, GP0, PF0, PF1, PF2, COLUPF, COLUBK
+  trashes a, x, y, z, n
+{
+    repeat {
+        ld a, INTIM
+    } until z
+
+    //; (After that loop finishes, we know the accumulator must contain 0.)
+
+    st a, WSYNC
+    st a, HMOVE
+    st a, VBLANK
+
+    //;
+    //; Wait for $3f (plus one?) scan lines to pass, by waiting for
+    //; WSYNC that many times.
+    //;
+
+    ld x, $3F
+    repeat {
+        st a, WSYNC
+        dec x
+    } until z        // FIXME orig loop used "bpl _wsync_loop"
+    st a, WSYNC
+
+    //;
+    //; Delay while the raster scans across the screen.  The more
+    //; we delay here, the more to the right the player will be when
+    //; we draw it.
+    //;
+
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+    ////   nop
+
+    //;
+    //; OK, *now* display the player.
+    //;
+        
+    st a, RESP0
+
+    //;
+    //; Loop over the rows of the sprite data, drawing each to the screen
+    //; over four scan lines.
+    //;
+    //; TODO understand this better and describe it!
+    //;
+
+    ld y, $07
+    for y down to 0 {
+        ld a, image_data + y
+        st a, GP0
+
+        st a, WSYNC
+        st a, WSYNC
+        st a, WSYNC
+        st a, WSYNC
+    }                  // FIXME original was "dec y; bpl _image_loop"
+
+    ld a, $00
+    st a, GP0
+
+    //;
+    //; Turn off screen display and clear display registers.
+    //;
+
+    ld a, $02
+    st a, WSYNC
+    st a, VBLANK
+    ld a, $00
+    st a, PF0
+    st a, PF1
+    st a, PF2
+    st a, COLUPF
+    st a, COLUBK
+}
+
+define main routine
+  inputs image_data, INTIM
+  outputs CTRLPF, colour, luminosity, NUSIZ0, VSYNC, WSYNC, TIM64T, HMOVE, VBLANK, RESP0, GP0, PF0, PF1, PF2, COLUPF, COLUBK
+  trashes a, x, y, z, n
+{
+    ld a, $00
+    st a, CTRLPF
+    ld a, $0c
+    st a, colour
+    ld a, $0a
+    st a, luminosity
+    ld a, $00
+    st a, NUSIZ0
+    repeat {
+        call vertical_blank
+        call display_frame
+        // call read_joystick
+    } forever
+}

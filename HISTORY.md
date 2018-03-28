@@ -8,6 +8,8 @@ History of SixtyPical
     be used in most places where literal values can be used.
 *   Specifying multiple SixtyPical source files will produce a single
     compiled result from their combination.
+*   Rudimentary support for Atari 2600 prelude in a 4K cartridge image,
+    and start of an example program in `eg/atari2600` directory.
 
 0.14
 ----

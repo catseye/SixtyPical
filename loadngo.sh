@@ -1,6 +1,6 @@
 #!/bin/sh
 
-usage="Usage: loadngo.sh (c64|vic20) [--dry-run] <source.60p>"
+usage="Usage: loadngo.sh (c64|vic20|atari2600) [--dry-run] <source.60p>"
 
 arch="$1"
 shift 1
@@ -18,6 +18,9 @@ elif [ "X$arch" = "Xvic20" ]; then
   else
     emu="xvic"
   fi
+elif [ "X$arch" = "Xatari2600" ]; then
+  prelude='atari2600'
+  emu='stella'
 else
   echo $usage && exit 1
 fi
