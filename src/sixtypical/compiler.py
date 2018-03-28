@@ -18,6 +18,7 @@ from sixtypical.gen6502 import (
     BCC, BCS, BNE, BEQ,
     JMP, JSR, RTS,
     SEI, CLI,
+    NOP,
 )
 
 
@@ -354,6 +355,8 @@ class Compiler(object):
             self.compile_copy(instr, instr.src, instr.dest)
         elif opcode == 'trash':
             pass
+        elif opcode == 'nop':
+            self.emitter.emit(NOP())
         else:
             raise NotImplementedError(opcode)
 

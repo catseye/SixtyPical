@@ -599,6 +599,8 @@ class Analyzer(object):
         elif opcode == 'trash':
             context.set_touched(instr.dest)
             context.set_unmeaningful(instr.dest)
+        elif opcode == 'nop':
+            pass
         else:
             raise NotImplementedError(opcode)
 

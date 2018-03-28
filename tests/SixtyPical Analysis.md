@@ -1010,7 +1010,7 @@ Can't `dec` a `word` type.
 
 ### cmp ###
 
-Some rudimentary tests for cmp.
+Some rudimentary tests for `cmp`.
 
     | routine main
     |   inputs a
@@ -1037,7 +1037,7 @@ Some rudimentary tests for cmp.
 
 ### and ###
 
-Some rudimentary tests for and.
+Some rudimentary tests for `and`.
 
     | routine main
     |   inputs a
@@ -1064,7 +1064,7 @@ Some rudimentary tests for and.
 
 ### or ###
 
-Writing unit tests on a train.  Wow.
+Some rudimentary tests for `or`.
 
     | routine main
     |   inputs a
@@ -1091,7 +1091,7 @@ Writing unit tests on a train.  Wow.
 
 ### xor ###
 
-Writing unit tests on a train.  Wow.
+Some rudimentary tests for `xor`.
 
     | routine main
     |   inputs a
@@ -1118,7 +1118,7 @@ Writing unit tests on a train.  Wow.
 
 ### shl ###
 
-Some rudimentary tests for shl.
+Some rudimentary tests for `shl`.
 
     | routine main
     |   inputs a, c
@@ -1146,7 +1146,7 @@ Some rudimentary tests for shl.
 
 ### shr ###
 
-Some rudimentary tests for shr.
+Some rudimentary tests for `shr`.
 
     | routine main
     |   inputs a, c
@@ -1171,6 +1171,16 @@ Some rudimentary tests for shr.
     |     shr a
     | }
     ? UnmeaningfulReadError: c
+
+### nop ###
+
+Some rudimentary tests for `nop`.
+
+    | routine main
+    | {
+    |     nop
+    | }
+    = ok
 
 ### call ###
 

@@ -78,6 +78,14 @@ Trash.
     | }
     = ok
 
+`nop`.
+
+    | routine main
+    | {
+    |     nop
+    | }
+    = ok
+
 If with not
 
     | routine foo {

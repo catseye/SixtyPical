@@ -440,6 +440,10 @@ class Parser(object):
             self.scanner.scan()
             dest = self.locexpr()
             return SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=None)
+        elif self.scanner.token in ("nop"):
+            opcode = self.scanner.token
+            self.scanner.scan()
+            return SingleOp(self.scanner.line_number, opcode=opcode, dest=None, src=None)
         elif self.scanner.token in ("call", "goto"):
             opcode = self.scanner.token
             self.scanner.scan()

@@ -114,7 +114,7 @@ zero_loop:
 main:
         jsr vertical_blank
         jsr display_frame
-        jsr read_joystick
+        ;;; jsr read_joystick
         jmp main
 
 ;
@@ -255,63 +255,63 @@ _image_loop:
 ; of the player.
 ;
 
-.scope
-read_joystick:
-        lda joystick_delay
-        beq _continue
-
-        dec joystick_delay
-        rts
-
-_continue:
-        lda SWCHA
-        and #$f0
-        cmp #$e0
-        beq _up
-        cmp #$d0
-        beq _down
-        cmp #$b0
-        beq _left
-        cmp #$70
-        beq _right
-        jmp _tail
-
-_up:     
-        inc luminosity
-        jmp _tail
-_down:
-        dec luminosity
-        jmp _tail
-_left:
-        dec colour
-        jmp _tail
-_right:
-        inc colour
-        ;jmp _tail
-
-_tail:
-        lda colour
-        and #$0f
-        sta colour
-
-        lda luminosity
-        and #$0f
-        sta luminosity
-
-        lda colour
-        clc
-        rol
-        rol
-        rol
-        rol
-        ora luminosity
-        sta COLUP0
-
-        lda #$06
-        sta joystick_delay
-
-        rts
-.scend
+;;; .scope
+;;; read_joystick:
+;;;         lda joystick_delay
+;;;         beq _continue
+;;; 
+;;;         dec joystick_delay
+;;;         rts
+;;; 
+;;; _continue:
+;;;         lda SWCHA
+;;;         and #$f0
+;;;         cmp #$e0
+;;;         beq _up
+;;;         cmp #$d0
+;;;         beq _down
+;;;         cmp #$b0
+;;;         beq _left
+;;;         cmp #$70
+;;;         beq _right
+;;;         jmp _tail
+;;; 
+;;; _up:     
+;;;         inc luminosity
+;;;         jmp _tail
+;;; _down:
+;;;         dec luminosity
+;;;         jmp _tail
+;;; _left:
+;;;         dec colour
+;;;         jmp _tail
+;;; _right:
+;;;         inc colour
+;;;         ;jmp _tail
+;;; 
+;;; _tail:
+;;;         lda colour
+;;;         and #$0f
+;;;         sta colour
+;;; 
+;;;         lda luminosity
+;;;         and #$0f
+;;;         sta luminosity
+;;; 
+;;;         lda colour
+;;;         clc
+;;;         rol
+;;;         rol
+;;;         rol
+;;;         rol
+;;;         ora luminosity
+;;;         sta COLUP0
+;;; 
+;;;         lda #$06
+;;;         sta joystick_delay
+;;; 
+;;;         rts
+;;; .scend
 
 ;
 ; Player (sprite) data.

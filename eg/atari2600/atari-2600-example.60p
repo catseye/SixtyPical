@@ -26,7 +26,7 @@ byte colour @ $80
 byte luminosity @ $81
 byte joystick_delay @ $82
 
-byte table[8] image_data : "ZZZZUUUU"
+byte table[8] image_data : "ZZZZUUUU"   // [126, 129, 153, 165, 129, 165, 129, 126]
         // %01111110 
         // %10000001
         // %10011001
@@ -89,21 +89,21 @@ define display_frame routine
     //; we draw it.
     //;
 
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
-    ////   nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
 
     //;
     //; OK, *now* display the player.

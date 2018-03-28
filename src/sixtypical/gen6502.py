@@ -312,6 +312,12 @@ class RTS(Instruction):
     }
 
 
+class NOP(Instruction):
+    opcodes = {
+        Implied:   0xEA,
+    }
+
+
 class SBC(Instruction):
     opcodes = {
         Immediate: 0xe9,

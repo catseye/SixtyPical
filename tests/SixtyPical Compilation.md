@@ -18,6 +18,15 @@ Null program.
     | }
     = $080D   RTS
 
+`nop` program.
+
+    | routine main
+    | {
+    |     nop
+    | }
+    = $080D   NOP
+    = $080E   RTS
+
 Rudimentary program.
 
     | routine main
