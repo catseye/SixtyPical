@@ -10,6 +10,8 @@ History of SixtyPical
 *   Accessing zero-page with `ld` and `st` generates zero-page opcodes.
 *   A `byte` or `word` table can be initialized with a list of constants.
 *   Branching and repeating on the `n` flag is now supported.
+*   The `--dump-fallthru-map` option outputs a map, in JSON format, of
+    which routines can be "fallen through" to by other routines.
 *   Specifying multiple SixtyPical source files will produce a single
     compiled result from their combination.
 *   Rudimentary support for Atari 2600 prelude in a 4K cartridge image,

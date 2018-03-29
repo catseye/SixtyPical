@@ -40,9 +40,9 @@ for example [hearts.60p](vic20/hearts.60p).
 
 ### atari2600
 
-In the [vic20](vic20/) directory are programs that run on the
+In the [atari2600](atari2600/) directory are programs that run on the
 Atari 2600 (4K cartridge).  The directory itself contains a simple
-demo, [atari-2600-example.60p](atari2600/atari-2600-example.60p).
-(Doesn't work yet.)
+demo, [smiley.60p](atari2600/smiley.60p) which was converted from an
+older Atari 2600 skeleton program written in [Ophis][].
 
 [Ophis]: http://michaelcmartin.github.io/Ophis/
