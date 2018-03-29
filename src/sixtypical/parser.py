@@ -33,6 +33,13 @@ class ParsingContext(object):
     def __str__(self):
         return "Symbols: {}\nStatics: {}\nTypedefs: {}\nConsts: {}".format(self.symbols, self.statics, self.typedefs, self.consts)
 
+    def lookup(self, name):
+        if name in self.statics:
+            return self.statics[name].model
+        if name in self.symbols:
+            return self.symbols[name].model
+        return None
+
 
 class Parser(object):
     def __init__(self, context, text, filename):
@@ -43,15 +50,8 @@ class Parser(object):
     def syntax_error(self, msg):
         self.scanner.syntax_error(msg)
 
-    def soft_lookup(self, name):
-        if name in self.context.statics:
-            return self.context.statics[name].model
-        if name in self.context.symbols:
-            return self.context.symbols[name].model
-        return None
-
     def lookup(self, name):
-        model = self.soft_lookup(name)
+        model = self.context.lookup(name)
         if model is None:
             self.syntax_error('Undefined symbol "{}"'.format(name))
         return model
@@ -71,7 +71,7 @@ class Parser(object):
         while self.scanner.on(*typenames):
             defn = self.defn()
             name = defn.name
-            if name in self.context.symbols:
+            if self.context.lookup(name):
                 self.syntax_error('Symbol "%s" already declared' % name)
             self.context.symbols[name] = SymEntry(defn, defn.location)
             defns.append(defn)
@@ -83,7 +83,7 @@ class Parser(object):
             else:
                 routine = self.legacy_routine()
                 name = routine.name
-            if name in self.context.symbols:
+            if self.context.lookup(name):
                 self.syntax_error('Symbol "%s" already declared' % name)
             self.context.symbols[name] = SymEntry(routine, routine.location)
             routines.append(routine)
@@ -99,18 +99,16 @@ class Parser(object):
         for instr in self.backpatch_instrs:
             if instr.opcode in ('call', 'goto'):
                 name = instr.location
-                if name not in self.context.symbols:
-                    self.syntax_error('Undefined routine "%s"' % name)
-                if not isinstance(self.context.symbols[name].model.type, (RoutineType, VectorType)):
+                model = self.lookup(name)
+                if not isinstance(model.type, (RoutineType, VectorType)):
                     self.syntax_error('Illegal call of non-executable "%s"' % name)
-                instr.location = self.context.symbols[name].model
+                instr.location = model
             if instr.opcode in ('copy',) and isinstance(instr.src, basestring):
                 name = instr.src
-                if name not in self.context.symbols:
-                    self.syntax_error('Undefined routine "%s"' % name)
-                if not isinstance(self.context.symbols[name].model.type, (RoutineType, VectorType)):
+                model = self.lookup(name)
+                if not isinstance(model.type, (RoutineType, VectorType)):
                     self.syntax_error('Illegal copy of non-executable "%s"' % name)
-                instr.src = self.context.symbols[name].model
+                instr.src = model
 
         return Program(self.scanner.line_number, defns=defns, routines=routines)
 
@@ -304,7 +302,7 @@ class Parser(object):
         c = {}
         for defn in statics:
             name = defn.name
-            if name in self.context.symbols or name in self.context.statics:
+            if self.context.lookup(name):
                 self.syntax_error('Symbol "%s" already declared' % name)
             c[name] = SymEntry(defn, defn.location)
         return c
@@ -336,7 +334,7 @@ class Parser(object):
         elif forward:
             name = self.scanner.token
             self.scanner.scan()
-            loc = self.soft_lookup(name)
+            loc = self.context.lookup(name)
             if loc is not None:
                 return loc
             else:
