@@ -316,7 +316,7 @@ class Analyzer(object):
             if context:
                 for encountered_goto in context.encountered_gotos():
                     fallthru_map.setdefault(encountered_goto.name, set()).add(routine.name)
-        program.fallthru_map = dict([(k, list(v)) for k, v in fallthru_map.iteritems()])
+        program.fallthru_map = dict([(k, sorted(v)) for k, v in fallthru_map.iteritems()])
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
