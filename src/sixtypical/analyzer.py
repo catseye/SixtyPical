@@ -314,8 +314,9 @@ class Analyzer(object):
         for routine in program.routines:
             context = self.analyze_routine(routine)
             if context:
-                for encountered_goto in context.encountered_gotos():
-                    fallthru_map.setdefault(encountered_goto.name, set()).add(routine.name)
+                encountered_gotos = list(context.encountered_gotos())
+                if len(encountered_gotos) == 1 and isinstance(encountered_gotos[0].type, RoutineType):
+                    fallthru_map.setdefault(encountered_gotos[0].name, set()).add(routine.name)
         program.fallthru_map = dict([(k, sorted(v)) for k, v in fallthru_map.iteritems()])
 
     def analyze_routine(self, routine):
