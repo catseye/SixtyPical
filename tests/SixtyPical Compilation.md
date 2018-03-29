@@ -198,13 +198,30 @@ Initialized byte table, initialized with list of byte values.
     = $080D   LDX #$00
     = $080F   LDA $0813,X
     = $0812   RTS
-    = $0813   .byte $57
-    = $0814   PHA
-    = $0815   EOR ($54,X)
-    = $0817   .byte $3F
+    = $0813   .byte $FF
+    = $0814   BRK
+    = $0815   STA ($80,X)
+    = $0817   .byte $7F
     = $0818   BRK
     = $0819   BRK
     = $081A   BRK
+
+Initialized word table, initialized with list of word values.
+
+    | word table[8] message : 65535, 0, 127
+    | 
+    | routine main
+    | {
+    | }
+    = $080D   RTS
+    = $080E   .byte $FF
+    = $080F   .byte $FF
+    = $0810   BRK
+    = $0811   BRK
+    = $0812   .byte $7F
+    = $0813   BRK
+    = $0814   BRK
+    = $0815   BRK
 
 Some instructions.
 

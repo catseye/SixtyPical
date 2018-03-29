@@ -13,6 +13,8 @@ class Emittable(object):
 
 class Byte(Emittable):
     def __init__(self, value):
+        if isinstance(value, basestring):
+            value = ord(value)
         if value < -127 or value > 255:
             raise IndexError(value)
         if value < 0:
@@ -49,6 +51,7 @@ class Word(Emittable):
 
 class Table(Emittable):
     def __init__(self, value, size):
+        """`value` should be an iterable of Emittables."""
         # TODO: range-checking
         self.value = value
         self._size = size
@@ -57,12 +60,10 @@ class Table(Emittable):
         return self._size
 
     def serialize(self, addr=None):
-        bytes = []
-        for b in self.value:
-            bytes.append(chr(ord(b)))
-        while len(bytes) < self.size():
-            bytes.append(chr(0))
-        return ''.join(bytes)
+        buf = ''.join([emittable.serialize() for emittable in self.value])
+        while len(buf) < self.size():
+            buf += chr(0)
+        return buf
 
     def __repr__(self):
         return "%s()" % (self.__class__.__name__)

@@ -144,9 +144,9 @@ class Parser(object):
                     self.scanner.scan()
                 else:
                     initial = []
-                    initial.append(self.const())
+                    initial.append(self.const().value)
                     while self.scanner.consume(','):
-                        initial.append(self.const())
+                        initial.append(self.const().value)
             else:
                 initial = self.const().value
 
