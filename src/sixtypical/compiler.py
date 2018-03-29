@@ -68,7 +68,7 @@ class Compiler(object):
         return self.labels[name]
 
     def absolute_or_zero_page(self, label):
-        if label.addr and label.addr < 256:
+        if label.addr is not None and label.addr < 256:
             return ZeroPage(label)
         else:
             return Absolute(label)

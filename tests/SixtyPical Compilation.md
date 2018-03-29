@@ -114,19 +114,24 @@ Memory location with explicit address.
 
 Accesses to memory locations in zero-page with `ld` and `st` use zero-page addressing.
 
+    | byte zp @ $00
     | byte screen @ 100
     | 
     | routine main
-    |   inputs screen
-    |   outputs screen
+    |   inputs screen, zp
+    |   outputs screen, zp
     |   trashes a, z, n
     | {
     |   ld a, screen
     |   st a, screen
+    |   ld a, zp
+    |   st a, zp
     | }
     = $080D   LDA $64
     = $080F   STA $64
-    = $0811   RTS
+    = $0811   LDA $00
+    = $0813   STA $00
+    = $0815   RTS
 
 Memory location with initial value.
 
