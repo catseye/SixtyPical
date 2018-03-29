@@ -116,6 +116,7 @@ main:
         jsr display_frame
         ;;; jsr read_joystick
         jmp main
+        rts ;;;
 
 ;
 ; Vertical blank routine.

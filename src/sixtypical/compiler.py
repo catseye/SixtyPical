@@ -67,6 +67,12 @@ class Compiler(object):
                 return static_label
         return self.labels[name]
 
+    def absolute_or_zero_page(self, label):
+        if label.addr and label.addr < 256:
+            return ZeroPage(label)
+        else:
+            return Absolute(label)
+
     # visitor methods
 
     def compile_program(self, program):
@@ -177,7 +183,7 @@ class Compiler(object):
                 elif isinstance(src, IndirectRef) and isinstance(src.ref.type, PointerType):
                     self.emitter.emit(LDA(IndirectY(self.get_label(src.ref.name))))
                 else:
-                    self.emitter.emit(LDA(Absolute(self.get_label(src.name))))
+                    self.emitter.emit(LDA(self.absolute_or_zero_page(self.get_label(src.name))))
             elif dest == REG_X:
                 if src == REG_A:
                     self.emitter.emit(TAX())
@@ -186,7 +192,7 @@ class Compiler(object):
                 elif isinstance(src, IndexedRef) and src.index == REG_Y:
                     self.emitter.emit(LDX(AbsoluteY(self.get_label(src.ref.name))))
                 else:
-                    self.emitter.emit(LDX(Absolute(self.get_label(src.name))))
+                    self.emitter.emit(LDX(self.absolute_or_zero_page(self.get_label(src.name))))
             elif dest == REG_Y:
                 if src == REG_A:
                     self.emitter.emit(TAY())
@@ -195,7 +201,7 @@ class Compiler(object):
                 elif isinstance(src, IndexedRef) and src.index == REG_X:
                     self.emitter.emit(LDY(AbsoluteX(self.get_label(src.ref.name))))
                 else:
-                    self.emitter.emit(LDY(Absolute(self.get_label(src.name))))
+                    self.emitter.emit(LDY(self.absolute_or_zero_page(self.get_label(src.name))))
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'st':
@@ -215,17 +221,15 @@ class Compiler(object):
                         REG_X: AbsoluteX,
                         REG_Y: AbsoluteY,
                     }[dest.index]
-                    label = self.get_label(dest.ref.name)
+                    operand = mode_cls(self.get_label(dest.ref.name))
                 elif isinstance(dest, IndirectRef) and isinstance(dest.ref.type, PointerType):
-                    mode_cls = IndirectY
-                    label = self.get_label(dest.ref.name)
+                    operand = IndirectY(self.get_label(dest.ref.name))
                 else:
-                    mode_cls = Absolute
-                    label = self.get_label(dest.name)
+                    operand = self.absolute_or_zero_page(self.get_label(dest.name))
 
-                if op_cls is None or mode_cls is None:
+                if op_cls is None:
                     raise UnsupportedOpcodeError(instr)
-                self.emitter.emit(op_cls(mode_cls(label)))
+                self.emitter.emit(op_cls(operand))
         elif opcode == 'add':
             if dest == REG_A:
                 if isinstance(src, ConstantRef):

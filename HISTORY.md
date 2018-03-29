@@ -9,6 +9,7 @@ History of SixtyPical
 *   Specifying multiple SixtyPical source files will produce a single
     compiled result from their combination.
 *   Added `nop` opcode, which compiles to `NOP` (mainly for timing.)
+*   Accessing zero-page with `ld` and `st` generates zero-page opcodes.
 *   Rudimentary support for Atari 2600 prelude in a 4K cartridge image,
     and start of an example program in `eg/atari2600` directory.
 
