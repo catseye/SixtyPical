@@ -357,7 +357,7 @@ Compiling `if` without `else`.
     = $0813   LDY #$01
     = $0815   RTS
 
-Compiling `repeat`.
+Compiling `repeat ... until z`.
 
     | routine main
     |   trashes a, y, z, n, c
@@ -376,7 +376,7 @@ Compiling `repeat`.
     = $0813   BNE $080F
     = $0815   RTS
 
-Compiling `repeat until not`.
+Compiling `repeat ... until not z`.
 
     | routine main
     |   trashes a, y, z, n, c
@@ -394,6 +394,40 @@ Compiling `repeat until not`.
     = $0811   CPY #$5B
     = $0813   BEQ $080F
     = $0815   RTS
+
+Compiling `repeat ... until n`.
+
+    | routine main
+    |   trashes a, y, z, n, c
+    | {
+    |     ld y, 65
+    |     repeat {
+    |         ld a, y
+    |         dec y
+    |     } until n
+    | }
+    = $080D   LDY #$41
+    = $080F   TYA
+    = $0810   DEY
+    = $0811   BPL $080F
+    = $0813   RTS
+
+Compiling `repeat ... until not n`.
+
+    | routine main
+    |   trashes a, y, z, n, c
+    | {
+    |     ld y, 65
+    |     repeat {
+    |         ld a, y
+    |         inc y
+    |     } until not n
+    | }
+    = $080D   LDY #$41
+    = $080F   TYA
+    = $0810   INY
+    = $0811   BMI $080F
+    = $0813   RTS
 
 Compiling `repeat forever`.
 

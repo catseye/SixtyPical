@@ -1669,6 +1669,18 @@ The body of `repeat forever` can be empty.
     | }
     = ok
 
+While `repeat` is most often used with `z`, it can also be used with `n`.
+
+    | routine main
+    |   outputs y, n, z
+    | {
+    |     ld y, 15
+    |     repeat {
+    |         dec y
+    |     } until n
+    | }
+    = ok
+
 ### for ###
 
 Basic "open-faced for" loop.  We'll start with the "upto" variant.

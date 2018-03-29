@@ -6,4 +6,5 @@ if [ "x$COMPARE" != "x" ]; then
   dcc6502 -o 0xf000 -m 200 smiley.bin > smiley.bin.disasm.txt
   dcc6502 -o 0xf000 -m 200 smiley-60p.bin > smiley-60p.bin.disasm.txt
   paste smiley.bin.disasm.txt smiley-60p.bin.disasm.txt | pr -t -e24
+  #diff -ru smiley.bin.disasm.txt smiley-60p.bin.disasm.txt
 fi
