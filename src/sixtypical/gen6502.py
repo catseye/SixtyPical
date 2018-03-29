@@ -160,6 +160,18 @@ class BNE(Instruction):
     }
 
 
+class BPL(Instruction):
+    opcodes = {
+        Relative:  0x10,
+    }
+
+
+class BMI(Instruction):
+    opcodes = {
+        Relative:  0x30,
+    }
+
+
 class CLC(Instruction):
     opcodes = {
         Implied:   0x18

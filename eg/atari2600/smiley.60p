@@ -81,7 +81,7 @@ define display_frame routine
     repeat {
         st a, WSYNC
         dec x
-    } until z        // FIXME orig loop used "bpl _wsync_loop"
+    } until n
     st a, WSYNC
 
     //;

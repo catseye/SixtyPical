@@ -9,10 +9,11 @@ History of SixtyPical
 *   Added `nop` opcode, which compiles to `NOP` (mainly for timing.)
 *   Accessing zero-page with `ld` and `st` generates zero-page opcodes.
 *   A `byte` or `word` table can be initialized with a list of constants.
+*   Branching and repeating on the `n` flag is now supported.
 *   Specifying multiple SixtyPical source files will produce a single
     compiled result from their combination.
 *   Rudimentary support for Atari 2600 prelude in a 4K cartridge image,
-    and start of an example program in `eg/atari2600` directory.
+    and an example program in `eg/atari2600` directory.
 
 0.14
 ----

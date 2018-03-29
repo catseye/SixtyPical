@@ -15,7 +15,7 @@ from sixtypical.gen6502 import (
     CLC, SEC, ADC, SBC, ROL, ROR,
     INC, INX, INY, DEC, DEX, DEY,
     CMP, CPX, CPY, AND, ORA, EOR,
-    BCC, BCS, BNE, BEQ,
+    BCC, BCS, BNE, BEQ, BPL, BMI,
     JMP, JSR, RTS,
     SEI, CLI,
     NOP,
@@ -518,10 +518,12 @@ class Compiler(object):
             False: {
                 'c': BCC,
                 'z': BNE,
+                'n': BPL,
             },
             True: {
                 'c': BCS,
                 'z': BEQ,
+                'n': BMI,
             },
         }[instr.inverted].get(instr.src.name)
         if cls is None:
@@ -548,10 +550,12 @@ class Compiler(object):
                 False: {
                     'c': BCC,
                     'z': BNE,
+                    'n': BPL,
                 },
                 True: {
                     'c': BCS,
                     'z': BEQ,
+                    'n': BMI,
                 },
             }[instr.inverted].get(instr.src.name)
             if cls is None:

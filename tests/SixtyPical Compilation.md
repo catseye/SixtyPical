@@ -417,13 +417,13 @@ Compiling `repeat ... until not n`.
     | routine main
     |   trashes a, y, z, n, c
     | {
-    |     ld y, 65
+    |     ld y, 199
     |     repeat {
     |         ld a, y
     |         inc y
     |     } until not n
     | }
-    = $080D   LDY #$41
+    = $080D   LDY #$C7
     = $080F   TYA
     = $0810   INY
     = $0811   BMI $080F
