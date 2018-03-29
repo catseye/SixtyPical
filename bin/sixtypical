@@ -58,6 +58,11 @@ def process_input_files(filenames, options):
     analyzer = Analyzer(debug=options.debug)
     analyzer.analyze_program(program)
 
+    if options.dump_fallthru_map:
+        import json
+        sys.stdout.write(json.dumps(program.fallthru_map, indent=4, sort_keys=True))
+        sys.stdout.write("\n")
+
     if options.analyze_only:
         return
 
@@ -121,11 +126,7 @@ if __name__ == '__main__':
         'filenames', metavar='FILENAME', type=str, nargs='+',
         help="The SixtyPical source files to compile."
     )
-    argparser.add_argument(
-        "--analyze-only",
-        action="store_true",
-        help="Only parse and analyze the program; do not compile it."
-    )
+
     argparser.add_argument(
         "--origin", type=str, default='0xc000',
         help="Location in memory where the `main` routine will be "
@@ -143,15 +144,26 @@ if __name__ == '__main__':
              "Also sets the origin and format. "
              "Options are: c64, vic20, atari2600."
     )
+
     argparser.add_argument(
-        "--debug",
+        "--analyze-only",
         action="store_true",
-        help="Display debugging information when analyzing and compiling."
+        help="Only parse and analyze the program; do not compile it."
+    )
+    argparser.add_argument(
+        "--dump-fallthru-map",
+        action="store_true",
+        help="Dump the fallthru map to stdout after analyzing the program."
     )
     argparser.add_argument(
         "--parse-only",
         action="store_true",
         help="Only parse the program; do not analyze or compile it."
+    )
+    argparser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Display debugging information when analyzing and compiling."
     )
     argparser.add_argument(
         "--traceback",

@@ -310,8 +310,13 @@ class Analyzer(object):
     def analyze_program(self, program):
         assert isinstance(program, Program)
         self.routines = {r.location: r for r in program.routines}
+        fallthru_map = {}
         for routine in program.routines:
-            self.analyze_routine(routine)
+            context = self.analyze_routine(routine)
+            if context:
+                for encountered_goto in context.encountered_gotos():
+                    fallthru_map.setdefault(encountered_goto.name, set()).add(routine.name)
+        program.fallthru_map = dict([(k, list(v)) for k, v in fallthru_map.iteritems()])
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
@@ -353,6 +358,7 @@ class Analyzer(object):
                 if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
                     raise ForbiddenWriteError(routine, ref.name)
         self.current_routine = None
+        return context
 
     def analyze_block(self, block, context):
         assert isinstance(block, Block)
