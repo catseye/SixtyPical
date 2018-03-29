@@ -122,6 +122,7 @@ class Compiler(object):
                 elif type_ == TYPE_WORD:
                     initial_data = Word(defn.initial)
                 elif TableType.is_a_table_type(type_, TYPE_BYTE):
+                    # FIXME convert defn.initial to a serializable type ... or when parsing.
                     initial_data = Table(defn.initial, type_.size)
                 else:
                     raise NotImplementedError(type_)

@@ -162,9 +162,31 @@ Word memory locations with explicit address, initial value.
     = $081A   .byte $BB
     = $081B   .byte $0B
 
-Initialized byte table.  Bytes allocated, but beyond the string, are 0's.
+Initialized byte table, initialized with ASCII string.  Bytes allocated, but beyond the string, are 0's.
 
     | byte table[8] message : "WHAT?"
+    | 
+    | routine main
+    |   inputs message
+    |   outputs x, a, z, n
+    | {
+    |   ld x, 0
+    |   ld a, message + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA $0813,X
+    = $0812   RTS
+    = $0813   .byte $57
+    = $0814   PHA
+    = $0815   EOR ($54,X)
+    = $0817   .byte $3F
+    = $0818   BRK
+    = $0819   BRK
+    = $081A   BRK
+
+Initialized byte table, initialized with list of byte values.
+
+    | byte table[8] message : 255, 0, 129, 128, 127
     | 
     | routine main
     |   inputs message

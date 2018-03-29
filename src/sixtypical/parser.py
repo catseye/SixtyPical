@@ -138,9 +138,15 @@ class Parser(object):
 
         initial = None
         if self.scanner.consume(':'):
-            if isinstance(type_, TableType) and self.scanner.on_type('string literal'):
-                initial = self.scanner.token
-                self.scanner.scan()
+            if isinstance(type_, TableType):
+                if self.scanner.on_type('string literal'):
+                    initial = self.scanner.token
+                    self.scanner.scan()
+                else:
+                    initial = []
+                    initial.append(self.const())
+                    while self.scanner.consume(','):
+                        initial.append(self.const())
             else:
                 initial = self.const().value
 
