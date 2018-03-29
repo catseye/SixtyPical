@@ -1,4 +1,5 @@
-// atari-2600-example.60p - SixtyPical translation of atari-2600-example.oph
+// smiley.60p - SixtyPical translation of smiley.oph (2018),
+//   which is itself a stripped-down version of atari-2600-example.oph
 
 byte VSYNC         @ $00
 byte VBLANK        @ $01
@@ -147,10 +148,25 @@ define display_frame routine
     st a, COLUBK
 }
 
+define colourize_player routine
+  inputs colour, luminosity
+  outputs COLUP0
+  trashes a, z, c, n
+{
+    ld a, colour
+    st off, c
+    shl a
+    shl a
+    shl a
+    shl a
+    or a, luminosity
+    st a, COLUP0
+}
+
 define main routine
   inputs image_data, INTIM
-  outputs CTRLPF, colour, luminosity, NUSIZ0, VSYNC, WSYNC, TIM64T, HMOVE, VBLANK, RESP0, GP0, PF0, PF1, PF2, COLUPF, COLUBK
-  trashes a, x, y, z, n
+  outputs CTRLPF, colour, luminosity, NUSIZ0, VSYNC, WSYNC, TIM64T, HMOVE, VBLANK, RESP0, GP0, PF0, PF1, PF2, COLUPF, COLUBK, COLUP0
+  trashes a, x, y, z, c, n
 {
     ld a, $00
     st a, CTRLPF
@@ -163,6 +179,6 @@ define main routine
     repeat {
         call vertical_blank
         call display_frame
-        // call read_joystick
+        call colourize_player
     } forever
 }

@@ -1,21 +1,12 @@
 ;
-; atari-2600-example.oph
-; Skeleton code for an Atari 2600 ROM,
-;   plus an example of reading the joystick.
-; By Chris Pressey, November 2, 2012.
+; smiley.oph (2018)
+; stripped-down version of atari-2600-example.oph (2012)
 ;
 ; This work is in the public domain.  See the file UNLICENSE for more info.
 ;
-; Based on Chris Cracknell's Atari 2600 clock (also in the public domain):
-;   http://everything2.com/title/An+example+of+Atari+2600+source+code
-;
 ; to build and run in Stella:
-;   ophis atari-2600-example.oph -o example.bin
-;   stella example.bin
-;
-; More useful information can be found in the Stella Programmer's Guide:
-;   http://alienbill.com/2600/101/docs/stella.html
-;
+;   ophis smiley.oph -o smiley.bin
+;   stella smiley.bin
 
 ;
 ; Useful system addresses (TODO: briefly describe each of these.)
@@ -114,8 +105,9 @@ zero_loop:
 main:
         jsr vertical_blank
         jsr display_frame
-        jsr read_joystick
+        jsr colourize_player
         jmp main
+        rts                ; NOTE just to pad out to match the SixtyPical version
 
 ;
 ; Vertical blank routine.
@@ -249,55 +241,12 @@ _image_loop:
         rts
 .scend
 
-
 ;
-; Read the joystick and use it to modify the colour and luminosity
-; of the player.
+; Modify the colour and luminosity of the player.
 ;
 
 .scope
-read_joystick:
-        lda joystick_delay
-        beq _continue
-
-        dec joystick_delay
-        rts
-
-_continue:
-        lda SWCHA
-        and #$f0
-        cmp #$e0
-        beq _up
-        cmp #$d0
-        beq _down
-        cmp #$b0
-        beq _left
-        cmp #$70
-        beq _right
-        jmp _tail
-
-_up:     
-        inc luminosity
-        jmp _tail
-_down:
-        dec luminosity
-        jmp _tail
-_left:
-        dec colour
-        jmp _tail
-_right:
-        inc colour
-        ;jmp _tail
-
-_tail:
-        lda colour
-        and #$0f
-        sta colour
-
-        lda luminosity
-        and #$0f
-        sta luminosity
-
+colourize_player:
         lda colour
         clc
         rol
@@ -306,10 +255,6 @@ _tail:
         rol
         ora luminosity
         sta COLUP0
-
-        lda #$06
-        sta joystick_delay
-
         rts
 .scend
 
