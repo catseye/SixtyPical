@@ -70,6 +70,13 @@ through to it.
     | {
     | }
     = {}
+    = *** serialization:
+    = [
+    =     [
+    =         "retain", 
+    =         "main"
+    =     ]
+    = ]
 
 If main does a `goto foo`, then it can fall through to `foo`.
 
@@ -87,6 +94,17 @@ If main does a `goto foo`, then it can fall through to `foo`.
     =         "main"
     =     ]
     = }
+    = *** serialization:
+    = [
+    =     [
+    =         "fallthru", 
+    =         "main"
+    =     ], 
+    =     [
+    =         "retain", 
+    =         "foo"
+    =     ]
+    = ]
 
 More than one routine can fall through to a routine.
 
@@ -113,6 +131,21 @@ If main does a `goto foo`, then it can fall through to `foo`.
     =         "main"
     =     ]
     = }
+    = *** serialization:
+    = [
+    =     [
+    =         "fallthru", 
+    =         "main"
+    =     ], 
+    =     [
+    =         "retain", 
+    =         "foo"
+    =     ], 
+    =     [
+    =         "retain", 
+    =         "bar"
+    =     ]
+    = ]
 
 There is nothing stopping two routines from tail-calling each
 other, but we will only be able to make one of them, at most,
@@ -152,6 +185,21 @@ fall through to the other.
     =         "foo"
     =     ]
     = }
+    = *** serialization:
+    = [
+    =     [
+    =         "retain", 
+    =         "main"
+    =     ], 
+    =     [
+    =         "fallthru", 
+    =         "bar"
+    =     ], 
+    =     [
+    =         "retain", 
+    =         "foo"
+    =     ]
+    = ]
 
 If a routine does two tail calls (which is possible because they
 can be in different branches of an `if`) it cannot fall through to another
@@ -176,6 +224,21 @@ routine.
     |     }
     | }
     = {}
+    = *** serialization:
+    = [
+    =     [
+    =         "retain", 
+    =         "main"
+    =     ], 
+    =     [
+    =         "retain", 
+    =         "bar"
+    =     ], 
+    =     [
+    =         "retain", 
+    =         "foo"
+    =     ]
+    = ]
 
 Similarly, a tail call to a vector can't be turned into a fallthru,
 because we don't necessarily know what actual routine the vector contains.
@@ -199,3 +262,18 @@ because we don't necessarily know what actual routine the vector contains.
     |     goto vec
     | }
     = {}
+    = *** serialization:
+    = [
+    =     [
+    =         "retain", 
+    =         "main"
+    =     ], 
+    =     [
+    =         "retain", 
+    =         "bar"
+    =     ], 
+    =     [
+    =         "retain", 
+    =         "foo"
+    =     ]
+    = ]

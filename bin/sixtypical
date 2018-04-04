@@ -84,7 +84,7 @@ def process_input_files(filenames, options):
             fa.find_cycles()
 
         routines_list = fa.serialize()
-        #dump('serialization', routines_list)
+        dump('serialization', routines_list)
 
     if options.analyze_only:
         return
