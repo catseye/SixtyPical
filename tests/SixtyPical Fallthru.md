@@ -139,7 +139,7 @@ fall through to the other.
     =     "bar", 
     =     "foo"
     = ]
-    = *** after breaking cycles:
+    = *** after breaking cycle:
     = {
     =     "bar": [
     =         "foo"

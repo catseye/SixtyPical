@@ -24,25 +24,27 @@ class FallthruAnalyzer(object):
         self.fallthru_map = dict([(k, sorted(v)) for k, v in fallthru_map.iteritems()])
         return self.fallthru_map
 
-    def find_ancestors(self):
+    def find_cycles(self):
         self.ancestor_map = {}
         for key in self.fallthru_map:
             ancestors = set()
             make_transitive_closure(self.fallthru_map, key, ancestors)
             self.ancestor_map[key] = sorted(ancestors)
-        return self.ancestor_map
 
-    def find_cycles(self):
         self.cycles_found = set()
         for key in self.ancestor_map:
             if key in self.ancestor_map[key]:
                 self.cycles_found.add(key)
+
         return self.cycles_found
 
-    def break_cycles(self):
+    def break_cycle(self):
+        cycle_to_break = sorted(self.cycles_found)[0]
+        cycles_to_break = set([cycle_to_break])
+
         new_fallthru_map = {}
         for key in self.fallthru_map:
-            values = set(self.fallthru_map[key]) - self.cycles_found
+            values = set(self.fallthru_map[key]) - cycles_to_break
             if values:
                 new_fallthru_map[key] = sorted(values)
         self.fallthru_map = new_fallthru_map

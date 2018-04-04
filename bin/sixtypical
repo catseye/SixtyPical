@@ -66,31 +66,31 @@ def process_input_files(filenames, options):
         fa.analyze_program(program)
 
         if options.dump_fallthru_info:
-            fallthru_map = dict(fa.fallthru_map)
-            sys.stdout.write(json.dumps(fallthru_map, indent=4, sort_keys=True))
-            sys.stdout.write("\n")
-
-        fa.find_ancestors()
-
-        if options.debug and options.dump_fallthru_info:
-            sys.stdout.write("*** ancestors:\n")
-            sys.stdout.write(json.dumps(fa.ancestor_map, indent=4, sort_keys=True))
+            sys.stdout.write(json.dumps(fa.fallthru_map, indent=4, sort_keys=True))
             sys.stdout.write("\n")
 
         fa.find_cycles()
 
-        if fa.cycles_found:
+        while fa.cycles_found:
             if options.dump_fallthru_info:
+
+                if options.debug:
+                    sys.stdout.write("*** ancestors:\n")
+                    sys.stdout.write(json.dumps(fa.ancestor_map, indent=4, sort_keys=True))
+                    sys.stdout.write("\n")
+
                 sys.stdout.write("*** cycles found:\n")
                 sys.stdout.write(json.dumps(sorted(fa.cycles_found), indent=4, sort_keys=True))
                 sys.stdout.write("\n")
 
-            fa.break_cycles()
+            fa.break_cycle()
 
-            if options.dump_fallthru_info and fallthru_map != fa.fallthru_map:
-                sys.stdout.write("*** after breaking cycles:\n")
+            if options.dump_fallthru_info:
+                sys.stdout.write("*** after breaking cycle:\n")
                 sys.stdout.write(json.dumps(fa.fallthru_map, indent=4, sort_keys=True))
                 sys.stdout.write("\n")
+
+            fa.find_cycles()
 
     if options.analyze_only:
         return
