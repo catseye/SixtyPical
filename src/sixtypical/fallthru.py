@@ -73,7 +73,7 @@ class FallthruAnalyzer(object):
             if routine.name not in self.fall_out_map:
                 self.fall_out_map[routine.name] = None
 
-        routine_list = []
+        roster = []
         pending_routines = copy(self.fall_out_map)
         while pending_routines:
             # Pick a routine that is still pending to be serialized.
@@ -87,13 +87,11 @@ class FallthruAnalyzer(object):
             chains.sort(key=len, reverse=True)
             routines = chains[0]
 
-            # Remove (r1,r2,...,rn) from R and append them to L in that order.
-            # Mark (r1,r2,...rn-1) as "will have their final goto removed."
+            # Append (r1,r2,...,rn) to the roster and remove r1,r2,...rn from R.
+            # A sublist like this appearing in the roster has meaning
+            # "optimize the final goto out of all but the last routine in the sublist".
             for r in routines:
                 del pending_routines[r]
-                if r == routines[-1]:
-                    routine_list.append(['retain', r])
-                else:
-                    routine_list.append(['fallthru', r])
+            roster.append(routines)
 
-        return routine_list
+        return roster

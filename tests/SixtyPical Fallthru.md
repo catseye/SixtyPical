@@ -73,7 +73,6 @@ through to it.
     = *** serialization:
     = [
     =     [
-    =         "retain", 
     =         "main"
     =     ]
     = ]
@@ -97,18 +96,13 @@ If main does a `goto foo`, then it can fall through to `foo`.
     = *** serialization:
     = [
     =     [
-    =         "fallthru", 
-    =         "main"
-    =     ], 
-    =     [
-    =         "retain", 
+    =         "main", 
     =         "foo"
     =     ]
     = ]
 
-More than one routine can fall through to a routine.
-
-If main does a `goto foo`, then it can fall through to `foo`.
+More than one routine can fall through to a routine.  We pick one
+of them to fall through, when selecting the order of routines.
 
     | define foo routine trashes a, z, n
     | {
@@ -134,15 +128,10 @@ If main does a `goto foo`, then it can fall through to `foo`.
     = *** serialization:
     = [
     =     [
-    =         "fallthru", 
-    =         "main"
-    =     ], 
-    =     [
-    =         "retain", 
+    =         "main", 
     =         "foo"
     =     ], 
     =     [
-    =         "retain", 
     =         "bar"
     =     ]
     = ]
@@ -188,15 +177,10 @@ fall through to the other.
     = *** serialization:
     = [
     =     [
-    =         "retain", 
     =         "main"
     =     ], 
     =     [
-    =         "fallthru", 
-    =         "bar"
-    =     ], 
-    =     [
-    =         "retain", 
+    =         "bar", 
     =         "foo"
     =     ]
     = ]
@@ -227,15 +211,12 @@ routine.
     = *** serialization:
     = [
     =     [
-    =         "retain", 
     =         "main"
     =     ], 
     =     [
-    =         "retain", 
     =         "bar"
     =     ], 
     =     [
-    =         "retain", 
     =         "foo"
     =     ]
     = ]
@@ -265,15 +246,12 @@ because we don't necessarily know what actual routine the vector contains.
     = *** serialization:
     = [
     =     [
-    =         "retain", 
     =         "main"
     =     ], 
     =     [
-    =         "retain", 
     =         "bar"
     =     ], 
     =     [
-    =         "retain", 
     =         "foo"
     =     ]
     = ]
