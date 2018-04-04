@@ -104,6 +104,9 @@ If main does a `goto foo`, then it can fall through to `foo`.
 More than one routine can fall through to a routine.  We pick one
 of them to fall through, when selecting the order of routines.
 
+Also note, `main` is always serialized first, so that the entry
+point of the entire program appears at the beginning of the code.
+
     | define foo routine trashes a, z, n
     | {
     |     ld a, 0
@@ -128,11 +131,11 @@ of them to fall through, when selecting the order of routines.
     = *** serialization:
     = [
     =     [
-    =         "bar", 
-    =         "foo"
+    =         "main"
     =     ], 
     =     [
-    =         "main"
+    =         "bar", 
+    =         "foo"
     =     ]
     = ]
 
@@ -177,11 +180,11 @@ fall through to the other.
     = *** serialization:
     = [
     =     [
-    =         "foo", 
-    =         "bar"
+    =         "main"
     =     ], 
     =     [
-    =         "main"
+    =         "foo", 
+    =         "bar"
     =     ]
     = ]
 
@@ -211,13 +214,13 @@ routine.
     = *** serialization:
     = [
     =     [
+    =         "main"
+    =     ], 
+    =     [
     =         "bar"
     =     ], 
     =     [
     =         "foo"
-    =     ], 
-    =     [
-    =         "main"
     =     ]
     = ]
 
@@ -246,12 +249,12 @@ because we don't necessarily know what actual routine the vector contains.
     = *** serialization:
     = [
     =     [
+    =         "main"
+    =     ], 
+    =     [
     =         "bar"
     =     ], 
     =     [
     =         "foo"
-    =     ], 
-    =     [
-    =         "main"
     =     ]
     = ]

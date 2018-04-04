@@ -64,11 +64,21 @@ class FallthruAnalyzer(object):
         self.fall_in_map = new_fall_in_map
 
     def serialize(self):
+        # NOTE, we can probably do this completely differently;
+        # construct the fall_out map
+        # construct fall_out chains
+        # sort these by length
+        # do the longest ones first
+
         pending_routines = sorted(self.fall_in_map.keys())
         routine_names = sorted([routine.name for routine in self.program.routines])
         for routine_name in routine_names:
             if routine_name not in pending_routines:
                 pending_routines.append(routine_name)
+
+        # make sure `main` appears first, whatever else may be the case.
+        pending_routines.remove('main')
+        pending_routines = ['main'] + pending_routines
 
         roster = []
         while pending_routines:
