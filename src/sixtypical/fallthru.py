@@ -64,20 +64,16 @@ class FallthruAnalyzer(object):
         self.fall_in_map = new_fall_in_map
 
     def serialize(self):
-        self.fall_out_map = {}
-        for key, values in self.fall_in_map.iteritems():
-            for value in values:
-                assert value not in self.fall_out_map
-                self.fall_out_map[value] = key
-        for routine in self.program.routines:
-            if routine.name not in self.fall_out_map:
-                self.fall_out_map[routine.name] = None
+        pending_routines = sorted(self.fall_in_map.keys())
+        routine_names = sorted([routine.name for routine in self.program.routines])
+        for routine_name in routine_names:
+            if routine_name not in pending_routines:
+                pending_routines.append(routine_name)
 
         roster = []
-        pending_routines = copy(self.fall_out_map)
         while pending_routines:
             # Pick a routine that is still pending to be serialized.
-            key = pending_routines.keys()[0]
+            key = pending_routines[0]
 
             in_set = self.fall_in_map.get(key, [])
 
@@ -86,12 +82,13 @@ class FallthruAnalyzer(object):
             chains = find_chains(self.fall_in_map, key, lambda k: k in pending_routines)
             chains.sort(key=len, reverse=True)
             routines = chains[0]
+            routines.reverse()
 
             # Append (r1,r2,...,rn) to the roster and remove r1,r2,...rn from R.
             # A sublist like this appearing in the roster has meaning
             # "optimize the final goto out of all but the last routine in the sublist".
             for r in routines:
-                del pending_routines[r]
+                pending_routines.remove(r)
             roster.append(routines)
 
         return roster

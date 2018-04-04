@@ -128,11 +128,11 @@ of them to fall through, when selecting the order of routines.
     = *** serialization:
     = [
     =     [
-    =         "main", 
+    =         "bar", 
     =         "foo"
     =     ], 
     =     [
-    =         "bar"
+    =         "main"
     =     ]
     = ]
 
@@ -177,11 +177,11 @@ fall through to the other.
     = *** serialization:
     = [
     =     [
-    =         "main"
+    =         "foo", 
+    =         "bar"
     =     ], 
     =     [
-    =         "bar", 
-    =         "foo"
+    =         "main"
     =     ]
     = ]
 
@@ -211,13 +211,13 @@ routine.
     = *** serialization:
     = [
     =     [
-    =         "main"
-    =     ], 
-    =     [
     =         "bar"
     =     ], 
     =     [
     =         "foo"
+    =     ], 
+    =     [
+    =         "main"
     =     ]
     = ]
 
@@ -246,12 +246,12 @@ because we don't necessarily know what actual routine the vector contains.
     = *** serialization:
     = [
     =     [
-    =         "main"
-    =     ], 
-    =     [
     =         "bar"
     =     ], 
     =     [
     =         "foo"
+    =     ], 
+    =     [
+    =         "main"
     =     ]
     = ]
