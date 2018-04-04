@@ -58,15 +58,16 @@ def process_input_files(filenames, options):
     analyzer = Analyzer(debug=options.debug)
     analyzer.analyze_program(program)
 
-    if options.dump_fallthru_map:
-        import json
+    if options.optimize_fallthru:
         from sixtypical.fallthru import FallthruAnalyzer
 
         fa = FallthruAnalyzer(debug=options.debug)
         fa.analyze_program(program)
 
-        sys.stdout.write(json.dumps(fa.fallthru_map, indent=4, sort_keys=True))
-        sys.stdout.write("\n")
+        if options.dump_fallthru_info:
+            import json
+            sys.stdout.write(json.dumps(fa.fallthru_map, indent=4, sort_keys=True))
+            sys.stdout.write("\n")
 
     if options.analyze_only:
         return
@@ -156,14 +157,15 @@ if __name__ == '__main__':
         help="Only parse and analyze the program; do not compile it."
     )
     argparser.add_argument(
-        "--dump-fallthru-map",
+        "--optimize-fallthru",
         action="store_true",
-        help="Dump the fallthru map to stdout after analyzing the program."
+        help="Reorder the routines in the program to maximize the number of tail calls "
+             "that can be removed by having execution 'fall through' to the next routine."
     )
     argparser.add_argument(
-        "--dump-fallthru-ordering",
+        "--dump-fallthru-info",
         action="store_true",
-        help="Dump the fallthru ordering to stdout after analyzing the program."
+        help="Dump the fallthru map and ordering to stdout after analyzing the program."
     )
     argparser.add_argument(
         "--parse-only",

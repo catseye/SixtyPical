@@ -51,10 +51,10 @@ When times comes to generate code, generate it in the order given by L.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Dump fallthru map of SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --analyze-only --dump-fallthru-map --traceback %(test-body-file)"
+    -> Functionality "Dump fallthru info for SixtyPical program" is implemented by
+    -> shell command "bin/sixtypical --optimize-fallthru --dump-fallthru-info --analyze-only --traceback %(test-body-file)"
 
-    -> Tests for functionality "Dump fallthru map of SixtyPical program"
+    -> Tests for functionality "Dump fallthru info for SixtyPical program"
 
 A single routine, obviously, falls through to nothing and has nothing fall
 through to it.
