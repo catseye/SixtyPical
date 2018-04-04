@@ -34,8 +34,15 @@ a single routine, the structures we find will be tree-like, not DAG-like.
 
 But they do permit cycles.
 
-So, we first break those cycles.  We will be left with out() sets which
-are disjoint trees, i.e. if r1 ∈ in(r2), then r1 ∉ in(r3) for all r3 ≠ r2.
+So, we first break those cycles.  (Is there a "best" way to do this?
+Perhaps.  But for now, we just break them arbitrarily; pick a r1 that
+has a cycle and remove it from in(r2) for all r2. This also means
+that, now, out(r1) = ∅.  Then check if there are still cycles, and keep
+picking one and breaking it until there are no cycles remaining.)
+
+We will be left with out() sets which are disjoint trees, i.e.
+if r1 ∈ in(r2), then r1 ∉ in(r3) for all r3 ≠ r2.  Also, 
+out(r1) = ∅ → for all r2, r1 ∉ in(r2).
 
 We then follow an algorithm something like this.  Treat R as a mutable
 set and start with an empty list L.  Then,

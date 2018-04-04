@@ -59,6 +59,8 @@ def process_input_files(filenames, options):
     analyzer.analyze_program(program)
 
     if options.optimize_fallthru:
+        from sixtypical.fallthru import FallthruAnalyzer
+
         def dump(label, data):
             import json
             if not options.dump_fallthru_info:
@@ -67,8 +69,6 @@ def process_input_files(filenames, options):
                 sys.stdout.write("*** {}:\n".format(label))
             sys.stdout.write(json.dumps(data, indent=4, sort_keys=True))
             sys.stdout.write("\n")
-
-        from sixtypical.fallthru import FallthruAnalyzer
 
         fa = FallthruAnalyzer(debug=options.debug)
         fa.analyze_program(program)
@@ -82,6 +82,9 @@ def process_input_files(filenames, options):
             fa.break_cycle()
             dump('after breaking cycle', fa.fall_in_map)
             fa.find_cycles()
+
+        routines_list = fa.serialize()
+        #dump('serialization', routines_list)
 
     if options.analyze_only:
         return

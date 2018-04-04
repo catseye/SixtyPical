@@ -1,5 +1,7 @@
 # encoding: UTF-8
 
+from copy import copy
+
 from sixtypical.model import RoutineType
 
 
@@ -50,4 +52,20 @@ class FallthruAnalyzer(object):
         self.fall_in_map = new_fall_in_map
 
     def serialize(self):
-        raise NotImplementedError
+        self.fall_out_map = {}
+        for key, values in self.fall_in_map.iteritems():
+            for value in values:
+                assert value not in self.fall_out_map
+                self.fall_out_map[value] = key
+
+        routine_list = []
+        fall_out_map = copy(self.fall_out_map)
+        while fall_out_map:
+            key = fall_out_map.keys()[0]
+            # ...
+            # Find the longest chain of routines r1,r2,...rn in R where out(r1) = {r2}, out(r2} = {r3}, ... out(rn-1) = {rn}, and rn = r.
+            # Remove (r1,r2,...,rn) from R and append them to L in that order. Mark (r1,r2,...rn-1) as "will have their final goto removed."
+            #
+            del fall_out_map[key]
+
+        return routine_list
