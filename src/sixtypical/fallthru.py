@@ -16,19 +16,19 @@ class FallthruAnalyzer(object):
         self.debug = debug
 
     def analyze_program(self, program):
-        fallthru_map = {}
+        fall_in_map = {}
         for routine in program.routines:
             encountered_gotos = list(routine.encountered_gotos)
             if len(encountered_gotos) == 1 and isinstance(encountered_gotos[0].type, RoutineType):
-                fallthru_map.setdefault(encountered_gotos[0].name, set()).add(routine.name)
-        self.fallthru_map = dict([(k, sorted(v)) for k, v in fallthru_map.iteritems()])
-        return self.fallthru_map
+                fall_in_map.setdefault(encountered_gotos[0].name, set()).add(routine.name)
+        self.fall_in_map = dict([(k, sorted(v)) for k, v in fall_in_map.iteritems()])
+        return self.fall_in_map
 
     def find_cycles(self):
         self.ancestor_map = {}
-        for key in self.fallthru_map:
+        for key in self.fall_in_map:
             ancestors = set()
-            make_transitive_closure(self.fallthru_map, key, ancestors)
+            make_transitive_closure(self.fall_in_map, key, ancestors)
             self.ancestor_map[key] = sorted(ancestors)
 
         self.cycles_found = set()
@@ -42,12 +42,12 @@ class FallthruAnalyzer(object):
         cycle_to_break = sorted(self.cycles_found)[0]
         cycles_to_break = set([cycle_to_break])
 
-        new_fallthru_map = {}
-        for key in self.fallthru_map:
-            values = set(self.fallthru_map[key]) - cycles_to_break
+        new_fall_in_map = {}
+        for key in self.fall_in_map:
+            values = set(self.fall_in_map[key]) - cycles_to_break
             if values:
-                new_fallthru_map[key] = sorted(values)
-        self.fallthru_map = new_fallthru_map
+                new_fall_in_map[key] = sorted(values)
+        self.fall_in_map = new_fall_in_map
 
     def serialize(self):
         raise NotImplementedError

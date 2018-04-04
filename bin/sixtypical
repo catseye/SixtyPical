@@ -72,7 +72,7 @@ def process_input_files(filenames, options):
         fa.analyze_program(program)
 
         if options.dump_fallthru_info:
-            dump(None, fa.fallthru_map)
+            dump(None, fa.fall_in_map)
 
         fa.find_cycles()
 
@@ -86,7 +86,7 @@ def process_input_files(filenames, options):
             fa.break_cycle()
 
             if options.dump_fallthru_info:
-                dump('after breaking cycle', fa.fallthru_map)
+                dump('after breaking cycle', fa.fall_in_map)
 
             fa.find_cycles()
 
