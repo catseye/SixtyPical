@@ -61,6 +61,8 @@ def process_input_files(filenames, options):
     if options.optimize_fallthru:
         def dump(label, data):
             import json
+            if not options.dump_fallthru_info:
+                return
             if label:
                 sys.stdout.write("*** {}:\n".format(label))
             sys.stdout.write(json.dumps(data, indent=4, sort_keys=True))
@@ -70,24 +72,15 @@ def process_input_files(filenames, options):
 
         fa = FallthruAnalyzer(debug=options.debug)
         fa.analyze_program(program)
-
-        if options.dump_fallthru_info:
-            dump(None, fa.fall_in_map)
+        dump(None, fa.fall_in_map)
 
         fa.find_cycles()
-
         while fa.cycles_found:
-            if options.dump_fallthru_info:
-
-                if options.debug:
-                    dump('ancestors', fa.ancestor_map)
-                dump('cycles found', sorted(fa.cycles_found))
-
+            if options.debug:
+                dump('ancestors', fa.ancestor_map)
+            dump('cycles found', sorted(fa.cycles_found))
             fa.break_cycle()
-
-            if options.dump_fallthru_info:
-                dump('after breaking cycle', fa.fall_in_map)
-
+            dump('after breaking cycle', fa.fall_in_map)
             fa.find_cycles()
 
     if options.analyze_only:
