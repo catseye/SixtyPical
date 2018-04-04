@@ -134,6 +134,17 @@ fall through to the other.
     =         "bar"
     =     ]
     = }
+    = *** cycles found:
+    = [
+    =     "bar", 
+    =     "foo"
+    = ]
+    = *** after breaking cycles:
+    = {
+    =     "bar": [
+    =         "foo"
+    =     ]
+    = }
 
 If a routine does two tail calls (which is possible because they
 can be in different branches of an `if`) it cannot fall through to another

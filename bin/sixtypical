@@ -59,15 +59,38 @@ def process_input_files(filenames, options):
     analyzer.analyze_program(program)
 
     if options.optimize_fallthru:
+        import json
         from sixtypical.fallthru import FallthruAnalyzer
 
         fa = FallthruAnalyzer(debug=options.debug)
         fa.analyze_program(program)
 
         if options.dump_fallthru_info:
-            import json
-            sys.stdout.write(json.dumps(fa.fallthru_map, indent=4, sort_keys=True))
+            fallthru_map = dict(fa.fallthru_map)
+            sys.stdout.write(json.dumps(fallthru_map, indent=4, sort_keys=True))
             sys.stdout.write("\n")
+
+        fa.find_ancestors()
+
+        if options.debug and options.dump_fallthru_info:
+            sys.stdout.write("*** ancestors:\n")
+            sys.stdout.write(json.dumps(fa.ancestor_map, indent=4, sort_keys=True))
+            sys.stdout.write("\n")
+
+        fa.find_cycles()
+
+        if fa.cycles_found:
+            if options.dump_fallthru_info:
+                sys.stdout.write("*** cycles found:\n")
+                sys.stdout.write(json.dumps(sorted(fa.cycles_found), indent=4, sort_keys=True))
+                sys.stdout.write("\n")
+
+            fa.break_cycles()
+
+            if options.dump_fallthru_info and fallthru_map != fa.fallthru_map:
+                sys.stdout.write("*** after breaking cycles:\n")
+                sys.stdout.write(json.dumps(fa.fallthru_map, indent=4, sort_keys=True))
+                sys.stdout.write("\n")
 
     if options.analyze_only:
         return
