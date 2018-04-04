@@ -60,7 +60,12 @@ def process_input_files(filenames, options):
 
     if options.dump_fallthru_map:
         import json
-        sys.stdout.write(json.dumps(program.fallthru_map, indent=4, sort_keys=True))
+        from sixtypical.fallthru import FallthruAnalyzer
+
+        fa = FallthruAnalyzer(debug=options.debug)
+        fa.analyze_program(program)
+
+        sys.stdout.write(json.dumps(fa.fallthru_map, indent=4, sort_keys=True))
         sys.stdout.write("\n")
 
     if options.analyze_only:
@@ -154,6 +159,11 @@ if __name__ == '__main__':
         "--dump-fallthru-map",
         action="store_true",
         help="Dump the fallthru map to stdout after analyzing the program."
+    )
+    argparser.add_argument(
+        "--dump-fallthru-ordering",
+        action="store_true",
+        help="Dump the fallthru ordering to stdout after analyzing the program."
     )
     argparser.add_argument(
         "--parse-only",

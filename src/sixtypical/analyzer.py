@@ -310,14 +310,9 @@ class Analyzer(object):
     def analyze_program(self, program):
         assert isinstance(program, Program)
         self.routines = {r.location: r for r in program.routines}
-        fallthru_map = {}
         for routine in program.routines:
             context = self.analyze_routine(routine)
-            if context:
-                encountered_gotos = list(context.encountered_gotos())
-                if len(encountered_gotos) == 1 and isinstance(encountered_gotos[0].type, RoutineType):
-                    fallthru_map.setdefault(encountered_gotos[0].name, set()).add(routine.name)
-        program.fallthru_map = dict([(k, sorted(v)) for k, v in fallthru_map.iteritems()])
+            routine.encountered_gotos = list(context.encountered_gotos()) if context else []
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
