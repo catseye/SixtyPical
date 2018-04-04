@@ -12,6 +12,17 @@ def make_transitive_closure(d, key, s):
             make_transitive_closure(d, sub, s)
 
 
+def find_chains(d, key, pred):
+    chains = []
+    for sub in d.get(key, []):
+        if pred(sub):
+            subchains = find_chains(d, sub, pred)
+            for subchain in subchains:
+                chains.append([key] + subchain)
+    chains.append([key])
+    return chains
+
+
 class FallthruAnalyzer(object):
 
     def __init__(self, debug=False):
@@ -63,17 +74,23 @@ class FallthruAnalyzer(object):
                 self.fall_out_map[routine.name] = None
 
         routine_list = []
-        fall_out_map = copy(self.fall_out_map)
-        while fall_out_map:
-            key = fall_out_map.keys()[0]
-            in_set = self.fall_in_map.get(key, [])
-            # Find the longest chain of routines r1,r2,...rn in R where out(r1) = {r2}, out(r2} = {r3}, ... out(rn-1) = {rn}, and rn = r.
-            # TODO implement this
-            routines = [key]
+        pending_routines = copy(self.fall_out_map)
+        while pending_routines:
+            # Pick a routine that is still pending to be serialized.
+            key = pending_routines.keys()[0]
 
-            # Remove (r1,r2,...,rn) from R and append them to L in that order. Mark (r1,r2,...rn-1) as "will have their final goto removed."
+            in_set = self.fall_in_map.get(key, [])
+
+            # Find the longest chain of routines r1,r2,...rn in R
+            # where out(r1) = {r2}, out(r2} = {r3}, ... out(rn-1) = {rn}, and rn = r.
+            chains = find_chains(self.fall_in_map, key, lambda k: k in pending_routines)
+            chains.sort(key=len, reverse=True)
+            routines = chains[0]
+
+            # Remove (r1,r2,...,rn) from R and append them to L in that order.
+            # Mark (r1,r2,...rn-1) as "will have their final goto removed."
             for r in routines:
-                del fall_out_map[r]
+                del pending_routines[r]
                 if r == routines[-1]:
                     routine_list.append(['retain', r])
                 else:
