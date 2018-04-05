@@ -58,6 +58,7 @@ def process_input_files(filenames, options):
     analyzer = Analyzer(debug=options.debug)
     analyzer.analyze_program(program)
 
+    compilation_roster = None
     if options.optimize_fallthru:
         from sixtypical.fallthru import FallthruAnalyzer
 
@@ -72,8 +73,8 @@ def process_input_files(filenames, options):
 
         fa = FallthruAnalyzer(debug=options.debug)
         fa.analyze_program(program)
-        routines_list = fa.serialize()
-        dump(routines_list)
+        compilation_roster = fa.serialize()
+        dump(compilation_roster)
 
     if options.analyze_only:
         return
@@ -116,7 +117,7 @@ def process_input_files(filenames, options):
     for byte in prelude:
         emitter.emit(Byte(byte))
     compiler = Compiler(emitter)
-    compiler.compile_program(program)
+    compiler.compile_program(program, compilation_roster=compilation_roster)
 
     # If we are outputting a cartridge with boot and BRK address
     # at the end, pad to ROM size minus 4 bytes, and emit addresses.

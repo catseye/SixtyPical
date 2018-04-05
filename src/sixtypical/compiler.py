@@ -75,7 +75,7 @@ class Compiler(object):
 
     # visitor methods
 
-    def compile_program(self, program):
+    def compile_program(self, program, compilation_roster=None):
         assert isinstance(program, Program)
 
         defn_labels = []
@@ -102,10 +102,14 @@ class Compiler(object):
                     defn_labels.append((defn, label))
                 self.routine_statics[routine.name] = static_labels
 
-        self.compile_routine(self.routines['main'])
-        for routine in program.routines:
-            if routine.name != 'main':
-                self.compile_routine(routine)
+        if compilation_roster is None:
+            compilation_roster = [['main']] + [[routine.name] for routine in program.routines if routine.name != 'main']
+
+        for roster_row in compilation_roster:
+            for routine_name in roster_row[0:-1]:
+                self.compile_routine(self.routines[routine_name])
+            routine_name = roster_row[-1]
+            self.compile_routine(self.routines[routine_name])
 
         for location, label in self.trampolines.iteritems():
             self.emitter.resolve_label(label)
