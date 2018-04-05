@@ -18,43 +18,46 @@ in a routine, and each branch of that `if` ends with a different `goto`.)
 A *fixed* routine means, a routine which is known at compile time, not a
 `goto` through a vector.
 
-Consider the set R of all routines in the program.
+Consider the set R of all available routines in the program.
 
-Every routine r1 ∈ R either potentially falls through to a single routine
-r2 ∈ R (r2 ≠ r1) or it does not potentially fall through to any routine.
-We can say out(r1) = {r2} or out(r1) = ∅.
+Every routine either potentially falls through to a single other routine
+or it does not potentially fall through to any routine.
 
-Every routine r ∈ R in this set also has a set of zero or more
-routines from which it is potentially falled through to by.  Call this
-in(r).  It is the case that out(r1) = {r2} → r1 ∈ in(r2).
+More formally, we can say
 
-We can trace out the connections by following the in- or our- sets of
-a given routine.  Because each routine potentially falls through to only
-a single routine, the structures we find will be tree-like, not DAG-like.
+fall : R → R ∪ {nil}, fall(r) ≠ r
 
-But they do permit cycles.
+where `nil` is an atom that represents no routine.
 
-So, we first break those cycles.  (Is there a "best" way to do this?
-Perhaps.  But for now, we just break them arbitrarily; pick a r1 that
-has a cycle and remove it from in(r2) for all r2. This also means
-that, now, out(r1) = ∅.  Then check if there are still cycles, and keep
-picking one and breaking it until there are no cycles remaining.)
+Now consider an operation chain() vaguely similar to a transitive closure
+on fall().  Starting with r, we construct a list of r, fall(r),
+fall(fall(r)), ... with the following restrictions:
 
-We will be left with out() sets which are disjoint trees, i.e.
-if r1 ∈ in(r2), then r1 ∉ in(r3) for all r3 ≠ r2.  Also, 
-out(r1) = ∅ → for all r2, r1 ∉ in(r2).
+-   we stop when we reach `nil` (because fall(`nil`) is not defined)
+-   we stop when we see an element that is not in R.
+-   we stop when we see an element that we have already added to the
+    list (this is to prevent infinite lists due to cycles.)
 
-We then follow an algorithm something like this.  Treat R as a mutable
-set and start with an empty list L.  Then,
+With these definitions, our algorithm is something like this.
 
-- Pick a routine r from R where out(r) = ∅.
-- Find the longest chain of routines r1,r2,...rn in R where out(r1) = {r2},
-  out(r2} = {r3}, ... out(rn-1) = {rn}, and rn = r.
-- Remove (r1,r2,...,rn) from R and append them to L in that order.
-  Mark (r1,r2,...rn-1) as "will have their final `goto` removed."
-- Repeat until R is empty.
+Treat R as a mutable set and start with an empty list of lists L.  Then,
+
+-   For all r ∈ R, find all chain(r).
+-   Pick a longest such chain.  Call it C.
+-   Append C to L.
+-   Remove all elements occurring in C, from R.
+-   Repeat until R is empty.
 
 When times comes to generate code, generate it in the order given by L.
+In addition, each sublist in L represents a number of routines to
+generate; all except the final routine in such a sublist need not have
+any jump instruction generated for its final `goto`.
+
+The tests in this document test against the list L.
+
+Note that this optimization is a feature of the SixtyPical's reference
+compiler, not the language.  So an implementation is not required
+to pass these tests to be considered an implementation of SixtyPical.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
@@ -69,8 +72,6 @@ through to it.
     | define main routine
     | {
     | }
-    = {}
-    = *** serialization:
     = [
     =     [
     =         "main"
@@ -88,12 +89,6 @@ If main does a `goto foo`, then it can fall through to `foo`.
     | {
     |     goto foo
     | }
-    = {
-    =     "foo": [
-    =         "main"
-    =     ]
-    = }
-    = *** serialization:
     = [
     =     [
     =         "main", 
@@ -122,20 +117,13 @@ point of the entire program appears at the beginning of the code.
     | {
     |     goto foo
     | }
-    = {
-    =     "foo": [
-    =         "bar", 
-    =         "main"
-    =     ]
-    = }
-    = *** serialization:
     = [
     =     [
-    =         "main"
+    =         "main", 
+    =         "foo"
     =     ], 
     =     [
-    =         "bar", 
-    =         "foo"
+    =         "bar"
     =     ]
     = ]
 
@@ -158,33 +146,13 @@ fall through to the other.
     | define main routine trashes a, z, n
     | {
     | }
-    = {
-    =     "bar": [
-    =         "foo"
-    =     ], 
-    =     "foo": [
-    =         "bar"
-    =     ]
-    = }
-    = *** cycles found:
-    = [
-    =     "bar", 
-    =     "foo"
-    = ]
-    = *** after breaking cycle:
-    = {
-    =     "bar": [
-    =         "foo"
-    =     ]
-    = }
-    = *** serialization:
     = [
     =     [
     =         "main"
     =     ], 
     =     [
-    =         "foo", 
-    =         "bar"
+    =         "bar", 
+    =         "foo"
     =     ]
     = ]
 
@@ -210,8 +178,6 @@ routine.
     |         goto bar
     |     }
     | }
-    = {}
-    = *** serialization:
     = [
     =     [
     =         "main"
@@ -245,8 +211,6 @@ because we don't necessarily know what actual routine the vector contains.
     |     copy bar, vec
     |     goto vec
     | }
-    = {}
-    = *** serialization:
     = [
     =     [
     =         "main"
