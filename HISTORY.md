@@ -10,9 +10,13 @@ History of SixtyPical
 *   Accessing zero-page with `ld` and `st` generates zero-page opcodes.
 *   A `byte` or `word` table can be initialized with a list of constants.
 *   Branching and repeating on the `n` flag is now supported.
-*   The `--optimize-fallthru` option causes the program to be analyzed
-    for fallthru optimizations; `--dump-fallthru-info` option outputs the
-    information from this analysis phase, in JSON format, to stdout.
+*   The `--optimize-fallthru` option causes the routines of the program
+    to be re-ordered to maximize the number of cases where a `goto`'ed
+    routine can be simply "falled through" to instead of `JMP`ed to.
+*   `--dump-fallthru-info` option outputs the information from the
+    fallthru analysis phase, in JSON format, to stdout.
+*   Even without fallthru optimization, `RTS` is no longer emitted after
+    the `JMP` from compiling a final `goto`.
 *   Specifying multiple SixtyPical source files will produce a single
     compiled result from their combination.
 *   Rudimentary support for Atari 2600 prelude in a 4K cartridge image,

@@ -25,7 +25,7 @@ or it does not potentially fall through to any routine.
 
 More formally, we can say
 
-fall : R → R ∪ {nil}, fall(r) ≠ r
+> fall : R → R ∪ {nil}, fall(r) ≠ r
 
 where `nil` is an atom that represents no routine.
 
@@ -247,10 +247,7 @@ Note this currently reflects the re-ordering, but does not remove the jmp/rts.
     | {
     |     goto foo
     | }
-    = $080D   JMP $0811
-    = $0810   RTS
-    = $0811   LDA #$00
-    = $0813   RTS
-    = $0814   LDA #$FF
-    = $0816   JMP $0811
-    = $0819   RTS
+    = $080D   LDA #$00
+    = $080F   RTS
+    = $0810   LDA #$FF
+    = $0812   JMP $080D

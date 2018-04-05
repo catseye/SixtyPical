@@ -107,7 +107,7 @@ class Compiler(object):
 
         for roster_row in compilation_roster:
             for routine_name in roster_row[0:-1]:
-                self.compile_routine(self.routines[routine_name])
+                self.compile_routine(self.routines[routine_name], skip_final_goto=True)
             routine_name = roster_row[-1]
             self.compile_routine(self.routines[routine_name])
 
@@ -140,14 +140,18 @@ class Compiler(object):
             if defn.initial is None and defn.addr is None:
                 self.emitter.resolve_bss_label(label)
 
-    def compile_routine(self, routine):
+    def compile_routine(self, routine, skip_final_goto=False):
         self.current_routine = routine
+        self.skip_final_goto = skip_final_goto
+        self.final_goto_seen = False
         assert isinstance(routine, Routine)
         if routine.block:
             self.emitter.resolve_label(self.get_label(routine.name))
             self.compile_block(routine.block)
-            self.emitter.emit(RTS())
+            if not self.final_goto_seen:
+                self.emitter.emit(RTS())
         self.current_routine = None
+        self.skip_final_goto = False
 
     def compile_block(self, block):
         assert isinstance(block, Block)
@@ -353,14 +357,18 @@ class Compiler(object):
             else:
                 raise NotImplementedError
         elif opcode == 'goto':
-            location = instr.location
-            label = self.get_label(instr.location.name)
-            if isinstance(location.type, RoutineType):
-                self.emitter.emit(JMP(Absolute(label)))
-            elif isinstance(location.type, VectorType):
-                self.emitter.emit(JMP(Indirect(label)))
+            self.final_goto_seen = True
+            if self.skip_final_goto:
+                pass
             else:
-                raise NotImplementedError
+                location = instr.location
+                label = self.get_label(instr.location.name)
+                if isinstance(location.type, RoutineType):
+                    self.emitter.emit(JMP(Absolute(label)))
+                elif isinstance(location.type, VectorType):
+                    self.emitter.emit(JMP(Indirect(label)))
+                else:
+                    raise NotImplementedError
         elif opcode == 'copy':
             self.compile_copy(instr, instr.src, instr.dest)
         elif opcode == 'trash':

@@ -63,6 +63,7 @@ Documentation
 *   [Literate test suite for SixtyPical syntax](tests/SixtyPical%20Syntax.md)
 *   [Literate test suite for SixtyPical analysis](tests/SixtyPical%20Analysis.md)
 *   [Literate test suite for SixtyPical compilation](tests/SixtyPical%20Compilation.md)
+*   [Literate test suite for SixtyPical fallthru optimization](tests/SixtyPical%20Fallthru.md)
 *   [6502 Opcodes used/not used in SixtyPical](doc/6502%20Opcodes.md)
 
 TODO
@@ -72,11 +73,6 @@ TODO
 
 This preserves them, so that, semantically, they can be used later even though they
 are trashed inside the block.
-
-### Re-order routines and optimize tail-calls to fallthroughs
-
-Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally
-is probably NP-complete.  But doing it adequately is probably not that hard.
 
 ### And at some point...
 

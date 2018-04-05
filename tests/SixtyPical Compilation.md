@@ -776,7 +776,7 @@ Indirect call.
     = $081E   JMP ($0822)
     = $0821   RTS
 
-goto.
+Compiling `goto`.  Note that no `RTS` is emitted after the `JMP`.
 
     | routine bar
     |   inputs y
@@ -794,10 +794,9 @@ goto.
     |     goto bar
     | }
     = $080D   LDY #$C8
-    = $080F   JMP $0813
-    = $0812   RTS
-    = $0813   LDX #$C8
-    = $0815   RTS
+    = $080F   JMP $0812
+    = $0812   LDX #$C8
+    = $0814   RTS
 
 ### Vector tables
 
