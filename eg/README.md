@@ -30,7 +30,8 @@ elaborate demos:
     the P65 assembler (now Ophis) and re-released on April 1st, 2008 (a
     hint as to its nature).
     
-    Translated to SixtyPical (in 2018), it's 48 bytes.
+    Translated to SixtyPical (in 2018), after adding some optimizations
+    to the SixtyPical compiler, the resulting executable is still 44 bytes!
 
 ### vic20
 
