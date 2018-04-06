@@ -30,6 +30,7 @@ class FallthruAnalyzer(object):
                 return chain
             seen.add(next)
             chain.append(next)
+            routine_name = next
 
     def serialize(self):
         pending_routines = copy(self.fallthru_map)
