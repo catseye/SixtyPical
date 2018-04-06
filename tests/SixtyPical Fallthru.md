@@ -213,6 +213,38 @@ routine.
     =     ]
     = ]
 
+If, however, they are the same goto, one can be optimized away.
+
+    | define foo routine trashes a, z, n
+    | {
+    |     ld a, 0
+    |     if z {
+    |         ld a, 1
+    |         goto bar
+    |     } else {
+    |         ld a, 2
+    |         goto bar
+    |     }
+    | }
+    | 
+    | define bar routine trashes a, z, n
+    | {
+    |     ld a, 255
+    | }
+    | 
+    | define main routine trashes a, z, n
+    | {
+    | }
+    = [
+    =     [
+    =         "main"
+    =     ], 
+    =     [
+    =         "foo", 
+    =         "bar"
+    =     ]
+    = ]
+
 Similarly, a tail call to a vector can't be turned into a fallthru,
 because we don't necessarily know what actual routine the vector contains.
 
@@ -305,8 +337,6 @@ Our algorithm might not be strictly optimal, but it does a good job.
 
 Basic test for actually applying this optimization when compiling SixtyPical programs.
 
-Note this currently reflects the re-ordering, but does not remove the jmp/rts.
-
     | define foo routine trashes a, z, n
     | {
     |     ld a, 0
@@ -326,3 +356,72 @@ Note this currently reflects the re-ordering, but does not remove the jmp/rts.
     = $080F   RTS
     = $0810   LDA #$FF
     = $0812   JMP $080D
+
+It can optimize out one of the `goto`s if they are the same.
+
+    | define foo routine trashes a, z, n
+    | {
+    |     ld a, 0
+    |     if z {
+    |         ld a, 1
+    |         goto bar
+    |     } else {
+    |         ld a, 2
+    |         goto bar
+    |     }
+    | }
+    | 
+    | define bar routine trashes a, z, n
+    | {
+    |     ld a, 255
+    | }
+    | 
+    | define main routine trashes a, z, n
+    | {
+    | }
+    = $080D   RTS
+    = $080E   LDA #$00
+    = $0810   BNE $0817
+    = $0812   LDA #$01
+    = $0814   JMP $0819
+    = $0817   LDA #$02
+    = $0819   LDA #$FF
+    = $081B   RTS
+
+It cannot optimize out the `goto`s if they are different.
+
+Note, this currently produces unfortunately unoptimized code,
+because generating code for the "true" branch of an `if` always
+generates a jump out of the `if`, even if the last instruction
+in the "true" branch is a `goto`.
+
+    | define foo routine trashes a, z, n
+    | {
+    |     ld a, 0
+    |     if z {
+    |         ld a, 1
+    |         goto bar
+    |     } else {
+    |         ld a, 2
+    |         goto main
+    |     }
+    | }
+    | 
+    | define bar routine trashes a, z, n
+    | {
+    |     ld a, 255
+    | }
+    | 
+    | define main routine trashes a, z, n
+    | {
+    | }
+    = $080D   RTS
+    = $080E   LDA #$FF
+    = $0810   RTS
+    = $0811   LDA #$00
+    = $0813   BNE $081D
+    = $0815   LDA #$01
+    = $0817   JMP $080E
+    = $081A   JMP $0822
+    = $081D   LDA #$02
+    = $081F   JMP $080D
