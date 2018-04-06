@@ -81,7 +81,7 @@ through to it.
     =     ]
     = ]
 
-If main does a `goto foo`, then it can fall through to `foo`.
+If `main` does a `goto foo`, then it can fall through to `foo`.
 
     | define foo routine trashes a, z, n
     | {
@@ -101,9 +101,6 @@ If main does a `goto foo`, then it can fall through to `foo`.
 
 More than one routine can fall through to a routine.  We pick one
 of them to fall through, when selecting the order of routines.
-
-Also note, `main` is always serialized first, so that the entry
-point of the entire program appears at the beginning of the code.
 
     | define foo routine trashes a, z, n
     | {
@@ -127,6 +124,29 @@ point of the entire program appears at the beginning of the code.
     =     ], 
     =     [
     =         "bar"
+    =     ]
+    = ]
+
+Because `main` is always serialized first (so that the entry
+point of the entire program appears at the beginning of the code),
+nothing ever falls through to `main`.
+
+    | define foo routine trashes a, z, n
+    | {
+    |     ld a, 0
+    |     goto main
+    | }
+    | 
+    | define main routine trashes a, z, n
+    | {
+    |     ld a, 1
+    | }
+    = [
+    =     [
+    =         "main"
+    =     ], 
+    =     [
+    =         "foo"
     =     ]
     = ]
 
@@ -223,6 +243,61 @@ because we don't necessarily know what actual routine the vector contains.
     =     ], 
     =     [
     =         "foo"
+    =     ]
+    = ]
+
+Our algorithm might not be strictly optimal, but it does a good job.
+
+    | define r1 routine trashes a, z, n
+    | {
+    |     ld a, 0
+    |     goto r2
+    | }
+    | 
+    | define r2 routine trashes a, z, n
+    | {
+    |     ld a, 0
+    |     goto r3
+    | }
+    | 
+    | define r3 routine trashes a, z, n
+    | {
+    |     ld a, 0
+    |     goto r4
+    | }
+    | 
+    | define r4 routine trashes a, z, n
+    | {
+    |     ld a, 0
+    | }
+    | 
+    | define r5 routine trashes a, z, n
+    | {
+    |     ld a, 0
+    |     goto r6
+    | }
+    | 
+    | define r6 routine trashes a, z, n
+    | {
+    |     ld a, 0
+    |     goto r3
+    | }
+    | 
+    | define main routine trashes a, z, n
+    | {
+    |     goto r1
+    | }
+    = [
+    =     [
+    =         "main", 
+    =         "r1", 
+    =         "r2", 
+    =         "r3", 
+    =         "r4"
+    =     ], 
+    =     [
+    =         "r5", 
+    =         "r6"
     =     ]
     = ]
 
