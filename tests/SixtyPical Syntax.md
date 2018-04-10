@@ -78,6 +78,14 @@ Trash.
     | }
     = ok
 
+`nop`.
+
+    | routine main
+    | {
+    |     nop
+    | }
+    = ok
+
 If with not
 
     | routine foo {
@@ -228,6 +236,31 @@ Can't have two typedefs with the same name.
     | }
     ? SyntaxError
 
+Constants.
+
+    | const lives 3
+    | const days lives
+    | const w1 1000
+    | const w2 word 0
+    | 
+    | typedef byte table[days] them
+    | 
+    | byte lark: lives
+    | 
+    | routine main {
+    |   ld a, lives
+    | }
+    = ok
+
+Can't have two constants with the same name.
+
+    | const w1 1000
+    | const w1 word 0
+    | 
+    | routine main {
+    | }
+    ? SyntaxError
+
 Explicit memory address.
 
     | byte screen @ 1024
@@ -269,7 +302,7 @@ User-defined locations of other types.
     | }
     = ok
 
-Initialized byte table.
+Initialized byte table, initialized with ASCII string.
 
     | byte table[32] message : "WHAT DO YOU WANT TO DO NEXT?"
     | 
@@ -284,6 +317,14 @@ Can't initialize anything but a byte table with a string.
     | routine main {
     | }
     ? SyntaxError
+
+Initialized byte table, initialized with list of bytes.
+
+    | byte table[8] charmap : 0, 255, 129, 192, 0, 1, 2, 4
+    | 
+    | routine main {
+    | }
+    = ok
 
 Can't access an undeclared memory location.
 

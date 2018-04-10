@@ -4,16 +4,17 @@ import re
 
 
 class SixtyPicalSyntaxError(ValueError):
-    def __init__(self, line_number, message):
-        super(SixtyPicalSyntaxError, self).__init__(line_number, message)
+    def __init__(self, filename, line_number, message):
+        super(SixtyPicalSyntaxError, self).__init__(filename, line_number, message)
 
     def __str__(self):
-        return "Line {}: {}".format(self.args[0], self.args[1])
+        return "{}, line {}: {}".format(self.args[0], self.args[1], self.args[2])
 
 
 class Scanner(object):
-    def __init__(self, text):
+    def __init__(self, text, filename):
         self.text = text
+        self.filename = filename
         self.token = None
         self.type = None
         self.line_number = 1
@@ -62,9 +63,7 @@ class Scanner(object):
         if self.token == token:
             self.scan()
         else:
-            raise SixtyPicalSyntaxError(self.line_number, "Expected '{}', but found '{}'".format(
-                token, self.token
-            ))
+            self.syntax_error("Expected '{}', but found '{}'".format(token, self.token))
 
     def on(self, *tokens):
         return self.token in tokens
@@ -74,9 +73,7 @@ class Scanner(object):
 
     def check_type(self, type):
         if not self.type == type:
-            raise SixtyPicalSyntaxError(self.line_number, "Expected {}, but found '{}'".format(
-                self.type, self.token
-            ))
+            self.syntax_error("Expected {}, but found '{}'".format(self.type, self.token))
 
     def consume(self, token):
         if self.token == token:
@@ -84,3 +81,6 @@ class Scanner(object):
             return True
         else:
             return False
+
+    def syntax_error(self, msg):
+        raise SixtyPicalSyntaxError(self.filename, self.line_number, msg)

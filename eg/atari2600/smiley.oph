@@ -1,0 +1,285 @@
+;
+; smiley.oph (2018)
+; stripped-down version of atari-2600-example.oph (2012)
+;
+; This work is in the public domain.  See the file UNLICENSE for more info.
+;
+; to build and run in Stella:
+;   ophis smiley.oph -o smiley.bin
+;   stella smiley.bin
+
+;
+; Useful system addresses (TODO: briefly describe each of these.)
+;
+
+.alias VSYNC          $00
+.alias VBLANK         $01
+.alias WSYNC          $02
+.alias NUSIZ0         $04
+.alias NUSIZ1         $05
+.alias COLUPF         $08
+.alias COLUBK         $09
+.alias PF0            $0D
+.alias PF1            $0E
+.alias PF2            $0F
+.alias SWCHA          $280
+.alias INTIM          $284
+.alias TIM64T         $296
+.alias CTRLPF         $0A
+.alias COLUP0         $06
+.alias COLUP1         $07
+.alias GP0            $1B
+.alias GP1            $1C
+.alias HMOVE          $2a
+.alias RESP0          $10
+.alias RESP1          $11
+
+;
+; Cartridge ROM occupies the top 4K of memory ($F000-$FFFF).
+; Thus, typically, the program will occupy all that space too.
+;
+; Zero-page RAM we can use with impunity starts at $80 and goes
+; upward (at least until $99, but probably further.)
+;
+
+.alias colour         $80
+.alias luminosity     $81
+.alias joystick_delay $82
+
+.org  $F000
+
+;
+; Standard prelude for Atari 2600 cartridge code.
+;
+; Get various parts of the machine into a known state:
+;
+; - Disable interrupts
+; - Clear the Decimal flag
+; - Initialize the Stack Pointer
+; - Zero all bytes in Zero Page memory
+;
+
+start:
+        sei
+        cld
+        ldx #$FF
+        txs
+        lda #$00
+
+zero_loop:
+        sta $00, x
+        dex
+        bne zero_loop
+
+        ; and fall through to...
+
+;
+; Initialization.
+;
+; - Clear the Playfield Control register.
+; - Set the player (sprite) colour to light green (write to COLUP0.)
+; - Set the player (sprite) size/repetion to normal (write to NUSIZ0.)
+;
+
+        lda #$00
+        sta CTRLPF
+        lda #$0c
+        sta colour
+        lda #$0a
+        sta luminosity
+        lda #$00
+        sta NUSIZ0
+
+        ; and fall through to...
+
+;
+; Main loop.
+;
+; A typical main loop consists of:
+; - Waiting for the frame to start (vertical blank period)
+; - Displaying stuff on the screen (the _display kernel_)
+; - Doing any processing you like (reading joysticks, updating program state,
+;   etc.), as long as you get it all done before the next frame starts!
+;
+
+main:
+        jsr vertical_blank
+        jsr display_frame
+        jsr colourize_player
+        jmp main
+        rts                ; NOTE just to pad out to match the SixtyPical version
+
+;
+; Vertical blank routine.
+;
+; In brief: wait until it is time for the next frame of video.
+; TODO: describe this in more detail.
+;
+
+vertical_blank:
+        ldx #$00
+        lda #$02
+        sta WSYNC
+        sta WSYNC
+        sta WSYNC
+        sta VSYNC
+        sta WSYNC
+        sta WSYNC
+        lda #$2C
+        sta TIM64T
+        lda #$00
+        sta WSYNC
+        sta VSYNC
+        rts
+
+;
+; Display kernal.
+;
+; First, wait until it's time to display the frame.
+;
+
+.scope
+display_frame:
+        lda INTIM
+        bne display_frame
+
+;
+; (After that loop finishes, we know the accumulator must contain 0.)
+; Wait for the next scanline, zero HMOVE (for some reason; TODO discover
+; this), then turn on the screen.
+;
+
+        sta WSYNC
+        sta HMOVE
+        sta VBLANK
+
+;
+; Actual work in the display kernal is done here.
+;
+; This is a pathological approach to writing a display kernal.
+; This wouldn't be how you'd do things in a game.  So be it.
+; One day I may improve it.  For now, be happy that it displays
+; anything at all!
+;
+
+;
+; Wait for $3f (plus one?) scan lines to pass, by waiting for
+; WSYNC that many times.
+;
+
+        ldx #$3F
+_wsync_loop:
+        sta WSYNC
+        dex
+        bpl _wsync_loop
+        sta WSYNC
+
+;
+; Delay while the raster scans across the screen.  The more
+; we delay here, the more to the right the player will be when
+; we draw it.
+;
+
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+
+;
+; OK, *now* display the player.
+;
+        
+        sta RESP0
+
+;
+; Loop over the rows of the sprite data, drawing each to the screen
+; over four scan lines.
+;
+; TODO understand this better and describe it!
+;
+
+        ldy #$07
+_image_loop:
+        lda image_data, y
+        sta GP0
+
+        sta WSYNC
+        sta WSYNC
+        sta WSYNC
+        sta WSYNC
+        dey
+        bpl _image_loop
+
+        lda #$00
+        sta GP0
+
+;
+; Turn off screen display and clear display registers.
+;
+
+        lda #$02
+        sta WSYNC
+        sta VBLANK
+        lda #$00
+        sta PF0
+        sta PF1
+        sta PF2
+        sta COLUPF
+        sta COLUBK
+
+        rts
+.scend
+
+;
+; Modify the colour and luminosity of the player.
+;
+
+.scope
+colourize_player:
+        lda colour
+        clc
+        rol
+        rol
+        rol
+        rol
+        ora luminosity
+        sta COLUP0
+        rts
+.scend
+
+;
+; Player (sprite) data.
+;
+; Because we loop over these bytes with the Y register counting *down*,
+; this image is stored "upside-down".
+;
+
+image_data:
+        .byte %01111110 
+        .byte %10000001
+        .byte %10011001
+        .byte %10100101
+        .byte %10000001
+        .byte %10100101
+        .byte %10000001
+        .byte %01111110
+
+;
+; Standard postlude for Atari 2600 cartridge code.
+; Give BRK and boot vectors that point to the start of the code.
+;
+
+.advance $FFFC
+        .word start
+        .word start

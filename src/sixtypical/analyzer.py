@@ -101,7 +101,7 @@ class Context(object):
         self._touched = set()
         self._range = dict()
         self._writeable = set()
-        self._has_encountered_goto = False
+        self._gotos_encountered = set()
 
         for ref in inputs:
             if ref.is_constant():
@@ -273,11 +273,11 @@ class Context(object):
         for ref in refs:
             self._writeable.add(ref)
 
-    def set_encountered_goto(self):
-        self._has_encountered_goto = True
+    def encounter_gotos(self, gotos):
+        self._gotos_encountered |= gotos
 
-    def has_encountered_goto(self):
-        return self._has_encountered_goto
+    def encountered_gotos(self):
+        return self._gotos_encountered
 
 
 class Analyzer(object):
@@ -311,7 +311,8 @@ class Analyzer(object):
         assert isinstance(program, Program)
         self.routines = {r.location: r for r in program.routines}
         for routine in program.routines:
-            self.analyze_routine(routine)
+            context = self.analyze_routine(routine)
+            routine.encountered_gotos = list(context.encountered_gotos()) if context else []
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
@@ -346,13 +347,14 @@ class Analyzer(object):
             if ref in type_.outputs:
                 raise UnmeaningfulOutputError(routine, ref.name)
 
-        if not context.has_encountered_goto():
+        if not context.encountered_gotos():
             for ref in type_.outputs:
                 context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
             for ref in context.each_touched():
                 if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
                     raise ForbiddenWriteError(routine, ref.name)
         self.current_routine = None
+        return context
 
     def analyze_block(self, block, context):
         assert isinstance(block, Block)
@@ -379,7 +381,7 @@ class Analyzer(object):
         dest = instr.dest
         src = instr.src
 
-        if context.has_encountered_goto():
+        if context.encountered_gotos():
             raise IllegalJumpError(instr, instr)
 
         if opcode == 'ld':
@@ -595,10 +597,12 @@ class Analyzer(object):
             self.assert_affected_within('outputs', type_, current_type)
             self.assert_affected_within('trashes', type_, current_type)
 
-            context.set_encountered_goto()
+            context.encounter_gotos(set([instr.location]))
         elif opcode == 'trash':
             context.set_touched(instr.dest)
             context.set_unmeaningful(instr.dest)
+        elif opcode == 'nop':
+            pass
         else:
             raise NotImplementedError(opcode)
 
@@ -636,8 +640,7 @@ class Analyzer(object):
         context._touched = set(context1._touched) | set(context2._touched)
         context.set_meaningful(*list(outgoing_meaningful))
         context._writeable = set(context1._writeable) | set(context2._writeable)
-        if context1.has_encountered_goto() or context2.has_encountered_goto():
-            context.set_encountered_goto()
+        context.encounter_gotos(context1.encountered_gotos() | context2.encountered_gotos())
 
         for ref in outgoing_trashes:
             context.set_touched(ref)

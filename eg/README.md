@@ -30,12 +30,20 @@ elaborate demos:
     the P65 assembler (now Ophis) and re-released on April 1st, 2008 (a
     hint as to its nature).
     
-    Translated to SixtyPical (in 2018), it's 48 bytes.
+    Translated to SixtyPical (in 2018), after adding some optimizations
+    to the SixtyPical compiler, the resulting executable is still 44 bytes!
 
 ### vic20
 
 In the [vic20](vic20/) directory are programs that run on the
 Commodore VIC-20.  The directory itself contains some simple demos,
 for example [hearts.60p](vic20/hearts.60p).
+
+### atari2600
+
+In the [atari2600](atari2600/) directory are programs that run on the
+Atari 2600 (4K cartridge).  The directory itself contains a simple
+demo, [smiley.60p](atari2600/smiley.60p) which was converted from an
+older Atari 2600 skeleton program written in [Ophis][].
 
 [Ophis]: http://michaelcmartin.github.io/Ophis/

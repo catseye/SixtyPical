@@ -18,6 +18,15 @@ Null program.
     | }
     = $080D   RTS
 
+`nop` program.
+
+    | routine main
+    | {
+    |     nop
+    | }
+    = $080D   NOP
+    = $080E   RTS
+
 Rudimentary program.
 
     | routine main
@@ -103,6 +112,27 @@ Memory location with explicit address.
     = $080F   STA $0400
     = $0812   RTS
 
+Accesses to memory locations in zero-page with `ld` and `st` use zero-page addressing.
+
+    | byte zp @ $00
+    | byte screen @ 100
+    | 
+    | routine main
+    |   inputs screen, zp
+    |   outputs screen, zp
+    |   trashes a, z, n
+    | {
+    |   ld a, screen
+    |   st a, screen
+    |   ld a, zp
+    |   st a, zp
+    | }
+    = $080D   LDA $64
+    = $080F   STA $64
+    = $0811   LDA $00
+    = $0813   STA $00
+    = $0815   RTS
+
 Memory location with initial value.
 
     | byte lives : 3
@@ -137,7 +167,7 @@ Word memory locations with explicit address, initial value.
     = $081A   .byte $BB
     = $081B   .byte $0B
 
-Initialized byte table.  Bytes allocated, but beyond the string, are 0's.
+Initialized byte table, initialized with ASCII string.  Bytes allocated, but beyond the string, are 0's.
 
     | byte table[8] message : "WHAT?"
     | 
@@ -158,6 +188,45 @@ Initialized byte table.  Bytes allocated, but beyond the string, are 0's.
     = $0818   BRK
     = $0819   BRK
     = $081A   BRK
+
+Initialized byte table, initialized with list of byte values.
+
+    | byte table[8] message : 255, 0, 129, 128, 127
+    | 
+    | routine main
+    |   inputs message
+    |   outputs x, a, z, n
+    | {
+    |   ld x, 0
+    |   ld a, message + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA $0813,X
+    = $0812   RTS
+    = $0813   .byte $FF
+    = $0814   BRK
+    = $0815   STA ($80,X)
+    = $0817   .byte $7F
+    = $0818   BRK
+    = $0819   BRK
+    = $081A   BRK
+
+Initialized word table, initialized with list of word values.
+
+    | word table[8] message : 65535, 0, 127
+    | 
+    | routine main
+    | {
+    | }
+    = $080D   RTS
+    = $080E   .byte $FF
+    = $080F   .byte $FF
+    = $0810   BRK
+    = $0811   BRK
+    = $0812   .byte $7F
+    = $0813   BRK
+    = $0814   BRK
+    = $0815   BRK
 
 Some instructions.
 
@@ -288,7 +357,7 @@ Compiling `if` without `else`.
     = $0813   LDY #$01
     = $0815   RTS
 
-Compiling `repeat`.
+Compiling `repeat ... until z`.
 
     | routine main
     |   trashes a, y, z, n, c
@@ -307,7 +376,7 @@ Compiling `repeat`.
     = $0813   BNE $080F
     = $0815   RTS
 
-Compiling `repeat until not`.
+Compiling `repeat ... until not z`.
 
     | routine main
     |   trashes a, y, z, n, c
@@ -325,6 +394,40 @@ Compiling `repeat until not`.
     = $0811   CPY #$5B
     = $0813   BEQ $080F
     = $0815   RTS
+
+Compiling `repeat ... until n`.
+
+    | routine main
+    |   trashes a, y, z, n, c
+    | {
+    |     ld y, 65
+    |     repeat {
+    |         ld a, y
+    |         dec y
+    |     } until n
+    | }
+    = $080D   LDY #$41
+    = $080F   TYA
+    = $0810   DEY
+    = $0811   BPL $080F
+    = $0813   RTS
+
+Compiling `repeat ... until not n`.
+
+    | routine main
+    |   trashes a, y, z, n, c
+    | {
+    |     ld y, 199
+    |     repeat {
+    |         ld a, y
+    |         inc y
+    |     } until not n
+    | }
+    = $080D   LDY #$C7
+    = $080F   TYA
+    = $0810   INY
+    = $0811   BMI $080F
+    = $0813   RTS
 
 Compiling `repeat forever`.
 
@@ -673,7 +776,7 @@ Indirect call.
     = $081E   JMP ($0822)
     = $0821   RTS
 
-goto.
+Compiling `goto`.  Note that no `RTS` is emitted after the `JMP`.
 
     | routine bar
     |   inputs y
@@ -691,10 +794,9 @@ goto.
     |     goto bar
     | }
     = $080D   LDY #$C8
-    = $080F   JMP $0813
-    = $0812   RTS
-    = $0813   LDX #$C8
-    = $0815   RTS
+    = $080F   JMP $0812
+    = $0812   LDX #$C8
+    = $0814   RTS
 
 ### Vector tables
 

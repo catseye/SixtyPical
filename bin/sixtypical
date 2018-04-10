@@ -18,10 +18,118 @@ from pprint import pprint
 import sys
 import traceback
 
-from sixtypical.parser import Parser
+from sixtypical.parser import Parser, ParsingContext
 from sixtypical.analyzer import Analyzer
 from sixtypical.emitter import Emitter, Byte, Word
 from sixtypical.compiler import Compiler
+
+
+def merge_programs(programs):
+    """Assumes that the programs do not have any conflicts."""
+
+    from sixtypical.ast import Program
+
+    full = Program(1, defns=[], routines=[])
+    for p in programs:
+        full.defns.extend(p.defns)
+        full.routines.extend(p.routines)
+
+    return full
+
+
+def process_input_files(filenames, options):
+    context = ParsingContext()
+
+    programs = []
+
+    for filename in options.filenames:
+        text = open(filename).read()
+        parser = Parser(context, text, filename)
+        if options.debug:
+            print(context)
+        program = parser.program()
+        programs.append(program)
+
+    if options.parse_only:
+        return
+
+    program = merge_programs(programs)
+
+    analyzer = Analyzer(debug=options.debug)
+    analyzer.analyze_program(program)
+
+    compilation_roster = None
+    if options.optimize_fallthru:
+        from sixtypical.fallthru import FallthruAnalyzer
+
+        def dump(data, label=None):
+            import json
+            if not options.dump_fallthru_info:
+                return
+            if label:
+                sys.stdout.write("*** {}:\n".format(label))
+            sys.stdout.write(json.dumps(data, indent=4, sort_keys=True))
+            sys.stdout.write("\n")
+
+        fa = FallthruAnalyzer(debug=options.debug)
+        fa.analyze_program(program)
+        compilation_roster = fa.serialize()
+        dump(compilation_roster)
+
+    if options.analyze_only:
+        return
+
+    fh = sys.stdout
+
+    if options.origin.startswith('0x'):
+        start_addr = int(options.origin, 16)
+    else:
+        start_addr = int(options.origin, 10)
+
+    output_format = options.output_format
+
+    prelude = []
+    if options.prelude == 'c64':
+        output_format = 'prg'
+        start_addr = 0x0801
+        prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
+                   0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
+    elif options.prelude == 'vic20':
+        output_format = 'prg'
+        start_addr = 0x1001
+        prelude = [0x0b, 0x10, 0xc9, 0x07, 0x9e, 0x34,
+                   0x31, 0x30, 0x39, 0x00, 0x00, 0x00]
+    elif options.prelude == 'atari2600':
+        output_format = 'crtbb'
+        start_addr = 0xf000
+        prelude = [0x78, 0xd8, 0xa2, 0xff, 0x9a, 0xa9,
+                    0x00,0x95, 0x00, 0xca, 0xd0, 0xfb]
+
+    elif options.prelude:
+        raise NotImplementedError("Unknown prelude: {}".format(options.prelude))
+
+    # If we are outputting a .PRG, we output the load address first.
+    # We don't use the Emitter for this b/c not part of addr space.
+    if output_format == 'prg':
+        fh.write(Word(start_addr).serialize(0))
+
+    emitter = Emitter(start_addr)
+    for byte in prelude:
+        emitter.emit(Byte(byte))
+    compiler = Compiler(emitter)
+    compiler.compile_program(program, compilation_roster=compilation_roster)
+
+    # If we are outputting a cartridge with boot and BRK address
+    # at the end, pad to ROM size minus 4 bytes, and emit addresses.
+    if output_format == 'crtbb':
+        emitter.pad_to_size(4096 - 4)
+        emitter.emit(Word(start_addr))
+        emitter.emit(Word(start_addr))
+
+    if options.debug:
+        pprint(emitter.accum)
+    else:
+        emitter.serialize(fh)
 
 
 if __name__ == '__main__':
@@ -31,11 +139,7 @@ if __name__ == '__main__':
         'filenames', metavar='FILENAME', type=str, nargs='+',
         help="The SixtyPical source files to compile."
     )
-    argparser.add_argument(
-        "--analyze-only",
-        action="store_true",
-        help="Only parse and analyze the program; do not compile it."
-    )
+
     argparser.add_argument(
         "--origin", type=str, default='0xc000',
         help="Location in memory where the `main` routine will be "
@@ -43,25 +147,42 @@ if __name__ == '__main__':
     )
     argparser.add_argument(
         "--output-format", type=str, default='prg',
-        help="Executable format to produce. Options are: prg (.PRG file "
-        "for Commodore 8-bit). Default: prg."
+        help="Executable format to produce. Options are: prg, crtbb. "
+             "Default: prg."
     )
     argparser.add_argument(
         "--prelude", type=str,
-        help="Insert a snippet before the compiled program "
-             "so that it can be LOADed and RUN on a certain platforms. "
+        help="Insert a snippet of code before the compiled program so that "
+             "it can be booted automatically on a particular platform. "
              "Also sets the origin and format. "
-             "Options are: c64 or vic20."
+             "Options are: c64, vic20, atari2600."
+    )
+
+    argparser.add_argument(
+        "--analyze-only",
+        action="store_true",
+        help="Only parse and analyze the program; do not compile it."
     )
     argparser.add_argument(
-        "--debug",
+        "--optimize-fallthru",
         action="store_true",
-        help="Display debugging information when analyzing and compiling."
+        help="Reorder the routines in the program to maximize the number of tail calls "
+             "that can be removed by having execution 'fall through' to the next routine."
+    )
+    argparser.add_argument(
+        "--dump-fallthru-info",
+        action="store_true",
+        help="Dump the fallthru map and ordering to stdout after analyzing the program."
     )
     argparser.add_argument(
         "--parse-only",
         action="store_true",
         help="Only parse the program; do not analyze or compile it."
+    )
+    argparser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Display debugging information when analyzing and compiling."
     )
     argparser.add_argument(
         "--traceback",
@@ -72,69 +193,11 @@ if __name__ == '__main__':
     options, unknown = argparser.parse_known_args(sys.argv[1:])
     remainder = ' '.join(unknown)
 
-    for filename in options.filenames:
-        text = open(filename).read()
-
-        try:
-            parser = Parser(text)
-            program = parser.program()
-        except Exception as e:
-            if options.traceback:
-                raise
-            else:
-                traceback.print_exception(e.__class__, e, None)
-                sys.exit(1)
-
-        if options.parse_only:
-            sys.exit(0)
-
-        try:
-            analyzer = Analyzer(debug=options.debug)
-            analyzer.analyze_program(program)
-        except Exception as e:
-            if options.traceback:
-                raise
-            else:
-                traceback.print_exception(e.__class__, e, None)
-                sys.exit(1)
-
-        if options.analyze_only:
-            sys.exit(0)
-
-        fh = sys.stdout
-
-        if options.origin.startswith('0x'):
-            start_addr = int(options.origin, 16)
+    try:
+        process_input_files(options.filenames, options)
+    except Exception as e:
+        if options.traceback:
+            raise
         else:
-            start_addr = int(options.origin, 10)
-
-        output_format = options.output_format
-
-        prelude = []
-        if options.prelude == 'c64':
-            output_format = 'prg'
-            start_addr = 0x0801
-            prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
-                       0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
-        elif options.prelude == 'vic20':
-            output_format = 'prg'
-            start_addr = 0x1001
-            prelude = [0x0b, 0x10, 0xc9, 0x07, 0x9e, 0x34,
-                       0x31, 0x30, 0x39, 0x00, 0x00, 0x00]
-        elif options.prelude:
-            raise NotImplementedError("Unknown prelude: {}".format(options.prelude))
-
-        # If we are outputting a .PRG, we output the load address first.
-        # We don't use the Emitter for this b/c not part of addr space.
-        if output_format == 'prg':
-            fh.write(Word(start_addr).serialize(0))
-
-        emitter = Emitter(start_addr)
-        for byte in prelude:
-            emitter.emit(Byte(byte))
-        compiler = Compiler(emitter)
-        compiler.compile_program(program)
-        if options.debug:
-            pprint(emitter.accum)
-        else:
-            emitter.serialize(fh)
+            traceback.print_exception(e.__class__, e, None)
+            sys.exit(1)

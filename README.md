@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-_Version 0.14.  Work-in-progress, everything is subject to change._
+_Version 0.15.  Work-in-progress, everything is subject to change._
 
 **SixtyPical** is a 6502-like programming language with advanced
 static analysis.
@@ -63,6 +63,7 @@ Documentation
 *   [Literate test suite for SixtyPical syntax](tests/SixtyPical%20Syntax.md)
 *   [Literate test suite for SixtyPical analysis](tests/SixtyPical%20Analysis.md)
 *   [Literate test suite for SixtyPical compilation](tests/SixtyPical%20Compilation.md)
+*   [Literate test suite for SixtyPical fallthru optimization](tests/SixtyPical%20Fallthru.md)
 *   [6502 Opcodes used/not used in SixtyPical](doc/6502%20Opcodes.md)
 
 TODO
@@ -73,19 +74,13 @@ TODO
 This preserves them, so that, semantically, they can be used later even though they
 are trashed inside the block.
 
-### Re-order routines and optimize tail-calls to fallthroughs
-
-Not because it saves 3 bytes, but because it's a neat trick.  Doing it optimally
-is probably NP-complete.  But doing it adequately is probably not that hard.
-
 ### And at some point...
 
 *   `low` and `high` address operators - to turn `word` type into `byte`.
-*   `const`s that can be used in defining the size of tables, etc.
 *   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
 *   Related: can we simply view a (small) part of a buffer as a byte table?  If not, why not?
 *   Related: add constant to buffer to get new buffer.  (Or to table, but... well, maybe.)
-*   Check that the buffer being read or written to through pointer, appears in approporiate inputs or outputs set.
+*   Check that the buffer being read or written to through pointer, appears in appropriate inputs or outputs set.
     (Associate each pointer with the buffer it points into.)
 *   `static` pointers -- currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.
 *   Question the value of the "consistent initialization" principle for `if` statement analysis.
@@ -94,7 +89,6 @@ is probably NP-complete.  But doing it adequately is probably not that hard.
 *   Automatic tail-call optimization (could be tricky, w/constraints?)
 *   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
-*   Optimize `ld a, z` and `st a, z` to zero-page operations if address of z < 256.
-*   Include files?
+*   Optimize `or|and|eor a, z` to zero-page operations if address of z < 256.
 
 [VICE]: http://vice-emu.sourceforge.net/

@@ -15,9 +15,10 @@ from sixtypical.gen6502 import (
     CLC, SEC, ADC, SBC, ROL, ROR,
     INC, INX, INY, DEC, DEX, DEY,
     CMP, CPX, CPY, AND, ORA, EOR,
-    BCC, BCS, BNE, BEQ,
+    BCC, BCS, BNE, BEQ, BPL, BMI,
     JMP, JSR, RTS,
     SEI, CLI,
+    NOP,
 )
 
 
@@ -66,9 +67,15 @@ class Compiler(object):
                 return static_label
         return self.labels[name]
 
+    def absolute_or_zero_page(self, label):
+        if label.addr is not None and label.addr < 256:
+            return ZeroPage(label)
+        else:
+            return Absolute(label)
+
     # visitor methods
 
-    def compile_program(self, program):
+    def compile_program(self, program, compilation_roster=None):
         assert isinstance(program, Program)
 
         defn_labels = []
@@ -95,10 +102,14 @@ class Compiler(object):
                     defn_labels.append((defn, label))
                 self.routine_statics[routine.name] = static_labels
 
-        self.compile_routine(self.routines['main'])
-        for routine in program.routines:
-            if routine.name != 'main':
-                self.compile_routine(routine)
+        if compilation_roster is None:
+            compilation_roster = [['main']] + [[routine.name] for routine in program.routines if routine.name != 'main']
+
+        for roster_row in compilation_roster:
+            for routine_name in roster_row[0:-1]:
+                self.compile_routine(self.routines[routine_name], skip_final_goto=True)
+            routine_name = roster_row[-1]
+            self.compile_routine(self.routines[routine_name])
 
         for location, label in self.trampolines.iteritems():
             self.emitter.resolve_label(label)
@@ -115,7 +126,9 @@ class Compiler(object):
                 elif type_ == TYPE_WORD:
                     initial_data = Word(defn.initial)
                 elif TableType.is_a_table_type(type_, TYPE_BYTE):
-                    initial_data = Table(defn.initial, type_.size)
+                    initial_data = Table([Byte(i) for i in defn.initial], type_.size)
+                elif TableType.is_a_table_type(type_, TYPE_WORD):
+                    initial_data = Table([Word(i) for i in defn.initial], type_.size)
                 else:
                     raise NotImplementedError(type_)
                 label.set_length(initial_data.size())
@@ -127,14 +140,18 @@ class Compiler(object):
             if defn.initial is None and defn.addr is None:
                 self.emitter.resolve_bss_label(label)
 
-    def compile_routine(self, routine):
+    def compile_routine(self, routine, skip_final_goto=False):
         self.current_routine = routine
+        self.skip_final_goto = skip_final_goto
+        self.final_goto_seen = False
         assert isinstance(routine, Routine)
         if routine.block:
             self.emitter.resolve_label(self.get_label(routine.name))
             self.compile_block(routine.block)
-            self.emitter.emit(RTS())
+            if not self.final_goto_seen:
+                self.emitter.emit(RTS())
         self.current_routine = None
+        self.skip_final_goto = False
 
     def compile_block(self, block):
         assert isinstance(block, Block)
@@ -176,7 +193,7 @@ class Compiler(object):
                 elif isinstance(src, IndirectRef) and isinstance(src.ref.type, PointerType):
                     self.emitter.emit(LDA(IndirectY(self.get_label(src.ref.name))))
                 else:
-                    self.emitter.emit(LDA(Absolute(self.get_label(src.name))))
+                    self.emitter.emit(LDA(self.absolute_or_zero_page(self.get_label(src.name))))
             elif dest == REG_X:
                 if src == REG_A:
                     self.emitter.emit(TAX())
@@ -185,7 +202,7 @@ class Compiler(object):
                 elif isinstance(src, IndexedRef) and src.index == REG_Y:
                     self.emitter.emit(LDX(AbsoluteY(self.get_label(src.ref.name))))
                 else:
-                    self.emitter.emit(LDX(Absolute(self.get_label(src.name))))
+                    self.emitter.emit(LDX(self.absolute_or_zero_page(self.get_label(src.name))))
             elif dest == REG_Y:
                 if src == REG_A:
                     self.emitter.emit(TAY())
@@ -194,7 +211,7 @@ class Compiler(object):
                 elif isinstance(src, IndexedRef) and src.index == REG_X:
                     self.emitter.emit(LDY(AbsoluteX(self.get_label(src.ref.name))))
                 else:
-                    self.emitter.emit(LDY(Absolute(self.get_label(src.name))))
+                    self.emitter.emit(LDY(self.absolute_or_zero_page(self.get_label(src.name))))
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'st':
@@ -214,17 +231,15 @@ class Compiler(object):
                         REG_X: AbsoluteX,
                         REG_Y: AbsoluteY,
                     }[dest.index]
-                    label = self.get_label(dest.ref.name)
+                    operand = mode_cls(self.get_label(dest.ref.name))
                 elif isinstance(dest, IndirectRef) and isinstance(dest.ref.type, PointerType):
-                    mode_cls = IndirectY
-                    label = self.get_label(dest.ref.name)
+                    operand = IndirectY(self.get_label(dest.ref.name))
                 else:
-                    mode_cls = Absolute
-                    label = self.get_label(dest.name)
+                    operand = self.absolute_or_zero_page(self.get_label(dest.name))
 
-                if op_cls is None or mode_cls is None:
+                if op_cls is None:
                     raise UnsupportedOpcodeError(instr)
-                self.emitter.emit(op_cls(mode_cls(label)))
+                self.emitter.emit(op_cls(operand))
         elif opcode == 'add':
             if dest == REG_A:
                 if isinstance(src, ConstantRef):
@@ -342,18 +357,24 @@ class Compiler(object):
             else:
                 raise NotImplementedError
         elif opcode == 'goto':
-            location = instr.location
-            label = self.get_label(instr.location.name)
-            if isinstance(location.type, RoutineType):
-                self.emitter.emit(JMP(Absolute(label)))
-            elif isinstance(location.type, VectorType):
-                self.emitter.emit(JMP(Indirect(label)))
+            self.final_goto_seen = True
+            if self.skip_final_goto:
+                pass
             else:
-                raise NotImplementedError
+                location = instr.location
+                label = self.get_label(instr.location.name)
+                if isinstance(location.type, RoutineType):
+                    self.emitter.emit(JMP(Absolute(label)))
+                elif isinstance(location.type, VectorType):
+                    self.emitter.emit(JMP(Indirect(label)))
+                else:
+                    raise NotImplementedError
         elif opcode == 'copy':
             self.compile_copy(instr, instr.src, instr.dest)
         elif opcode == 'trash':
             pass
+        elif opcode == 'nop':
+            self.emitter.emit(NOP())
         else:
             raise NotImplementedError(opcode)
 
@@ -509,10 +530,12 @@ class Compiler(object):
             False: {
                 'c': BCC,
                 'z': BNE,
+                'n': BPL,
             },
             True: {
                 'c': BCS,
                 'z': BEQ,
+                'n': BMI,
             },
         }[instr.inverted].get(instr.src.name)
         if cls is None:
@@ -539,10 +562,12 @@ class Compiler(object):
                 False: {
                     'c': BCC,
                     'z': BNE,
+                    'n': BPL,
                 },
                 True: {
                     'c': BCS,
                     'z': BEQ,
+                    'n': BMI,
                 },
             }[instr.inverted].get(instr.src.name)
             if cls is None:
