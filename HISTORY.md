@@ -1,6 +1,12 @@
 History of SixtyPical
 =====================
 
+0.16
+----
+
+*   `or a, z`, `and a, z`, and `eor a, z` compile to zero-page operations
+    if the address of z < 256.
+
 0.15
 ----
 

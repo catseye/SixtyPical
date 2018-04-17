@@ -112,7 +112,8 @@ Memory location with explicit address.
     = $080F   STA $0400
     = $0812   RTS
 
-Accesses to memory locations in zero-page with `ld` and `st` use zero-page addressing.
+Accesses to memory locations in zero-page with `ld` and `st`
+and `and`, `or`, and `xor` use zero-page addressing.
 
     | byte zp @ $00
     | byte screen @ 100
@@ -126,12 +127,18 @@ Accesses to memory locations in zero-page with `ld` and `st` use zero-page addre
     |   st a, screen
     |   ld a, zp
     |   st a, zp
+    |   and a, zp
+    |   or a, zp
+    |   xor a, zp
     | }
     = $080D   LDA $64
     = $080F   STA $64
     = $0811   LDA $00
     = $0813   STA $00
-    = $0815   RTS
+    = $0815   AND $00
+    = $0817   ORA $00
+    = $0819   EOR $00
+    = $081B   RTS
 
 Memory location with initial value.
 

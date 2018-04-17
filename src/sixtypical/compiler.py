@@ -332,7 +332,7 @@ class Compiler(object):
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(cls(Immediate(Byte(src.value))))
                 else:
-                    self.emitter.emit(cls(Absolute(self.get_label(src.name))))
+                    self.emitter.emit(cls(self.absolute_or_zero_page(self.get_label(src.name))))
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode in ('shl', 'shr'):

@@ -89,6 +89,5 @@ are trashed inside the block.
 *   Automatic tail-call optimization (could be tricky, w/constraints?)
 *   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
 *   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
-*   Optimize `or|and|eor a, z` to zero-page operations if address of z < 256.
 
 [VICE]: http://vice-emu.sourceforge.net/

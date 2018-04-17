@@ -133,6 +133,7 @@ class AND(Instruction):
         Absolute:  0x2d,
         AbsoluteX: 0x3d,
         AbsoluteY: 0x39,
+        ZeroPage:  0x25,
     }
 
 
@@ -231,6 +232,7 @@ class EOR(Instruction):
         Absolute:  0x4d,
         AbsoluteX: 0x5d,
         AbsoluteY: 0x59,
+        ZeroPage:  0x45,
     }
 
 
@@ -299,6 +301,7 @@ class ORA(Instruction):
         Absolute:  0x0d,
         AbsoluteX: 0x1d,
         AbsoluteY: 0x19,
+        ZeroPage:  0x05,
     }
 
 
