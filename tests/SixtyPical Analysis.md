@@ -474,7 +474,43 @@ The index must be initialized.
     | }
     ? UnmeaningfulReadError: x
 
-There are other operations you can do on tables.
+There are other operations you can do on tables. (1/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z, v
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     add a, many + x
+    |     sub a, many + x
+    |     cmp a, many + x
+    | }
+    = ok
+
+There are other operations you can do on tables. (2/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     and a, many + x
+    |     or a, many + x
+    |     xor a, many + x
+    | }
+    = ok
+
+
+There are other operations you can do on tables. (3/3)
 
     | byte table[256] many
     | 
@@ -486,12 +522,6 @@ There are other operations you can do on tables.
     |     ld x, 0
     |     ld a, 0
     |     st off, c
-    |     add a, many + x
-    |     sub a, many + x
-    |     cmp a, many + x
-    |     and a, many + x
-    |     or a, many + x
-    |     xor a, many + x
     |     shl many + x
     |     shr many + x
     |     inc many + x
