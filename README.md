@@ -86,6 +86,5 @@ are trashed inside the block.
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
 *   Add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
 *   Automatic tail-call optimization (could be tricky, w/constraints?)
-*   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
 
 [VICE]: http://vice-emu.sourceforge.net/
