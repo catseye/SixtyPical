@@ -565,12 +565,14 @@ Buffers and pointers.
 
     | buffer[2048] buf
     | pointer ptr
+    | pointer ptrb
     | byte foo
     | 
     | routine main {
     |     copy ^buf, ptr
     |     copy 123, [ptr] + y
     |     copy [ptr] + y, foo
+    |     copy [ptr] + y, [ptrb] + y
     | }
     = ok
 

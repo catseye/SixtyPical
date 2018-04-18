@@ -2114,6 +2114,24 @@ Read through a pointer.
     | }
     = ok
 
+Read and write through two pointers.
+
+    | buffer[2048] buf
+    | pointer ptra
+    | pointer ptrb
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf
+    |   trashes a, y, z, n, ptra, ptrb
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptra
+    |     copy ^buf, ptrb
+    |     copy [ptra] + y, [ptrb] + y
+    | }
+    = ok
+
 Read through a pointer to the `a` register.  Note that this is done with `ld`,
 not `copy`.
 

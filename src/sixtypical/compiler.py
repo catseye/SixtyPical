@@ -428,6 +428,12 @@ class Compiler(object):
             dest_label = self.get_label(dest.name)
             self.emitter.emit(LDA(IndirectY(src_label)))
             self.emitter.emit(STA(Absolute(dest_label)))
+        elif isinstance(src, IndirectRef) and isinstance(dest, IndirectRef) and isinstance(src.ref.type, PointerType) and isinstance(dest.ref.type, PointerType):
+            ### copy [ptra] + y, [ptrb] + y
+            src_label = self.get_label(src.ref.name)
+            dest_label = self.get_label(dest.ref.name)
+            self.emitter.emit(LDA(IndirectY(src_label)))
+            self.emitter.emit(STA(IndirectY(dest_label)))
         elif isinstance(src, AddressRef) and isinstance(dest, LocationRef) and isinstance(src.ref.type, BufferType) and isinstance(dest.type, PointerType):
             ### copy ^buf, ptr
             src_label = self.get_label(src.ref.name)

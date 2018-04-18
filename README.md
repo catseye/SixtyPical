@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-_Version 0.15.  Work-in-progress, everything is subject to change._
+_Version 0.16.  Work-in-progress, everything is subject to change._
 
 **SixtyPical** is a 6502-like programming language with advanced
 static analysis.
@@ -87,6 +87,5 @@ are trashed inside the block.
 *   Add absolute addressing in shl/shr, absolute-indexed for add, sub, etc.
 *   Automatic tail-call optimization (could be tricky, w/constraints?)
 *   Possibly `ld x, [ptr] + y`, possibly `st x, [ptr] + y`.
-*   Maybe even `copy [ptra] + y, [ptrb] + y`, which can be compiled to indirect LDA then indirect STA!
 
 [VICE]: http://vice-emu.sourceforge.net/

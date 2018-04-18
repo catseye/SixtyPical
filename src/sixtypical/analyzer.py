@@ -517,6 +517,11 @@ class Analyzer(object):
                     pass
                 else:
                     raise TypeMismatchError(instr, (src, dest))
+            elif isinstance(src, IndirectRef) and isinstance(dest, IndirectRef):
+                if isinstance(src.ref.type, PointerType) and isinstance(dest.ref.type, PointerType):
+                    pass
+                else:
+                    raise TypeMismatchError(instr, (src, dest))
 
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
                 if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
@@ -561,7 +566,12 @@ class Analyzer(object):
                 context.set_written(dest.ref)
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, REG_Y)
+                # TODO more sophisticated?
                 context.set_written(dest)
+            elif isinstance(src, IndirectRef) and isinstance(dest, IndirectRef):
+                context.assert_meaningful(src.ref, REG_Y)
+                # TODO more sophisticated?
+                context.set_written(dest.ref)
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
                 context.set_written(dest.ref)

@@ -8,6 +8,7 @@ History of SixtyPical
     if the address of z < 256.
 *   More thorough tests and justifications written for the case of
     assigning a routine to a vector with a "wider" type.
+*   Support for `copy [ptra]+y, [ptrb]+y` to indirect LDA indirect STA.
 
 0.15
 ----

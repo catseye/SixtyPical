@@ -1037,6 +1037,35 @@ Read through a pointer, into a byte storage location, or the `a` register.
     = $081C   LDA ($FE),Y
     = $081E   RTS
 
+Read and write through two pointers.
+
+    | buffer[2048] buf
+    | pointer ptra @ 252
+    | pointer ptrb @ 254
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf
+    |   trashes a, y, z, n, ptra, ptrb
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptra
+    |     copy ^buf, ptrb
+    |     copy [ptra] + y, [ptrb] + y
+    | }
+    = $080D   LDY #$00
+    = $080F   LDA #$24
+    = $0811   STA $FC
+    = $0813   LDA #$08
+    = $0815   STA $FD
+    = $0817   LDA #$24
+    = $0819   STA $FE
+    = $081B   LDA #$08
+    = $081D   STA $FF
+    = $081F   LDA ($FC),Y
+    = $0821   STA ($FE),Y
+    = $0823   RTS
+
 Write the `a` register through a pointer.
 
     | buffer[2048] buf
