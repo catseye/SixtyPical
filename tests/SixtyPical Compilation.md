@@ -274,40 +274,44 @@ Some instructions.
     |     cmp y, foo
     |     shl a
     |     shr a
+    |     shl foo
+    |     shr foo
     | }
     = $080D   LDA #$00
     = $080F   LDX #$00
     = $0811   LDY #$00
-    = $0813   STA $0853
-    = $0816   STX $0853
-    = $0819   STY $0853
+    = $0813   STA $0859
+    = $0816   STX $0859
+    = $0819   STY $0859
     = $081C   SEC
     = $081D   CLC
     = $081E   ADC #$01
-    = $0820   ADC $0853
+    = $0820   ADC $0859
     = $0823   SBC #$01
-    = $0825   SBC $0853
-    = $0828   INC $0853
+    = $0825   SBC $0859
+    = $0828   INC $0859
     = $082B   INX
     = $082C   INY
-    = $082D   DEC $0853
+    = $082D   DEC $0859
     = $0830   DEX
     = $0831   DEY
     = $0832   AND #$FF
-    = $0834   AND $0853
+    = $0834   AND $0859
     = $0837   ORA #$FF
-    = $0839   ORA $0853
+    = $0839   ORA $0859
     = $083C   EOR #$FF
-    = $083E   EOR $0853
+    = $083E   EOR $0859
     = $0841   CMP #$01
-    = $0843   CMP $0853
+    = $0843   CMP $0859
     = $0846   CPX #$01
-    = $0848   CPX $0853
+    = $0848   CPX $0859
     = $084B   CPY #$01
-    = $084D   CPY $0853
+    = $084D   CPY $0859
     = $0850   ROL A
     = $0851   ROR A
-    = $0852   RTS
+    = $0852   ROL $0859
+    = $0855   ROR $0859
+    = $0858   RTS
 
 Compiling `if`.
 

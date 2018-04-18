@@ -1120,11 +1120,13 @@ Some rudimentary tests for `xor`.
 
 Some rudimentary tests for `shl`.
 
+    | byte foo
     | routine main
-    |   inputs a, c
-    |   outputs a, c, z, n
+    |   inputs foo, a, c
+    |   outputs foo, a, c, z, n
     | {
     |     shl a
+    |     shl foo
     | }
     = ok
 
@@ -1148,11 +1150,13 @@ Some rudimentary tests for `shl`.
 
 Some rudimentary tests for `shr`.
 
+    | byte foo
     | routine main
-    |   inputs a, c
-    |   outputs a, c, z, n
+    |   inputs foo, a, c
+    |   outputs foo, a, c, z, n
     | {
     |     shr a
+    |     shr foo
     | }
     = ok
 

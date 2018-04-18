@@ -9,6 +9,7 @@ History of SixtyPical
 *   More thorough tests and justifications written for the case of
     assigning a routine to a vector with a "wider" type.
 *   Support for `copy [ptra]+y, [ptrb]+y` to indirect LDA indirect STA.
+*   Support for `shl foo` and `shr foo` where `foo` is a byte storage.
 
 0.15
 ----

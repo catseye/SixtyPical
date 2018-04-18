@@ -343,7 +343,7 @@ class Compiler(object):
             if dest == REG_A:
                 self.emitter.emit(cls())
             else:
-                raise UnsupportedOpcodeError(instr)
+                self.emitter.emit(cls(self.absolute_or_zero_page(self.get_label(dest.name))))
         elif opcode == 'call':
             location = instr.location
             label = self.get_label(instr.location.name)

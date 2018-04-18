@@ -29,6 +29,12 @@ Program with comments.
     | routine main {
     |     ld a, 0
     |     add a, 1    // We are adding the thing.
+    |     sub a, 1
+    |     shl a
+    |     shr a
+    |     and a, 1
+    |     or a, 1
+    |     xor a, 1
     | }
     = ok
 
@@ -268,6 +274,8 @@ Explicit memory address.
     | routine main {
     |   ld a, 100
     |   st a, screen
+    |   shl screen
+    |   shr screen
     | }
     = ok
 
