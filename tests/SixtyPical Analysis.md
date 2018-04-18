@@ -2223,21 +2223,30 @@ as an input to, an output of, or as a trashed value of a routine.
     | }
     ? ConstantConstraintError: foo
 
-You can copy the address of a routine into a vector, if that vector is
-declared appropriately.
+#### routine-vector type compatibility
+
+You can copy the address of a routine into a vector, if that vector type
+is at least as "wide" as the type of the routine.  More specifically,
+
+- the vector must take _exactly_ the same inputs as the routine
+- the vector must make _exactly_ the same outputs as the routine
+- the vector must trash _at least_ what the routine trashes
+
+If the vector and the routine have the very same signature, that's not an error.
 
     | vector routine
-    |   inputs x
-    |   outputs x
+    |   inputs x, y
+    |   outputs x, y
     |   trashes z, n
     |     vec
     | 
     | routine foo
-    |   inputs x
-    |   outputs x
+    |   inputs x, y
+    |   outputs x, y
     |   trashes z, n
     | {
     |   inc x
+    |   inc y
     | }
     | 
     | routine main
@@ -2248,20 +2257,48 @@ declared appropriately.
     | }
     = ok
 
-But not if the vector is declared inappropriately.
+If the vector takes an input that the routine doesn't take, that's not an error.
+(The interface requires that a parameter be specified before calling, but the
+implementation doesn't actually read it.)
 
     | vector routine
-    |   inputs y
-    |   outputs y
+    |   inputs x, y, a
+    |   outputs x, y
     |   trashes z, n
     |     vec
     | 
     | routine foo
-    |   inputs x
-    |   outputs x
+    |   inputs x, y
+    |   outputs x, y
     |   trashes z, n
     | {
     |   inc x
+    |   inc y
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+If the vector fails to take an input that the routine takes, that's an error.
+
+    | vector routine
+    |   inputs x
+    |   outputs x, y
+    |   trashes z, n
+    |     vec
+    | 
+    | routine foo
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z, n
+    | {
+    |   inc x
+    |   inc y
     | }
     | 
     | routine main
@@ -2272,21 +2309,99 @@ But not if the vector is declared inappropriately.
     | }
     ? IncompatibleConstraintsError
 
-"Appropriately" means, if the routine affects no more than what is named
-in the input/output sets of the vector.
+If the vector produces an output that the routine doesn't produce, that's an error.
 
     | vector routine
-    |   inputs a, x
+    |   inputs x, y
+    |   outputs x, y, a
+    |   trashes z, n
+    |     vec
+    | 
+    | routine foo
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z, n
+    | {
+    |   inc x
+    |   inc y
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    ? IncompatibleConstraintsError
+
+If the vector fails to produce an output that the routine produces, that's an error.
+
+    | vector routine
+    |   inputs x, y
     |   outputs x
+    |   trashes z, n
+    |     vec
+    | 
+    | routine foo
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z, n
+    | {
+    |   inc x
+    |   inc y
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    ? IncompatibleConstraintsError
+
+If the vector fails to trash something the routine trashes, that's an error.
+
+    | vector routine
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z
+    |     vec
+    | 
+    | routine foo
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z, n
+    | {
+    |   inc x
+    |   inc y
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    ? IncompatibleConstraintsError
+
+If the vector trashes something the routine doesn't trash, that's not an error.
+(The implementation preserves something the interface doesn't guarantee is
+preserved.  The caller gets no guarantee that it's preserved.  It actually is,
+but it doesn't know that.)
+
+    | vector routine
+    |   inputs x, y
+    |   outputs x, y
     |   trashes a, z, n
     |     vec
     | 
     | routine foo
-    |   inputs x
-    |   outputs x
+    |   inputs x, y
+    |   outputs x, y
     |   trashes z, n
     | {
     |   inc x
+    |   inc y
     | }
     | 
     | routine main
@@ -2296,6 +2411,8 @@ in the input/output sets of the vector.
     |     copy foo, vec
     | }
     = ok
+
+#### other properties of routines
 
 Routines are read-only.
 
