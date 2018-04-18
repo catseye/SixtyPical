@@ -2309,7 +2309,10 @@ If the vector fails to take an input that the routine takes, that's an error.
     | }
     ? IncompatibleConstraintsError
 
-If the vector produces an output that the routine doesn't produce, that's an error.
+If the vector produces an output that the routine doesn't produce, that's not an error.
+(The interface claims the result of calling the routine is defined, but the implementation
+actually preserves it instead of changing it; the caller can still treat it as a defined
+output.)
 
     | vector routine
     |   inputs x, y
@@ -2332,7 +2335,7 @@ If the vector produces an output that the routine doesn't produce, that's an err
     | {
     |     copy foo, vec
     | }
-    ? IncompatibleConstraintsError
+    = ok
 
 If the vector fails to produce an output that the routine produces, that's an error.
 

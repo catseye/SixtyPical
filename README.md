@@ -77,7 +77,6 @@ are trashed inside the block.
 ### And at some point...
 
 *   `low` and `high` address operators - to turn `word` type into `byte`.
-*   Tests, and implementation, ensuring a routine can be assigned to a vector of "wider" type
 *   Related: can we simply view a (small) part of a buffer as a byte table?  If not, why not?
 *   Related: add constant to buffer to get new buffer.  (Or to table, but... well, maybe.)
 *   Check that the buffer being read or written to through pointer, appears in appropriate inputs or outputs set.
