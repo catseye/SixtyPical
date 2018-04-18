@@ -75,6 +75,15 @@ TODO
 
 To turn `word` type into `byte`.
 
+Trying to remember if we have a compelling case for this or now.  The best I can think
+of is for implementing 16-bit `cmp` in an efficient way.  Maybe we should see if we
+can get by with 16-bit `cmp` instead though.
+
+The problem is that once a byte is extracted, putting it back into a word is awkward.
+The address operators have to modify a destination in a special way.  That is, when
+you say `st a, >word`, you are updating `word` to be `word & $ff | a << 8`, somelike.
+Is that consistent with `st`?  Well, probably it is, but we have to explain it.
+
 ### Save registers on stack
 
 This preserves them, so that, semantically, they can be used later even though they
