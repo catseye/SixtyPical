@@ -69,13 +69,8 @@ Documentation
 TODO
 ----
 
-### Save registers on stack
-
-This preserves them, so that, semantically, they can be used later even though they
-are trashed inside the block.
-
-### And at some point...
-
+*   Save registers on stack: this preserves them, so that, semantically, they can be used later even though they
+    are trashed inside the block.
 *   `low` and `high` address operators - to turn `word` type into `byte`.
 *   Related: can we simply view a (small) part of a buffer as a byte table?  If not, why not?
 *   Related: add constant to buffer to get new buffer.  (Or to table, but... well, maybe.)
@@ -84,7 +79,6 @@ are trashed inside the block.
 *   `static` pointers -- currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.
 *   Question the value of the "consistent initialization" principle for `if` statement analysis.
 *   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
-*   Add absolute-indexed for add, sub, and, or, xor, shl, shr
 *   Automatic tail-call optimization (could be tricky, w/constraints?)
 
 [VICE]: http://vice-emu.sourceforge.net/

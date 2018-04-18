@@ -244,6 +244,8 @@ class Compiler(object):
             if dest == REG_A:
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(ADC(Immediate(Byte(src.value))))
+                elif isinstance(src, IndexedRef):
+                    self.emitter.emit(ADC(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
                 else:
                     self.emitter.emit(ADC(Absolute(self.get_label(src.name))))
             elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and dest.type == TYPE_WORD:
@@ -292,6 +294,8 @@ class Compiler(object):
             if dest == REG_A:
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(SBC(Immediate(Byte(src.value))))
+                elif isinstance(src, IndexedRef):
+                    self.emitter.emit(SBC(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
                 else:
                     self.emitter.emit(SBC(Absolute(self.get_label(src.name))))
             elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and dest.type == TYPE_WORD:
@@ -316,10 +320,6 @@ class Compiler(object):
                     raise UnsupportedOpcodeError(instr)
             else:
                 raise UnsupportedOpcodeError(instr)
-        elif opcode == 'inc':
-            self.compile_inc(instr, instr.dest)
-        elif opcode == 'dec':
-            self.compile_dec(instr, instr.dest)
         elif opcode == 'cmp':
             self.compile_cmp(instr, instr.src, instr.dest)
         elif opcode in ('and', 'or', 'xor',):
@@ -331,10 +331,16 @@ class Compiler(object):
             if dest == REG_A:
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(cls(Immediate(Byte(src.value))))
+                elif isinstance(src, IndexedRef):
+                    self.emitter.emit(cls(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
                 else:
                     self.emitter.emit(cls(self.absolute_or_zero_page(self.get_label(src.name))))
             else:
                 raise UnsupportedOpcodeError(instr)
+        elif opcode == 'inc':
+            self.compile_inc(instr, instr.dest)
+        elif opcode == 'dec':
+            self.compile_dec(instr, instr.dest)
         elif opcode in ('shl', 'shr'):
             cls = {
                 'shl': ROL,
@@ -342,6 +348,8 @@ class Compiler(object):
             }[opcode]
             if dest == REG_A:
                 self.emitter.emit(cls())
+            elif isinstance(dest, IndexedRef):
+                self.emitter.emit(cls(self.addressing_mode_for_index(dest.index)(self.get_label(dest.ref.name))))
             else:
                 self.emitter.emit(cls(self.absolute_or_zero_page(self.get_label(dest.name))))
         elif opcode == 'call':
@@ -389,6 +397,9 @@ class Compiler(object):
             raise UnsupportedOpcodeError(instr)
         if isinstance(src, ConstantRef):
             self.emitter.emit(cls(Immediate(Byte(src.value))))
+        elif isinstance(src, IndexedRef):
+            # FIXME might not work for some dest's (that is, cls's)
+            self.emitter.emit(cls(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
         else:
             self.emitter.emit(cls(Absolute(self.get_label(src.name))))
 
@@ -398,6 +409,8 @@ class Compiler(object):
             self.emitter.emit(INX())
         elif dest == REG_Y:
             self.emitter.emit(INY())
+        elif isinstance(dest, IndexedRef):
+            self.emitter.emit(INC(self.addressing_mode_for_index(dest.index)(self.get_label(dest.ref.name))))
         else:
             self.emitter.emit(INC(Absolute(self.get_label(dest.name))))
 
@@ -407,6 +420,8 @@ class Compiler(object):
             self.emitter.emit(DEX())
         elif dest == REG_Y:
             self.emitter.emit(DEY())
+        elif isinstance(dest, IndexedRef):
+            self.emitter.emit(DEC(self.addressing_mode_for_index(dest.index)(self.get_label(dest.ref.name))))
         else:
             self.emitter.emit(DEC(Absolute(self.get_label(dest.name))))
 

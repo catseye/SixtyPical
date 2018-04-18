@@ -220,6 +220,8 @@ Initialized byte table, initialized with list of byte values.
 
 Initialized word table, initialized with list of word values.
 
+FIXME wait, is this not a word table[4]?
+
     | word table[8] message : 65535, 0, 127
     | 
     | routine main
@@ -312,6 +314,78 @@ Some instructions.
     = $0852   ROL $0859
     = $0855   ROR $0859
     = $0858   RTS
+
+Some instructions on tables. (1/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z, v
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     add a, many + x
+    |     sub a, many + x
+    |     cmp a, many + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$00
+    = $0811   CLC
+    = $0812   ADC $081C,X
+    = $0815   SBC $081C,X
+    = $0818   CMP $081C,X
+    = $081B   RTS
+
+Some instructions on tables. (2/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     and a, many + x
+    |     or a, many + x
+    |     xor a, many + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$00
+    = $0811   AND $081B,X
+    = $0814   ORA $081B,X
+    = $0817   EOR $081B,X
+    = $081A   RTS
+
+Some instructions on tables. (3/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     shl many + x
+    |     shr many + x
+    |     inc many + x
+    |     dec many + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$00
+    = $0811   CLC
+    = $0812   ROL $081F,X
+    = $0815   ROR $081F,X
+    = $0818   INC $081F,X
+    = $081B   DEC $081F,X
+    = $081E   RTS
 
 Compiling `if`.
 
@@ -525,7 +599,7 @@ Indexed access.
     = $0814   LDA $0819,X
     = $0817   RTS
 
-Byte tables take up 256 bytes in memory.
+Byte tables take up, at most, 256 bytes in memory.
 
     | byte table[256] tab1
     | byte table[256] tab2

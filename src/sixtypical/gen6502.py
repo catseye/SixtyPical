@@ -211,6 +211,7 @@ class CPY(Instruction):
 class DEC(Instruction):
     opcodes = {
         Absolute:  0xce,
+        AbsoluteX: 0xde,
     }
 
 
