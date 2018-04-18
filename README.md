@@ -54,6 +54,8 @@ You can try the `loadngo.sh` script on other sources in the `eg` directory
 tree, which contains more extensive examples, including an entire
 game(-like program); see [eg/README.md](eg/README.md) for a listing.
 
+[VICE]: http://vice-emu.sourceforge.net/
+
 Documentation
 -------------
 
@@ -69,16 +71,52 @@ Documentation
 TODO
 ----
 
-*   Save registers on stack: this preserves them, so that, semantically, they can be used later even though they
-    are trashed inside the block.
-*   `low` and `high` address operators - to turn `word` type into `byte`.
-*   Related: can we simply view a (small) part of a buffer as a byte table?  If not, why not?
-*   Related: add constant to buffer to get new buffer.  (Or to table, but... well, maybe.)
-*   Check that the buffer being read or written to through pointer, appears in appropriate inputs or outputs set.
-    (Associate each pointer with the buffer it points into.)
-*   `static` pointers -- currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.
-*   Question the value of the "consistent initialization" principle for `if` statement analysis.
-*   `interrupt` routines -- to indicate that "the supervisor" has stored values on the stack, so we can trash them.
-*   Automatic tail-call optimization (could be tricky, w/constraints?)
+### `low` and `high` address operators
 
-[VICE]: http://vice-emu.sourceforge.net/
+To turn `word` type into `byte`.
+
+### Save registers on stack
+
+This preserves them, so that, semantically, they can be used later even though they
+are trashed inside the block.
+
+### Associate each pointer with the buffer it points into
+
+Check that the buffer being read or written to through pointer, appears in appropriate inputs or outputs set.
+
+### `static` tables
+
+They are uninitialized, but the twist is, the address is a buffer that is
+an input to and/or output of the routine.  So, they are defined (insofar
+as the buffer is defined.)
+
+They are therefore a "view" of a section of a buffer.
+
+This is slightly dangerous since it does permit aliases: the buffer and the
+table refer to the same memory.
+
+`static` tables overlayed on buffers is an alternative to `static` pointers
+(which are currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.)
+
+### Question "consistent initialization"
+
+Question the value of the "consistent initialization" principle for `if` statement analysis.
+
+### Tail-call optimization
+
+More generally, define a block as having zero or one `goto`s at the end.  (and `goto`s cannot
+appear elsewhere.)
+
+If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can.
+The constraints should iron out the same both ways.
+
+And - once we have this - why do we need `goto` to be in tail position, strictly?
+As long as the routine has consistent type context every place it exits, that should be fine.
+
+### Include pragmas
+
+Search a searchlist of include paths.  And use them to make libraries of routines.
+
+One such library routine might be an `interrupt routine` type for various architectures.
+Since "the supervisor" has stored values on the stack, we should be able to trash them
+with impunity, in such a routine.
