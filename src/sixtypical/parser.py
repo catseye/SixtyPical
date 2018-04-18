@@ -442,7 +442,7 @@ class Parser(object):
         elif self.scanner.token in ("shl", "shr", "inc", "dec"):
             opcode = self.scanner.token
             self.scanner.scan()
-            dest = self.locexpr()
+            dest = self.indexed_locexpr()
             return SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=None)
         elif self.scanner.token in ("nop",):
             opcode = self.scanner.token

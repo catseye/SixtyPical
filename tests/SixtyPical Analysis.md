@@ -474,6 +474,31 @@ The index must be initialized.
     | }
     ? UnmeaningfulReadError: x
 
+There are other operations you can do on tables.
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     add a, many + x
+    |     sub a, many + x
+    |     cmp a, many + x
+    |     and a, many + x
+    |     or a, many + x
+    |     xor a, many + x
+    |     shl many + x
+    |     shr many + x
+    |     inc many + x
+    |     dec many + x
+    | }
+    = ok
+
 Copying to and from a word table.
 
     | word one

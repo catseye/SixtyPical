@@ -173,13 +173,26 @@ User-defined memory addresses of different types.
     | }
     = ok
 
-Tables of different types.
+Tables of different types and some operations on them.
 
-    | byte table[256] tab
-    | word table[256] wtab
-    | vector (routine trashes a) table[256] vtab
+    | byte table[256] many
+    | word table[256] wmany
+    | vector (routine trashes a) table[256] vmany
     | 
     | routine main {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     add a, many + x
+    |     sub a, many + x
+    |     cmp a, many + x
+    |     and a, many + x
+    |     or a, many + x
+    |     xor a, many + x
+    |     shl many + x
+    |     shr many + x
+    |     inc many + x
+    |     dec many + x
     | }
     = ok
 
