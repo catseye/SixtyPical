@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff, Save
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
     TableType, BufferType, PointerType, VectorType, RoutineType,
@@ -269,7 +269,7 @@ class Context(object):
             self._writeable.remove(ref)
 
     def set_writeable(self, *refs):
-        """Intended to be used for implementing analyzing `for`."""
+        """Intended to be used for implementing analyzing `for`, but also used in `save`."""
         for ref in refs:
             self._writeable.add(ref)
 
@@ -291,6 +291,41 @@ class Context(object):
         self.assert_meaningful(dest.index)
         self.assert_in_range(dest.index, dest.ref)
         self.set_written(dest.ref)
+
+    def extract(self, location):
+        """Used in `save`."""
+        baton = (
+            location,
+            location in self._touched,
+            self._range.get(location, None),
+            location in self._writeable,
+        )
+
+        if location in self._touched:
+            self._touched.remove(location)
+        self.set_unmeaningful(location)
+        self.set_writeable(location)
+
+        return baton
+
+    def re_introduce(self, baton):
+        """Used in `save`."""
+        location, was_touched, was_range, was_writeable = baton
+
+        if was_touched:
+            self._touched.add(location)
+        elif location in self._touched:
+            self._touched.remove(location)
+
+        if was_range is not None:
+            self._range[location] = was_range
+        elif location in self._range:
+            del self._range[location]
+
+        if was_writeable:
+            self._writeable.add(location)
+        elif location in self._writeable:
+            self._writeable.remove(location)
 
 
 class Analyzer(object):
@@ -385,6 +420,8 @@ class Analyzer(object):
             self.analyze_for(instr, context)
         elif isinstance(instr, WithInterruptsOff):
             self.analyze_block(instr.block, context)
+        elif isinstance(instr, Save):
+            self.analyze_save(instr, context)
         else:
             raise NotImplementedError
 
@@ -730,3 +767,13 @@ class Analyzer(object):
         # after it is executed, we know the range of the loop variable.
         context.set_range(instr.dest, instr.final, instr.final)
         context.set_writeable(instr.dest)
+
+    def analyze_save(self, instr, context):
+        if len(instr.locations) != 1:
+            raise NotImplementedError("Only 1 location in save is supported right now")
+        location = instr.locations[0]
+
+        baton = context.extract(location)
+        self.analyze_block(instr.block, context)
+        # TODO assert no goto was encountered
+        context.re_introduce(baton)

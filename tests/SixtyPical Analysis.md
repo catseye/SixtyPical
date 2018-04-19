@@ -1938,6 +1938,21 @@ initialized at the start of that loop.
     | }
     ? UnmeaningfulReadError: y
 
+### save ###
+
+Basic neutral test.
+
+    | routine main
+    |   inputs a, x
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     save x {
+    |         ld a, 0
+    |     }
+    | }
+    = ok
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
