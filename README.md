@@ -83,6 +83,8 @@ The problem is that once a byte is extracted, putting it back into a word is awk
 The address operators have to modify a destination in a special way.  That is, when
 you say `st a, >word`, you are updating `word` to be `word & $ff | a << 8`, somelike.
 Is that consistent with `st`?  Well, probably it is, but we have to explain it.
+It might make more sense, then, for it to be "part of the operation" instead of "part of
+the reference"; something like `st.hi x, word`; `st.lo y, word`.  Dunno.
 
 ### Save registers on stack
 
@@ -91,9 +93,17 @@ are trashed inside the block.
 
 ### Associate each pointer with the buffer it points into
 
-Check that the buffer being read or written to through pointer, appears in appropriate inputs or outputs set.
+Check that the buffer being read or written to through pointer, appears in appropriate
+inputs or outputs set.
 
-### `static` tables
+In the analysis, when we obtain a pointer, we need to record, in contect, what buffer
+that pointer came from.
+
+When we write through that pointer, we need to set that buffer as written.
+
+When we read through the pointer, we need to check that the buffer is readable.
+
+### table overlays
 
 They are uninitialized, but the twist is, the address is a buffer that is
 an input to and/or output of the routine.  So, they are defined (insofar
@@ -104,8 +114,14 @@ They are therefore a "view" of a section of a buffer.
 This is slightly dangerous since it does permit aliases: the buffer and the
 table refer to the same memory.
 
-`static` tables overlayed on buffers is an alternative to `static` pointers
-(which are currently not possible because pointers must be zero-page, thus `@`, thus uninitialized.)
+Although, if they are `static`, you could say, in the routine in which they
+are `static`, as soon as you've established one, you can no longer use the
+buffer; and the ones you establish must be disjoint.
+
+(That seems to be the most compelling case for restricting them to `static`.)
+
+An alternative would be `static` pointers, which are currently not possible because
+pointers must be zero-page, thus `@`, thus uninitialized.
 
 ### Question "consistent initialization"
 
