@@ -86,10 +86,33 @@ Is that consistent with `st`?  Well, probably it is, but we have to explain it.
 It might make more sense, then, for it to be "part of the operation" instead of "part of
 the reference"; something like `st.hi x, word`; `st.lo y, word`.  Dunno.
 
-### Save registers on stack
+### Save values
 
 This preserves them, so that, semantically, they can be used later even though they
-are trashed inside the block.
+are trashed (or otherwise alternately used) inside the block.
+
+Inside the block, we set them as writeable (but not meaningful).  When the block
+exits, we restore whatever status they had.
+
+This act will trash `a`, both in the block, and outside it, unless the value being
+saved is `a`.  One idiom would be something like
+
+    save a { save var {
+        ...
+    } }
+
+which would save all values.  Maybe abbreviate this to
+
+    save a, var {
+        ...
+    }
+
+This can use the stack.  But it need not use the stack.
+
+### Make all symbols forward-referencable
+
+Basically, don't do symbol-table lookups when parsing, but do have a more formal
+"symbol resolution" (linking) phase right after parsing.
 
 ### Associate each pointer with the buffer it points into
 
@@ -103,7 +126,7 @@ When we write through that pointer, we need to set that buffer as written.
 
 When we read through the pointer, we need to check that the buffer is readable.
 
-### table overlays
+### Table overlays
 
 They are uninitialized, but the twist is, the address is a buffer that is
 an input to and/or output of the routine.  So, they are defined (insofar
@@ -127,6 +150,11 @@ pointers must be zero-page, thus `@`, thus uninitialized.
 
 Question the value of the "consistent initialization" principle for `if` statement analysis.
 
+Part of this is the trashes at the end; I think what it should be is that the trashes
+after the `if` is the union of the trashes in each of the branches; this would obviate the
+need to `trash` values explicitly, but if you tried to access them afterwards, it would still
+error.
+
 ### Tail-call optimization
 
 More generally, define a block as having zero or one `goto`s at the end.  (and `goto`s cannot
@@ -138,7 +166,7 @@ The constraints should iron out the same both ways.
 And - once we have this - why do we need `goto` to be in tail position, strictly?
 As long as the routine has consistent type context every place it exits, that should be fine.
 
-### Include pragmas
+### "Include" directives
 
 Search a searchlist of include paths.  And use them to make libraries of routines.
 
