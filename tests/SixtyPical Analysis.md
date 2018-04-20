@@ -1940,18 +1940,53 @@ initialized at the start of that loop.
 
 ### save ###
 
-Basic neutral test.
+Basic neutral test, where the `save` makes no difference.
 
     | routine main
     |   inputs a, x
     |   outputs a, x
     |   trashes z, n
     | {
+    |     ld a, 1
+    |     save x {
+    |         ld a, 2
+    |     }
+    |     ld a, 3
+    | }
+    = ok
+
+A defined value that has been saved can be trashed inside the block.
+It will continue to be defined outside the block.
+
+    | routine main
+    |   inputs a
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld x, 0
     |     save x {
     |         ld a, 0
+    |         trash x
     |     }
     | }
     = ok
+
+A trashed value that has been saved can be used inside the block.
+It will continue to be trashed outside the block.
+
+    | routine main
+    |   inputs a
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld x, 0
+    |     trash x
+    |     save x {
+    |         ld a, 0
+    |         ld x, 1
+    |     }
+    | }
+    ? UnmeaningfulOutputError: x
 
 ### copy ###
 
