@@ -1988,6 +1988,21 @@ It will continue to be trashed outside the block.
     | }
     ? UnmeaningfulOutputError: x
 
+A value which is not output from the routine, is preserved by the
+routine; and can appear in a `save` exactly because a `save` preserves it.
+
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes z, n
+    | {
+    |     save x {
+    |         ld a, 0
+    |         ld x, 1
+    |     }
+    | }
+    = ok
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
