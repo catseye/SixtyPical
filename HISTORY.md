@@ -4,6 +4,8 @@ History of SixtyPical
 0.16
 ----
 
+*   Removed `--prelude` in favour of specifying both format and prelude
+    with a single option, `--output-format`.  Documentation for same.
 *   `or a, z`, `and a, z`, and `eor a, z` compile to zero-page operations
     if the address of z < 256.
 *   More thorough tests and justifications written for the case of

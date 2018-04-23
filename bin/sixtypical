@@ -81,36 +81,36 @@ def process_input_files(filenames, options):
 
     fh = sys.stdout
 
-    if options.origin.startswith('0x'):
-        start_addr = int(options.origin, 16)
-    else:
-        start_addr = int(options.origin, 10)
-
-    output_format = options.output_format
-
-    prelude = []
-    if options.prelude == 'c64':
-        output_format = 'prg'
+    if options.output_format == 'raw':
+        start_addr = 0x0000
+        prelude = []
+    elif options.output_format == 'prg':
+        start_addr = 0xc000
+        prelude = []
+    elif options.output_format == 'c64-basic-prg':
         start_addr = 0x0801
         prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
                    0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
-    elif options.prelude == 'vic20':
-        output_format = 'prg'
+    elif options.output_format == 'vic20-basic-prg':
         start_addr = 0x1001
         prelude = [0x0b, 0x10, 0xc9, 0x07, 0x9e, 0x34,
                    0x31, 0x30, 0x39, 0x00, 0x00, 0x00]
-    elif options.prelude == 'atari2600':
-        output_format = 'crtbb'
+    elif options.output_format == 'atari2600-cart':
         start_addr = 0xf000
         prelude = [0x78, 0xd8, 0xa2, 0xff, 0x9a, 0xa9,
-                    0x00,0x95, 0x00, 0xca, 0xd0, 0xfb]
+                   0x00, 0x95, 0x00, 0xca, 0xd0, 0xfb]
+    else:
+        raise NotImplementedError("Unknown output format: {}".format(options.output_format))
 
-    elif options.prelude:
-        raise NotImplementedError("Unknown prelude: {}".format(options.prelude))
+    if options.origin is not None:
+        if options.origin.startswith('0x'):
+            start_addr = int(options.origin, 16)
+        else:
+            start_addr = int(options.origin, 10)
 
     # If we are outputting a .PRG, we output the load address first.
     # We don't use the Emitter for this b/c not part of addr space.
-    if output_format == 'prg':
+    if options.output_format in ('prg', 'c64-basic-prg', 'vic20-basic-prg'):
         fh.write(Word(start_addr).serialize(0))
 
     emitter = Emitter(start_addr)
@@ -121,7 +121,7 @@ def process_input_files(filenames, options):
 
     # If we are outputting a cartridge with boot and BRK address
     # at the end, pad to ROM size minus 4 bytes, and emit addresses.
-    if output_format == 'crtbb':
+    if options.output_format == 'atari2600-cart':
         emitter.pad_to_size(4096 - 4)
         emitter.emit(Word(start_addr))
         emitter.emit(Word(start_addr))
@@ -141,21 +141,15 @@ if __name__ == '__main__':
     )
 
     argparser.add_argument(
-        "--origin", type=str, default='0xc000',
+        "--origin", type=str, default=None,
         help="Location in memory where the `main` routine will be "
-        "located. Default: 0xc000."
+        "located. Default: depends on output format."
     )
     argparser.add_argument(
-        "--output-format", type=str, default='prg',
-        help="Executable format to produce. Options are: prg, crtbb. "
-             "Default: prg."
-    )
-    argparser.add_argument(
-        "--prelude", type=str,
-        help="Insert a snippet of code before the compiled program so that "
-             "it can be booted automatically on a particular platform. "
-             "Also sets the origin and format. "
-             "Options are: c64, vic20, atari2600."
+        "--output-format", type=str, default='raw',
+        help="Executable format to produce; also sets a default origin. "
+             "Options are: raw, prg, c64-basic-prg, vic20-basic-prg, atari2600-cart."
+             "Default: raw."
     )
 
     argparser.add_argument(
