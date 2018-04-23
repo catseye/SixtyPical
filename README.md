@@ -67,6 +67,7 @@ Documentation
 *   [Literate test suite for SixtyPical compilation](tests/SixtyPical%20Compilation.md)
 *   [Literate test suite for SixtyPical fallthru optimization](tests/SixtyPical%20Fallthru.md)
 *   [6502 Opcodes used/not used in SixtyPical](doc/6502%20Opcodes.md)
+*   [Output formats supported by `sixtypical`](doc/Output%20Formats.md)
 
 TODO
 ----
