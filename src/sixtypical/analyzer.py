@@ -777,3 +777,9 @@ class Analyzer(object):
         self.analyze_block(instr.block, context)
         # TODO assert no goto was encountered
         context.re_introduce(baton)
+
+        if location == REG_A:
+            pass
+        else:
+            context.set_touched(REG_A)
+            context.set_unmeaningful(REG_A)

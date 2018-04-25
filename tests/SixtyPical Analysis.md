@@ -1955,17 +1955,45 @@ Basic neutral test, where the `save` makes no difference.
     | }
     = ok
 
+Saving any location (other than `a`) will trash `a`.
+
+    | routine main
+    |   inputs a, x
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld a, 1
+    |     save x {
+    |         ld a, 2
+    |     }
+    | }
+    ? UnmeaningfulOutputError
+
+Saving `a` does not trash anything.
+
+    | routine main
+    |   inputs a, x
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld x, 1
+    |     save a {
+    |         ld x, 2
+    |     }
+    |     ld x, 3
+    | }
+    = ok
+
 A defined value that has been saved can be trashed inside the block.
 It will continue to be defined outside the block.
 
     | routine main
-    |   inputs a
-    |   outputs a, x
-    |   trashes z, n
+    |   outputs x, y
+    |   trashes a, z, n
     | {
     |     ld x, 0
     |     save x {
-    |         ld a, 0
+    |         ld y, 0
     |         trash x
     |     }
     | }
@@ -1992,13 +2020,29 @@ A value which is not output from the routine, is preserved by the
 routine; and can appear in a `save` exactly because a `save` preserves it.
 
     | routine main
+    |   outputs y
+    |   trashes a, z, n
+    | {
+    |     save x {
+    |         ld y, 0
+    |         ld x, 1
+    |     }
+    | }
+    = ok
+
+Because saving anything except `a` trashes `a`, a common idiom is to save `a`
+first in a nested series of `save`s.
+
+    | routine main
     |   inputs a
     |   outputs a
     |   trashes z, n
     | {
-    |     save x {
-    |         ld a, 0
-    |         ld x, 1
+    |     save a {
+    |         save x {
+    |             ld a, 0
+    |             ld x, 1
+    |         }
     |     }
     | }
     = ok
