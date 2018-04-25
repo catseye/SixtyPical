@@ -636,4 +636,9 @@ class Compiler(object):
             self.emitter.emit(PLA())
             self.emitter.emit(TAY())
         else:
-            raise NotImplementedError
+            src_label = self.get_label(location.name)
+            self.emitter.emit(LDA(Absolute(src_label)))
+            self.emitter.emit(PHA())
+            self.compile_block(instr.block)
+            self.emitter.emit(PLA())
+            self.emitter.emit(STA(Absolute(src_label)))

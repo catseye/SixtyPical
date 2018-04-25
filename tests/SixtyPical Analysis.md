@@ -2047,6 +2047,44 @@ first in a nested series of `save`s.
     | }
     = ok
 
+Not just registers, but also user-defined locations can be saved.
+
+    | byte foo
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     save foo {
+    |         st 5, foo
+    |     }
+    | }
+    = ok
+
+But only if they are bytes.
+
+    | word foo
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     save foo {
+    |         copy 555, foo
+    |     }
+    | }
+    ? TypeMismatchError
+
+    | byte table[16] tab
+    | 
+    | routine main
+    |   trashes a, y, z, n
+    | {
+    |     save tab {
+    |         ld y, 0
+    |         st 5, tab + y
+    |     }
+    | }
+    ? TypeMismatchError
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.

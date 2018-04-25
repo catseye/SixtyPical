@@ -603,6 +603,25 @@ Compiling `save`.
     = $0816   PLA
     = $0817   RTS
 
+Compiling `save` on a user-defined location.
+
+    | byte foo
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     save foo {
+    |         ld a, 0
+    |         st a, foo
+    |     }
+    | }
+    = $080D   LDA $081B
+    = $0810   PHA
+    = $0811   LDA #$00
+    = $0813   STA $081B
+    = $0816   PLA
+    = $0817   STA $081B
+    = $081A   RTS
+
 Indexed access.
 
     | byte one

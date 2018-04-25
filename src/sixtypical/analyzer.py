@@ -335,9 +335,9 @@ class Analyzer(object):
         self.routines = {}
         self.debug = debug
 
-    def assert_type(self, type, *locations):
+    def assert_type(self, type_, *locations):
         for location in locations:
-            if location.type != type:
+            if location.type != type_:
                 raise TypeMismatchError(self.current_routine, location.name)
 
     def assert_affected_within(self, name, affecting_type, limiting_type):
@@ -464,7 +464,7 @@ class Analyzer(object):
                 context.assert_meaningful(dest.ref, REG_Y)
                 context.set_written(dest.ref)
             elif src.type != dest.type:
-                raise TypeMismatchError(instr, '{} and {}'.format(src, name))
+                raise TypeMismatchError(instr, '{} and {}'.format(src, dest))
             else:
                 context.set_written(dest)
                 # FIXME: context.copy_range(src, dest)   ?
@@ -772,6 +772,7 @@ class Analyzer(object):
         if len(instr.locations) != 1:
             raise NotImplementedError("Only 1 location in save is supported right now")
         location = instr.locations[0]
+        self.assert_type(TYPE_BYTE, location)
 
         baton = context.extract(location)
         self.analyze_block(instr.block, context)
