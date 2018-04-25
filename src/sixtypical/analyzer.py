@@ -293,23 +293,23 @@ class Context(object):
         self.set_written(dest.ref)
 
     def extract(self, location):
-        """Used in `save`."""
+        """Sets the given location as writeable in the context, and returns a 'baton' representing
+        the previous state of context for that location.  This 'baton' can be used to later restore
+        this state of context."""
+        # Used in `save`.
         baton = (
             location,
             location in self._touched,
             self._range.get(location, None),
             location in self._writeable,
         )
-
-        if location in self._touched:
-            self._touched.remove(location)
-        self.set_unmeaningful(location)
         self.set_writeable(location)
-
         return baton
 
     def re_introduce(self, baton):
-        """Used in `save`."""
+        """Given a 'baton' produced by `extract()`, restores the context for that saved location
+        to what it was before `extract()` was called."""
+        # Used in `save`.
         location, was_touched, was_range, was_writeable = baton
 
         if was_touched:
