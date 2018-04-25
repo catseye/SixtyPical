@@ -419,13 +419,11 @@ static byte save_x : 0
         call dispatch_logic
 
         if c {
-            // Player died!  Want no dead!  Break out of the loop (this is a bit awkward.)
+            // Player died!  Want no dead!
             call clear_screen
             copy game_state_game_over, dispatch_game_state
-            ld x, 15
-        } else {
-            ld x, save_x
         }
+        ld x, save_x
 
         copy pos, actor_pos + x
         copy delta, actor_delta + x
