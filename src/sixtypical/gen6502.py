@@ -306,6 +306,18 @@ class ORA(Instruction):
     }
 
 
+class PHA(Instruction):
+    opcodes = {
+        Implied:   0x48,
+    }
+
+
+class PLA(Instruction):
+    opcodes = {
+        Implied:   0x68,
+    }
+
+
 class ROL(Instruction):
     opcodes = {
         Implied:   0x2a,    # Accumulator

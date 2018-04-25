@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff, Save
 from sixtypical.model import (
     ConstantRef, LocationRef, IndexedRef, IndirectRef, AddressRef,
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
@@ -12,6 +12,7 @@ from sixtypical.gen6502 import (
     Immediate, Absolute, AbsoluteX, AbsoluteY, ZeroPage, Indirect, IndirectY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
     TAX, TAY, TXA, TYA,
+    PHA, PLA,
     CLC, SEC, ADC, SBC, ROL, ROR,
     INC, INX, INY, DEC, DEX, DEY,
     CMP, CPX, CPY, AND, ORA, EOR,
@@ -169,6 +170,8 @@ class Compiler(object):
             return self.compile_for(instr)
         elif isinstance(instr, WithInterruptsOff):
             return self.compile_with_interrupts_off(instr)
+        elif isinstance(instr, Save):
+            return self.compile_save(instr)
         else:
             raise NotImplementedError
 
@@ -613,3 +616,24 @@ class Compiler(object):
         self.emitter.emit(SEI())
         self.compile_block(instr.block)
         self.emitter.emit(CLI())
+
+    def compile_save(self, instr):
+        location = instr.locations[0]
+        if location == REG_A:
+            self.emitter.emit(PHA())
+            self.compile_block(instr.block)
+            self.emitter.emit(PLA())
+        elif location == REG_X:
+            self.emitter.emit(TXA())
+            self.emitter.emit(PHA())
+            self.compile_block(instr.block)
+            self.emitter.emit(PLA())
+            self.emitter.emit(TAX())
+        elif location == REG_Y:
+            self.emitter.emit(TYA())
+            self.emitter.emit(PHA())
+            self.compile_block(instr.block)
+            self.emitter.emit(PLA())
+            self.emitter.emit(TAY())
+        else:
+            raise NotImplementedError
