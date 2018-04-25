@@ -2016,6 +2016,65 @@ It will continue to be trashed outside the block.
     | }
     ? UnmeaningfulOutputError: x
 
+The known range of a value will be preserved outside the block as well.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 31
+    |     ld x, a
+    |     save x {
+    |         ld x, 255
+    |     }
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    = ok
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 63
+    |     ld x, a
+    |     save x {
+    |         ld x, 1
+    |     }
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    ? RangeExceededError
+
+The known properties of a value are preserved inside the block, too.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 31
+    |     ld x, a
+    |     save x {
+    |         copy one, many + x
+    |         copy many + x, one
+    |     }
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    = ok
+
 A value which is not output from the routine, is preserved by the
 routine; and can appear in a `save` exactly because a `save` preserves it.
 
