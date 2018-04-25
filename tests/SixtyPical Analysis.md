@@ -2085,6 +2085,84 @@ But only if they are bytes.
     | }
     ? TypeMismatchError
 
+A `goto` cannot appear within a `save` block, even if it is otherwise in tail position.
+
+    | routine other
+    |   trashes a, z, n
+    | {
+    |     ld a, 0
+    | }
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     ld a, 1
+    |     save x {
+    |         ld x, 2
+    |         goto other
+    |     }
+    | }
+    ? IllegalJumpError
+
+### with interrupts ###
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    | 
+    | routine main
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |   with interrupts off {
+    |     copy foo, bar
+    |   }
+    | }
+    = ok
+
+A `goto` cannot appear within a `with interrupts` block, even if it is
+otherwise in tail position.
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    | 
+    | routine other
+    |   trashes bar, a, n, z
+    | {
+    |    ld a, 0
+    | }
+    | 
+    | routine main
+    |   trashes bar, a, n, z
+    | {
+    |   with interrupts off {
+    |     copy foo, bar
+    |     goto other
+    |   }
+    | }
+    ? IllegalJumpError
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
