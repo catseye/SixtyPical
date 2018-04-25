@@ -420,6 +420,8 @@ class Analyzer(object):
             self.analyze_for(instr, context)
         elif isinstance(instr, WithInterruptsOff):
             self.analyze_block(instr.block, context)
+            if context.encountered_gotos():
+                raise IllegalJumpError(instr, instr)
         elif isinstance(instr, Save):
             self.analyze_save(instr, context)
         else:
@@ -776,7 +778,8 @@ class Analyzer(object):
 
         baton = context.extract(location)
         self.analyze_block(instr.block, context)
-        # TODO assert no goto was encountered
+        if context.encountered_gotos():
+            raise IllegalJumpError(instr, instr)
         context.re_introduce(baton)
 
         if location == REG_A:
