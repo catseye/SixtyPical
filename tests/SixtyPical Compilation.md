@@ -220,9 +220,7 @@ Initialized byte table, initialized with list of byte values.
 
 Initialized word table, initialized with list of word values.
 
-FIXME wait, is this not a word table[4]?
-
-    | word table[8] message : 65535, 0, 127
+    | word table[4] message : 65535, 0, 127, 127
     | 
     | routine main
     | {
@@ -234,7 +232,7 @@ FIXME wait, is this not a word table[4]?
     = $0811   BRK
     = $0812   .byte $7F
     = $0813   BRK
-    = $0814   BRK
+    = $0814   .byte $7F
     = $0815   BRK
 
 Some instructions.
