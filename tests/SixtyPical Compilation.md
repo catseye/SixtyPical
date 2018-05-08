@@ -7,7 +7,7 @@ SixtyPical to 6502 machine code.
 [Falderal]:     http://catseye.tc/node/Falderal
 
     -> Functionality "Compile SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --prelude=c64 --traceback %(test-body-file) >/tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
+    -> shell command "bin/sixtypical --output-format=c64-basic-prg --traceback %(test-body-file) >/tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
 
     -> Tests for functionality "Compile SixtyPical program"
 
@@ -112,7 +112,8 @@ Memory location with explicit address.
     = $080F   STA $0400
     = $0812   RTS
 
-Accesses to memory locations in zero-page with `ld` and `st` use zero-page addressing.
+Accesses to memory locations in zero-page with `ld` and `st`
+and `and`, `or`, and `xor` use zero-page addressing.
 
     | byte zp @ $00
     | byte screen @ 100
@@ -126,12 +127,18 @@ Accesses to memory locations in zero-page with `ld` and `st` use zero-page addre
     |   st a, screen
     |   ld a, zp
     |   st a, zp
+    |   and a, zp
+    |   or a, zp
+    |   xor a, zp
     | }
     = $080D   LDA $64
     = $080F   STA $64
     = $0811   LDA $00
     = $0813   STA $00
-    = $0815   RTS
+    = $0815   AND $00
+    = $0817   ORA $00
+    = $0819   EOR $00
+    = $081B   RTS
 
 Memory location with initial value.
 
@@ -213,7 +220,7 @@ Initialized byte table, initialized with list of byte values.
 
 Initialized word table, initialized with list of word values.
 
-    | word table[8] message : 65535, 0, 127
+    | word table[4] message : 65535, 0, 127, 127
     | 
     | routine main
     | {
@@ -225,7 +232,7 @@ Initialized word table, initialized with list of word values.
     = $0811   BRK
     = $0812   .byte $7F
     = $0813   BRK
-    = $0814   BRK
+    = $0814   .byte $7F
     = $0815   BRK
 
 Some instructions.
@@ -267,40 +274,116 @@ Some instructions.
     |     cmp y, foo
     |     shl a
     |     shr a
+    |     shl foo
+    |     shr foo
     | }
     = $080D   LDA #$00
     = $080F   LDX #$00
     = $0811   LDY #$00
-    = $0813   STA $0853
-    = $0816   STX $0853
-    = $0819   STY $0853
+    = $0813   STA $0859
+    = $0816   STX $0859
+    = $0819   STY $0859
     = $081C   SEC
     = $081D   CLC
     = $081E   ADC #$01
-    = $0820   ADC $0853
+    = $0820   ADC $0859
     = $0823   SBC #$01
-    = $0825   SBC $0853
-    = $0828   INC $0853
+    = $0825   SBC $0859
+    = $0828   INC $0859
     = $082B   INX
     = $082C   INY
-    = $082D   DEC $0853
+    = $082D   DEC $0859
     = $0830   DEX
     = $0831   DEY
     = $0832   AND #$FF
-    = $0834   AND $0853
+    = $0834   AND $0859
     = $0837   ORA #$FF
-    = $0839   ORA $0853
+    = $0839   ORA $0859
     = $083C   EOR #$FF
-    = $083E   EOR $0853
+    = $083E   EOR $0859
     = $0841   CMP #$01
-    = $0843   CMP $0853
+    = $0843   CMP $0859
     = $0846   CPX #$01
-    = $0848   CPX $0853
+    = $0848   CPX $0859
     = $084B   CPY #$01
-    = $084D   CPY $0853
+    = $084D   CPY $0859
     = $0850   ROL A
     = $0851   ROR A
-    = $0852   RTS
+    = $0852   ROL $0859
+    = $0855   ROR $0859
+    = $0858   RTS
+
+Some instructions on tables. (1/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z, v
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     add a, many + x
+    |     sub a, many + x
+    |     cmp a, many + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$00
+    = $0811   CLC
+    = $0812   ADC $081C,X
+    = $0815   SBC $081C,X
+    = $0818   CMP $081C,X
+    = $081B   RTS
+
+Some instructions on tables. (2/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     and a, many + x
+    |     or a, many + x
+    |     xor a, many + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$00
+    = $0811   AND $081B,X
+    = $0814   ORA $081B,X
+    = $0817   EOR $081B,X
+    = $081A   RTS
+
+Some instructions on tables. (3/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     shl many + x
+    |     shr many + x
+    |     inc many + x
+    |     dec many + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$00
+    = $0811   CLC
+    = $0812   ROL $081F,X
+    = $0815   ROR $081F,X
+    = $0818   INC $081F,X
+    = $081B   DEC $081F,X
+    = $081E   RTS
 
 Compiling `if`.
 
@@ -494,6 +577,49 @@ Compiling `for ... down to`.
     = $0815   BNE $080F
     = $0817   RTS
 
+Compiling `save`.
+
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes z, n
+    | {
+    |     save a {
+    |         save x {
+    |             ld a, 0
+    |             ld x, 1
+    |         }
+    |     }
+    | }
+    = $080D   PHA
+    = $080E   TXA
+    = $080F   PHA
+    = $0810   LDA #$00
+    = $0812   LDX #$01
+    = $0814   PLA
+    = $0815   TAX
+    = $0816   PLA
+    = $0817   RTS
+
+Compiling `save` on a user-defined location.
+
+    | byte foo
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     save foo {
+    |         ld a, 0
+    |         st a, foo
+    |     }
+    | }
+    = $080D   LDA $081B
+    = $0810   PHA
+    = $0811   LDA #$00
+    = $0813   STA $081B
+    = $0816   PLA
+    = $0817   STA $081B
+    = $081A   RTS
+
 Indexed access.
 
     | byte one
@@ -514,7 +640,7 @@ Indexed access.
     = $0814   LDA $0819,X
     = $0817   RTS
 
-Byte tables take up 256 bytes in memory.
+Byte tables take up, at most, 256 bytes in memory.
 
     | byte table[256] tab1
     | byte table[256] tab2
@@ -1029,6 +1155,35 @@ Read through a pointer, into a byte storage location, or the `a` register.
     = $0819   STA $101F
     = $081C   LDA ($FE),Y
     = $081E   RTS
+
+Read and write through two pointers.
+
+    | buffer[2048] buf
+    | pointer ptra @ 252
+    | pointer ptrb @ 254
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf
+    |   trashes a, y, z, n, ptra, ptrb
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptra
+    |     copy ^buf, ptrb
+    |     copy [ptra] + y, [ptrb] + y
+    | }
+    = $080D   LDY #$00
+    = $080F   LDA #$24
+    = $0811   STA $FC
+    = $0813   LDA #$08
+    = $0815   STA $FD
+    = $0817   LDA #$24
+    = $0819   STA $FE
+    = $081B   LDA #$08
+    = $081D   STA $FF
+    = $081F   LDA ($FC),Y
+    = $0821   STA ($FE),Y
+    = $0823   RTS
 
 Write the `a` register through a pointer.
 

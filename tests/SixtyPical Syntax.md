@@ -29,6 +29,12 @@ Program with comments.
     | routine main {
     |     ld a, 0
     |     add a, 1    // We are adding the thing.
+    |     sub a, 1
+    |     shl a
+    |     shr a
+    |     and a, 1
+    |     or a, 1
+    |     xor a, 1
     | }
     = ok
 
@@ -155,6 +161,20 @@ Basic "open-faced for" loops, up and down.
     | }
     = ok
 
+Other blocks.
+
+    | routine main trashes a, x, c, z, v {
+    |     with interrupts off {
+    |         save a, x, c {
+    |             ld a, 0
+    |         }
+    |     }
+    |     save a, x, c {
+    |         ld a, 0
+    |     }
+    | }
+    = ok
+
 User-defined memory addresses of different types.
 
     | byte byt
@@ -167,13 +187,26 @@ User-defined memory addresses of different types.
     | }
     = ok
 
-Tables of different types.
+Tables of different types and some operations on them.
 
-    | byte table[256] tab
-    | word table[256] wtab
-    | vector (routine trashes a) table[256] vtab
+    | byte table[256] many
+    | word table[256] wmany
+    | vector (routine trashes a) table[256] vmany
     | 
     | routine main {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     add a, many + x
+    |     sub a, many + x
+    |     cmp a, many + x
+    |     and a, many + x
+    |     or a, many + x
+    |     xor a, many + x
+    |     shl many + x
+    |     shr many + x
+    |     inc many + x
+    |     dec many + x
     | }
     = ok
 
@@ -268,6 +301,8 @@ Explicit memory address.
     | routine main {
     |   ld a, 100
     |   st a, screen
+    |   shl screen
+    |   shr screen
     | }
     = ok
 
@@ -565,12 +600,14 @@ Buffers and pointers.
 
     | buffer[2048] buf
     | pointer ptr
+    | pointer ptrb
     | byte foo
     | 
     | routine main {
     |     copy ^buf, ptr
     |     copy 123, [ptr] + y
     |     copy [ptr] + y, foo
+    |     copy [ptr] + y, [ptrb] + y
     | }
     = ok
 

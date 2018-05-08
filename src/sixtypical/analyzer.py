@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff, Save
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
     TableType, BufferType, PointerType, VectorType, RoutineType,
@@ -269,7 +269,7 @@ class Context(object):
             self._writeable.remove(ref)
 
     def set_writeable(self, *refs):
-        """Intended to be used for implementing analyzing `for`."""
+        """Intended to be used for implementing analyzing `for`, but also used in `save`."""
         for ref in refs:
             self._writeable.add(ref)
 
@@ -279,6 +279,54 @@ class Context(object):
     def encountered_gotos(self):
         return self._gotos_encountered
 
+    def assert_types_for_read_table(self, instr, src, dest, type_):
+        if (not TableType.is_a_table_type(src.ref.type, type_)) or (not dest.type == type_):
+            raise TypeMismatchError(instr, '{} and {}'.format(src.ref.name, dest.name))
+        self.assert_meaningful(src, src.index)
+        self.assert_in_range(src.index, src.ref)
+
+    def assert_types_for_update_table(self, instr, dest, type_):
+        if not TableType.is_a_table_type(dest.ref.type, type_):
+            raise TypeMismatchError(instr, '{}'.format(dest.ref.name))
+        self.assert_meaningful(dest.index)
+        self.assert_in_range(dest.index, dest.ref)
+        self.set_written(dest.ref)
+
+    def extract(self, location):
+        """Sets the given location as writeable in the context, and returns a 'baton' representing
+        the previous state of context for that location.  This 'baton' can be used to later restore
+        this state of context."""
+        # Used in `save`.
+        baton = (
+            location,
+            location in self._touched,
+            self._range.get(location, None),
+            location in self._writeable,
+        )
+        self.set_writeable(location)
+        return baton
+
+    def re_introduce(self, baton):
+        """Given a 'baton' produced by `extract()`, restores the context for that saved location
+        to what it was before `extract()` was called."""
+        # Used in `save`.
+        location, was_touched, was_range, was_writeable = baton
+
+        if was_touched:
+            self._touched.add(location)
+        elif location in self._touched:
+            self._touched.remove(location)
+
+        if was_range is not None:
+            self._range[location] = was_range
+        elif location in self._range:
+            del self._range[location]
+
+        if was_writeable:
+            self._writeable.add(location)
+        elif location in self._writeable:
+            self._writeable.remove(location)
+
 
 class Analyzer(object):
 
@@ -287,9 +335,9 @@ class Analyzer(object):
         self.routines = {}
         self.debug = debug
 
-    def assert_type(self, type, *locations):
+    def assert_type(self, type_, *locations):
         for location in locations:
-            if location.type != type:
+            if location.type != type_:
                 raise TypeMismatchError(self.current_routine, location.name)
 
     def assert_affected_within(self, name, affecting_type, limiting_type):
@@ -372,6 +420,10 @@ class Analyzer(object):
             self.analyze_for(instr, context)
         elif isinstance(instr, WithInterruptsOff):
             self.analyze_block(instr.block, context)
+            if context.encountered_gotos():
+                raise IllegalJumpError(instr, instr)
+        elif isinstance(instr, Save):
+            self.analyze_save(instr, context)
         else:
             raise NotImplementedError
 
@@ -386,12 +438,7 @@ class Analyzer(object):
 
         if opcode == 'ld':
             if isinstance(src, IndexedRef):
-                if TableType.is_a_table_type(src.ref.type, TYPE_BYTE) and dest.type == TYPE_BYTE:
-                    pass
-                else:
-                    raise TypeMismatchError(instr, '{} and {}'.format(src.ref.name, dest.name))
-                context.assert_meaningful(src, src.index)
-                context.assert_in_range(src.index, src.ref)
+                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
             elif isinstance(src, IndirectRef):
                 # copying this analysis from the matching branch in `copy`, below
                 if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
@@ -407,13 +454,9 @@ class Analyzer(object):
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
             if isinstance(dest, IndexedRef):
-                if src.type == TYPE_BYTE and TableType.is_a_table_type(dest.ref.type, TYPE_BYTE):
-                    pass
-                else:
+                if src.type != TYPE_BYTE:
                     raise TypeMismatchError(instr, (src, dest))
-                context.assert_meaningful(dest.index)
-                context.assert_in_range(dest.index, dest.ref)
-                context.set_written(dest.ref)
+                context.assert_types_for_update_table(instr, dest, TYPE_BYTE)
             elif isinstance(dest, IndirectRef):
                 # copying this analysis from the matching branch in `copy`, below
                 if isinstance(dest.ref.type, PointerType) and src.type == TYPE_BYTE:
@@ -423,67 +466,88 @@ class Analyzer(object):
                 context.assert_meaningful(dest.ref, REG_Y)
                 context.set_written(dest.ref)
             elif src.type != dest.type:
-                raise TypeMismatchError(instr, '{} and {}'.format(src, name))
+                raise TypeMismatchError(instr, '{} and {}'.format(src, dest))
             else:
                 context.set_written(dest)
                 # FIXME: context.copy_range(src, dest)   ?
             context.assert_meaningful(src)
         elif opcode == 'add':
             context.assert_meaningful(src, dest, FLAG_C)
-            if src.type == TYPE_BYTE:
+            if isinstance(src, IndexedRef):
+                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
+            elif src.type == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
-                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
             else:
                 self.assert_type(TYPE_WORD, src)
                 if dest.type == TYPE_WORD:
-                    context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
                     context.set_touched(REG_A)
                     context.set_unmeaningful(REG_A)
                 elif isinstance(dest.type, PointerType):
-                    context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
                     context.set_touched(REG_A)
                     context.set_unmeaningful(REG_A)
                 else:
                     self.assert_type(TYPE_WORD, dest)
+            context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
             context.invalidate_range(dest)
         elif opcode == 'sub':
             context.assert_meaningful(src, dest, FLAG_C)
-            if src.type == TYPE_BYTE:
+            if isinstance(src, IndexedRef):
+                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
+            elif src.type == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
-                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
             else:
                 self.assert_type(TYPE_WORD, src, dest)
-                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
                 context.set_touched(REG_A)
                 context.set_unmeaningful(REG_A)
-            context.invalidate_range(dest)
-        elif opcode in ('inc', 'dec'):
-            self.assert_type(TYPE_BYTE, dest)
-            context.assert_meaningful(dest)
-            context.set_written(dest, FLAG_Z, FLAG_N)
+            context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C, FLAG_V)
             context.invalidate_range(dest)
         elif opcode == 'cmp':
-            self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
+            if isinstance(src, IndexedRef):
+                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
+            else:
+                self.assert_type(TYPE_BYTE, src, dest)
             context.set_written(FLAG_Z, FLAG_N, FLAG_C)
         elif opcode == 'and':
-            self.assert_type(TYPE_BYTE, src, dest)
+            if isinstance(src, IndexedRef):
+                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
+            else:
+                self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
             context.set_written(dest, FLAG_Z, FLAG_N)
             # If you AND the A register with a value V, the resulting value of A
             # cannot exceed the value of V; i.e. the maximum value of A becomes
             # the maximum value of V.
-            context.set_top_of_range(dest, context.get_top_of_range(src))
+            if not isinstance(src, IndexedRef):
+                context.set_top_of_range(dest, context.get_top_of_range(src))
         elif opcode in ('or', 'xor'):
-            self.assert_type(TYPE_BYTE, src, dest)
+            if isinstance(src, IndexedRef):
+                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
+            else:
+                self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
             context.set_written(dest, FLAG_Z, FLAG_N)
             context.invalidate_range(dest)
+        elif opcode in ('inc', 'dec'):
+            context.assert_meaningful(dest)
+            if isinstance(dest, IndexedRef):
+                context.assert_types_for_update_table(instr, dest, TYPE_BYTE)
+                context.set_written(dest.ref, FLAG_Z, FLAG_N)
+                #context.invalidate_range(dest)
+            else:
+                self.assert_type(TYPE_BYTE, dest)
+                context.set_written(dest, FLAG_Z, FLAG_N)
+                context.invalidate_range(dest)
         elif opcode in ('shl', 'shr'):
-            self.assert_type(TYPE_BYTE, dest)
             context.assert_meaningful(dest, FLAG_C)
-            context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
-            context.invalidate_range(dest)
+            if isinstance(dest, IndexedRef):
+                context.assert_types_for_update_table(instr, dest, TYPE_BYTE)
+                context.set_written(dest.ref, FLAG_Z, FLAG_N, FLAG_C)
+                #context.invalidate_range(dest)
+            else:
+                self.assert_type(TYPE_BYTE, dest)
+                context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
+                context.invalidate_range(dest)
         elif opcode == 'call':
             type = instr.location.type
             if isinstance(type, VectorType):
@@ -514,6 +578,11 @@ class Analyzer(object):
                     raise TypeMismatchError(instr, (src, dest))
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
+                    pass
+                else:
+                    raise TypeMismatchError(instr, (src, dest))
+            elif isinstance(src, IndirectRef) and isinstance(dest, IndirectRef):
+                if isinstance(src.ref.type, PointerType) and isinstance(dest.ref.type, PointerType):
                     pass
                 else:
                     raise TypeMismatchError(instr, (src, dest))
@@ -561,7 +630,12 @@ class Analyzer(object):
                 context.set_written(dest.ref)
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, REG_Y)
+                # TODO more sophisticated?
                 context.set_written(dest)
+            elif isinstance(src, IndirectRef) and isinstance(dest, IndirectRef):
+                context.assert_meaningful(src.ref, REG_Y)
+                # TODO more sophisticated?
+                context.set_written(dest.ref)
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
                 context.assert_meaningful(src, dest.ref, dest.index)
                 context.set_written(dest.ref)
@@ -695,3 +769,21 @@ class Analyzer(object):
         # after it is executed, we know the range of the loop variable.
         context.set_range(instr.dest, instr.final, instr.final)
         context.set_writeable(instr.dest)
+
+    def analyze_save(self, instr, context):
+        if len(instr.locations) != 1:
+            raise NotImplementedError("Only 1 location in save is supported right now")
+        location = instr.locations[0]
+        self.assert_type(TYPE_BYTE, location)
+
+        baton = context.extract(location)
+        self.analyze_block(instr.block, context)
+        if context.encountered_gotos():
+            raise IllegalJumpError(instr, instr)
+        context.re_introduce(baton)
+
+        if location == REG_A:
+            pass
+        else:
+            context.set_touched(REG_A)
+            context.set_unmeaningful(REG_A)

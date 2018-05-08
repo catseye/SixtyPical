@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff, Save
 from sixtypical.model import (
     ConstantRef, LocationRef, IndexedRef, IndirectRef, AddressRef,
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
@@ -12,6 +12,7 @@ from sixtypical.gen6502 import (
     Immediate, Absolute, AbsoluteX, AbsoluteY, ZeroPage, Indirect, IndirectY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
     TAX, TAY, TXA, TYA,
+    PHA, PLA,
     CLC, SEC, ADC, SBC, ROL, ROR,
     INC, INX, INY, DEC, DEX, DEY,
     CMP, CPX, CPY, AND, ORA, EOR,
@@ -169,6 +170,8 @@ class Compiler(object):
             return self.compile_for(instr)
         elif isinstance(instr, WithInterruptsOff):
             return self.compile_with_interrupts_off(instr)
+        elif isinstance(instr, Save):
+            return self.compile_save(instr)
         else:
             raise NotImplementedError
 
@@ -244,6 +247,8 @@ class Compiler(object):
             if dest == REG_A:
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(ADC(Immediate(Byte(src.value))))
+                elif isinstance(src, IndexedRef):
+                    self.emitter.emit(ADC(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
                 else:
                     self.emitter.emit(ADC(Absolute(self.get_label(src.name))))
             elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and dest.type == TYPE_WORD:
@@ -292,6 +297,8 @@ class Compiler(object):
             if dest == REG_A:
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(SBC(Immediate(Byte(src.value))))
+                elif isinstance(src, IndexedRef):
+                    self.emitter.emit(SBC(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
                 else:
                     self.emitter.emit(SBC(Absolute(self.get_label(src.name))))
             elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and dest.type == TYPE_WORD:
@@ -316,10 +323,6 @@ class Compiler(object):
                     raise UnsupportedOpcodeError(instr)
             else:
                 raise UnsupportedOpcodeError(instr)
-        elif opcode == 'inc':
-            self.compile_inc(instr, instr.dest)
-        elif opcode == 'dec':
-            self.compile_dec(instr, instr.dest)
         elif opcode == 'cmp':
             self.compile_cmp(instr, instr.src, instr.dest)
         elif opcode in ('and', 'or', 'xor',):
@@ -331,10 +334,16 @@ class Compiler(object):
             if dest == REG_A:
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(cls(Immediate(Byte(src.value))))
+                elif isinstance(src, IndexedRef):
+                    self.emitter.emit(cls(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
                 else:
-                    self.emitter.emit(cls(Absolute(self.get_label(src.name))))
+                    self.emitter.emit(cls(self.absolute_or_zero_page(self.get_label(src.name))))
             else:
                 raise UnsupportedOpcodeError(instr)
+        elif opcode == 'inc':
+            self.compile_inc(instr, instr.dest)
+        elif opcode == 'dec':
+            self.compile_dec(instr, instr.dest)
         elif opcode in ('shl', 'shr'):
             cls = {
                 'shl': ROL,
@@ -342,8 +351,10 @@ class Compiler(object):
             }[opcode]
             if dest == REG_A:
                 self.emitter.emit(cls())
+            elif isinstance(dest, IndexedRef):
+                self.emitter.emit(cls(self.addressing_mode_for_index(dest.index)(self.get_label(dest.ref.name))))
             else:
-                raise UnsupportedOpcodeError(instr)
+                self.emitter.emit(cls(self.absolute_or_zero_page(self.get_label(dest.name))))
         elif opcode == 'call':
             location = instr.location
             label = self.get_label(instr.location.name)
@@ -389,6 +400,9 @@ class Compiler(object):
             raise UnsupportedOpcodeError(instr)
         if isinstance(src, ConstantRef):
             self.emitter.emit(cls(Immediate(Byte(src.value))))
+        elif isinstance(src, IndexedRef):
+            # FIXME might not work for some dest's (that is, cls's)
+            self.emitter.emit(cls(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
         else:
             self.emitter.emit(cls(Absolute(self.get_label(src.name))))
 
@@ -398,6 +412,8 @@ class Compiler(object):
             self.emitter.emit(INX())
         elif dest == REG_Y:
             self.emitter.emit(INY())
+        elif isinstance(dest, IndexedRef):
+            self.emitter.emit(INC(self.addressing_mode_for_index(dest.index)(self.get_label(dest.ref.name))))
         else:
             self.emitter.emit(INC(Absolute(self.get_label(dest.name))))
 
@@ -407,6 +423,8 @@ class Compiler(object):
             self.emitter.emit(DEX())
         elif dest == REG_Y:
             self.emitter.emit(DEY())
+        elif isinstance(dest, IndexedRef):
+            self.emitter.emit(DEC(self.addressing_mode_for_index(dest.index)(self.get_label(dest.ref.name))))
         else:
             self.emitter.emit(DEC(Absolute(self.get_label(dest.name))))
 
@@ -428,6 +446,12 @@ class Compiler(object):
             dest_label = self.get_label(dest.name)
             self.emitter.emit(LDA(IndirectY(src_label)))
             self.emitter.emit(STA(Absolute(dest_label)))
+        elif isinstance(src, IndirectRef) and isinstance(dest, IndirectRef) and isinstance(src.ref.type, PointerType) and isinstance(dest.ref.type, PointerType):
+            ### copy [ptra] + y, [ptrb] + y
+            src_label = self.get_label(src.ref.name)
+            dest_label = self.get_label(dest.ref.name)
+            self.emitter.emit(LDA(IndirectY(src_label)))
+            self.emitter.emit(STA(IndirectY(dest_label)))
         elif isinstance(src, AddressRef) and isinstance(dest, LocationRef) and isinstance(src.ref.type, BufferType) and isinstance(dest.type, PointerType):
             ### copy ^buf, ptr
             src_label = self.get_label(src.ref.name)
@@ -592,3 +616,29 @@ class Compiler(object):
         self.emitter.emit(SEI())
         self.compile_block(instr.block)
         self.emitter.emit(CLI())
+
+    def compile_save(self, instr):
+        location = instr.locations[0]
+        if location == REG_A:
+            self.emitter.emit(PHA())
+            self.compile_block(instr.block)
+            self.emitter.emit(PLA())
+        elif location == REG_X:
+            self.emitter.emit(TXA())
+            self.emitter.emit(PHA())
+            self.compile_block(instr.block)
+            self.emitter.emit(PLA())
+            self.emitter.emit(TAX())
+        elif location == REG_Y:
+            self.emitter.emit(TYA())
+            self.emitter.emit(PHA())
+            self.compile_block(instr.block)
+            self.emitter.emit(PLA())
+            self.emitter.emit(TAY())
+        else:
+            src_label = self.get_label(location.name)
+            self.emitter.emit(LDA(Absolute(src_label)))
+            self.emitter.emit(PHA())
+            self.compile_block(instr.block)
+            self.emitter.emit(PLA())
+            self.emitter.emit(STA(Absolute(src_label)))

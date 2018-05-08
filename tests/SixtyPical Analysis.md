@@ -474,6 +474,60 @@ The index must be initialized.
     | }
     ? UnmeaningfulReadError: x
 
+There are other operations you can do on tables. (1/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z, v
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     add a, many + x
+    |     sub a, many + x
+    |     cmp a, many + x
+    | }
+    = ok
+
+There are other operations you can do on tables. (2/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     and a, many + x
+    |     or a, many + x
+    |     xor a, many + x
+    | }
+    = ok
+
+There are other operations you can do on tables. (3/3)
+
+    | byte table[256] many
+    | 
+    | routine main
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     shl many + x
+    |     shr many + x
+    |     inc many + x
+    |     dec many + x
+    | }
+    = ok
+
 Copying to and from a word table.
 
     | word one
@@ -1120,11 +1174,13 @@ Some rudimentary tests for `xor`.
 
 Some rudimentary tests for `shl`.
 
+    | byte foo
     | routine main
-    |   inputs a, c
-    |   outputs a, c, z, n
+    |   inputs foo, a, c
+    |   outputs foo, a, c, z, n
     | {
     |     shl a
+    |     shl foo
     | }
     = ok
 
@@ -1148,11 +1204,13 @@ Some rudimentary tests for `shl`.
 
 Some rudimentary tests for `shr`.
 
+    | byte foo
     | routine main
-    |   inputs a, c
-    |   outputs a, c, z, n
+    |   inputs foo, a, c
+    |   outputs foo, a, c, z, n
     | {
     |     shr a
+    |     shr foo
     | }
     = ok
 
@@ -1879,6 +1937,290 @@ initialized at the start of that loop.
     | }
     ? UnmeaningfulReadError: y
 
+### save ###
+
+Basic neutral test, where the `save` makes no difference.
+
+    | routine main
+    |   inputs a, x
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld a, 1
+    |     save x {
+    |         ld a, 2
+    |     }
+    |     ld a, 3
+    | }
+    = ok
+
+Saving any location (other than `a`) will trash `a`.
+
+    | routine main
+    |   inputs a, x
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld a, 1
+    |     save x {
+    |         ld a, 2
+    |     }
+    | }
+    ? UnmeaningfulOutputError
+
+Saving `a` does not trash anything.
+
+    | routine main
+    |   inputs a, x
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld x, 1
+    |     save a {
+    |         ld x, 2
+    |     }
+    |     ld x, 3
+    | }
+    = ok
+
+A defined value that has been saved can be trashed inside the block.
+It will continue to be defined outside the block.
+
+    | routine main
+    |   outputs x, y
+    |   trashes a, z, n
+    | {
+    |     ld x, 0
+    |     save x {
+    |         ld y, 0
+    |         trash x
+    |     }
+    | }
+    = ok
+
+A trashed value that has been saved can be used inside the block.
+It will continue to be trashed outside the block.
+
+    | routine main
+    |   inputs a
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld x, 0
+    |     trash x
+    |     save x {
+    |         ld a, 0
+    |         ld x, 1
+    |     }
+    | }
+    ? UnmeaningfulOutputError: x
+
+The known range of a value will be preserved outside the block as well.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 31
+    |     ld x, a
+    |     save x {
+    |         ld x, 255
+    |     }
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    = ok
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 63
+    |     ld x, a
+    |     save x {
+    |         ld x, 1
+    |     }
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    ? RangeExceededError
+
+The known properties of a value are preserved inside the block, too.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 31
+    |     ld x, a
+    |     save x {
+    |         copy one, many + x
+    |         copy many + x, one
+    |     }
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    = ok
+
+A value which is not output from the routine, is preserved by the
+routine; and can appear in a `save` exactly because a `save` preserves it.
+
+    | routine main
+    |   outputs y
+    |   trashes a, z, n
+    | {
+    |     save x {
+    |         ld y, 0
+    |         ld x, 1
+    |     }
+    | }
+    = ok
+
+Because saving anything except `a` trashes `a`, a common idiom is to save `a`
+first in a nested series of `save`s.
+
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes z, n
+    | {
+    |     save a {
+    |         save x {
+    |             ld a, 0
+    |             ld x, 1
+    |         }
+    |     }
+    | }
+    = ok
+
+Not just registers, but also user-defined locations can be saved.
+
+    | byte foo
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     save foo {
+    |         st 5, foo
+    |     }
+    | }
+    = ok
+
+But only if they are bytes.
+
+    | word foo
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     save foo {
+    |         copy 555, foo
+    |     }
+    | }
+    ? TypeMismatchError
+
+    | byte table[16] tab
+    | 
+    | routine main
+    |   trashes a, y, z, n
+    | {
+    |     save tab {
+    |         ld y, 0
+    |         st 5, tab + y
+    |     }
+    | }
+    ? TypeMismatchError
+
+A `goto` cannot appear within a `save` block, even if it is otherwise in tail position.
+
+    | routine other
+    |   trashes a, z, n
+    | {
+    |     ld a, 0
+    | }
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     ld a, 1
+    |     save x {
+    |         ld x, 2
+    |         goto other
+    |     }
+    | }
+    ? IllegalJumpError
+
+### with interrupts ###
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    | 
+    | routine main
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |   with interrupts off {
+    |     copy foo, bar
+    |   }
+    | }
+    = ok
+
+A `goto` cannot appear within a `with interrupts` block, even if it is
+otherwise in tail position.
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    | 
+    | routine other
+    |   trashes bar, a, n, z
+    | {
+    |    ld a, 0
+    | }
+    | 
+    | routine main
+    |   trashes bar, a, n, z
+    | {
+    |   with interrupts off {
+    |     copy foo, bar
+    |     goto other
+    |   }
+    | }
+    ? IllegalJumpError
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.
@@ -2114,6 +2456,24 @@ Read through a pointer.
     | }
     = ok
 
+Read and write through two pointers.
+
+    | buffer[2048] buf
+    | pointer ptra
+    | pointer ptrb
+    | 
+    | routine main
+    |   inputs buf
+    |   outputs buf
+    |   trashes a, y, z, n, ptra, ptrb
+    | {
+    |     ld y, 0
+    |     copy ^buf, ptra
+    |     copy ^buf, ptrb
+    |     copy [ptra] + y, [ptrb] + y
+    | }
+    = ok
+
 Read through a pointer to the `a` register.  Note that this is done with `ld`,
 not `copy`.
 
@@ -2223,21 +2583,30 @@ as an input to, an output of, or as a trashed value of a routine.
     | }
     ? ConstantConstraintError: foo
 
-You can copy the address of a routine into a vector, if that vector is
-declared appropriately.
+#### routine-vector type compatibility
+
+You can copy the address of a routine into a vector, if that vector type
+is at least as "wide" as the type of the routine.  More specifically,
+
+- the vector must take _at least_ the inputs that the routine takes
+- the vector must produce _at least_ the outputs that the routine produces
+- the vector must trash _at least_ what the routine trashes
+
+If the vector and the routine have the very same signature, that's not an error.
 
     | vector routine
-    |   inputs x
-    |   outputs x
+    |   inputs x, y
+    |   outputs x, y
     |   trashes z, n
     |     vec
     | 
     | routine foo
-    |   inputs x
-    |   outputs x
+    |   inputs x, y
+    |   outputs x, y
     |   trashes z, n
     | {
     |   inc x
+    |   inc y
     | }
     | 
     | routine main
@@ -2248,20 +2617,48 @@ declared appropriately.
     | }
     = ok
 
-But not if the vector is declared inappropriately.
+If the vector takes an input that the routine doesn't take, that's not an error.
+(The interface requires that a parameter be specified before calling, but the
+implementation doesn't actually read it.)
 
     | vector routine
-    |   inputs y
-    |   outputs y
+    |   inputs x, y, a
+    |   outputs x, y
     |   trashes z, n
     |     vec
     | 
     | routine foo
-    |   inputs x
-    |   outputs x
+    |   inputs x, y
+    |   outputs x, y
     |   trashes z, n
     | {
     |   inc x
+    |   inc y
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+If the vector fails to take an input that the routine takes, that's an error.
+
+    | vector routine
+    |   inputs x
+    |   outputs x, y
+    |   trashes z, n
+    |     vec
+    | 
+    | routine foo
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z, n
+    | {
+    |   inc x
+    |   inc y
     | }
     | 
     | routine main
@@ -2272,21 +2669,24 @@ But not if the vector is declared inappropriately.
     | }
     ? IncompatibleConstraintsError
 
-"Appropriately" means, if the routine affects no more than what is named
-in the input/output sets of the vector.
+If the vector produces an output that the routine doesn't produce, that's not an error.
+(The interface claims the result of calling the routine is defined, but the implementation
+actually preserves it instead of changing it; the caller can still treat it as a defined
+output.)
 
     | vector routine
-    |   inputs a, x
-    |   outputs x
-    |   trashes a, z, n
+    |   inputs x, y
+    |   outputs x, y, a
+    |   trashes z, n
     |     vec
     | 
     | routine foo
-    |   inputs x
-    |   outputs x
+    |   inputs x, y
+    |   outputs x, y
     |   trashes z, n
     | {
     |   inc x
+    |   inc y
     | }
     | 
     | routine main
@@ -2296,6 +2696,86 @@ in the input/output sets of the vector.
     |     copy foo, vec
     | }
     = ok
+
+If the vector fails to produce an output that the routine produces, that's an error.
+
+    | vector routine
+    |   inputs x, y
+    |   outputs x
+    |   trashes z, n
+    |     vec
+    | 
+    | routine foo
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z, n
+    | {
+    |   inc x
+    |   inc y
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    ? IncompatibleConstraintsError
+
+If the vector fails to trash something the routine trashes, that's an error.
+
+    | vector routine
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z
+    |     vec
+    | 
+    | routine foo
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z, n
+    | {
+    |   inc x
+    |   inc y
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    ? IncompatibleConstraintsError
+
+If the vector trashes something the routine doesn't trash, that's not an error.
+(The implementation preserves something the interface doesn't guarantee is
+preserved.  The caller gets no guarantee that it's preserved.  It actually is,
+but it doesn't know that.)
+
+    | vector routine
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes a, z, n
+    |     vec
+    | 
+    | routine foo
+    |   inputs x, y
+    |   outputs x, y
+    |   trashes z, n
+    | {
+    |   inc x
+    |   inc y
+    | }
+    | 
+    | routine main
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+#### other properties of routines
 
 Routines are read-only.
 
