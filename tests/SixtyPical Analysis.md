@@ -509,7 +509,6 @@ There are other operations you can do on tables. (2/3)
     | }
     = ok
 
-
 There are other operations you can do on tables. (3/3)
 
     | byte table[256] many
@@ -2589,8 +2588,8 @@ as an input to, an output of, or as a trashed value of a routine.
 You can copy the address of a routine into a vector, if that vector type
 is at least as "wide" as the type of the routine.  More specifically,
 
-- the vector must take _exactly_ the same inputs as the routine
-- the vector must make _exactly_ the same outputs as the routine
+- the vector must take _at least_ the inputs that the routine takes
+- the vector must produce _at least_ the outputs that the routine produces
 - the vector must trash _at least_ what the routine trashes
 
 If the vector and the routine have the very same signature, that's not an error.
