@@ -87,28 +87,30 @@ Is that consistent with `st`?  Well, probably it is, but we have to explain it.
 It might make more sense, then, for it to be "part of the operation" instead of "part of
 the reference"; something like `st.hi x, word`; `st.lo y, word`.  Dunno.
 
-### Save values
+### Save multiple values in single block
 
-This preserves them, so that, semantically, they can be used later even though they
-are trashed (or otherwise alternately used) inside the block.
-
-Inside the block, we set them as writeable (but not meaningful).  When the block
-exits, we restore whatever status they had.
-
-This act will trash `a`, both in the block, and outside it, unless the value being
-saved is `a`.  One idiom would be something like
+As a shortcut for the idiom
 
     save a { save var {
         ...
     } }
 
-which would save all values.  Maybe abbreviate this to
+allow
 
     save a, var {
         ...
     }
 
-This can use the stack.  But it need not use the stack.
+### Save values to other-than-the-stack
+
+Allow
+
+    save a to temp_a {
+        ...
+    }
+
+Which uses some other storage location instead of the stack.  A local static
+would be a good candidate for such.
 
 ### Make all symbols forward-referencable
 

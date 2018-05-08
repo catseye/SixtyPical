@@ -4,10 +4,8 @@ History of SixtyPical
 0.16
 ----
 
-*   Removed `--prelude` in favour of specifying both format and prelude
-    with a single option, `--output-format`.  Documentation for same.
-*   `or a, z`, `and a, z`, and `eor a, z` compile to zero-page operations
-    if the address of z < 256.
+*   Added `save` block, which allows the named locations to be modified
+    arbitrarily inside the block, and automatically restored at the end.
 *   More thorough tests and justifications written for the case of
     assigning a routine to a vector with a "wider" type.
 *   Support for `copy [ptra]+y, [ptrb]+y` to indirect LDA indirect STA.
@@ -15,6 +13,10 @@ History of SixtyPical
 *   Support for `I a, btable + x` where `I` is `add`, `sub`, `cmp`,
     `and`, `or`, or `xor`
 *   Support for `I btable + x` where `I` is `shl`, `shr`, `inc`, `dec`
+*   `or a, z`, `and a, z`, and `eor a, z` compile to zero-page operations
+    if the address of z < 256.
+*   Removed `--prelude` in favour of specifying both format and prelude
+    with a single option, `--output-format`.  Documentation for same.
 
 0.15
 ----
