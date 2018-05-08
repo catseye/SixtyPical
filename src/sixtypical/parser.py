@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff
+from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff, Save
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
     RoutineType, VectorType, TableType, BufferType, PointerType,
@@ -470,6 +470,10 @@ class Parser(object):
             self.scanner.expect("off")
             block = self.block()
             return WithInterruptsOff(self.scanner.line_number, block=block)
+        elif self.scanner.consume("save"):
+            locations = self.locexprs()
+            block = self.block()
+            return Save(self.scanner.line_number, locations=locations, block=block)
         elif self.scanner.consume("trash"):
             dest = self.locexpr()
             return SingleOp(self.scanner.line_number, opcode='trash', src=None, dest=dest)

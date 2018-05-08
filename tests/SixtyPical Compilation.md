@@ -579,6 +579,49 @@ Compiling `for ... down to`.
     = $0815   BNE $080F
     = $0817   RTS
 
+Compiling `save`.
+
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes z, n
+    | {
+    |     save a {
+    |         save x {
+    |             ld a, 0
+    |             ld x, 1
+    |         }
+    |     }
+    | }
+    = $080D   PHA
+    = $080E   TXA
+    = $080F   PHA
+    = $0810   LDA #$00
+    = $0812   LDX #$01
+    = $0814   PLA
+    = $0815   TAX
+    = $0816   PLA
+    = $0817   RTS
+
+Compiling `save` on a user-defined location.
+
+    | byte foo
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     save foo {
+    |         ld a, 0
+    |         st a, foo
+    |     }
+    | }
+    = $080D   LDA $081B
+    = $0810   PHA
+    = $0811   LDA #$00
+    = $0813   STA $081B
+    = $0816   PLA
+    = $0817   STA $081B
+    = $081A   RTS
+
 Indexed access.
 
     | byte one

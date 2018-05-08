@@ -1938,6 +1938,290 @@ initialized at the start of that loop.
     | }
     ? UnmeaningfulReadError: y
 
+### save ###
+
+Basic neutral test, where the `save` makes no difference.
+
+    | routine main
+    |   inputs a, x
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld a, 1
+    |     save x {
+    |         ld a, 2
+    |     }
+    |     ld a, 3
+    | }
+    = ok
+
+Saving any location (other than `a`) will trash `a`.
+
+    | routine main
+    |   inputs a, x
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld a, 1
+    |     save x {
+    |         ld a, 2
+    |     }
+    | }
+    ? UnmeaningfulOutputError
+
+Saving `a` does not trash anything.
+
+    | routine main
+    |   inputs a, x
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld x, 1
+    |     save a {
+    |         ld x, 2
+    |     }
+    |     ld x, 3
+    | }
+    = ok
+
+A defined value that has been saved can be trashed inside the block.
+It will continue to be defined outside the block.
+
+    | routine main
+    |   outputs x, y
+    |   trashes a, z, n
+    | {
+    |     ld x, 0
+    |     save x {
+    |         ld y, 0
+    |         trash x
+    |     }
+    | }
+    = ok
+
+A trashed value that has been saved can be used inside the block.
+It will continue to be trashed outside the block.
+
+    | routine main
+    |   inputs a
+    |   outputs a, x
+    |   trashes z, n
+    | {
+    |     ld x, 0
+    |     trash x
+    |     save x {
+    |         ld a, 0
+    |         ld x, 1
+    |     }
+    | }
+    ? UnmeaningfulOutputError: x
+
+The known range of a value will be preserved outside the block as well.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 31
+    |     ld x, a
+    |     save x {
+    |         ld x, 255
+    |     }
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    = ok
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 63
+    |     ld x, a
+    |     save x {
+    |         ld x, 1
+    |     }
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    ? RangeExceededError
+
+The known properties of a value are preserved inside the block, too.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | routine main
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 31
+    |     ld x, a
+    |     save x {
+    |         copy one, many + x
+    |         copy many + x, one
+    |     }
+    |     copy one, many + x
+    |     copy many + x, one
+    | }
+    = ok
+
+A value which is not output from the routine, is preserved by the
+routine; and can appear in a `save` exactly because a `save` preserves it.
+
+    | routine main
+    |   outputs y
+    |   trashes a, z, n
+    | {
+    |     save x {
+    |         ld y, 0
+    |         ld x, 1
+    |     }
+    | }
+    = ok
+
+Because saving anything except `a` trashes `a`, a common idiom is to save `a`
+first in a nested series of `save`s.
+
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes z, n
+    | {
+    |     save a {
+    |         save x {
+    |             ld a, 0
+    |             ld x, 1
+    |         }
+    |     }
+    | }
+    = ok
+
+Not just registers, but also user-defined locations can be saved.
+
+    | byte foo
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     save foo {
+    |         st 5, foo
+    |     }
+    | }
+    = ok
+
+But only if they are bytes.
+
+    | word foo
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     save foo {
+    |         copy 555, foo
+    |     }
+    | }
+    ? TypeMismatchError
+
+    | byte table[16] tab
+    | 
+    | routine main
+    |   trashes a, y, z, n
+    | {
+    |     save tab {
+    |         ld y, 0
+    |         st 5, tab + y
+    |     }
+    | }
+    ? TypeMismatchError
+
+A `goto` cannot appear within a `save` block, even if it is otherwise in tail position.
+
+    | routine other
+    |   trashes a, z, n
+    | {
+    |     ld a, 0
+    | }
+    | 
+    | routine main
+    |   trashes a, z, n
+    | {
+    |     ld a, 1
+    |     save x {
+    |         ld x, 2
+    |         goto other
+    |     }
+    | }
+    ? IllegalJumpError
+
+### with interrupts ###
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    | 
+    | routine main
+    |   outputs bar
+    |   trashes a, n, z
+    | {
+    |   with interrupts off {
+    |     copy foo, bar
+    |   }
+    | }
+    = ok
+
+A `goto` cannot appear within a `with interrupts` block, even if it is
+otherwise in tail position.
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | routine foo
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    | 
+    | routine other
+    |   trashes bar, a, n, z
+    | {
+    |    ld a, 0
+    | }
+    | 
+    | routine main
+    |   trashes bar, a, n, z
+    | {
+    |   with interrupts off {
+    |     copy foo, bar
+    |     goto other
+    |   }
+    | }
+    ? IllegalJumpError
+
 ### copy ###
 
 Can't `copy` from a memory location that isn't initialized.

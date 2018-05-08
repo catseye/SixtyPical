@@ -161,6 +161,20 @@ Basic "open-faced for" loops, up and down.
     | }
     = ok
 
+Other blocks.
+
+    | routine main trashes a, x, c, z, v {
+    |     with interrupts off {
+    |         save a, x, c {
+    |             ld a, 0
+    |         }
+    |     }
+    |     save a, x, c {
+    |         ld a, 0
+    |     }
+    | }
+    = ok
+
 User-defined memory addresses of different types.
 
     | byte byt

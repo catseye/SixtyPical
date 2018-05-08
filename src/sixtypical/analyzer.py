@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff
+from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff, Save
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
     TableType, BufferType, PointerType, VectorType, RoutineType,
@@ -269,7 +269,7 @@ class Context(object):
             self._writeable.remove(ref)
 
     def set_writeable(self, *refs):
-        """Intended to be used for implementing analyzing `for`."""
+        """Intended to be used for implementing analyzing `for`, but also used in `save`."""
         for ref in refs:
             self._writeable.add(ref)
 
@@ -292,6 +292,41 @@ class Context(object):
         self.assert_in_range(dest.index, dest.ref)
         self.set_written(dest.ref)
 
+    def extract(self, location):
+        """Sets the given location as writeable in the context, and returns a 'baton' representing
+        the previous state of context for that location.  This 'baton' can be used to later restore
+        this state of context."""
+        # Used in `save`.
+        baton = (
+            location,
+            location in self._touched,
+            self._range.get(location, None),
+            location in self._writeable,
+        )
+        self.set_writeable(location)
+        return baton
+
+    def re_introduce(self, baton):
+        """Given a 'baton' produced by `extract()`, restores the context for that saved location
+        to what it was before `extract()` was called."""
+        # Used in `save`.
+        location, was_touched, was_range, was_writeable = baton
+
+        if was_touched:
+            self._touched.add(location)
+        elif location in self._touched:
+            self._touched.remove(location)
+
+        if was_range is not None:
+            self._range[location] = was_range
+        elif location in self._range:
+            del self._range[location]
+
+        if was_writeable:
+            self._writeable.add(location)
+        elif location in self._writeable:
+            self._writeable.remove(location)
+
 
 class Analyzer(object):
 
@@ -300,9 +335,9 @@ class Analyzer(object):
         self.routines = {}
         self.debug = debug
 
-    def assert_type(self, type, *locations):
+    def assert_type(self, type_, *locations):
         for location in locations:
-            if location.type != type:
+            if location.type != type_:
                 raise TypeMismatchError(self.current_routine, location.name)
 
     def assert_affected_within(self, name, affecting_type, limiting_type):
@@ -385,6 +420,10 @@ class Analyzer(object):
             self.analyze_for(instr, context)
         elif isinstance(instr, WithInterruptsOff):
             self.analyze_block(instr.block, context)
+            if context.encountered_gotos():
+                raise IllegalJumpError(instr, instr)
+        elif isinstance(instr, Save):
+            self.analyze_save(instr, context)
         else:
             raise NotImplementedError
 
@@ -427,7 +466,7 @@ class Analyzer(object):
                 context.assert_meaningful(dest.ref, REG_Y)
                 context.set_written(dest.ref)
             elif src.type != dest.type:
-                raise TypeMismatchError(instr, '{} and {}'.format(src, name))
+                raise TypeMismatchError(instr, '{} and {}'.format(src, dest))
             else:
                 context.set_written(dest)
                 # FIXME: context.copy_range(src, dest)   ?
@@ -730,3 +769,21 @@ class Analyzer(object):
         # after it is executed, we know the range of the loop variable.
         context.set_range(instr.dest, instr.final, instr.final)
         context.set_writeable(instr.dest)
+
+    def analyze_save(self, instr, context):
+        if len(instr.locations) != 1:
+            raise NotImplementedError("Only 1 location in save is supported right now")
+        location = instr.locations[0]
+        self.assert_type(TYPE_BYTE, location)
+
+        baton = context.extract(location)
+        self.analyze_block(instr.block, context)
+        if context.encountered_gotos():
+            raise IllegalJumpError(instr, instr)
+        context.re_introduce(baton)
+
+        if location == REG_A:
+            pass
+        else:
+            context.set_touched(REG_A)
+            context.set_unmeaningful(REG_A)

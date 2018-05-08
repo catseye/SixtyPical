@@ -90,3 +90,8 @@ class For(Instr):
 
 class WithInterruptsOff(Instr):
     child_attrs = ('block',)
+
+
+class Save(Instr):
+    value_attrs = ('locations',)
+    child_attrs = ('block',)
