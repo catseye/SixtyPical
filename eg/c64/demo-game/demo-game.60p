@@ -406,31 +406,31 @@ define game_state_title_screen game_state_routine
 }
 
 define game_state_play game_state_routine
-static byte save_x : 0
 {
     ld x, 0
-    repeat {
+    for x up to 15 {
         copy actor_pos + x, pos
         copy actor_delta + x, delta
 
-        st x, save_x
+        //
+        // Save our loop counter on the stack temporarily.  This means that routines
+        // like `dispatch_logic` and `clear_screen` are allowed to do whatever they
+        // want with the `x` register; we will restore it at the end of this block.
+        //
+        save x {
+            copy actor_logic + x, dispatch_logic
+            call dispatch_logic
 
-        copy actor_logic + x, dispatch_logic
-        call dispatch_logic
-
-        if c {
-            // Player died!  Want no dead!
-            call clear_screen
-            copy game_state_game_over, dispatch_game_state
+            if c {
+                // Player died!  Want no dead!
+                call clear_screen
+                copy game_state_game_over, dispatch_game_state
+            }
         }
-        ld x, save_x
 
         copy pos, actor_pos + x
         copy delta, actor_delta + x
-
-        inc x
-        cmp x, 16
-    } until z
+    }
 
     goto save_cinv
 }
