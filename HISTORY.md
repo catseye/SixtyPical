@@ -1,6 +1,11 @@
 History of SixtyPical
 =====================
 
+0.17
+----
+
+*   Split TODO off into own file.
+
 0.16
 ----
 
