@@ -48,7 +48,7 @@ If you have the [VICE][] emulator installed, from this directory, you can run
 and it will compile the [hearts.60p source code](eg/c64/hearts.60p) and
 automatically start it in the `x64` emulator, and you should see:
 
-![Screenshot of result of running hearts.60p](https://raw.github.com/catseye/SixtyPical/master/images/hearts.png)
+![Screenshot of result of running hearts.60p](images/hearts.png?raw=true)
 
 You can try the `loadngo.sh` script on other sources in the `eg` directory
 tree, which contains more extensive examples, including an entire
