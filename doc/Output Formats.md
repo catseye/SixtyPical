@@ -8,8 +8,7 @@ Output Formats
 The file contains only the emitted bytes of the compiled SixtyPical
 program.
 
-The default origin is $0000; it is not unlikely you will want to
-override this.
+The default origin is $0000; you will likely want to override this.
 
 Note that the origin is not stored in the output file in this format;
 that information must be recorded separately.
@@ -20,8 +19,7 @@ The first two bytes of the file contain the origin address in
 little-endian format.  The remainder of the file is the emitted bytes
 of the compiled SixtyPical program, starting at that origin.
 
-The default origin is $C000; it is likely you will want to
-override this.
+The default origin is $C000; you will likely want override this.
 
 This format coincides with Commodore's PRG format for disk files,
 thus its name.
