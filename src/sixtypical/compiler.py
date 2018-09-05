@@ -112,7 +112,7 @@ class Compiler(object):
             routine_name = roster_row[-1]
             self.compile_routine(self.routines[routine_name])
 
-        for location, label in self.trampolines.iteritems():
+        for location, label in self.trampolines.items():
             self.emitter.resolve_label(label)
             self.emitter.emit(JMP(Indirect(self.get_label(location.name))))
             self.emitter.emit(RTS())

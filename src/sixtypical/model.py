@@ -20,7 +20,7 @@ class Type(object):
 
     def backpatch_constraint_labels(self, resolver):
         def resolve(w):
-             if not isinstance(w, basestring):
+             if not isinstance(w, str):
                  return w
              return resolver(w)
         if isinstance(self, TableType):

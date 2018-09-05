@@ -13,7 +13,7 @@ class Emittable(object):
 
 class Byte(Emittable):
     def __init__(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             value = ord(value)
         if value < -127 or value > 255:
             raise IndexError(value)

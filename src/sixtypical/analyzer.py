@@ -372,23 +372,23 @@ class Analyzer(object):
         context = Context(self.routines, routine, type_.inputs, type_.outputs, type_.trashes)
 
         if self.debug:
-            print "at start of routine `{}`:".format(routine.name)
-            print context
+            print("at start of routine `{}`:".format(routine.name))
+            print(context)
 
         self.analyze_block(routine.block, context)
         trashed = set(context.each_touched()) - set(context.each_meaningful())
 
         if self.debug:
-            print "at end of routine `{}`:".format(routine.name)
-            print context
-            print "trashed: ", LocationRef.format_set(trashed)
-            print "outputs: ", LocationRef.format_set(type_.outputs)
+            print("at end of routine `{}`:".format(routine.name))
+            print(context)
+            print("trashed: ", LocationRef.format_set(trashed))
+            print("outputs: ", LocationRef.format_set(type_.outputs))
             trashed_outputs = type_.outputs & trashed
             if trashed_outputs:
-                print "TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs)
-            print ''
-            print '-' * 79
-            print ''
+                print("TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs))
+            print('')
+            print('-' * 79)
+            print('')
 
         # even if we goto another routine, we can't trash an output.
         for ref in trashed:

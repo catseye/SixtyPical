@@ -90,7 +90,7 @@ class Parser(object):
         self.scanner.check_type('EOF')
 
         # now backpatch the executable types.
-        #for type_name, type_ in self.context.typedefs.iteritems():
+        #for type_name, type_ in self.context.typedefs.items():
         #    type_.backpatch_constraint_labels(lambda w: self.lookup(w))
         for defn in defns:
             defn.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
@@ -103,7 +103,7 @@ class Parser(object):
                 if not isinstance(model.type, (RoutineType, VectorType)):
                     self.syntax_error('Illegal call of non-executable "%s"' % name)
                 instr.location = model
-            if instr.opcode in ('copy',) and isinstance(instr.src, basestring):
+            if instr.opcode in ('copy',) and isinstance(instr.src, str):
                 name = instr.src
                 model = self.lookup(name)
                 if not isinstance(model.type, (RoutineType, VectorType)):
@@ -359,7 +359,7 @@ class Parser(object):
 
     def indexed_locexpr(self, forward=False):
         loc = self.locexpr(forward=forward)
-        if not isinstance(loc, basestring):
+        if not isinstance(loc, str):
             index = None
             if self.scanner.consume('+'):
                 index = self.locexpr()
