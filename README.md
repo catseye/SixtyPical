@@ -3,30 +3,36 @@ SixtyPical
 
 _Version 0.17.  Work-in-progress, everything is subject to change._
 
-**SixtyPical** is a 6502-like programming language with advanced
-static analysis.
+**SixtyPical** is a low-level programming language with advanced
+static analysis.  Many of its primitive instructions resemble
+those of the 6502 CPU — in fact it is intended to be compiled to
+6502 machine code — but along with these are constructs which
+ease structuring and analysizing the code.
 
-"6502-like" means that it has similar restrictions as programming
-in 6502 assembly (e.g. the programmer must choose the registers that
-values will be stored in) and is concomitantly easy for a compiler to
-translate it to 6502 machine language code.
+SixtyPical aims to fill this niche:
 
-"Advanced static analysis" includes _abstract interpretation_, where we
-go through the program step by step, tracking not just the changes that
-happen during a _specific_ execution of the program, but _sets_ of changes
-that could _possibly_ happen in any run of the program.  This lets us
-determine that certain things can never happen, which we can then formulate
-as safety checks.
+*   You'd use assembly, but you don't want to spend hours
+    debugging (say) a memory overrun that happened because of a
+    ridiculous silly error.
+*   You'd use C, but you don't want the overhead of compiler-added
+    code to manage the stack and registers.
 
-In practice, this means it catches things like
+SixtyPical gives the programmer a coding regimen on par with assembly
+language in terms of size and hands-on-ness, but also able to catch
+many ridiculous silly errors at compile time, such as
 
 *   you forgot to clear carry before adding something to the accumulator
-*   a subroutine that you call trashes a register you thought was preserved
+*   a subroutine that you called trashes a register you thought it preserved
 *   you tried to read or write a byte beyond the end of a byte array
 *   you tried to write the address of something that was not a routine, to
     a jump vector
 
-and suchlike.  It also provides some convenient operations based on
+Many of these checks are done with _abstract interpretation_, where we
+go through the program step by step, tracking not just the changes that
+happen during a _specific_ execution of the program, but _sets_ of changes
+that could _possibly_ happen in any run of the program.
+
+SixtyPical also provides some convenient operations based on
 machine-language programming idioms, such as
 
 *   copying values from one register to another (via a third register when
@@ -35,8 +41,15 @@ machine-language programming idioms, such as
 *   explicit tail calls
 *   indirect subroutine calls
 
-The reference implementation can analyze and compile SixtyPical programs to
-6502 machine code.
+SixtyPical is defined by a specification document, a set of test cases,
+and a reference implementation written in Python 2.  The reference
+implementation can analyze and compile SixtyPical programs to 6502 machine code,
+which can be run on several 6502-based 8-bit architectures:
+
+*   Commodore 64
+*   Commodore VIC-20
+*   Atari 2600 VCS
+*   Apple II
 
 Quick Start
 -----------
