@@ -2276,7 +2276,7 @@ Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
 
 a, z, and n are trashed, and must be declared as such.
 
-(Note, both n and z are forbidden writes in this tests.)
+(Note, both n and z are forbidden writes in this test.)
 
     | byte lives
     | routine main
@@ -2288,13 +2288,15 @@ a, z, and n are trashed, and must be declared as such.
 
 a, z, and n are trashed, and must not be declared as outputs.
 
+(Note, both n and a are unmeaningful outputs in this test.)
+
     | byte lives
     | routine main
     |   outputs lives, a, z, n
     | {
     |     copy 0, lives
     | }
-    ? UnmeaningfulOutputError: n
+    ? UnmeaningfulOutputError
 
 Unless of course you subsequently initialize them.
 

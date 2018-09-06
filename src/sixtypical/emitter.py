@@ -8,6 +8,7 @@ class Emittable(object):
         raise NotImplementedError
 
     def serialize(self, addr):
+        """Should return an array of unsigned bytes (integers from 0 to 255.)"""
         raise NotImplementedError
 
 
@@ -25,7 +26,7 @@ class Byte(Emittable):
         return 1
 
     def serialize(self, addr=None):
-        return chr(self.value)
+        return [self.value]
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.value)
@@ -43,7 +44,7 @@ class Word(Emittable):
         word = self.value
         low = word & 255
         high = (word >> 8) & 255
-        return chr(low) + chr(high)
+        return [low, high]
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.value)
@@ -60,9 +61,11 @@ class Table(Emittable):
         return self._size
 
     def serialize(self, addr=None):
-        buf = ''.join([emittable.serialize() for emittable in self.value])
+        buf = []
+        for emittable in self.value:
+            buf.extend(emittable.serialize())
         while len(buf) < self.size():
-            buf += chr(0)
+            buf.append(0)
         return buf
 
     def __repr__(self):
@@ -130,7 +133,7 @@ class HighAddressByte(Emittable):
         return 1
 
     def serialize(self, addr=None):
-        return self.label.serialize()[0]
+        return [self.label.serialize()[0]]
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.label)
@@ -145,7 +148,7 @@ class LowAddressByte(Emittable):
         return 1
 
     def serialize(self, addr=None):
-        return self.label.serialize()[1]
+        return [self.label.serialize()[1]]
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.label)
@@ -167,10 +170,11 @@ class Emitter(object):
             self.addr += thing.size()
 
     def serialize(self, stream):
+        """`stream` should be a file opened in binary mode."""
         addr = self.start_addr
         for emittable in self.accum:
             chunk = emittable.serialize(addr)
-            stream.write(chunk)
+            stream.write(bytearray(chunk))
             addr += len(chunk)
 
     def make_label(self, name=None):

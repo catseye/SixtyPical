@@ -48,7 +48,7 @@ Treat R as a mutable set and start with an empty list of lists L.  Then,
 -   Remove all elements occurring in C, from R.
 -   Repeat until R is empty.
 
-When times comes to generate code, generate it in the order given by L.
+When time comes to generate code, generate it in the order given by L.
 In addition, each sublist in L represents a number of routines to
 generate; all except the final routine in such a sublist need not have
 any jump instruction generated for its final `goto`.
@@ -65,7 +65,7 @@ to pass these tests to be considered an implementation of SixtyPical.
     -> shell command "bin/sixtypical --optimize-fallthru --dump-fallthru-info --analyze-only --traceback %(test-body-file)"
 
     -> Functionality "Compile SixtyPical program with fallthru optimization" is implemented by
-    -> shell command "bin/sixtypical --output-format=c64-basic-prg --optimize-fallthru --traceback %(test-body-file) >/tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
+    -> shell command "bin/sixtypical --output-format=c64-basic-prg --optimize-fallthru --traceback %(test-body-file) --output /tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
 
     -> Tests for functionality "Dump fallthru info for SixtyPical program"
 

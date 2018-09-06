@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """Usage: sixtypical [OPTIONS] FILES
 
@@ -79,7 +79,7 @@ def process_input_files(filenames, options):
     if options.analyze_only:
         return
 
-    fh = sys.stdout
+    fh = open(options.output, 'wb')
 
     if options.output_format == 'raw':
         start_addr = 0x0000
@@ -111,7 +111,7 @@ def process_input_files(filenames, options):
     # If we are outputting a .PRG, we output the load address first.
     # We don't use the Emitter for this b/c not part of addr space.
     if options.output_format in ('prg', 'c64-basic-prg', 'vic20-basic-prg'):
-        fh.write(Word(start_addr).serialize(0))
+        fh.write(bytearray(Word(start_addr).serialize()))
 
     emitter = Emitter(start_addr)
     for byte in prelude:
@@ -140,6 +140,10 @@ if __name__ == '__main__':
         help="The SixtyPical source files to compile."
     )
 
+    argparser.add_argument(
+        "--output", "-o", type=str, metavar='FILENAME',
+        help="File to which generated 6502 code will be written."
+    )
     argparser.add_argument(
         "--origin", type=str, default=None,
         help="Location in memory where the `main` routine will be "

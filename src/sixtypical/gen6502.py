@@ -20,7 +20,7 @@ class Implied(AddressingMode):
         return 0
 
     def serialize(self, addr=None):
-        return ''
+        return []
 
     def __repr__(self):
         return "%s()" % (self.__class__.__name__)
@@ -109,10 +109,9 @@ class Instruction(Emittable):
         return 1 + self.operand.size() if self.operand else 0
 
     def serialize(self, addr=None):
-        return (
-            chr(self.opcodes[self.operand.__class__]) +
-            self.operand.serialize(addr)
-        )
+        serialized_operand = self.operand.serialize(addr)
+        assert isinstance(serialized_operand, list), self.operand.__class__
+        return [self.opcodes[self.operand.__class__]] + serialized_operand
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.operand)
