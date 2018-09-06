@@ -2001,6 +2001,8 @@ It will continue to be defined outside the block.
 A trashed value that has been saved can be used inside the block.
 It will continue to be trashed outside the block.
 
+(Note, both x and a are unmeaningful in this test.)
+
     | routine main
     |   inputs a
     |   outputs a, x
@@ -2013,7 +2015,7 @@ It will continue to be trashed outside the block.
     |         ld x, 1
     |     }
     | }
-    ? UnmeaningfulOutputError: x
+    ? UnmeaningfulOutputError
 
 The known range of a value will be preserved outside the block as well.
 
@@ -2272,7 +2274,9 @@ Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
     | }
     ? ForbiddenWriteError: lives
 
-a, z, and n are trashed, and must be declared as such
+a, z, and n are trashed, and must be declared as such.
+
+(Note, both n and z are forbidden writes in this tests.)
 
     | byte lives
     | routine main
@@ -2280,7 +2284,7 @@ a, z, and n are trashed, and must be declared as such
     | {
     |     copy 0, lives
     | }
-    ? ForbiddenWriteError: n
+    ? ForbiddenWriteError
 
 a, z, and n are trashed, and must not be declared as outputs.
 

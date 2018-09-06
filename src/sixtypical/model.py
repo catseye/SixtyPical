@@ -172,7 +172,7 @@ class LocationRef(Ref):
 
     @classmethod
     def format_set(cls, location_refs):
-        return '{%s}' % ', '.join([str(loc) for loc in sorted(location_refs)])
+        return '{%s}' % ', '.join([str(loc) for loc in sorted(location_refs, key=lambda x: x.name)])
 
 
 class IndirectRef(Ref):
