@@ -20,7 +20,7 @@ import traceback
 
 from sixtypical.parser import Parser, ParsingContext
 from sixtypical.analyzer import Analyzer
-from sixtypical.emitter import Emitter, Byte, Word
+from sixtypical.outputter import Outputter
 from sixtypical.compiler import Compiler
 
 
@@ -79,57 +79,25 @@ def process_input_files(filenames, options):
     if options.analyze_only:
         return
 
-    fh = open(options.output, 'wb')
-
-    if options.output_format == 'raw':
-        start_addr = 0x0000
-        prelude = []
-    elif options.output_format == 'prg':
-        start_addr = 0xc000
-        prelude = []
-    elif options.output_format == 'c64-basic-prg':
-        start_addr = 0x0801
-        prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
-                   0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
-    elif options.output_format == 'vic20-basic-prg':
-        start_addr = 0x1001
-        prelude = [0x0b, 0x10, 0xc9, 0x07, 0x9e, 0x34,
-                   0x31, 0x30, 0x39, 0x00, 0x00, 0x00]
-    elif options.output_format == 'atari2600-cart':
-        start_addr = 0xf000
-        prelude = [0x78, 0xd8, 0xa2, 0xff, 0x9a, 0xa9,
-                   0x00, 0x95, 0x00, 0xca, 0xd0, 0xfb]
-    else:
-        raise NotImplementedError("Unknown output format: {}".format(options.output_format))
+    outputter = Outputter(options.output_format)
 
     if options.origin is not None:
         if options.origin.startswith('0x'):
-            start_addr = int(options.origin, 16)
+            outputter.set_start_addr(int(options.origin, 16))
         else:
-            start_addr = int(options.origin, 10)
+            outputter.set_start_addr(int(options.origin, 10))
 
-    # If we are outputting a .PRG, we output the load address first.
-    # We don't use the Emitter for this b/c not part of addr space.
-    if options.output_format in ('prg', 'c64-basic-prg', 'vic20-basic-prg'):
-        fh.write(bytearray(Word(start_addr).serialize(0)))
+    with open(options.output, 'wb') as fh:
+        # this is *awful* binding
+        emitter = outputter.write_prelude(fh)
+        compiler = Compiler(emitter)
+        compiler.compile_program(program, compilation_roster=compilation_roster)
+        outputter.write_postlude(emitter)
 
-    emitter = Emitter(start_addr)
-    for byte in prelude:
-        emitter.emit(Byte(byte))
-    compiler = Compiler(emitter)
-    compiler.compile_program(program, compilation_roster=compilation_roster)
-
-    # If we are outputting a cartridge with boot and BRK address
-    # at the end, pad to ROM size minus 4 bytes, and emit addresses.
-    if options.output_format == 'atari2600-cart':
-        emitter.pad_to_size(4096 - 4)
-        emitter.emit(Word(start_addr))
-        emitter.emit(Word(start_addr))
-
-    if options.debug:
-        pprint(emitter.accum)
-    else:
-        emitter.serialize_to(fh)
+        if options.debug:
+            pprint(emitter.accum)
+        else:
+            emitter.serialize_to(fh)
 
 
 if __name__ == '__main__':
