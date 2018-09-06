@@ -43,7 +43,7 @@ class FallthruAnalyzer(object):
 
         while pending_routines:
             chains = [self.find_chain(k, pending_routines) for k in pending_routines.keys()]
-            chains.sort(key=len, reverse=True)
+            chains.sort(key=lambda x: (len(x), str(x)), reverse=True)
             c = chains[0]
             roster.append(c)
             for k in c:

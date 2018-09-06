@@ -174,8 +174,8 @@ fall through to the other.
     =         "main"
     =     ],
     =     [
-    =         "bar",
-    =         "foo"
+    =         "foo",
+    =         "bar"
     =     ]
     = ]
 
@@ -206,10 +206,10 @@ routine.
     =         "main"
     =     ],
     =     [
-    =         "bar"
+    =         "foo"
     =     ],
     =     [
-    =         "foo"
+    =         "bar"
     =     ]
     = ]
 
@@ -271,10 +271,10 @@ because we don't necessarily know what actual routine the vector contains.
     =         "main"
     =     ],
     =     [
-    =         "bar"
+    =         "foo"
     =     ],
     =     [
-    =         "foo"
+    =         "bar"
     =     ]
     = ]
 
@@ -416,12 +416,12 @@ in the "true" branch is a `goto`.
     | {
     | }
     = $080D   RTS
-    = $080E   LDA #$FF
-    = $0810   RTS
-    = $0811   LDA #$00
-    = $0813   BNE $081D
-    = $0815   LDA #$01
-    = $0817   JMP $080E
-    = $081A   JMP $0822
-    = $081D   LDA #$02
-    = $081F   JMP $080D
+    = $080E   LDA #$00
+    = $0810   BNE $081A
+    = $0812   LDA #$01
+    = $0814   JMP $081F
+    = $0817   JMP $081F
+    = $081A   LDA #$02
+    = $081C   JMP $080D
+    = $081F   LDA #$FF
+    = $0821   RTS

@@ -7,7 +7,7 @@ History of SixtyPical
 *   Split TODO off into own file.
 *   `sixtypical` no longer writes the compiled binary to standard
     output.  The `--output` command-line argument should be given.
-*   Many tests pass when `sixtypical` is run with Python 3.
+*   All tests pass when `sixtypical` is run under Python 3.5.2.
 
 0.16
 ----
