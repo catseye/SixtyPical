@@ -94,7 +94,7 @@ If `main` does a `goto foo`, then it can fall through to `foo`.
     | }
     = [
     =     [
-    =         "main", 
+    =         "main",
     =         "foo"
     =     ]
     = ]
@@ -119,9 +119,9 @@ of them to fall through, when selecting the order of routines.
     | }
     = [
     =     [
-    =         "main", 
+    =         "main",
     =         "foo"
-    =     ], 
+    =     ],
     =     [
     =         "bar"
     =     ]
@@ -144,7 +144,7 @@ nothing ever falls through to `main`.
     = [
     =     [
     =         "main"
-    =     ], 
+    =     ],
     =     [
     =         "foo"
     =     ]
@@ -172,9 +172,9 @@ fall through to the other.
     = [
     =     [
     =         "main"
-    =     ], 
+    =     ],
     =     [
-    =         "bar", 
+    =         "bar",
     =         "foo"
     =     ]
     = ]
@@ -204,10 +204,10 @@ routine.
     = [
     =     [
     =         "main"
-    =     ], 
+    =     ],
     =     [
     =         "bar"
-    =     ], 
+    =     ],
     =     [
     =         "foo"
     =     ]
@@ -238,9 +238,9 @@ If, however, they are the same goto, one can be optimized away.
     = [
     =     [
     =         "main"
-    =     ], 
+    =     ],
     =     [
-    =         "foo", 
+    =         "foo",
     =         "bar"
     =     ]
     = ]
@@ -269,10 +269,10 @@ because we don't necessarily know what actual routine the vector contains.
     = [
     =     [
     =         "main"
-    =     ], 
+    =     ],
     =     [
     =         "bar"
-    =     ], 
+    =     ],
     =     [
     =         "foo"
     =     ]
@@ -321,14 +321,14 @@ Our algorithm might not be strictly optimal, but it does a good job.
     | }
     = [
     =     [
-    =         "main", 
-    =         "r1", 
-    =         "r2", 
-    =         "r3", 
+    =         "main",
+    =         "r1",
+    =         "r2",
+    =         "r3",
     =         "r4"
-    =     ], 
+    =     ],
     =     [
-    =         "r5", 
+    =         "r5",
     =         "r6"
     =     ]
     = ]

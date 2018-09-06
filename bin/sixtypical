@@ -68,7 +68,7 @@ def process_input_files(filenames, options):
                 return
             if label:
                 sys.stdout.write("*** {}:\n".format(label))
-            sys.stdout.write(json.dumps(data, indent=4, sort_keys=True))
+            sys.stdout.write(json.dumps(data, indent=4, sort_keys=True, separators=(',', ':')))
             sys.stdout.write("\n")
 
         fa = FallthruAnalyzer(debug=options.debug)
