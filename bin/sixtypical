@@ -129,7 +129,7 @@ def process_input_files(filenames, options):
     if options.debug:
         pprint(emitter.accum)
     else:
-        emitter.serialize(fh)
+        emitter.serialize_to(fh)
 
 
 if __name__ == '__main__':
