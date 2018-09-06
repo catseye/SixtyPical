@@ -24,7 +24,7 @@ elif [ "X$arch" = "Xatari2600" ]; then
 elif [ "X$arch" = "Xapple2" ]; then
   src="$1"
   out=/tmp/a-out.bin
-  bin/sixtypical --traceback --origin=0x2000 --output-format=raw $src > $out
+  bin/sixtypical --traceback --origin=0x2000 --output-format=raw $src > $out || exit 1
   ls -la $out
   cp ~/scratchpad/linapple/res/Master.dsk sixtypical.dsk
   # TODO: replace HELLO with something that does like
