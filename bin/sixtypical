@@ -111,7 +111,7 @@ def process_input_files(filenames, options):
     # If we are outputting a .PRG, we output the load address first.
     # We don't use the Emitter for this b/c not part of addr space.
     if options.output_format in ('prg', 'c64-basic-prg', 'vic20-basic-prg'):
-        fh.write(bytearray(Word(start_addr).serialize()))
+        fh.write(bytearray(Word(start_addr).serialize(0)))
 
     emitter = Emitter(start_addr)
     for byte in prelude:
