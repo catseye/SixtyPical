@@ -122,13 +122,9 @@ class Parser(object):
                     if not isinstance(model.type, (RoutineType, VectorType)):
                         self.syntax_error('Illegal call of non-executable "%s"' % name)
                     instr.location = model
-                if instr.opcode in ('copy',) and isinstance(instr.src, ForwardReference):
-                    forward_reference = instr.src
-                    name = forward_reference.name
-                    model = self.lookup(name)
-                    if not isinstance(model.type, (RoutineType, VectorType)):
-                        self.syntax_error('Illegal copy of non-executable "%s"' % name)
-                    instr.src = model
+                if instr.opcode in ('copy',):
+                    if isinstance(instr.src, ForwardReference):
+                        instr.src = self.lookup(instr.src.name)
 
         return program
 
