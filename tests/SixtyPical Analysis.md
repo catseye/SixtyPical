@@ -1424,7 +1424,7 @@ calling it.
 Calling an extern is just the same as calling a defined routine with the
 same constraints.
 
-    | routine chrout
+    | define chrout routine
     |   inputs a
     |   trashes a
     |   @ 65490
@@ -1437,7 +1437,7 @@ same constraints.
     | }
     = ok
 
-    | routine chrout
+    | define chrout routine
     |   inputs a
     |   trashes a
     |   @ 65490
@@ -1449,7 +1449,7 @@ same constraints.
     | }
     ? UnmeaningfulReadError: a
 
-    | routine chrout
+    | define chrout routine
     |   inputs a
     |   trashes a
     |   @ 65490
@@ -2264,7 +2264,7 @@ otherwise in tail position.
     |     inc x
     | }
     | 
-    | routine other
+    | define other routine
     |   trashes bar, a, n, z
     | {
     |    ld a, 0
@@ -2884,11 +2884,11 @@ Calling the vector does indeed trash the things the vector says it does.
 
     | vector routine trashes x, z, n foo
     | 
-    | routine bar trashes x, z, n {
+    | define bar routine trashes x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main outputs x, foo trashes z, n {
+    | define main routine outputs x, foo trashes z, n {
     |     ld x, 0
     |     copy bar, foo
     |     call foo
@@ -2897,31 +2897,31 @@ Calling the vector does indeed trash the things the vector says it does.
 
 `goto`, if present, must be in tail position (the final instruction in a routine.)
 
-    | routine bar trashes x, z, n {
+    | define bar routine trashes x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main trashes x, z, n {
+    | define main routine trashes x, z, n {
     |     ld x, 0
     |     goto bar
     | }
     = ok
 
-    | routine bar trashes x, z, n {
+    | define bar routine trashes x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main trashes x, z, n {
+    | define main routine trashes x, z, n {
     |     goto bar
     |     ld x, 0
     | }
     ? IllegalJumpError
 
-    | routine bar trashes x, z, n {
+    | define bar routine trashes x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main trashes x, z, n {
+    | define main routine trashes x, z, n {
     |     ld x, 0
     |     if z {
     |         ld x, 1
@@ -2930,11 +2930,11 @@ Calling the vector does indeed trash the things the vector says it does.
     | }
     = ok
 
-    | routine bar trashes x, z, n {
+    | define bar routine trashes x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main trashes x, z, n {
+    | define main routine trashes x, z, n {
     |     ld x, 0
     |     if z {
     |         ld x, 1
@@ -2944,11 +2944,11 @@ Calling the vector does indeed trash the things the vector says it does.
     | }
     ? IllegalJumpError
 
-    | routine bar trashes x, z, n {
+    | define bar routine trashes x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main trashes x, z, n {
+    | define main routine trashes x, z, n {
     |     ld x, 0
     |     if z {
     |         ld x, 1
@@ -2960,11 +2960,11 @@ Calling the vector does indeed trash the things the vector says it does.
     | }
     = ok
 
-    | routine bar trashes x, z, n {
+    | define bar routine trashes x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main trashes x, z, n {
+    | define main routine trashes x, z, n {
     |     ld x, 0
     |     if z {
     |         ld x, 1
@@ -2977,11 +2977,11 @@ Calling the vector does indeed trash the things the vector says it does.
 
 For the purposes of `goto`, the end of a loop is never tail position.
 
-    | routine bar trashes x, z, n {
+    | define bar routine trashes x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main trashes x, z, n {
+    | define main routine trashes x, z, n {
     |     ld x, 0
     |     repeat {
     |         inc x
@@ -2992,22 +2992,22 @@ For the purposes of `goto`, the end of a loop is never tail position.
 
 Can't `goto` a routine that outputs or trashes more than the current routine.
 
-    | routine bar trashes x, y, z, n {
+    | define bar routine trashes x, y, z, n {
     |     ld x, 200
     |     ld y, 200
     | }
     | 
-    | routine main trashes x, z, n {
+    | define main routine trashes x, z, n {
     |     ld x, 0
     |     goto bar
     | }
     ? IncompatibleConstraintsError
 
-    | routine bar outputs y trashes z, n {
+    | define bar routine outputs y trashes z, n {
     |     ld y, 200
     | }
     | 
-    | routine main trashes x, z, n {
+    | define main routine trashes x, z, n {
     |     ld x, 0
     |     goto bar
     | }
@@ -3015,11 +3015,11 @@ Can't `goto` a routine that outputs or trashes more than the current routine.
 
 Can `goto` a routine that outputs or trashes less than the current routine.
 
-    | routine bar trashes x, z, n {
+    | define bar routine trashes x, z, n {
     |     ld x, 1
     | }
     | 
-    | routine main trashes a, x, z, n {
+    | define main routine trashes a, x, z, n {
     |     ld a, 0
     |     ld x, 0
     |     goto bar
@@ -3030,11 +3030,11 @@ Indirect goto.
 
     | vector routine outputs x trashes a, z, n foo
     | 
-    | routine bar outputs x trashes a, z, n {
+    | define bar routine outputs x trashes a, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main outputs x trashes foo, a, z, n {
+    | define main routine outputs x trashes foo, a, z, n {
     |     copy bar, foo
     |     goto foo
     | }
@@ -3047,19 +3047,19 @@ vector says it does.
     |   trashes a, x, z, n
     |     foo
     | 
-    | routine bar
+    | define bar routine
     |   trashes a, x, z, n {
     |     ld x, 200
     | }
     | 
-    | routine sub
+    | define sub routine
     |   trashes foo, a, x, z, n {
     |     ld x, 0
     |     copy bar, foo
     |     goto foo
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs a
     |   trashes foo, x, z, n {
     |     call sub
