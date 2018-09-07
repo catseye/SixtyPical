@@ -33,9 +33,11 @@
 typedef routine
   inputs joy2, press_fire_msg, dispatch_game_state,
          actor_pos, actor_delta, actor_logic,
+         player_died,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs dispatch_game_state,
           actor_pos, actor_delta, actor_logic,
+          player_died,
           screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, x, y, c, z, n, v, pos, new_pos, delta, ptr, dispatch_logic
     game_state_routine
@@ -45,13 +47,13 @@ typedef routine
 //
 // Routines that conform to this type also follow this convention:
 //
-// Set carry if the player perished.  Carry clear otherwise.
+// Set player_died to 1 if the player perished.  Unchanged otherwise.
 //
 
 typedef routine
-  inputs pos, delta, joy2, screen
-  outputs pos, delta, new_pos, screen, c
-  trashes a, x, y, z, n, v, ptr
+  inputs pos, delta, joy2, screen, player_died
+  outputs pos, delta, new_pos, screen, player_died
+  trashes a, x, y, z, n, v, c, ptr
     logic_routine
 
 // ----------------------------------------------------------------
@@ -86,6 +88,8 @@ word new_pos
 
 word table[256] actor_delta
 word delta
+
+byte player_died
 
 vector logic_routine table[256] actor_logic
 vector logic_routine dispatch_logic
@@ -241,7 +245,7 @@ define check_new_position_in_bounds routine
 
 routine init_game
   inputs actor_pos, actor_delta, actor_logic
-  outputs actor_pos, actor_delta, actor_logic
+  outputs actor_pos, actor_delta, actor_logic, player_died
   trashes pos, a, y, z, n, c, v
 {
     ld y, 0
@@ -259,9 +263,11 @@ routine init_game
     } until z
 
     ld y, 0
-    copy word 0, actor_pos + y
+    copy word 40, actor_pos + y
     copy word 0, actor_delta + y
     copy player_logic, actor_logic + y
+
+    st y, player_died
 }
 
 // ----------------------------------------------------------------
@@ -301,10 +307,9 @@ define player_logic logic_routine
             st off, c
             add ptr, pos
             copy 81, [ptr] + y
-
-            st off, c
         } else {
-            st on, c
+            ld a, 1
+            st a, player_died
         }
 
         // FIXME these trashes, strictly speaking, probably shouldn't be needed,
@@ -314,8 +319,6 @@ define player_logic logic_routine
         trash ptr
         trash y
         trash v
-    } else {
-        st off, c
     }
 }
 
@@ -351,10 +354,6 @@ define enemy_logic logic_routine
             st off, c
             add ptr, pos
             copy 82, [ptr] + y
-
-            st off, c
-        } else {
-            st on, c
         }
 
         // FIXME these trashes, strictly speaking, probably shouldn't be needed,
@@ -373,8 +372,6 @@ define enemy_logic logic_routine
             copy $ffd8, delta
         }
     }
-
-    st off, c
 }
 
 // ----------------------------------------------------------------
@@ -408,6 +405,7 @@ define game_state_title_screen game_state_routine
 define game_state_play game_state_routine
 {
     ld x, 0
+    st x, player_died
     for x up to 15 {
         copy actor_pos + x, pos
         copy actor_delta + x, delta
@@ -420,16 +418,17 @@ define game_state_play game_state_routine
         save x {
             copy actor_logic + x, dispatch_logic
             call dispatch_logic
-
-            if c {
-                // Player died!  Want no dead!
-                call clear_screen
-                copy game_state_game_over, dispatch_game_state
-            }
         }
 
         copy pos, actor_pos + x
         copy delta, actor_delta + x
+    }
+
+    ld a, player_died
+    if not z {
+        // Player died!  Want no dead!
+        call clear_screen
+        copy game_state_game_over, dispatch_game_state
     }
 
     goto save_cinv

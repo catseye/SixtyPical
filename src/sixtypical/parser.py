@@ -18,6 +18,14 @@ class SymEntry(object):
         return "%s(%r, %r)" % (self.__class__.__name__, self.ast_node, self.model)
 
 
+class ForwardReference(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.name)
+
+
 class ParsingContext(object):
     def __init__(self):
         self.symbols = {}          # token -> SymEntry
@@ -45,7 +53,6 @@ class Parser(object):
     def __init__(self, context, text, filename):
         self.context = context
         self.scanner = Scanner(text, filename)
-        self.backpatch_instrs = []
 
     def syntax_error(self, msg):
         self.scanner.syntax_error(msg)
@@ -66,6 +73,44 @@ class Parser(object):
 
     def clear_statics(self):
         self.context.statics = {}
+
+    # ---- symbol resolution
+
+    def resolve_symbols(self, program):
+        # This could stand to be better unified.
+
+        def backpatch_constraint_labels(type_):
+            def resolve(w):
+                 if not isinstance(w, ForwardReference):
+                     return w
+                 return self.lookup(w.name)
+            if isinstance(type_, TableType):
+                backpatch_constraint_labels(type_.of_type)
+            elif isinstance(type_, VectorType):
+                backpatch_constraint_labels(type_.of_type)
+            elif isinstance(type_, RoutineType):
+                type_.inputs = set([resolve(w) for w in type_.inputs])
+                type_.outputs = set([resolve(w) for w in type_.outputs])
+                type_.trashes = set([resolve(w) for w in type_.trashes])
+
+        for defn in program.defns:
+            backpatch_constraint_labels(defn.location.type)
+        for routine in program.routines:
+            backpatch_constraint_labels(routine.location.type)
+
+        def resolve_fwd_reference(obj, field):
+            field_value = getattr(obj, field, None)
+            if isinstance(field_value, ForwardReference):
+                setattr(obj, field, self.lookup(field_value.name))
+            elif isinstance(field_value, IndexedRef):
+                if isinstance(field_value.ref, ForwardReference):
+                    field_value.ref = self.lookup(field_value.ref.name)
+
+        for node in program.all_children():
+            if isinstance(node, SingleOp):
+                resolve_fwd_reference(node, 'location')
+                resolve_fwd_reference(node, 'src')
+                resolve_fwd_reference(node, 'dest')
 
     # --- grammar productions
 
@@ -91,28 +136,9 @@ class Parser(object):
             routines.append(routine)
         self.scanner.check_type('EOF')
 
-        # now backpatch the executable types.
-        #for type_name, type_ in self.context.typedefs.items():
-        #    type_.backpatch_constraint_labels(lambda w: self.lookup(w))
-        for defn in defns:
-            defn.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
-        for routine in routines:
-            routine.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
-        for instr in self.backpatch_instrs:
-            if instr.opcode in ('call', 'goto'):
-                name = instr.location
-                model = self.lookup(name)
-                if not isinstance(model.type, (RoutineType, VectorType)):
-                    self.syntax_error('Illegal call of non-executable "%s"' % name)
-                instr.location = model
-            if instr.opcode in ('copy',) and isinstance(instr.src, str):
-                name = instr.src
-                model = self.lookup(name)
-                if not isinstance(model.type, (RoutineType, VectorType)):
-                    self.syntax_error('Illegal copy of non-executable "%s"' % name)
-                instr.src = model
-
-        return Program(self.scanner.line_number, defns=defns, routines=routines)
+        program = Program(self.scanner.line_number, defns=defns, routines=routines)
+        self.resolve_symbols(program)
+        return program
 
     def typedef(self):
         self.scanner.expect('typedef')
@@ -252,7 +278,11 @@ class Parser(object):
             outputs = set(self.labels())
         if self.scanner.consume('trashes'):
             trashes = set(self.labels())
-        return (inputs, outputs, trashes)
+        return (
+            set([ForwardReference(n) for n in inputs]),
+            set([ForwardReference(n) for n in outputs]),
+            set([ForwardReference(n) for n in trashes])
+        )
 
     def routine(self, name):
         type_ = self.defn_type()
@@ -302,23 +332,19 @@ class Parser(object):
             accum.append(self.locexpr())
         return accum
 
-    def locexpr(self, forward=False):
+    def locexpr(self):
         if self.scanner.token in ('on', 'off', 'word') or self.scanner.token in self.context.consts or self.scanner.on_type('integer literal'):
             return self.const()
-        elif forward:
+        else:
             name = self.scanner.token
             self.scanner.scan()
             loc = self.context.fetch(name)
-            if loc is not None:
+            if loc:
                 return loc
             else:
-                return name
-        else:
-            loc = self.lookup(self.scanner.token)
-            self.scanner.scan()
-            return loc
+                return ForwardReference(name)
 
-    def indlocexpr(self, forward=False):
+    def indlocexpr(self):
         if self.scanner.consume('['):
             loc = self.locexpr()
             self.scanner.expect(']')
@@ -329,10 +355,10 @@ class Parser(object):
             loc = self.locexpr()
             return AddressRef(loc)
         else:
-            return self.indexed_locexpr(forward=forward)
+            return self.indexed_locexpr()
 
-    def indexed_locexpr(self, forward=False):
-        loc = self.locexpr(forward=forward)
+    def indexed_locexpr(self):
+        loc = self.locexpr()
         if not isinstance(loc, str):
             index = None
             if self.scanner.consume('+'):
@@ -427,17 +453,15 @@ class Parser(object):
             self.scanner.scan()
             name = self.scanner.token
             self.scanner.scan()
-            instr = SingleOp(self.scanner.line_number, opcode=opcode, location=name, dest=None, src=None)
-            self.backpatch_instrs.append(instr)
+            instr = SingleOp(self.scanner.line_number, opcode=opcode, location=ForwardReference(name), dest=None, src=None)
             return instr
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token
             self.scanner.scan()
-            src = self.indlocexpr(forward=True)
+            src = self.indlocexpr()
             self.scanner.expect(',')
             dest = self.indlocexpr()
             instr = SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=src)
-            self.backpatch_instrs.append(instr)
             return instr
         elif self.scanner.consume("with"):
             self.scanner.expect("interrupts")

@@ -1,20 +1,16 @@
 TODO for SixtyPical
 ===================
 
-### `low` and `high` address operators
+### 16-bit `cmp`
 
-To turn `word` type into `byte`.
+This is because we don't actually want `low` and `high` address operators
+that turn `word` type into `byte`.
 
-Trying to remember if we have a compelling case for this or now.  The best I can think
-of is for implementing 16-bit `cmp` in an efficient way.  Maybe we should see if we
-can get by with 16-bit `cmp` instead though.
+This is because this immediately makes things harder (that is, effectively
+impossible) to analyze.
 
-The problem is that once a byte is extracted, putting it back into a word is awkward.
-The address operators have to modify a destination in a special way.  That is, when
-you say `st a, >word`, you are updating `word` to be `word & $ff | a << 8`, somelike.
-Is that consistent with `st`?  Well, probably it is, but we have to explain it.
-It might make more sense, then, for it to be "part of the operation" instead of "part of
-the reference"; something like `st.hi x, word`; `st.lo y, word`.  Dunno.
+16-bit `cmp` also benefits from some special differences between `cmp`
+and `sub` on 6502, so it would be nice to capture them.
 
 ### Save values to other-than-the-stack
 
@@ -27,17 +23,12 @@ Allow
 Which uses some other storage location instead of the stack.  A local static
 would be a good candidate for such.
 
-### Make all symbols forward-referencable
-
-Basically, don't do symbol-table lookups when parsing, but do have a more formal
-"symbol resolution" (linking) phase right after parsing.
-
 ### Associate each pointer with the buffer it points into
 
 Check that the buffer being read or written to through pointer, appears in appropriate
 inputs or outputs set.
 
-In the analysis, when we obtain a pointer, we need to record, in contect, what buffer
+In the analysis, when we obtain a pointer, we need to record, in context, what buffer
 that pointer came from.
 
 When we write through that pointer, we need to set that buffer as written.
@@ -78,8 +69,8 @@ error.
 More generally, define a block as having zero or one `goto`s at the end.  (and `goto`s cannot
 appear elsewhere.)
 
-If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can.
-The constraints should iron out the same both ways.
+If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can,
+if the block is in tail position.  The constraints should iron out the same both ways.
 
 And - once we have this - why do we need `goto` to be in tail position, strictly?
 As long as the routine has consistent type context every place it exits, that should be fine.
@@ -91,3 +82,8 @@ Search a searchlist of include paths.  And use them to make libraries of routine
 One such library routine might be an `interrupt routine` type for various architectures.
 Since "the supervisor" has stored values on the stack, we should be able to trash them
 with impunity, in such a routine.
+
+### Line numbers in analysis error messages
+
+For analysis errors, there is a line number, but it's the line of the routine
+after the routine in which the analysis error occurred.  Fix this.

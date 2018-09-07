@@ -196,6 +196,35 @@ If a routine reads or writes a user-define memory location, it needs to declare 
     | }
     = ok
 
+### call ###
+
+You can't call a non-routine.
+
+    | byte up
+    | 
+    | routine main outputs x, y trashes z, n {
+    |     ld x, 0
+    |     ld y, 1
+    |     call up
+    | }
+    ? TypeMismatchError: up
+
+    | routine main outputs x, y trashes z, n {
+    |     ld x, 0
+    |     ld y, 1
+    |     call x
+    | }
+    ? TypeMismatchError: x
+
+Nor can you goto a non-routine.
+
+    | byte foo
+    | 
+    | routine main {
+    |     goto foo
+    | }
+    ? TypeMismatchError: foo
+
 ### ld ###
 
 Can't `ld` from a memory location that isn't initialized.
