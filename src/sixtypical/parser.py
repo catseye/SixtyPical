@@ -83,14 +83,10 @@ class Parser(object):
             defn = self.defn()
             self.declare(defn.name, SymEntry(defn, defn.location))
             defns.append(defn)
-        while self.scanner.on('define', 'routine'):
-            if self.scanner.consume('define'):
-                name = self.scanner.token
-                self.scanner.scan()
-                routine = self.routine(name)
-            else:
-                routine = self.legacy_routine()
-                name = routine.name
+        while self.scanner.consume('define'):
+            name = self.scanner.token
+            self.scanner.scan()
+            routine = self.routine(name)
             self.declare(name, SymEntry(routine, routine.location))
             routines.append(routine)
         self.scanner.check_type('EOF')
@@ -257,27 +253,6 @@ class Parser(object):
         if self.scanner.consume('trashes'):
             trashes = set(self.labels())
         return (inputs, outputs, trashes)
-
-    def legacy_routine(self):
-        self.scanner.expect('routine')
-        name = self.scanner.token
-        self.scanner.scan()
-        (inputs, outputs, trashes) = self.constraints()
-        type_ = RoutineType(inputs=inputs, outputs=outputs, trashes=trashes)
-        if self.scanner.consume('@'):
-            self.scanner.check_type('integer literal')
-            block = None
-            addr = int(self.scanner.token)
-            self.scanner.scan()
-        else:
-            block = self.block()
-            addr = None
-        location = LocationRef(type_, name)
-        return Routine(
-            self.scanner.line_number,
-            name=name, block=block, addr=addr,
-            location=location
-        )
 
     def routine(self, name):
         type_ = self.defn_type()

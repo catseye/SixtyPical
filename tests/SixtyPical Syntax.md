@@ -16,7 +16,7 @@ but not necessarily sensible programs.
 
 Rudimentary program.
 
-    | routine main {
+    | define main routine {
     |     ld a, 0
     |     add a, 1
     | }
@@ -26,7 +26,7 @@ Program with comments.
 
     | // Welcome to my program.
     | 
-    | routine main {
+    | define main routine {
     |     ld a, 0
     |     add a, 1    // We are adding the thing.
     |     sub a, 1
@@ -40,7 +40,7 @@ Program with comments.
 
 Hex literals.
 
-    | routine main {
+    | define main routine {
     |     ld a, $ff
     |     add a, $01
     | }
@@ -48,7 +48,7 @@ Hex literals.
 
 Syntax error.
 
-    | routine foo (
+    | define foo routine (
     |     ld a, 0
     |     add a, 1
     | )
@@ -65,12 +65,12 @@ Another syntax error.
 
 Extern routines
 
-    | routine chrout
+    | define chrout routine
     |   inputs a
     |   trashes a
     |   @ 65490
     | 
-    | routine chrin
+    | define chrin routine
     |   outputs a
     |   trashes x
     |   @ 65487
@@ -78,7 +78,7 @@ Extern routines
 
 Trash.
 
-    | routine main {
+    | define main routine {
     |     trash a
     |     trash n
     | }
@@ -86,7 +86,7 @@ Trash.
 
 `nop`.
 
-    | routine main
+    | define main routine
     | {
     |     nop
     | }
@@ -94,7 +94,7 @@ Trash.
 
 If with not
 
-    | routine foo {
+    | define foo routine {
     |     ld y, 0
     |     cmp y, 10
     |     if not z {
@@ -106,7 +106,7 @@ If with not
 
 Repeat loop
 
-    | routine foo {
+    | define foo routine {
     |     ld y, 0
     |     repeat {
     |         inc y
@@ -117,7 +117,7 @@ Repeat loop
 
 "While" loop
 
-    | routine foo inputs y {
+    | define foo routine inputs y {
     |     repeat {
     |         cmp y, 10
     |         if not z {
@@ -129,7 +129,7 @@ Repeat loop
 
 Repeat forever
 
-    | routine foo inputs y {
+    | define foo routine inputs y {
     |     repeat {
     |         inc y
     |     } forever
@@ -138,7 +138,7 @@ Repeat forever
 
 Repeat with not
 
-    | routine foo inputs y {
+    | define foo routine inputs y {
     |     repeat {
     |         inc y
     |     } until not z
@@ -149,7 +149,7 @@ Basic "open-faced for" loops, up and down.
 
     | byte table[256] tab
     | 
-    | routine foo trashes a, x, c, z, v {
+    | define foo routine trashes a, x, c, z, v {
     |     ld x, 0
     |     for x up to 15 {
     |         ld a, tab + x
@@ -163,7 +163,7 @@ Basic "open-faced for" loops, up and down.
 
 Other blocks.
 
-    | routine main trashes a, x, c, z, v {
+    | define main routine trashes a, x, c, z, v {
     |     with interrupts off {
     |         save a, x, c {
     |             ld a, 0
@@ -183,7 +183,7 @@ User-defined memory addresses of different types.
     | buffer[2048] buf
     | pointer ptr
     | 
-    | routine main {
+    | define main routine {
     | }
     = ok
 
@@ -193,7 +193,7 @@ Tables of different types and some operations on them.
     | word table[256] wmany
     | vector (routine trashes a) table[256] vmany
     | 
-    | routine main {
+    | define main routine {
     |     ld x, 0
     |     ld a, 0
     |     st off, c
@@ -215,7 +215,7 @@ greater than 0 and less than or equal to 256.
 
     | word table[512] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -227,7 +227,7 @@ greater than 0 and less than or equal to 256.
 
     | word table[0] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -239,7 +239,7 @@ greater than 0 and less than or equal to 256.
 
     | word table[48] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -256,7 +256,7 @@ Typedefs of different types.
     | typedef routine trashes a game_routine
     | vector game_routine start_game
     | 
-    | routine main {
+    | define main routine {
     | }
     = ok
 
@@ -265,7 +265,7 @@ Can't have two typedefs with the same name.
     | typedef byte frank
     | typedef word frank
     | 
-    | routine main {
+    | define main routine {
     | }
     ? SyntaxError
 
@@ -280,7 +280,7 @@ Constants.
     | 
     | byte lark: lives
     | 
-    | routine main {
+    | define main routine {
     |   ld a, lives
     | }
     = ok
@@ -290,7 +290,7 @@ Can't have two constants with the same name.
     | const w1 1000
     | const w1 word 0
     | 
-    | routine main {
+    | define main routine {
     | }
     ? SyntaxError
 
@@ -298,7 +298,7 @@ Explicit memory address.
 
     | byte screen @ 1024
     | 
-    | routine main {
+    | define main routine {
     |   ld a, 100
     |   st a, screen
     |   shl screen
@@ -310,7 +310,7 @@ Initialized memory locations.
 
     | byte lives : 3
     | 
-    | routine main {
+    | define main routine {
     |   ld a, lives
     |   st a, lives
     | }
@@ -320,7 +320,7 @@ Cannot have both initial value and explicit address.
 
     | byte screen : 3 @ 1024
     | 
-    | routine main {
+    | define main routine {
     |   ld a, lives
     |   st a, lives
     | }
@@ -333,7 +333,7 @@ User-defined locations of other types.
     | word r2 @ 60000
     | word r3 : 2000
     | 
-    | routine main {
+    | define main routine {
     | }
     = ok
 
@@ -341,15 +341,15 @@ Initialized byte table, initialized with ASCII string.
 
     | byte table[32] message : "WHAT DO YOU WANT TO DO NEXT?"
     | 
-    | routine main {
+    | define main routine {
     | }
     = ok
 
 Can't initialize anything but a byte table with a string.
 
-    | word message : "WHAT DO YOU WANT TO DO NEXT?"
+    | word message : "OUCH! WHAT DO YOU DO?"
     | 
-    | routine main {
+    | define main routine {
     | }
     ? SyntaxError
 
@@ -357,13 +357,13 @@ Initialized byte table, initialized with list of bytes.
 
     | byte table[8] charmap : 0, 255, 129, 192, 0, 1, 2, 4
     | 
-    | routine main {
+    | define main routine {
     | }
     = ok
 
 Can't access an undeclared memory location.
 
-    | routine main {
+    | define main routine {
     |     ld a, 0
     |     st a, lives
     | }
@@ -374,7 +374,7 @@ Can't define two memory locations with the same name.
     | byte lives
     | byte lives
     | 
-    | routine main {
+    | define main routine {
     |     ld a, 0
     |     st a, lives
     | }
@@ -384,19 +384,19 @@ Can't shadow the name of a register or a flag.
 
     | byte a
     | 
-    | routine main {
+    | define main routine {
     | }
     ? SyntaxError
 
     | byte z
     | 
-    | routine main {
+    | define main routine {
     | }
     ? SyntaxError
 
 Can't call routine that hasn't been defined.
 
-    | routine main {
+    | define main routine {
     |     ld x, 0
     |     ld y, 1
     |     call up
@@ -408,14 +408,14 @@ And you can't call a non-routine.
 
     | byte up
     | 
-    | routine main {
+    | define main routine {
     |     ld x, 0
     |     ld y, 1
     |     call up
     | }
     ? SyntaxError
 
-    | routine main {
+    | define main routine {
     |     ld x, 0
     |     ld y, 1
     |     call x
@@ -424,24 +424,24 @@ And you can't call a non-routine.
 
 But you can call a routine that is yet to be defined, further on.
 
-    | routine main {
+    | define main routine {
     |     ld x, 0
     |     ld y, 1
     |     call up
     |     call up
     | }
-    | routine up {
+    | define up routine {
     |     ld a, 0
     | }
     = ok
 
 Can't define two routines with the same name.
 
-    | routine main {
+    | define main routine {
     |     inc x
     |     inc y
     | }
-    | routine main {
+    | define main routine {
     |     ld x, 0
     |     ld y, 1
     | }
@@ -451,7 +451,7 @@ Declaring byte and word table memory location.
 
     | byte table[256] tab
     | 
-    | routine main {
+    | define main routine {
     |     ld x, 0
     |     ld y, 0
     |     ld a, tab + x
@@ -462,7 +462,7 @@ Declaring byte and word table memory location.
     | word one
     | word table[256] many
     | 
-    | routine main {
+    | define main routine {
     |     ld x, 0
     |     copy one, many + x
     |     copy word 0, many + x
@@ -478,10 +478,10 @@ Declaring and calling a vector.
     |   trashes a, x, z, n
     |   cinv @ 788
     | 
-    | routine foo {
+    | define foo routine {
     |     ld a, 0
     | }
-    | routine main {
+    | define main routine {
     |     with interrupts off {
     |         copy foo, cinv
     |     }
@@ -497,7 +497,7 @@ Only vectors can be decorated with constraints like that.
     |   trashes a, x, z, n
     |   @ 788
     | 
-    | routine main {
+    | define main routine {
     | }
     ? SyntaxError
 
@@ -509,10 +509,10 @@ Constraints set may only contain labels.
     |   trashes a, x, z, n
     |   cinv @ 788
     | 
-    | routine foo {
+    | define foo routine {
     |     ld a, 0
     | }
-    | routine main {
+    | define main routine {
     |     with interrupts off {
     |         copy foo, cinv
     |     }
@@ -528,10 +528,10 @@ A vector can name itself in its inputs, outputs, and trashes.
     |   trashes a, x, z, n
     |   cinv @ 788
     | 
-    | routine foo {
+    | define foo routine {
     |     ld a, 0
     | }
-    | routine main {
+    | define main routine {
     |     with interrupts off {
     |         copy foo, cinv
     |     }
@@ -548,50 +548,50 @@ references in the source of a `copy` instruction.
     |   outputs cinv, x
     |   trashes a, x, z, n
     |   cinv @ 788
-    | routine main {
+    | define main routine {
     |     with interrupts off {
     |         copy foo, cinv
     |     }
     |     call cinv
     | }
-    | routine foo {
+    | define foo routine {
     |     ld a, 0
     | }
     = ok
 
 goto.
 
-    | routine foo {
+    | define foo routine {
     |     ld a, 0
     | }
-    | routine main {
+    | define main routine {
     |     goto foo
     | }
     = ok
 
-    | routine main {
+    | define main routine {
     |     goto foo
     | }
-    | routine foo {
+    | define foo routine {
     |     ld a, 0
     | }
     = ok
 
     | vector routine foo
     | 
-    | routine main {
+    | define main routine {
     |     goto foo
     | }
     = ok
 
-    | routine main {
+    | define main routine {
     |     goto foo
     | }
     ? SyntaxError
 
     | byte foo
     | 
-    | routine main {
+    | define main routine {
     |     goto foo
     | }
     ? SyntaxError
@@ -603,7 +603,7 @@ Buffers and pointers.
     | pointer ptrb
     | byte foo
     | 
-    | routine main {
+    | define main routine {
     |     copy ^buf, ptr
     |     copy 123, [ptr] + y
     |     copy [ptr] + y, foo
@@ -629,7 +629,28 @@ Routines can be defined in a new style.
     |   inc x
     | }
     | 
-    | routine main
+    | define main routine
+    |   outputs vec
+    |   trashes a, z, n
+    | {
+    |     copy foo, vec
+    | }
+    = ok
+
+    | typedef routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     routine_type
+    | 
+    | vector routine_type vec
+    | 
+    | define foo routine_type
+    | {
+    |   inc x
+    | }
+    | 
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
