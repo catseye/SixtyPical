@@ -33,7 +33,7 @@ class ParsingContext(object):
     def __str__(self):
         return "Symbols: {}\nStatics: {}\nTypedefs: {}\nConsts: {}".format(self.symbols, self.statics, self.typedefs, self.consts)
 
-    def lookup(self, name):
+    def fetch(self, name):
         if name in self.statics:
             return self.statics[name].model
         if name in self.symbols:
@@ -51,10 +51,15 @@ class Parser(object):
         self.scanner.syntax_error(msg)
 
     def lookup(self, name):
-        model = self.context.lookup(name)
+        model = self.context.fetch(name)
         if model is None:
             self.syntax_error('Undefined symbol "{}"'.format(name))
         return model
+
+    def declare(self, name, symentry):
+        if self.context.fetch(name):
+            self.syntax_error('Symbol "%s" already declared' % name)
+        self.context.symbols[name] = symentry
 
     # --- grammar productions
 
@@ -70,10 +75,7 @@ class Parser(object):
         typenames.extend(self.context.typedefs.keys())
         while self.scanner.on(*typenames):
             defn = self.defn()
-            name = defn.name
-            if self.context.lookup(name):
-                self.syntax_error('Symbol "%s" already declared' % name)
-            self.context.symbols[name] = SymEntry(defn, defn.location)
+            self.declare(defn.name, SymEntry(defn, defn.location))
             defns.append(defn)
         while self.scanner.on('define', 'routine'):
             if self.scanner.consume('define'):
@@ -83,9 +85,7 @@ class Parser(object):
             else:
                 routine = self.legacy_routine()
                 name = routine.name
-            if self.context.lookup(name):
-                self.syntax_error('Symbol "%s" already declared' % name)
-            self.context.symbols[name] = SymEntry(routine, routine.location)
+            self.declare(name, SymEntry(routine, routine.location))
             routines.append(routine)
         self.scanner.check_type('EOF')
 
@@ -302,7 +302,7 @@ class Parser(object):
         c = {}
         for defn in statics:
             name = defn.name
-            if self.context.lookup(name):
+            if self.context.fetch(name):
                 self.syntax_error('Symbol "%s" already declared' % name)
             c[name] = SymEntry(defn, defn.location)
         return c
@@ -334,7 +334,7 @@ class Parser(object):
         elif forward:
             name = self.scanner.token
             self.scanner.scan()
-            loc = self.context.lookup(name)
+            loc = self.context.fetch(name)
             if loc is not None:
                 return loc
             else:
