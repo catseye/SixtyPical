@@ -20,7 +20,7 @@ import traceback
 
 from sixtypical.parser import Parser, ParsingContext
 from sixtypical.analyzer import Analyzer
-from sixtypical.outputter import Outputter
+from sixtypical.outputter import outputter_class_for
 from sixtypical.compiler import Compiler
 
 
@@ -79,25 +79,23 @@ def process_input_files(filenames, options):
     if options.analyze_only:
         return
 
-    outputter = Outputter(options.output_format)
-
+    start_addr = None
     if options.origin is not None:
         if options.origin.startswith('0x'):
-            outputter.set_start_addr(int(options.origin, 16))
+            start_addr = int(options.origin, 16)
         else:
-            outputter.set_start_addr(int(options.origin, 10))
+            start_addr = int(options.origin, 10)
 
     with open(options.output, 'wb') as fh:
-        # this is *awful* binding
-        emitter = outputter.write_prelude(fh)
-        compiler = Compiler(emitter)
+        outputter = outputter_class_for(options.output_format)(fh, start_addr=start_addr)
+        outputter.write_prelude()
+        compiler = Compiler(outputter.emitter)
         compiler.compile_program(program, compilation_roster=compilation_roster)
-        outputter.write_postlude(emitter)
-
+        outputter.write_postlude()
         if options.debug:
-            pprint(emitter.accum)
+            pprint(outputter.emitter)
         else:
-            emitter.serialize_to(fh)
+            outputter.emitter.serialize_to(fh)
 
 
 if __name__ == '__main__':
