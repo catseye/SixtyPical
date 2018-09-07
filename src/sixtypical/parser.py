@@ -18,6 +18,14 @@ class SymEntry(object):
         return "%s(%r, %r)" % (self.__class__.__name__, self.ast_node, self.model)
 
 
+class ForwardReference(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.name)
+
+
 class ParsingContext(object):
     def __init__(self):
         self.symbols = {}          # token -> SymEntry
@@ -45,7 +53,6 @@ class Parser(object):
     def __init__(self, context, text, filename):
         self.context = context
         self.scanner = Scanner(text, filename)
-        self.backpatch_instrs = []
 
     def syntax_error(self, msg):
         self.scanner.syntax_error(msg)
@@ -102,21 +109,28 @@ class Parser(object):
             defn.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
         for routine in routines:
             routine.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
-        for instr in self.backpatch_instrs:
-            if instr.opcode in ('call', 'goto'):
-                name = instr.location
-                model = self.lookup(name)
-                if not isinstance(model.type, (RoutineType, VectorType)):
-                    self.syntax_error('Illegal call of non-executable "%s"' % name)
-                instr.location = model
-            if instr.opcode in ('copy',) and isinstance(instr.src, str):
-                name = instr.src
-                model = self.lookup(name)
-                if not isinstance(model.type, (RoutineType, VectorType)):
-                    self.syntax_error('Illegal copy of non-executable "%s"' % name)
-                instr.src = model
 
-        return Program(self.scanner.line_number, defns=defns, routines=routines)
+        program = Program(self.scanner.line_number, defns=defns, routines=routines)
+
+        for node in program.all_children():
+            if isinstance(node, SingleOp):
+                instr = node
+                if instr.opcode in ('call', 'goto'):
+                    forward_reference = instr.location
+                    name = forward_reference.name
+                    model = self.lookup(name)
+                    if not isinstance(model.type, (RoutineType, VectorType)):
+                        self.syntax_error('Illegal call of non-executable "%s"' % name)
+                    instr.location = model
+                if instr.opcode in ('copy',) and isinstance(instr.src, ForwardReference):
+                    forward_reference = instr.src
+                    name = forward_reference.name
+                    model = self.lookup(name)
+                    if not isinstance(model.type, (RoutineType, VectorType)):
+                        self.syntax_error('Illegal copy of non-executable "%s"' % name)
+                    instr.src = model
+
+        return program
 
     def typedef(self):
         self.scanner.expect('typedef')
@@ -337,7 +351,7 @@ class Parser(object):
             if loc is not None:
                 return loc
             else:
-                return name
+                return ForwardReference(name)
         else:
             loc = self.lookup(self.scanner.token)
             self.scanner.scan()
@@ -452,8 +466,7 @@ class Parser(object):
             self.scanner.scan()
             name = self.scanner.token
             self.scanner.scan()
-            instr = SingleOp(self.scanner.line_number, opcode=opcode, location=name, dest=None, src=None)
-            self.backpatch_instrs.append(instr)
+            instr = SingleOp(self.scanner.line_number, opcode=opcode, location=ForwardReference(name), dest=None, src=None)
             return instr
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token
@@ -462,7 +475,6 @@ class Parser(object):
             self.scanner.expect(',')
             dest = self.indlocexpr()
             instr = SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=src)
-            self.backpatch_instrs.append(instr)
             return instr
         elif self.scanner.consume("with"):
             self.scanner.expect("interrupts")

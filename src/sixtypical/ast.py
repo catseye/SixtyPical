@@ -37,14 +37,16 @@ class AST(object):
     def all_children(self):
         for attr in self.children_attrs:
             for child in self.attrs[attr]:
+                if child is not None:
+                    yield child
+                    for subchild in child.all_children():
+                        yield subchild
+        for attr in self.child_attrs:
+            child = self.attrs[attr]
+            if child is not None:
                 yield child
                 for subchild in child.all_children():
                     yield subchild
-        for attr in self.child_attrs:
-            child = self.attrs[attr]
-            yield child
-            for subchild in child.all_children():
-                yield subchild
 
 
 class Program(AST):
