@@ -115,11 +115,12 @@ class Parser(object):
         for node in program.all_children():
             if isinstance(node, SingleOp):
                 instr = node
+                if isinstance(instr.location, ForwardReference):
+                    instr.location = self.lookup(instr.location.name)
                 if isinstance(instr.src, ForwardReference):
                     instr.src = self.lookup(instr.src.name)
-                if instr.opcode in ('call', 'goto'):
-                    if isinstance(instr.location, ForwardReference):
-                        instr.location = self.lookup(instr.location.name)
+                if isinstance(instr.dest, ForwardReference):
+                    instr.dest = self.lookup(instr.dest.name)
 
         return program
 
