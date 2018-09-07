@@ -771,17 +771,21 @@ class Analyzer(object):
         context.set_writeable(instr.dest)
 
     def analyze_save(self, instr, context):
-        if len(instr.locations) != 1:
-            raise NotImplementedError("Only 1 location in save is supported right now")
-        location = instr.locations[0]
-        self.assert_type(TYPE_BYTE, location)
+        batons = []
+        for location in instr.locations:
+            self.assert_type(TYPE_BYTE, location)
+            baton = context.extract(location)
+            batons.append(baton)
 
-        baton = context.extract(location)
         self.analyze_block(instr.block, context)
         if context.encountered_gotos():
             raise IllegalJumpError(instr, instr)
-        context.re_introduce(baton)
 
+        for location in reversed(instr.locations):
+            baton = batons.pop()
+            context.re_introduce(baton)
+
+        # FIXME check if A needs to be the outer thing that is saved, I think it does.
         if location == REG_A:
             pass
         else:

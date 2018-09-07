@@ -601,6 +601,28 @@ Compiling `save`.
     = $0816   PLA
     = $0817   RTS
 
+Compiling `save` with shortcut syntax.
+
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes z, n
+    | {
+    |     save a, x {
+    |         ld a, 0
+    |         ld x, 1
+    |     }
+    | }
+    = $080D   PHA
+    = $080E   TXA
+    = $080F   PHA
+    = $0810   LDA #$00
+    = $0812   LDX #$01
+    = $0814   PLA
+    = $0815   TAX
+    = $0816   PLA
+    = $0817   RTS
+
 Compiling `save` on a user-defined location.
 
     | byte foo

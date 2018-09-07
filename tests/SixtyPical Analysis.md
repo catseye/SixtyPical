@@ -2107,6 +2107,20 @@ first in a nested series of `save`s.
     | }
     = ok
 
+There is a shortcut syntax for a nested series of `save`s.
+
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes z, n
+    | {
+    |     save a, x {
+    |         ld a, 0
+    |         ld x, 1
+    |     }
+    | }
+    = ok
+
 Not just registers, but also user-defined locations can be saved.
 
     | byte foo
