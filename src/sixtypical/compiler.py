@@ -618,27 +618,32 @@ class Compiler(object):
         self.emitter.emit(CLI())
 
     def compile_save(self, instr):
-        location = instr.locations[0]
-        if location == REG_A:
-            self.emitter.emit(PHA())
-            self.compile_block(instr.block)
-            self.emitter.emit(PLA())
-        elif location == REG_X:
-            self.emitter.emit(TXA())
-            self.emitter.emit(PHA())
-            self.compile_block(instr.block)
-            self.emitter.emit(PLA())
-            self.emitter.emit(TAX())
-        elif location == REG_Y:
-            self.emitter.emit(TYA())
-            self.emitter.emit(PHA())
-            self.compile_block(instr.block)
-            self.emitter.emit(PLA())
-            self.emitter.emit(TAY())
-        else:
-            src_label = self.get_label(location.name)
-            self.emitter.emit(LDA(Absolute(src_label)))
-            self.emitter.emit(PHA())
-            self.compile_block(instr.block)
-            self.emitter.emit(PLA())
-            self.emitter.emit(STA(Absolute(src_label)))
+        for location in instr.locations:
+            if location == REG_A:
+                self.emitter.emit(PHA())
+            elif location == REG_X:
+                self.emitter.emit(TXA())
+                self.emitter.emit(PHA())
+            elif location == REG_Y:
+                self.emitter.emit(TYA())
+                self.emitter.emit(PHA())
+            else:
+                src_label = self.get_label(location.name)
+                self.emitter.emit(LDA(Absolute(src_label)))
+                self.emitter.emit(PHA())
+
+        self.compile_block(instr.block)
+
+        for location in reversed(instr.locations):
+            if location == REG_A:
+                self.emitter.emit(PLA())
+            elif location == REG_X:
+                self.emitter.emit(PLA())
+                self.emitter.emit(TAX())
+            elif location == REG_Y:
+                self.emitter.emit(PLA())
+                self.emitter.emit(TAY())
+            else:
+                src_label = self.get_label(location.name)
+                self.emitter.emit(PLA())
+                self.emitter.emit(STA(Absolute(src_label)))

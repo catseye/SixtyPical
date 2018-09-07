@@ -16,20 +16,6 @@ Is that consistent with `st`?  Well, probably it is, but we have to explain it.
 It might make more sense, then, for it to be "part of the operation" instead of "part of
 the reference"; something like `st.hi x, word`; `st.lo y, word`.  Dunno.
 
-### Save multiple values in single block
-
-As a shortcut for the idiom
-
-    save a { save var {
-        ...
-    } }
-
-allow
-
-    save a, var {
-        ...
-    }
-
 ### Save values to other-than-the-stack
 
 Allow
