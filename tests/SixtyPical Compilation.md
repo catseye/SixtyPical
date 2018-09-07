@@ -13,14 +13,14 @@ SixtyPical to 6502 machine code.
 
 Null program.
 
-    | routine main
+    | define main routine
     | {
     | }
     = $080D   RTS
 
 `nop` program.
 
-    | routine main
+    | define main routine
     | {
     |     nop
     | }
@@ -29,7 +29,7 @@ Null program.
 
 Rudimentary program.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes c, z, n, v
@@ -43,12 +43,12 @@ Rudimentary program.
 
 Call extern.
 
-    | routine chrout
+    | define chrout routine
     |   inputs a
     |   trashes a
     |   @ 65490
     | 
-    | routine main
+    | define main routine
     |   inputs a
     |   trashes a, z, n
     | {
@@ -61,7 +61,7 @@ Call extern.
 
 Call defined routine.
 
-    | routine foo
+    | define foo routine
     |   outputs a, x, y
     |   trashes z, n
     | {
@@ -70,7 +70,7 @@ Call defined routine.
     |   ld y, 0
     | }
     | 
-    | routine main
+    | define main routine
     |   trashes a, x, y, z, n
     | {
     |     call foo
@@ -86,7 +86,7 @@ Access a defined memory location.
 
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   trashes a, y, z, n, foo
     | {
     |     ld y, 0
@@ -102,7 +102,7 @@ Memory location with explicit address.
 
     | byte screen @ 1024
     | 
-    | routine main
+    | define main routine
     |   trashes a, z, n, screen
     | {
     |   ld a, 100
@@ -118,7 +118,7 @@ and `and`, `or`, and `xor` use zero-page addressing.
     | byte zp @ $00
     | byte screen @ 100
     | 
-    | routine main
+    | define main routine
     |   inputs screen, zp
     |   outputs screen, zp
     |   trashes a, z, n
@@ -144,7 +144,7 @@ Memory location with initial value.
 
     | byte lives : 3
     | 
-    | routine main
+    | define main routine
     |   inputs lives
     |   trashes a, z, n
     | {
@@ -159,7 +159,7 @@ Word memory locations with explicit address, initial value.
     | word w1 @ 60001
     | word w2 : 3003
     | 
-    | routine main
+    | define main routine
     |   inputs w1
     |   outputs w2
     |   trashes a, z, n
@@ -178,7 +178,7 @@ Initialized byte table, initialized with ASCII string.  Bytes allocated, but bey
 
     | byte table[8] message : "WHAT?"
     | 
-    | routine main
+    | define main routine
     |   inputs message
     |   outputs x, a, z, n
     | {
@@ -200,7 +200,7 @@ Initialized byte table, initialized with list of byte values.
 
     | byte table[8] message : 255, 0, 129, 128, 127
     | 
-    | routine main
+    | define main routine
     |   inputs message
     |   outputs x, a, z, n
     | {
@@ -222,7 +222,7 @@ Initialized word table, initialized with list of word values.
 
     | word table[4] message : 65535, 0, 127, 127
     | 
-    | routine main
+    | define main routine
     | {
     | }
     = $080D   RTS
@@ -239,7 +239,7 @@ Some instructions.
 
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   trashes a, x, y, z, n, c, v, foo
     | {
     |     ld a, 0
@@ -317,7 +317,7 @@ Some instructions on tables. (1/3)
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, c, n, z, v
@@ -341,7 +341,7 @@ Some instructions on tables. (2/3)
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, c, n, z
@@ -363,7 +363,7 @@ Some instructions on tables. (3/3)
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, c, n, z
@@ -387,7 +387,7 @@ Some instructions on tables. (3/3)
 
 Compiling `if`.
 
-    | routine main
+    | define main routine
     |   trashes a, x, y, z, n, c, v
     | {
     |     ld a, 0
@@ -406,7 +406,7 @@ Compiling `if`.
 
 Compiling `if not`.
 
-    | routine main
+    | define main routine
     |   trashes a, x, y, z, n, c, v
     | {
     |     ld a, 0
@@ -425,7 +425,7 @@ Compiling `if not`.
 
 Compiling `if` without `else`.
 
-    | routine main
+    | define main routine
     |   trashes a, x, y, z, n, c, v
     | {
     |     ld a, 0
@@ -442,7 +442,7 @@ Compiling `if` without `else`.
 
 Compiling `repeat ... until z`.
 
-    | routine main
+    | define main routine
     |   trashes a, y, z, n, c
     | {
     |     ld y, 65
@@ -461,7 +461,7 @@ Compiling `repeat ... until z`.
 
 Compiling `repeat ... until not z`.
 
-    | routine main
+    | define main routine
     |   trashes a, y, z, n, c
     | {
     |     ld y, 65
@@ -480,7 +480,7 @@ Compiling `repeat ... until not z`.
 
 Compiling `repeat ... until n`.
 
-    | routine main
+    | define main routine
     |   trashes a, y, z, n, c
     | {
     |     ld y, 65
@@ -497,7 +497,7 @@ Compiling `repeat ... until n`.
 
 Compiling `repeat ... until not n`.
 
-    | routine main
+    | define main routine
     |   trashes a, y, z, n, c
     | {
     |     ld y, 199
@@ -514,7 +514,7 @@ Compiling `repeat ... until not n`.
 
 Compiling `repeat forever`.
 
-    | routine main
+    | define main routine
     |   trashes a, y, z, n, c
     | {
     |     ld y, 65
@@ -529,7 +529,7 @@ Compiling `repeat forever`.
 
 The body of `repeat forever` can be empty.
 
-    | routine main
+    | define main routine
     | {
     |     repeat {
     |     } forever
@@ -579,7 +579,7 @@ Compiling `for ... down to`.
 
 Compiling `save`.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes z, n
@@ -603,7 +603,7 @@ Compiling `save`.
 
 Compiling `save` with shortcut syntax.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes z, n
@@ -626,7 +626,7 @@ Compiling `save` with shortcut syntax.
 Compiling `save` on a user-defined location.
 
     | byte foo
-    | routine main
+    | define main routine
     |   trashes a, z, n
     | {
     |     save foo {
@@ -647,7 +647,7 @@ Indexed access.
     | byte one
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   outputs many
     |   trashes a, x, n, z
     | {
@@ -667,7 +667,7 @@ Byte tables take up, at most, 256 bytes in memory.
     | byte table[256] tab1
     | byte table[256] tab2
     | 
-    | routine main
+    | define main routine
     |   inputs tab1
     |   outputs tab2
     |   trashes a, x, n, z
@@ -686,7 +686,7 @@ Byte storage locations take up only 1 byte in memory.
     | byte one
     | byte two
     | 
-    | routine main
+    | define main routine
     |   outputs one, two
     |   trashes a, x, n, z
     | {
@@ -704,7 +704,7 @@ Copy byte to byte.
     | byte bar
     | byte baz
     | 
-    | routine main
+    | define main routine
     |   inputs baz
     |   outputs bar
     |   trashes a, n, z
@@ -720,7 +720,7 @@ Copy word to word.
     | word bar
     | word baz
     | 
-    | routine main
+    | define main routine
     |   inputs baz
     |   outputs bar
     |   trashes a, n, z
@@ -737,7 +737,7 @@ Copy literal word to word.
 
     | word bar
     | 
-    | routine main
+    | define main routine
     |   outputs bar
     |   trashes a, n, z
     | {
@@ -753,7 +753,7 @@ You can also copy a literal word to a word table.
 
     | word table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -773,7 +773,7 @@ Copy vector to vector.
     | vector routine bar
     | vector routine baz
     | 
-    | routine main
+    | define main routine
     |   inputs baz
     |   outputs bar
     |   trashes a, n, z
@@ -794,7 +794,7 @@ Copy routine to vector, inside an `interrupts off` block.
     |   trashes z, n
     |     bar
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -802,7 +802,7 @@ Copy routine to vector, inside an `interrupts off` block.
     |     inc x
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs bar
     |   trashes a, n, z
     | {
@@ -828,14 +828,14 @@ Copy routine (by forward reference) to vector.
     |   trashes z, n
     |     bar
     | 
-    | routine main
+    | define main routine
     |   outputs bar
     |   trashes a, n, z
     | {
     |     copy foo, bar
     | }
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -855,7 +855,7 @@ Copy word to word table and back, with both `x` and `y` as indexes.
     | word one
     | word table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs one, many
     |   outputs one, many
     |   trashes a, x, y, n, z
@@ -899,14 +899,14 @@ Indirect call.
     |   trashes z, n
     |     foo
     | 
-    | routine bar
+    | define bar routine
     |   outputs x
     |   trashes z, n
     | {
     |     ld x, 200
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs x, foo
     |   trashes a, z, n
     | {
@@ -926,7 +926,7 @@ Indirect call.
 
 Compiling `goto`.  Note that no `RTS` is emitted after the `JMP`.
 
-    | routine bar
+    | define bar routine
     |   inputs y
     |   outputs x, y
     |   trashes z, n
@@ -934,7 +934,7 @@ Compiling `goto`.  Note that no `RTS` is emitted after the `JMP`.
     |     ld x, 200
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs x, y
     |   trashes a, z, n
     | {
@@ -959,11 +959,11 @@ Copying to and from a vector table.
     |   trashes a, z, n
     |     table[256] many
     | 
-    | routine bar outputs x trashes a, z, n {
+    | define bar routine outputs x trashes a, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main
+    | define main routine
     |   inputs one, many
     |   outputs one, many
     |   trashes a, x, n, z
@@ -1004,7 +1004,7 @@ Copying to and from a vector table.
 Adding a constant word to a word memory location.
 
     | word score
-    | routine main
+    | define main routine
     |   inputs score
     |   outputs score
     |   trashes a, c, z, v, n
@@ -1025,7 +1025,7 @@ Adding a word memory location to another word memory location.
 
     | word score
     | word delta
-    | routine main
+    | define main routine
     |   inputs score, delta
     |   outputs score
     |   trashes a, c, z, v, n
@@ -1045,7 +1045,7 @@ Adding a word memory location to another word memory location.
 Subtracting a constant word from a word memory location.
 
     | word score
-    | routine main
+    | define main routine
     |   inputs score
     |   outputs score
     |   trashes a, c, z, v, n
@@ -1066,7 +1066,7 @@ Subtracting a word memory location from another word memory location.
 
     | word score
     | word delta
-    | routine main
+    | define main routine
     |   inputs score, delta
     |   outputs score
     |   trashes a, c, z, v, n
@@ -1090,7 +1090,7 @@ Load address into pointer.
     | buffer[2048] buf
     | pointer ptr @ 254
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs buf, y
     |   trashes a, z, n, ptr
@@ -1110,7 +1110,7 @@ Write literal through a pointer.
     | buffer[2048] buf
     | pointer ptr @ 254
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs buf, y
     |   trashes a, z, n, ptr
@@ -1134,7 +1134,7 @@ Write stored value through a pointer.
     | pointer ptr @ 254
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   inputs foo, buf
     |   outputs y, buf
     |   trashes a, z, n, ptr
@@ -1158,7 +1158,7 @@ Read through a pointer, into a byte storage location, or the `a` register.
     | pointer ptr @ 254
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs y, foo
     |   trashes a, z, n, ptr
@@ -1184,7 +1184,7 @@ Read and write through two pointers.
     | pointer ptra @ 252
     | pointer ptrb @ 254
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs buf
     |   trashes a, y, z, n, ptra, ptrb
@@ -1213,7 +1213,7 @@ Write the `a` register through a pointer.
     | pointer ptr @ 254
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs buf
     |   trashes a, y, z, n, ptr
@@ -1240,7 +1240,7 @@ Note that this is *not* range-checked.  (Yet.)
     | byte foo
     | word delta
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs y, foo, delta
     |   trashes a, c, v, z, n, ptr
@@ -1283,7 +1283,7 @@ Note that this is *not* range-checked.  (Yet.)
 
 Trash does nothing except indicate that we do not care about the value anymore.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n
