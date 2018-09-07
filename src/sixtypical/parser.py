@@ -479,3 +479,17 @@ class Parser(object):
             return SingleOp(self.scanner.line_number, opcode='trash', src=None, dest=dest)
         else:
             self.syntax_error('bad opcode "%s"' % self.scanner.token)
+
+
+# - - - -
+
+
+def merge_programs(programs):
+    """Assumes that the programs do not have any conflicts."""
+
+    full = Program(1, defns=[], routines=[])
+    for p in programs:
+        full.defns.extend(p.defns)
+        full.routines.extend(p.routines)
+
+    return full

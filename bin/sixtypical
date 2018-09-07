@@ -18,23 +18,10 @@ from pprint import pprint
 import sys
 import traceback
 
-from sixtypical.parser import Parser, ParsingContext
+from sixtypical.parser import Parser, ParsingContext, merge_programs
 from sixtypical.analyzer import Analyzer
 from sixtypical.outputter import outputter_class_for
 from sixtypical.compiler import Compiler
-
-
-def merge_programs(programs):
-    """Assumes that the programs do not have any conflicts."""
-
-    from sixtypical.ast import Program
-
-    full = Program(1, defns=[], routines=[])
-    for p in programs:
-        full.defns.extend(p.defns)
-        full.routines.extend(p.routines)
-
-    return full
 
 
 def process_input_files(filenames, options):
@@ -76,7 +63,7 @@ def process_input_files(filenames, options):
         compilation_roster = fa.serialize()
         dump(compilation_roster)
 
-    if options.analyze_only:
+    if options.analyze_only or options.output is None:
         return
 
     start_addr = None
