@@ -56,10 +56,16 @@ class Parser(object):
             self.syntax_error('Undefined symbol "{}"'.format(name))
         return model
 
-    def declare(self, name, symentry):
+    def declare(self, name, symentry, static=False):
         if self.context.fetch(name):
             self.syntax_error('Symbol "%s" already declared' % name)
-        self.context.symbols[name] = symentry
+        if static:
+            self.context.statics[name] = symentry
+        else:
+            self.context.symbols[name] = symentry
+
+    def clear_statics(self):
+        self.context.statics = {}
 
     # --- grammar productions
 
@@ -286,9 +292,11 @@ class Parser(object):
         else:
             statics = self.statics()
 
-            self.context.statics = self.compose_statics_dict(statics)
+            self.clear_statics()
+            for defn in statics:
+                self.declare(defn.name, SymEntry(defn, defn.location), static=True)
             block = self.block()
-            self.context.statics = {}
+            self.clear_statics()
 
             addr = None
         location = LocationRef(type_, name)
@@ -297,15 +305,6 @@ class Parser(object):
             name=name, block=block, addr=addr,
             location=location, statics=statics
         )
-
-    def compose_statics_dict(self, statics):
-        c = {}
-        for defn in statics:
-            name = defn.name
-            if self.context.fetch(name):
-                self.syntax_error('Symbol "%s" already declared' % name)
-            c[name] = SymEntry(defn, defn.location)
-        return c
 
     def labels(self):
         accum = []
