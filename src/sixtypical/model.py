@@ -18,20 +18,6 @@ class Type(object):
     def __hash__(self):
         return hash(self.name)
 
-    def backpatch_constraint_labels(self, resolver):
-        def resolve(w):
-             if not isinstance(w, str):
-                 return w
-             return resolver(w)
-        if isinstance(self, TableType):
-            self.of_type.backpatch_constraint_labels(resolver)
-        elif isinstance(self, VectorType):
-            self.of_type.backpatch_constraint_labels(resolver)
-        elif isinstance(self, RoutineType):
-            self.inputs = set([resolve(w) for w in self.inputs])
-            self.outputs = set([resolve(w) for w in self.outputs])
-            self.trashes = set([resolve(w) for w in self.trashes])
-
 
 TYPE_BIT = Type('bit', max_range=(0, 1))
 TYPE_BYTE = Type('byte', max_range=(0, 255))

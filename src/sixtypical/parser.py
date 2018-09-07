@@ -74,6 +74,41 @@ class Parser(object):
     def clear_statics(self):
         self.context.statics = {}
 
+    def resolve_symbols(self, program):
+
+        def backpatch_constraint_labels(type_, resolver):
+            def resolve(w):
+                 if not isinstance(w, str):
+                     return w
+                 return resolver(w)
+            if isinstance(type_, TableType):
+                backpatch_constraint_labels(type_.of_type, resolver)
+            elif isinstance(type_, VectorType):
+                backpatch_constraint_labels(type_.of_type, resolver)
+            elif isinstance(type_, RoutineType):
+                type_.inputs = set([resolve(w) for w in type_.inputs])
+                type_.outputs = set([resolve(w) for w in type_.outputs])
+                type_.trashes = set([resolve(w) for w in type_.trashes])
+
+        for defn in program.defns:
+            backpatch_constraint_labels(defn.location.type, lambda w: self.lookup(w))
+        for routine in program.routines:
+            backpatch_constraint_labels(routine.location.type, lambda w: self.lookup(w))
+
+        def resolve_fwd_reference(obj, field):
+            field_value = getattr(obj, field, None)
+            if isinstance(field_value, ForwardReference):
+                setattr(obj, field, self.lookup(field_value.name))
+            elif isinstance(field_value, IndexedRef):
+                if isinstance(field_value.ref, ForwardReference):
+                    field_value.ref = self.lookup(field_value.ref.name)
+
+        for node in program.all_children():
+            if isinstance(node, SingleOp):
+                resolve_fwd_reference(node, 'location')
+                resolve_fwd_reference(node, 'src')
+                resolve_fwd_reference(node, 'dest')
+
     # --- grammar productions
 
     def program(self):
@@ -102,30 +137,8 @@ class Parser(object):
             routines.append(routine)
         self.scanner.check_type('EOF')
 
-        # now backpatch the executable types.
-        #for type_name, type_ in self.context.typedefs.items():
-        #    type_.backpatch_constraint_labels(lambda w: self.lookup(w))
-        for defn in defns:
-            defn.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
-        for routine in routines:
-            routine.location.type.backpatch_constraint_labels(lambda w: self.lookup(w))
-
         program = Program(self.scanner.line_number, defns=defns, routines=routines)
-
-        def resolve_fwd_reference(obj, field):
-            field_value = getattr(obj, field, None)
-            if isinstance(field_value, ForwardReference):
-                setattr(obj, field, self.lookup(field_value.name))
-            elif isinstance(field_value, IndexedRef):
-                if isinstance(field_value.ref, ForwardReference):
-                    field_value.ref = self.lookup(field_value.ref.name)
-
-        for node in program.all_children():
-            if isinstance(node, SingleOp):
-                resolve_fwd_reference(node, 'location')
-                resolve_fwd_reference(node, 'src')
-                resolve_fwd_reference(node, 'dest')
-
+        self.resolve_symbols(program)
         return program
 
     def typedef(self):
