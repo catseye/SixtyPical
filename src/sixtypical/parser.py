@@ -112,15 +112,19 @@ class Parser(object):
 
         program = Program(self.scanner.line_number, defns=defns, routines=routines)
 
+        def resolve_fwd_reference(obj, field):
+            field_value = getattr(obj, field, None)
+            if isinstance(field_value, ForwardReference):
+                setattr(obj, field, self.lookup(field_value.name))
+            elif isinstance(field_value, IndexedRef):
+                if isinstance(field_value.ref, ForwardReference):
+                    field_value.ref = self.lookup(field_value.ref.name)
+
         for node in program.all_children():
             if isinstance(node, SingleOp):
-                instr = node
-                if isinstance(instr.location, ForwardReference):
-                    instr.location = self.lookup(instr.location.name)
-                if isinstance(instr.src, ForwardReference):
-                    instr.src = self.lookup(instr.src.name)
-                if isinstance(instr.dest, ForwardReference):
-                    instr.dest = self.lookup(instr.dest.name)
+                resolve_fwd_reference(node, 'location')
+                resolve_fwd_reference(node, 'src')
+                resolve_fwd_reference(node, 'dest')
 
         return program
 
@@ -339,11 +343,7 @@ class Parser(object):
         elif forward:
             name = self.scanner.token
             self.scanner.scan()
-            loc = self.context.fetch(name)
-            if loc is not None:
-                return loc
-            else:
-                return ForwardReference(name)
+            return ForwardReference(name)
         else:
             loc = self.lookup(self.scanner.token)
             self.scanner.scan()
