@@ -5,8 +5,11 @@ History of SixtyPical
 ----
 
 *   `save X, Y, Z { }` now allowed as a shortcut for nested `save`s.
-*   Trying to call or goto a non-routine-typed symbol is now an
-    analysis error, not a syntax error.
+*   If the name in a location expression isn't found in the symbol
+    table, a forward reference will _always_ be generated; and forward
+    references in _all_ operations will be resolved after parsing.
+*   As a consequence, trying to call or goto a non-routine-typed symbol
+    is now an analysis error, not a syntax error.
 *   Split TODO off into own file.
 *   `sixtypical` no longer writes the compiled binary to standard
     output.  The `--output` command-line argument should be given

@@ -27,11 +27,6 @@ Allow
 Which uses some other storage location instead of the stack.  A local static
 would be a good candidate for such.
 
-### Make all symbols forward-referencable
-
-Basically, don't do symbol-table lookups when parsing, but do have a more formal
-"symbol resolution" (linking) phase right after parsing.
-
 ### Associate each pointer with the buffer it points into
 
 Check that the buffer being read or written to through pointer, appears in appropriate
