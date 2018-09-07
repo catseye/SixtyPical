@@ -357,19 +357,19 @@ class Parser(object):
             accum.append(self.locexpr())
         return accum
 
-    def locexpr(self, forward=False):
+    def locexpr(self):
         if self.scanner.token in ('on', 'off', 'word') or self.scanner.token in self.context.consts or self.scanner.on_type('integer literal'):
             return self.const()
-        elif forward:
+        else:
             name = self.scanner.token
             self.scanner.scan()
-            return ForwardReference(name)
-        else:
-            loc = self.lookup(self.scanner.token)
-            self.scanner.scan()
-            return loc
+            loc = self.context.fetch(name)
+            if loc:
+                return loc
+            else:
+                return ForwardReference(name)
 
-    def indlocexpr(self, forward=False):
+    def indlocexpr(self):
         if self.scanner.consume('['):
             loc = self.locexpr()
             self.scanner.expect(']')
@@ -380,10 +380,10 @@ class Parser(object):
             loc = self.locexpr()
             return AddressRef(loc)
         else:
-            return self.indexed_locexpr(forward=forward)
+            return self.indexed_locexpr()
 
-    def indexed_locexpr(self, forward=False):
-        loc = self.locexpr(forward=forward)
+    def indexed_locexpr(self):
+        loc = self.locexpr()
         if not isinstance(loc, str):
             index = None
             if self.scanner.consume('+'):
@@ -483,7 +483,7 @@ class Parser(object):
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token
             self.scanner.scan()
-            src = self.indlocexpr(forward=True)
+            src = self.indlocexpr()
             self.scanner.expect(',')
             dest = self.indlocexpr()
             instr = SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=src)
