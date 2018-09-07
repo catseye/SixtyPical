@@ -1,6 +1,6 @@
 byte lives
 
-routine main
+define main routine
   inputs lives
   outputs lives
   trashes a, x

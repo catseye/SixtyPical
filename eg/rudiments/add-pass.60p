@@ -1,4 +1,4 @@
-routine main
+define main routine
   inputs a
   outputs a
   trashes c, z, n, v

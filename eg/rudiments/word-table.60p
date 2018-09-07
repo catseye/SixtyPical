@@ -1,7 +1,7 @@
 word one
 word table[256] many
 
-routine main
+define main routine
   inputs one, many
   outputs one, many
   trashes a, x, y, n, z

@@ -1,4 +1,4 @@
-routine add_four
+define add_four routine
   inputs a
   outputs a
 {

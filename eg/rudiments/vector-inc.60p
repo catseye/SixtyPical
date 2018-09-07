@@ -6,14 +6,14 @@ routine chrout
   trashes a
   @ 65490
 
-routine printa
+define printa routine 
   trashes a, z, n
 {
     ld a, 65
     call chrout
 }
 
-routine printb
+define printb routine 
   trashes a, z, n
 {
     ld a, 66
