@@ -5,6 +5,8 @@ History of SixtyPical
 ----
 
 *   `save X, Y, Z { }` now allowed as a shortcut for nested `save`s.
+*   Trying to call or goto a non-routine-typed symbol is now an
+    analysis error, not a syntax error.
 *   Split TODO off into own file.
 *   `sixtypical` no longer writes the compiled binary to standard
     output.  The `--output` command-line argument should be given

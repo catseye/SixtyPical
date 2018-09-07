@@ -404,24 +404,6 @@ Can't call routine that hasn't been defined.
     | }
     ? SyntaxError
 
-And you can't call a non-routine.
-
-    | byte up
-    | 
-    | routine main {
-    |     ld x, 0
-    |     ld y, 1
-    |     call up
-    | }
-    ? SyntaxError
-
-    | routine main {
-    |     ld x, 0
-    |     ld y, 1
-    |     call x
-    | }
-    ? SyntaxError
-
 But you can call a routine that is yet to be defined, further on.
 
     | routine main {
@@ -584,13 +566,6 @@ goto.
     | }
     = ok
 
-    | routine main {
-    |     goto foo
-    | }
-    ? SyntaxError
-
-    | byte foo
-    | 
     | routine main {
     |     goto foo
     | }

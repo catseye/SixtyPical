@@ -550,6 +550,8 @@ class Analyzer(object):
                 context.invalidate_range(dest)
         elif opcode == 'call':
             type = instr.location.type
+            if not isinstance(type, (RoutineType, VectorType)):
+                raise TypeMismatchError(instr, instr.location)
             if isinstance(type, VectorType):
                 type = type.of_type
             for ref in type.inputs:

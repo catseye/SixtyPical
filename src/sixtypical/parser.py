@@ -115,16 +115,11 @@ class Parser(object):
         for node in program.all_children():
             if isinstance(node, SingleOp):
                 instr = node
+                if isinstance(instr.src, ForwardReference):
+                    instr.src = self.lookup(instr.src.name)
                 if instr.opcode in ('call', 'goto'):
-                    forward_reference = instr.location
-                    name = forward_reference.name
-                    model = self.lookup(name)
-                    if not isinstance(model.type, (RoutineType, VectorType)):
-                        self.syntax_error('Illegal call of non-executable "%s"' % name)
-                    instr.location = model
-                if instr.opcode in ('copy',):
-                    if isinstance(instr.src, ForwardReference):
-                        instr.src = self.lookup(instr.src.name)
+                    if isinstance(instr.location, ForwardReference):
+                        instr.location = self.lookup(instr.location.name)
 
         return program
 
