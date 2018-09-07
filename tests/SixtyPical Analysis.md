@@ -2121,6 +2121,20 @@ There is a shortcut syntax for a nested series of `save`s.
     | }
     = ok
 
+`a` is only preserved if it is the outermost thing `save`d.
+
+    | routine main
+    |   inputs a
+    |   outputs a
+    |   trashes z, n
+    | {
+    |     save x, a {
+    |         ld a, 0
+    |         ld x, 1
+    |     }
+    | }
+    ? UnmeaningfulOutputError: a
+
 Not just registers, but also user-defined locations can be saved.
 
     | byte foo

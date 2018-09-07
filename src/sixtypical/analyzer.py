@@ -785,7 +785,8 @@ class Analyzer(object):
             baton = batons.pop()
             context.re_introduce(baton)
 
-        # FIXME check if A needs to be the outer thing that is saved, I think it does.
+        # We do this check outside the loop, because A is only preserved
+        # if it is the outermost thing being `save`d.
         if location == REG_A:
             pass
         else:
