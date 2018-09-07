@@ -27,11 +27,11 @@ TYPE_WORD = Type('word', max_range=(0, 65535))
 
 class RoutineType(Type):
     """This memory location contains the code for a routine."""
-    def __init__(self, inputs=None, outputs=None, trashes=None):
+    def __init__(self, inputs, outputs, trashes):
         self.name = 'routine'
-        self.inputs = inputs or set()
-        self.outputs = outputs or set()
-        self.trashes = trashes or set()
+        self.inputs = inputs
+        self.outputs = outputs
+        self.trashes = trashes
 
     def __repr__(self):
         return '%s(%r, inputs=%r, outputs=%r, trashes=%r)' % (

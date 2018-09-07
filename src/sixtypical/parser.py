@@ -74,26 +74,29 @@ class Parser(object):
     def clear_statics(self):
         self.context.statics = {}
 
-    def resolve_symbols(self, program):
+    # ---- symbol resolution
 
-        def backpatch_constraint_labels(type_, resolver):
+    def resolve_symbols(self, program):
+        # This could stand to be better unified.
+
+        def backpatch_constraint_labels(type_):
             def resolve(w):
-                 if not isinstance(w, str):
+                 if not isinstance(w, ForwardReference):
                      return w
-                 return resolver(w)
+                 return self.lookup(w.name)
             if isinstance(type_, TableType):
-                backpatch_constraint_labels(type_.of_type, resolver)
+                backpatch_constraint_labels(type_.of_type)
             elif isinstance(type_, VectorType):
-                backpatch_constraint_labels(type_.of_type, resolver)
+                backpatch_constraint_labels(type_.of_type)
             elif isinstance(type_, RoutineType):
                 type_.inputs = set([resolve(w) for w in type_.inputs])
                 type_.outputs = set([resolve(w) for w in type_.outputs])
                 type_.trashes = set([resolve(w) for w in type_.trashes])
 
         for defn in program.defns:
-            backpatch_constraint_labels(defn.location.type, lambda w: self.lookup(w))
+            backpatch_constraint_labels(defn.location.type)
         for routine in program.routines:
-            backpatch_constraint_labels(routine.location.type, lambda w: self.lookup(w))
+            backpatch_constraint_labels(routine.location.type)
 
         def resolve_fwd_reference(obj, field):
             field_value = getattr(obj, field, None)
@@ -279,7 +282,11 @@ class Parser(object):
             outputs = set(self.labels())
         if self.scanner.consume('trashes'):
             trashes = set(self.labels())
-        return (inputs, outputs, trashes)
+        return (
+            set([ForwardReference(n) for n in inputs]),
+            set([ForwardReference(n) for n in outputs]),
+            set([ForwardReference(n) for n in trashes])
+        )
 
     def legacy_routine(self):
         self.scanner.expect('routine')
