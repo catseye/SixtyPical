@@ -15,7 +15,7 @@ static analysis rules.
 
 Routines must declare their inputs, outputs, and memory locations they trash.
 
-    | routine up
+    | define up routine
     |   inputs a
     |   outputs a
     |   trashes c, z, v, n
@@ -27,7 +27,7 @@ Routines must declare their inputs, outputs, and memory locations they trash.
 
 Routines may not declare a memory location to be both an output and trashed.
 
-    | routine main
+    | define main routine
     |   outputs a
     |   trashes a
     | {
@@ -37,14 +37,14 @@ Routines may not declare a memory location to be both an output and trashed.
 
 If a routine declares it outputs a location, that location should be initialized.
 
-    | routine main
+    | define main routine
     |   outputs a, x, z, n
     | {
     |     ld x, 0
     | }
     ? UnmeaningfulOutputError: a
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     | {
@@ -54,14 +54,14 @@ If a routine declares it outputs a location, that location should be initialized
 If a routine declares it outputs a location, that location may or may not have
 been initialized.  Trashing is mainly a signal to the caller.
 
-    | routine main
+    | define main routine
     |   trashes x, z, n
     | {
     |     ld x, 0
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   trashes x, z, n
     | {
     | }
@@ -69,20 +69,20 @@ been initialized.  Trashing is mainly a signal to the caller.
 
 If a routine modifies a location, it needs to either output it or trash it.
 
-    | routine main
+    | define main routine
     | {
     |     ld x, 0
     | }
     ? ForbiddenWriteError: x
 
-    | routine main
+    | define main routine
     |   outputs x, z, n
     | {
     |     ld x, 0
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   trashes x, z, n
     | {
     |     ld x, 0
@@ -91,14 +91,14 @@ If a routine modifies a location, it needs to either output it or trash it.
 
 This is true regardless of whether it's an input or not.
 
-    | routine main
+    | define main routine
     |   inputs x
     | {
     |     ld x, 0
     | }
     ? ForbiddenWriteError: x
 
-    | routine main
+    | define main routine
     |   inputs x
     |   outputs x, z, n
     | {
@@ -106,7 +106,7 @@ This is true regardless of whether it's an input or not.
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   inputs x
     |   trashes x, z, n
     | {
@@ -116,20 +116,20 @@ This is true regardless of whether it's an input or not.
 
 If a routine trashes a location, this must be declared.
 
-    | routine foo
+    | define foo routine
     |   trashes x
     | {
     |     trash x
     | }
     = ok
 
-    | routine foo
+    | define foo routine
     | {
     |     trash x
     | }
     ? ForbiddenWriteError: x
 
-    | routine foo
+    | define foo routine
     |   outputs x
     | {
     |     trash x
@@ -138,39 +138,39 @@ If a routine trashes a location, this must be declared.
 
 If a routine causes a location to be trashed, this must be declared in the caller.
 
-    | routine trash_x
+    | define trash_x routine
     |   trashes x, z, n
     | {
     |   ld x, 0
     | }
     | 
-    | routine foo
+    | define foo routine
     |   trashes x, z, n
     | {
     |     call trash_x
     | }
     = ok
 
-    | routine trash_x
+    | define trash_x routine
     |   trashes x, z, n
     | {
     |   ld x, 0
     | }
     | 
-    | routine foo
+    | define foo routine
     |   trashes z, n
     | {
     |     call trash_x
     | }
     ? ForbiddenWriteError: x
 
-    | routine trash_x
+    | define trash_x routine
     |   trashes x, z, n
     | {
     |   ld x, 0
     | }
     | 
-    | routine foo
+    | define foo routine
     |   outputs x
     |   trashes z, n
     | {
@@ -185,7 +185,7 @@ If a routine reads or writes a user-define memory location, it needs to declare 
     | word w1 @ 60001
     | word w2 : 2000
     | 
-    | routine main
+    | define main routine
     |   inputs b1, w1
     |   outputs b2, w2
     |   trashes a, z, n
@@ -202,14 +202,14 @@ You can't call a non-routine.
 
     | byte up
     | 
-    | routine main outputs x, y trashes z, n {
+    | define main routine outputs x, y trashes z, n {
     |     ld x, 0
     |     ld y, 1
     |     call up
     | }
     ? TypeMismatchError: up
 
-    | routine main outputs x, y trashes z, n {
+    | define main routine outputs x, y trashes z, n {
     |     ld x, 0
     |     ld y, 1
     |     call x
@@ -220,7 +220,7 @@ Nor can you goto a non-routine.
 
     | byte foo
     | 
-    | routine main {
+    | define main routine {
     |     goto foo
     | }
     ? TypeMismatchError: foo
@@ -229,7 +229,7 @@ Nor can you goto a non-routine.
 
 Can't `ld` from a memory location that isn't initialized.
 
-    | routine main
+    | define main routine
     |   inputs a, x
     |   trashes a, z, n
     | {
@@ -237,7 +237,7 @@ Can't `ld` from a memory location that isn't initialized.
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   inputs a
     |   trashes a
     | {
@@ -247,14 +247,14 @@ Can't `ld` from a memory location that isn't initialized.
 
 Can't `ld` to a memory location that doesn't appear in (outputs ∪ trashes).
 
-    | routine main
+    | define main routine
     |   trashes a, z, n
     | {
     |     ld a, 0
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   outputs a
     |   trashes z, n
     | {
@@ -262,7 +262,7 @@ Can't `ld` to a memory location that doesn't appear in (outputs ∪ trashes).
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   outputs z, n
     |   trashes a
     | {
@@ -270,14 +270,14 @@ Can't `ld` to a memory location that doesn't appear in (outputs ∪ trashes).
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   trashes z, n
     | {
     |     ld a, 0
     | }
     ? ForbiddenWriteError: a
 
-    | routine main
+    | define main routine
     |   trashes a, n
     | {
     |     ld a, 0
@@ -288,7 +288,7 @@ Can't `ld` a `word` type.
 
     | word foo
     | 
-    | routine main
+    | define main routine
     |   inputs foo
     |   trashes a, n, z
     | {
@@ -301,7 +301,7 @@ Can't `ld` a `word` type.
 Can't `st` from a memory location that isn't initialized.
 
     | byte lives
-    | routine main
+    | define main routine
     |   inputs x
     |   trashes lives
     | {
@@ -310,7 +310,7 @@ Can't `st` from a memory location that isn't initialized.
     = ok
 
     | byte lives
-    | routine main
+    | define main routine
     |   trashes x, lives
     | {
     |     st x, lives
@@ -320,7 +320,7 @@ Can't `st` from a memory location that isn't initialized.
 Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
 
     | byte lives
-    | routine main
+    | define main routine
     |   trashes lives
     | {
     |     st 0, lives
@@ -328,7 +328,7 @@ Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
     = ok
 
     | byte lives
-    | routine main
+    | define main routine
     |   outputs lives
     | {
     |     st 0, lives
@@ -336,7 +336,7 @@ Can't `st` to a memory location that doesn't appear in (outputs ∪ trashes).
     = ok
 
     | byte lives
-    | routine main
+    | define main routine
     |   inputs lives
     | {
     |     st 0, lives
@@ -347,7 +347,7 @@ Can't `st` a `word` type.
 
     | word foo
     | 
-    | routine main
+    | define main routine
     |   outputs foo
     |   trashes a, n, z
     | {
@@ -363,7 +363,7 @@ Storing to a table, you must use an index.
     | byte one
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   outputs one
     |   trashes a, x, n, z
     | {
@@ -376,7 +376,7 @@ Storing to a table, you must use an index.
     | byte one
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   outputs many
     |   trashes a, x, n, z
     | {
@@ -389,7 +389,7 @@ Storing to a table, you must use an index.
     | byte one
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   outputs one
     |   trashes a, x, n, z
     | {
@@ -402,7 +402,7 @@ Storing to a table, you must use an index.
     | byte one
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   outputs many
     |   trashes a, x, n, z
     | {
@@ -417,7 +417,7 @@ The index must be initialized.
     | byte one
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   outputs many
     |   trashes a, x, n, z
     | {
@@ -430,7 +430,7 @@ Reading from a table, you must use an index.
 
     | byte one
     | 
-    | routine main
+    | define main routine
     |   outputs one
     |   trashes a, x, n, z
     | {
@@ -442,7 +442,7 @@ Reading from a table, you must use an index.
 
     | byte one
     | 
-    | routine main
+    | define main routine
     |   outputs one
     |   trashes a, x, n, z
     | {
@@ -454,7 +454,7 @@ Reading from a table, you must use an index.
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   outputs many
     |   trashes a, x, n, z
     | {
@@ -467,7 +467,7 @@ Reading from a table, you must use an index.
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   outputs many
     |   trashes a, x, n, z
     | {
@@ -480,7 +480,7 @@ Reading from a table, you must use an index.
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -494,7 +494,7 @@ The index must be initialized.
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -507,7 +507,7 @@ There are other operations you can do on tables. (1/3)
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, c, n, z, v
@@ -525,7 +525,7 @@ There are other operations you can do on tables. (2/3)
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, c, n, z
@@ -542,7 +542,7 @@ There are other operations you can do on tables. (3/3)
 
     | byte table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, c, n, z
@@ -562,7 +562,7 @@ Copying to and from a word table.
     | word one
     | word table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs one, many
     |   outputs one, many
     |   trashes a, x, n, z
@@ -576,7 +576,7 @@ Copying to and from a word table.
     | word one
     | word table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs one, many
     |   outputs one, many
     |   trashes a, x, n, z
@@ -589,7 +589,7 @@ Copying to and from a word table.
     | word one
     | word table[256] many
     | 
-    | routine main
+    | define main routine
     |   inputs one, many
     |   outputs one, many
     |   trashes a, x, n, z
@@ -604,7 +604,7 @@ You can also copy a literal word to a word table.
 
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -628,7 +628,7 @@ constant value falls inside or outside the range of the table.
 
     | byte table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -641,7 +641,7 @@ constant value falls inside or outside the range of the table.
 
     | byte table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -653,7 +653,7 @@ constant value falls inside or outside the range of the table.
 
     | byte table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -669,7 +669,7 @@ This applies to `copy` as well.
     | word one: 77
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs many, one
     |   outputs many, one
     |   trashes a, x, n, z
@@ -683,7 +683,7 @@ This applies to `copy` as well.
     | word one: 77
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs many, one
     |   outputs many, one
     |   trashes a, x, n, z
@@ -696,7 +696,7 @@ This applies to `copy` as well.
     | word one: 77
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs many, one
     |   outputs many, one
     |   trashes a, x, n, z
@@ -714,7 +714,7 @@ a table.
     | word one: 77
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs a, many, one
     |   outputs many, one
     |   trashes a, x, n, z
@@ -731,7 +731,7 @@ Test for "clipping", but not enough.
     | word one: 77
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs a, many, one
     |   outputs many, one
     |   trashes a, x, n, z
@@ -749,7 +749,7 @@ no longer be guaranteed.
     | word one: 77
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs a, many, one
     |   outputs many, one
     |   trashes a, x, n, z
@@ -766,7 +766,7 @@ no longer be guaranteed.
 
 Can't `add` from or to a memory location that isn't initialized.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes c, z, v, n
@@ -777,7 +777,7 @@ Can't `add` from or to a memory location that isn't initialized.
     = ok
 
     | byte lives
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes c, z, v, n
@@ -788,7 +788,7 @@ Can't `add` from or to a memory location that isn't initialized.
     ? UnmeaningfulReadError: lives
 
     | byte lives
-    | routine main
+    | define main routine
     |   inputs lives
     |   outputs a
     |   trashes c, z, v, n
@@ -800,7 +800,7 @@ Can't `add` from or to a memory location that isn't initialized.
 
 Can't `add` to a memory location that isn't writeable.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   trashes c
     | {
@@ -812,7 +812,7 @@ Can't `add` to a memory location that isn't writeable.
 You can `add` a word constant to a word memory location.
 
     | word score
-    | routine main
+    | define main routine
     |   inputs a, score
     |   outputs score
     |   trashes a, c, z, v, n
@@ -825,7 +825,7 @@ You can `add` a word constant to a word memory location.
 `add`ing a word constant to a word memory location trashes `a`.
 
     | word score
-    | routine main
+    | define main routine
     |   inputs a, score
     |   outputs score, a
     |   trashes c, z, v, n
@@ -838,7 +838,7 @@ You can `add` a word constant to a word memory location.
 To be sure, `add`ing a word constant to a word memory location trashes `a`.
 
     | word score
-    | routine main
+    | define main routine
     |   inputs score
     |   outputs score
     |   trashes c, z, v, n
@@ -852,7 +852,7 @@ You can `add` a word memory location to another word memory location.
 
     | word score
     | word delta
-    | routine main
+    | define main routine
     |   inputs score, delta
     |   outputs score
     |   trashes a, c, z, v, n
@@ -866,7 +866,7 @@ You can `add` a word memory location to another word memory location.
 
     | word score
     | word delta
-    | routine main
+    | define main routine
     |   inputs score, delta
     |   outputs score
     |   trashes c, z, v, n
@@ -880,7 +880,7 @@ You can `add` a word memory location, or a constant, to a pointer.
 
     | pointer ptr
     | word delta
-    | routine main
+    | define main routine
     |   inputs ptr, delta
     |   outputs ptr
     |   trashes a, c, z, v, n
@@ -895,7 +895,7 @@ You can `add` a word memory location, or a constant, to a pointer.
 
     | pointer ptr
     | word delta
-    | routine main
+    | define main routine
     |   inputs ptr, delta
     |   outputs ptr
     |   trashes c, z, v, n
@@ -910,7 +910,7 @@ You can `add` a word memory location, or a constant, to a pointer.
 
 Can't `sub` from or to a memory location that isn't initialized.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes c, z, v, n
@@ -921,7 +921,7 @@ Can't `sub` from or to a memory location that isn't initialized.
     = ok
 
     | byte lives
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes c, z, v, n
@@ -932,7 +932,7 @@ Can't `sub` from or to a memory location that isn't initialized.
     ? UnmeaningfulReadError: lives
 
     | byte lives
-    | routine main
+    | define main routine
     |   inputs lives
     |   outputs a
     |   trashes c, z, v, n
@@ -944,7 +944,7 @@ Can't `sub` from or to a memory location that isn't initialized.
 
 Can't `sub` to a memory location that isn't writeable.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   trashes c
     | {
@@ -956,7 +956,7 @@ Can't `sub` to a memory location that isn't writeable.
 You can `sub` a word constant from a word memory location.
 
     | word score
-    | routine main
+    | define main routine
     |   inputs a, score
     |   outputs score
     |   trashes a, c, z, v, n
@@ -969,7 +969,7 @@ You can `sub` a word constant from a word memory location.
 `sub`ing a word constant from a word memory location trashes `a`.
 
     | word score
-    | routine main
+    | define main routine
     |   inputs a, score
     |   outputs score, a
     |   trashes c, z, v, n
@@ -983,7 +983,7 @@ You can `sub` a word memory location from another word memory location.
 
     | word score
     | word delta
-    | routine main
+    | define main routine
     |   inputs score, delta
     |   outputs score
     |   trashes a, c, z, v, n
@@ -997,7 +997,7 @@ You can `sub` a word memory location from another word memory location.
 
     | word score
     | word delta
-    | routine main
+    | define main routine
     |   inputs score, delta
     |   outputs score
     |   trashes c, z, v, n
@@ -1011,7 +1011,7 @@ You can `sub` a word memory location from another word memory location.
 
 Location must be initialized and writeable.
 
-    | routine main
+    | define main routine
     |   outputs x
     |   trashes z, n
     | {
@@ -1019,7 +1019,7 @@ Location must be initialized and writeable.
     | }
     ? UnmeaningfulReadError: x
 
-    | routine main
+    | define main routine
     |   inputs x
     |   trashes z, n
     | {
@@ -1027,7 +1027,7 @@ Location must be initialized and writeable.
     | }
     ? ForbiddenWriteError: x
 
-    | routine main
+    | define main routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -1040,7 +1040,7 @@ Can't `inc` a `word` type.
 
     | word foo
     | 
-    | routine main
+    | define main routine
     |   inputs foo
     |   outputs foo
     |   trashes z, n
@@ -1053,7 +1053,7 @@ Can't `inc` a `word` type.
 
 Location must be initialized and writeable.
 
-    | routine main
+    | define main routine
     |   outputs x
     |   trashes z, n
     | {
@@ -1061,7 +1061,7 @@ Location must be initialized and writeable.
     | }
     ? UnmeaningfulReadError: x
 
-    | routine main
+    | define main routine
     |   inputs x
     |   trashes z, n
     | {
@@ -1069,7 +1069,7 @@ Location must be initialized and writeable.
     | }
     ? ForbiddenWriteError: x
 
-    | routine main
+    | define main routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -1082,7 +1082,7 @@ Can't `dec` a `word` type.
 
     | word foo
     | 
-    | routine main
+    | define main routine
     |   inputs foo
     |   outputs foo
     |   trashes z, n
@@ -1095,7 +1095,7 @@ Can't `dec` a `word` type.
 
 Some rudimentary tests for `cmp`.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   trashes z, c, n
     | {
@@ -1103,7 +1103,7 @@ Some rudimentary tests for `cmp`.
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   inputs a
     |   trashes z, n
     | {
@@ -1111,7 +1111,7 @@ Some rudimentary tests for `cmp`.
     | }
     ? ForbiddenWriteError: c
 
-    | routine main
+    | define main routine
     |   trashes z, c, n
     | {
     |     cmp a, 4
@@ -1122,7 +1122,7 @@ Some rudimentary tests for `cmp`.
 
 Some rudimentary tests for `and`.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a, z, n
     | {
@@ -1130,7 +1130,7 @@ Some rudimentary tests for `and`.
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   inputs a
     |   trashes z, n
     | {
@@ -1138,7 +1138,7 @@ Some rudimentary tests for `and`.
     | }
     ? ForbiddenWriteError: a
 
-    | routine main
+    | define main routine
     |   trashes z, n
     | {
     |     and a, 4
@@ -1149,7 +1149,7 @@ Some rudimentary tests for `and`.
 
 Some rudimentary tests for `or`.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a, z, n
     | {
@@ -1157,7 +1157,7 @@ Some rudimentary tests for `or`.
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   inputs a
     |   trashes z, n
     | {
@@ -1165,7 +1165,7 @@ Some rudimentary tests for `or`.
     | }
     ? ForbiddenWriteError: a
 
-    | routine main
+    | define main routine
     |   trashes z, n
     | {
     |     or a, 4
@@ -1176,7 +1176,7 @@ Some rudimentary tests for `or`.
 
 Some rudimentary tests for `xor`.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a, z, n
     | {
@@ -1184,7 +1184,7 @@ Some rudimentary tests for `xor`.
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   inputs a
     |   trashes z, n
     | {
@@ -1192,7 +1192,7 @@ Some rudimentary tests for `xor`.
     | }
     ? ForbiddenWriteError: a
 
-    | routine main
+    | define main routine
     |   trashes z, n
     | {
     |     xor a, 4
@@ -1204,7 +1204,7 @@ Some rudimentary tests for `xor`.
 Some rudimentary tests for `shl`.
 
     | byte foo
-    | routine main
+    | define main routine
     |   inputs foo, a, c
     |   outputs foo, a, c, z, n
     | {
@@ -1213,7 +1213,7 @@ Some rudimentary tests for `shl`.
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   inputs a, c
     |   outputs c, z, n
     | {
@@ -1221,7 +1221,7 @@ Some rudimentary tests for `shl`.
     | }
     ? ForbiddenWriteError: a
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a, c, z, n
     | {
@@ -1234,7 +1234,7 @@ Some rudimentary tests for `shl`.
 Some rudimentary tests for `shr`.
 
     | byte foo
-    | routine main
+    | define main routine
     |   inputs foo, a, c
     |   outputs foo, a, c, z, n
     | {
@@ -1243,7 +1243,7 @@ Some rudimentary tests for `shr`.
     | }
     = ok
 
-    | routine main
+    | define main routine
     |   inputs a, c
     |   outputs c, z, n
     | {
@@ -1251,7 +1251,7 @@ Some rudimentary tests for `shr`.
     | }
     ? ForbiddenWriteError: a
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a, c, z, n
     | {
@@ -1263,7 +1263,7 @@ Some rudimentary tests for `shr`.
 
 Some rudimentary tests for `nop`.
 
-    | routine main
+    | define main routine
     | {
     |     nop
     | }
@@ -1276,14 +1276,14 @@ initialized.
 
     | byte lives
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   trashes lives
     | {
     |     st x, lives
     | }
     | 
-    | routine main
+    | define main routine
     | {
     |     call foo
     | }
@@ -1293,14 +1293,14 @@ Note that if you call a routine that trashes a location, you also trash it.
 
     | byte lives
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   trashes lives
     | {
     |     st x, lives
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs x, z, n
     | {
     |     ld x, 0
@@ -1310,14 +1310,14 @@ Note that if you call a routine that trashes a location, you also trash it.
 
     | byte lives
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   trashes lives
     | {
     |     st x, lives
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs x, z, n
     |   trashes lives
     | {
@@ -1330,14 +1330,14 @@ You can't output a value that the thing you called trashed.
 
     | byte lives
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   trashes lives
     | {
     |     st x, lives
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs x, z, n, lives
     | {
     |     ld x, 0
@@ -1349,14 +1349,14 @@ You can't output a value that the thing you called trashed.
 
     | byte lives
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   trashes lives
     | {
     |     st x, lives
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs x, z, n, lives
     | {
     |     ld x, 0
@@ -1368,13 +1368,13 @@ You can't output a value that the thing you called trashed.
 If a routine declares outputs, they are initialized in the caller after
 calling it.
 
-    | routine foo
+    | define foo routine
     |   outputs x, z, n
     | {
     |     ld x, 0
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs a
     |   trashes x, z, n
     | {
@@ -1383,11 +1383,11 @@ calling it.
     | }
     = ok
 
-    | routine foo
+    | define foo routine
     | {
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs a
     |   trashes x
     | {
@@ -1399,20 +1399,20 @@ calling it.
 If a routine trashes locations, they are uninitialized in the caller after
 calling it.
 
-    | routine foo
+    | define foo routine
     |   trashes x, z, n
     | {
     |     ld x, 0
     | }
     = ok
 
-    | routine foo
+    | define foo routine
     |   trashes x, z, n
     | {
     |     ld x, 0
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs a
     |   trashes x, z, n
     | {
@@ -1429,7 +1429,7 @@ same constraints.
     |   trashes a
     |   @ 65490
     | 
-    | routine main
+    | define main routine
     |   trashes a, z, n
     | {
     |     ld a, 65
@@ -1442,7 +1442,7 @@ same constraints.
     |   trashes a
     |   @ 65490
     | 
-    | routine main
+    | define main routine
     |   trashes a, z, n
     | {
     |     call chrout
@@ -1454,7 +1454,7 @@ same constraints.
     |   trashes a
     |   @ 65490
     | 
-    | routine main
+    | define main routine
     |   trashes a, x, z, n
     | {
     |     ld a, 65
@@ -1467,7 +1467,7 @@ same constraints.
 
 Trash does nothing except indicate that we do not care about the value anymore.
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n
@@ -1478,7 +1478,7 @@ Trash does nothing except indicate that we do not care about the value anymore.
     | }
     = ok
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs a, x
     |   trashes z, n
@@ -1489,7 +1489,7 @@ Trash does nothing except indicate that we do not care about the value anymore.
     | }
     ? UnmeaningfulOutputError: a
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n
@@ -1504,7 +1504,7 @@ Trash does nothing except indicate that we do not care about the value anymore.
 
 Both blocks of an `if` are analyzed.
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n, c
@@ -1520,7 +1520,7 @@ Both blocks of an `if` are analyzed.
 
 If a location is initialized in one block, is must be initialized in the other as well.
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n, c
@@ -1534,7 +1534,7 @@ If a location is initialized in one block, is must be initialized in the other a
     | }
     ? InconsistentInitializationError: x
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n, c
@@ -1548,7 +1548,7 @@ If a location is initialized in one block, is must be initialized in the other a
     | }
     ? InconsistentInitializationError: x
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n, c
@@ -1567,7 +1567,7 @@ initialized, either because it was set previous to the `if`, or is an
 input to the routine, and it is initialized in one branch, it need not
 be initialized in the other.
 
-    | routine foo
+    | define foo routine
     |   outputs x
     |   trashes a, z, n, c
     | {
@@ -1582,7 +1582,7 @@ be initialized in the other.
     | }
     = ok
 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes a, z, n, c
@@ -1599,7 +1599,7 @@ be initialized in the other.
 
 An `if` with a single block is analyzed as if it had an empty `else` block.
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n, c
@@ -1611,7 +1611,7 @@ An `if` with a single block is analyzed as if it had an empty `else` block.
     | }
     ? InconsistentInitializationError: x
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n, c
@@ -1624,7 +1624,7 @@ An `if` with a single block is analyzed as if it had an empty `else` block.
     | }
     = ok
 
-    | routine foo
+    | define foo routine
     |   inputs a
     |   outputs x
     |   trashes a, z, n, c
@@ -1641,7 +1641,7 @@ The cardinal rule for trashes in an `if` is the "union rule": if one branch
 trashes {`a`} and the other branch trashes {`b`} then the whole `if` statement
 trashes {`a`, `b`}.
 
-    | routine foo
+    | define foo routine
     |   inputs a, x, z
     |   trashes a, x
     | {
@@ -1653,7 +1653,7 @@ trashes {`a`, `b`}.
     | }
     = ok
 
-    | routine foo
+    | define foo routine
     |   inputs a, x, z
     |   trashes a
     | {
@@ -1665,7 +1665,7 @@ trashes {`a`, `b`}.
     | }
     ? ForbiddenWriteError: x (in foo, line 10)
 
-    | routine foo
+    | define foo routine
     |   inputs a, x, z
     |   trashes x
     | {
@@ -1681,7 +1681,7 @@ trashes {`a`, `b`}.
 
 Repeat loop.
 
-    | routine main
+    | define main routine
     |   outputs x, y, n, z, c
     | {
     |     ld x, 0
@@ -1696,7 +1696,7 @@ Repeat loop.
 
 You can initialize something inside the loop that was uninitialized outside.
 
-    | routine main
+    | define main routine
     |   outputs x, y, n, z, c
     | {
     |     ld x, 0
@@ -1711,12 +1711,12 @@ You can initialize something inside the loop that was uninitialized outside.
 But you can't UNinitialize something at the end of the loop that you need
 initialized at the start.
 
-    | routine foo
+    | define foo routine
     |   trashes y
     | {
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs x, y, n, z, c
     | {
     |     ld x, 0
@@ -1736,7 +1736,7 @@ this is an error too.
     | word one : 0
     | word two : 0
     | 
-    | routine main
+    | define main routine
     |   inputs one, two
     |   outputs two
     |   trashes a, z, n
@@ -1749,7 +1749,7 @@ this is an error too.
 
 The body of `repeat forever` can be empty.
 
-    | routine main
+    | define main routine
     | {
     |     repeat {
     |     } forever
@@ -1758,7 +1758,7 @@ The body of `repeat forever` can be empty.
 
 While `repeat` is most often used with `z`, it can also be used with `n`.
 
-    | routine main
+    | define main routine
     |   outputs y, n, z
     | {
     |     ld y, 15
@@ -1934,7 +1934,7 @@ If the range isn't known to be larger than the final value, you can't go down to
 
 You can initialize something inside the loop that was uninitialized outside.
 
-    | routine main
+    | define main routine
     |   outputs x, y, n, z
     |   trashes c
     | {
@@ -1948,12 +1948,12 @@ You can initialize something inside the loop that was uninitialized outside.
 But you can't UNinitialize something at the end of the loop that you need
 initialized at the start of that loop.
 
-    | routine foo
+    | define foo routine
     |   trashes y
     | {
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs x, y, n, z
     |   trashes c
     | {
@@ -1970,7 +1970,7 @@ initialized at the start of that loop.
 
 Basic neutral test, where the `save` makes no difference.
 
-    | routine main
+    | define main routine
     |   inputs a, x
     |   outputs a, x
     |   trashes z, n
@@ -1985,7 +1985,7 @@ Basic neutral test, where the `save` makes no difference.
 
 Saving any location (other than `a`) will trash `a`.
 
-    | routine main
+    | define main routine
     |   inputs a, x
     |   outputs a, x
     |   trashes z, n
@@ -1999,7 +1999,7 @@ Saving any location (other than `a`) will trash `a`.
 
 Saving `a` does not trash anything.
 
-    | routine main
+    | define main routine
     |   inputs a, x
     |   outputs a, x
     |   trashes z, n
@@ -2015,7 +2015,7 @@ Saving `a` does not trash anything.
 A defined value that has been saved can be trashed inside the block.
 It will continue to be defined outside the block.
 
-    | routine main
+    | define main routine
     |   outputs x, y
     |   trashes a, z, n
     | {
@@ -2032,7 +2032,7 @@ It will continue to be trashed outside the block.
 
 (Note, both x and a are unmeaningful in this test.)
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a, x
     |   trashes z, n
@@ -2051,7 +2051,7 @@ The known range of a value will be preserved outside the block as well.
     | word one: 77
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs a, many, one
     |   outputs many, one
     |   trashes a, x, n, z
@@ -2069,7 +2069,7 @@ The known range of a value will be preserved outside the block as well.
     | word one: 77
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs a, many, one
     |   outputs many, one
     |   trashes a, x, n, z
@@ -2089,7 +2089,7 @@ The known properties of a value are preserved inside the block, too.
     | word one: 77
     | word table[32] many
     | 
-    | routine main
+    | define main routine
     |   inputs a, many, one
     |   outputs many, one
     |   trashes a, x, n, z
@@ -2108,7 +2108,7 @@ The known properties of a value are preserved inside the block, too.
 A value which is not output from the routine, is preserved by the
 routine; and can appear in a `save` exactly because a `save` preserves it.
 
-    | routine main
+    | define main routine
     |   outputs y
     |   trashes a, z, n
     | {
@@ -2122,7 +2122,7 @@ routine; and can appear in a `save` exactly because a `save` preserves it.
 Because saving anything except `a` trashes `a`, a common idiom is to save `a`
 first in a nested series of `save`s.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes z, n
@@ -2138,7 +2138,7 @@ first in a nested series of `save`s.
 
 There is a shortcut syntax for a nested series of `save`s.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes z, n
@@ -2152,7 +2152,7 @@ There is a shortcut syntax for a nested series of `save`s.
 
 `a` is only preserved if it is the outermost thing `save`d.
 
-    | routine main
+    | define main routine
     |   inputs a
     |   outputs a
     |   trashes z, n
@@ -2168,7 +2168,7 @@ Not just registers, but also user-defined locations can be saved.
 
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   trashes a, z, n
     | {
     |     save foo {
@@ -2181,7 +2181,7 @@ But only if they are bytes.
 
     | word foo
     | 
-    | routine main
+    | define main routine
     |   trashes a, z, n
     | {
     |     save foo {
@@ -2192,7 +2192,7 @@ But only if they are bytes.
 
     | byte table[16] tab
     | 
-    | routine main
+    | define main routine
     |   trashes a, y, z, n
     | {
     |     save tab {
@@ -2204,13 +2204,13 @@ But only if they are bytes.
 
 A `goto` cannot appear within a `save` block, even if it is otherwise in tail position.
 
-    | routine other
+    | define other routine
     |   trashes a, z, n
     | {
     |     ld a, 0
     | }
     | 
-    | routine main
+    | define main routine
     |   trashes a, z, n
     | {
     |     ld a, 1
@@ -2229,7 +2229,7 @@ A `goto` cannot appear within a `save` block, even if it is otherwise in tail po
     |   trashes z, n
     |     bar
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -2237,7 +2237,7 @@ A `goto` cannot appear within a `save` block, even if it is otherwise in tail po
     |     inc x
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs bar
     |   trashes a, n, z
     | {
@@ -2256,7 +2256,7 @@ otherwise in tail position.
     |   trashes z, n
     |     bar
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -2270,7 +2270,7 @@ otherwise in tail position.
     |    ld a, 0
     | }
     | 
-    | routine main
+    | define main routine
     |   trashes bar, a, n, z
     | {
     |   with interrupts off {
@@ -2285,7 +2285,7 @@ otherwise in tail position.
 Can't `copy` from a memory location that isn't initialized.
 
     | byte lives
-    | routine main
+    | define main routine
     |   inputs x
     |   outputs lives
     |   trashes a, z, n
@@ -2295,7 +2295,7 @@ Can't `copy` from a memory location that isn't initialized.
     = ok
 
     | byte lives
-    | routine main
+    | define main routine
     |   outputs lives
     |   trashes x, a, z, n
     | {
@@ -2306,7 +2306,7 @@ Can't `copy` from a memory location that isn't initialized.
 Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
 
     | byte lives
-    | routine main
+    | define main routine
     |   trashes lives, a, z, n
     | {
     |     copy 0, lives
@@ -2314,7 +2314,7 @@ Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
     = ok
 
     | byte lives
-    | routine main
+    | define main routine
     |   outputs lives
     |   trashes a, z, n
     | {
@@ -2323,7 +2323,7 @@ Can't `copy` to a memory location that doesn't appear in (outputs ∪ trashes).
     = ok
 
     | byte lives
-    | routine main
+    | define main routine
     |   inputs lives
     |   trashes a, z, n
     | {
@@ -2336,7 +2336,7 @@ a, z, and n are trashed, and must be declared as such.
 (Note, both n and z are forbidden writes in this test.)
 
     | byte lives
-    | routine main
+    | define main routine
     |   outputs lives
     | {
     |     copy 0, lives
@@ -2348,7 +2348,7 @@ a, z, and n are trashed, and must not be declared as outputs.
 (Note, both n and a are unmeaningful outputs in this test.)
 
     | byte lives
-    | routine main
+    | define main routine
     |   outputs lives, a, z, n
     | {
     |     copy 0, lives
@@ -2358,7 +2358,7 @@ a, z, and n are trashed, and must not be declared as outputs.
 Unless of course you subsequently initialize them.
 
     | byte lives
-    | routine main
+    | define main routine
     |   outputs lives, a, z, n
     | {
     |     copy 0, lives
@@ -2371,7 +2371,7 @@ Can `copy` from a `byte` to a `byte`.
     | byte source : 0
     | byte dest
     | 
-    | routine main
+    | define main routine
     |   inputs source
     |   outputs dest
     |   trashes a, z, n
@@ -2386,7 +2386,7 @@ as the destination of a `copy`.
     | byte source : 0
     | byte dest
     | 
-    | routine main
+    | define main routine
     |   inputs source
     |   outputs dest
     |   trashes a, z, n
@@ -2400,7 +2400,7 @@ Can `copy` from a `word` to a `word`.
     | word source : 0
     | word dest
     | 
-    | routine main
+    | define main routine
     |   inputs source
     |   outputs dest
     |   trashes a, z, n
@@ -2414,7 +2414,7 @@ Can't `copy` from a `byte` to a `word`.
     | byte source : 0
     | word dest
     | 
-    | routine main
+    | define main routine
     |   inputs source
     |   outputs dest
     |   trashes a, z, n
@@ -2428,7 +2428,7 @@ Can't `copy` from a `word` to a `byte`.
     | word source : 0
     | byte dest
     | 
-    | routine main
+    | define main routine
     |   inputs source
     |   outputs dest
     |   trashes a, z, n
@@ -2459,7 +2459,7 @@ Write literal through a pointer.
     | buffer[2048] buf
     | pointer ptr
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs y, buf
     |   trashes a, z, n, ptr
@@ -2475,7 +2475,7 @@ It does use `y`.
     | buffer[2048] buf
     | pointer ptr
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs buf
     |   trashes a, z, n, ptr
@@ -2491,7 +2491,7 @@ Write stored value through a pointer.
     | pointer ptr
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   inputs foo, buf
     |   outputs y, buf
     |   trashes a, z, n, ptr
@@ -2508,7 +2508,7 @@ Read through a pointer.
     | pointer ptr
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs foo
     |   trashes a, y, z, n, ptr
@@ -2525,7 +2525,7 @@ Read and write through two pointers.
     | pointer ptra
     | pointer ptrb
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs buf
     |   trashes a, y, z, n, ptra, ptrb
@@ -2544,7 +2544,7 @@ not `copy`.
     | pointer ptr
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs a
     |   trashes y, z, n, ptr
@@ -2562,7 +2562,7 @@ not `copy`.
     | pointer ptr
     | byte foo
     | 
-    | routine main
+    | define main routine
     |   inputs buf
     |   outputs buf
     |   trashes a, y, z, n, ptr
@@ -2585,7 +2585,7 @@ as an input to, an output of, or as a trashed value of a routine.
     |   trashes z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -2593,7 +2593,7 @@ as an input to, an output of, or as a trashed value of a routine.
     |   inc x
     | }
     | 
-    | routine main
+    | define main routine
     |   inputs foo
     |   outputs vec
     |   trashes a, z, n
@@ -2608,7 +2608,7 @@ as an input to, an output of, or as a trashed value of a routine.
     |   trashes z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -2616,7 +2616,7 @@ as an input to, an output of, or as a trashed value of a routine.
     |   inc x
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec, foo
     |   trashes a, z, n
     | {
@@ -2630,7 +2630,7 @@ as an input to, an output of, or as a trashed value of a routine.
     |   trashes z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -2638,7 +2638,7 @@ as an input to, an output of, or as a trashed value of a routine.
     |   inc x
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n, foo
     | {
@@ -2663,7 +2663,7 @@ If the vector and the routine have the very same signature, that's not an error.
     |   trashes z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x, y
     |   outputs x, y
     |   trashes z, n
@@ -2672,7 +2672,7 @@ If the vector and the routine have the very same signature, that's not an error.
     |   inc y
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -2690,7 +2690,7 @@ implementation doesn't actually read it.)
     |   trashes z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x, y
     |   outputs x, y
     |   trashes z, n
@@ -2699,7 +2699,7 @@ implementation doesn't actually read it.)
     |   inc y
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -2715,7 +2715,7 @@ If the vector fails to take an input that the routine takes, that's an error.
     |   trashes z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x, y
     |   outputs x, y
     |   trashes z, n
@@ -2724,7 +2724,7 @@ If the vector fails to take an input that the routine takes, that's an error.
     |   inc y
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -2743,7 +2743,7 @@ output.)
     |   trashes z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x, y
     |   outputs x, y
     |   trashes z, n
@@ -2752,7 +2752,7 @@ output.)
     |   inc y
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -2768,7 +2768,7 @@ If the vector fails to produce an output that the routine produces, that's an er
     |   trashes z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x, y
     |   outputs x, y
     |   trashes z, n
@@ -2777,7 +2777,7 @@ If the vector fails to produce an output that the routine produces, that's an er
     |   inc y
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -2793,7 +2793,7 @@ If the vector fails to trash something the routine trashes, that's an error.
     |   trashes z
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x, y
     |   outputs x, y
     |   trashes z, n
@@ -2802,7 +2802,7 @@ If the vector fails to trash something the routine trashes, that's an error.
     |   inc y
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -2821,7 +2821,7 @@ but it doesn't know that.)
     |   trashes a, z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x, y
     |   outputs x, y
     |   trashes z, n
@@ -2830,7 +2830,7 @@ but it doesn't know that.)
     |   inc y
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -2848,7 +2848,7 @@ Routines are read-only.
     |   trashes z, n
     |     vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -2856,7 +2856,7 @@ Routines are read-only.
     |   inc x
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -2870,11 +2870,11 @@ Indirect call.
     |   outputs x trashes z, n
     |     foo
     | 
-    | routine bar outputs x trashes z, n {
+    | define bar routine outputs x trashes z, n {
     |     ld x, 200
     | }
     | 
-    | routine main outputs x, foo trashes a, z, n {
+    | define main routine outputs x, foo trashes a, z, n {
     |     copy bar, foo
     |     call foo
     | }
@@ -3071,13 +3071,13 @@ vector says it does.
     |   outputs x
     |   trashes a, z, n  foo
     | 
-    | routine bar
+    | define bar routine
     |   outputs x
     |   trashes a, z, n {
     |     ld x, 200
     | }
     | 
-    | routine sub
+    | define sub routine
     |   outputs x
     |   trashes foo, a, z, n {
     |     ld x, 0
@@ -3085,7 +3085,7 @@ vector says it does.
     |     goto foo
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs a
     |   trashes foo, x, z, n {
     |     call sub
@@ -3106,11 +3106,11 @@ A vector can be copied into a vector table.
     |   trashes a, z, n)
     |     table[256] many
     | 
-    | routine bar outputs x trashes a, z, n {
+    | define bar routine outputs x trashes a, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main
+    | define main routine
     |   inputs one, many
     |   outputs one, many
     |   trashes a, x, n, z
@@ -3132,11 +3132,11 @@ A vector can be copied out of a vector table.
     |   trashes a, z, n)
     |     table[256] many
     | 
-    | routine bar outputs x trashes a, z, n {
+    | define bar routine outputs x trashes a, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main
+    | define main routine
     |   inputs one, many
     |   outputs one, many
     |   trashes a, x, n, z
@@ -3154,11 +3154,11 @@ A routine can be copied into a vector table.
     |     trashes a, z, n)
     |   table[256] many
     | 
-    | routine bar outputs x trashes a, z, n {
+    | define bar routine outputs x trashes a, z, n {
     |     ld x, 200
     | }
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -3179,7 +3179,7 @@ A vector in a vector table cannot be directly called.
     |     ld x, 200
     | }
     | 
-    | routine main
+    | define main routine
     |   inputs many
     |   outputs many
     |   trashes a, x, n, z
@@ -3203,7 +3203,7 @@ that types have structural equivalence, not name equivalence.
     | 
     | vector routine_type vec
     | 
-    | routine foo
+    | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
@@ -3211,7 +3211,7 @@ that types have structural equivalence, not name equivalence.
     |   inc x
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
@@ -3234,7 +3234,7 @@ The new style routine definitions support typedefs.
     |   inc x
     | }
     | 
-    | routine main
+    | define main routine
     |   outputs vec
     |   trashes a, z, n
     | {
