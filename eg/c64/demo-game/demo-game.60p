@@ -33,6 +33,7 @@
 typedef routine
   inputs joy2, press_fire_msg, dispatch_game_state,
          actor_pos, actor_delta, actor_logic,
+         player_died,
          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   outputs dispatch_game_state,
           actor_pos, actor_delta, actor_logic,
@@ -380,7 +381,6 @@ define enemy_logic logic_routine
 define game_state_title_screen game_state_routine
 {
     ld y, 0
-    st y, player_died
     for y up to 17 {
         ld a, press_fire_msg + y
 
@@ -436,8 +436,6 @@ define game_state_play game_state_routine
 
 define game_state_game_over game_state_routine
 {
-    ld y, 0
-    st y, player_died
     st off, c
     call check_button
 
