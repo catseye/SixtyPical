@@ -7,7 +7,7 @@ byte ds_page2    @ $C055
 byte ds_lores    @ $C056
 byte ds_hires    @ $C057
 
-routine main
+define main routine
   inputs a
   outputs ds_lores, ds_page1, ds_split, ds_graphics
   trashes a, z, n

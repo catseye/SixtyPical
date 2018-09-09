@@ -24,7 +24,7 @@ vector routine
   trashes z, n
     save_cinv
 
-routine our_cinv
+define our_cinv routine
   inputs vic_border
   outputs vic_border
   trashes z, n
@@ -33,7 +33,7 @@ routine our_cinv
     goto save_cinv
 }
 
-routine main
+define main routine
   inputs cinv
   outputs cinv, save_cinv
   trashes a, n, z

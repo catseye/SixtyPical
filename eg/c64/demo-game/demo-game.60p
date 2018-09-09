@@ -121,7 +121,7 @@ vector game_state_routine
 // Utility Routines
 // ----------------------------------------------------------------
 
-routine read_stick
+define read_stick routine
   inputs joy2
   outputs delta
   trashes a, x, z, n
@@ -186,7 +186,7 @@ define check_button routine
     }
 }
 
-routine clear_screen
+define clear_screen routine
   outputs screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
   trashes a, y, c, n, z
 {
@@ -209,7 +209,7 @@ routine clear_screen
     } until z
 }
 
-routine calculate_new_position
+define calculate_new_position routine
   inputs pos, delta
   outputs new_pos
   trashes a, c, n, z, v
@@ -243,7 +243,7 @@ define check_new_position_in_bounds routine
     }
 }
 
-routine init_game
+define init_game routine
   inputs actor_pos, actor_delta, actor_logic
   outputs actor_pos, actor_delta, actor_logic, player_died
   trashes pos, a, y, z, n, c, v

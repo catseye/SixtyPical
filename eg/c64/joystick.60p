@@ -3,7 +3,7 @@ byte joy2 @ $dc00
 
 word delta
 
-routine read_stick
+define read_stick routine
   inputs joy2
   outputs delta
   trashes a, x, z, n
@@ -36,7 +36,7 @@ routine read_stick
     }
 }
 
-routine main
+define main routine
   inputs joy2
   outputs delta
   trashes a, x, z, n, screen

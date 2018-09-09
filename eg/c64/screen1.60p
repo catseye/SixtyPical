@@ -1,6 +1,6 @@
 byte screen @ 1024
 
-routine main
+define main routine
   trashes a, z, n, screen
 {
   ld a, 83

@@ -1,12 +1,11 @@
 // Write ">AB>" to "standard output"
 
-routine cout
+define cout routine
   inputs a
   trashes a
   @ $FDED
 
-routine main
-  inputs a
+define main routine
   trashes a, z, n
 {
     ld a, 62
