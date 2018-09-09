@@ -11,26 +11,26 @@ vector (routine
   trashes a, z, n)
     table[32] vectors
 
-routine chrout
+define chrout routine
   inputs a
   trashes a
   @ 65490
 
-routine printa
+define printa routine
   trashes a, z, n
 {
     ld a, 65
     call chrout
 }
 
-routine printb
+define printb routine
   trashes a, z, n
 {
     ld a, 66
     call chrout
 }
 
-routine main
+define main routine
   inputs vectors
   outputs vectors
   trashes print, a, x, z, n, c

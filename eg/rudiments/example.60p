@@ -3,7 +3,7 @@ byte lives
 define main routine
   inputs lives
   outputs lives
-  trashes a, x
+  trashes a, x, z, n, c, v
   {
       ld a, 0
       st a, lives

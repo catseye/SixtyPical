@@ -2,26 +2,26 @@ vector routine
   trashes a, z, n
     print
 
-routine chrout
+define chrout routine
   inputs a
   trashes a
   @ 65490
 
-routine printa
+define printa routine
   trashes a, z, n
 {
     ld a, 65
     call chrout
 }
 
-routine printb
+define printb routine
   trashes a, z, n
 {
     ld a, 66
     call chrout
 }
 
-routine main
+define main routine
   trashes print, a, z, n
 {
     copy printa, print

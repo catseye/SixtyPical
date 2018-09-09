@@ -1,6 +1,7 @@
 define main routine
   inputs a
   outputs a
+  trashes z, n, c
 {
     cmp a, 42
     if z {
