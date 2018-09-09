@@ -1,5 +1,5 @@
 word score
-routine main
+define main routine
   inputs score
   outputs score
   trashes a, c, z, v, n

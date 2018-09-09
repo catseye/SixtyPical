@@ -1,16 +1,16 @@
-routine chrout
+define chrout routine
   inputs a
   trashes a
   @ 65490
 
-routine print
+define print routine
   trashes a, z, n
 {
     ld a, 65
     call chrout
 }
 
-routine main
+define main routine
   trashes a, z, n
 {
     call print

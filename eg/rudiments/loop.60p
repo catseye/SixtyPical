@@ -1,9 +1,9 @@
-routine chrout
+define chrout routine
   inputs a
   trashes a
   @ 65490
 
-routine main
+define main routine
   trashes a, y, z, n, c
 {
     ld y, 65

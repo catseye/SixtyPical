@@ -457,7 +457,7 @@ define our_cinv game_state_routine
     goto dispatch_game_state
 }
 
-routine main
+define main routine
   inputs cinv
   outputs cinv, save_cinv, pos, dispatch_game_state,
           screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4

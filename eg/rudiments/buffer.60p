@@ -2,7 +2,7 @@ buffer[2048] buf
 pointer ptr @ 254
 byte foo
 
-routine main
+define main routine
   inputs buf
   outputs buf, y, foo
   trashes a, z, n, ptr

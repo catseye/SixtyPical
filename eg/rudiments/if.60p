@@ -1,4 +1,4 @@
-routine foo
+define main routine
   inputs a
   outputs a
 {

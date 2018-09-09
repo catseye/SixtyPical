@@ -1,11 +1,11 @@
 byte foo
 
-routine chrout
+define chrout routine
   inputs a
   trashes a
   @ 65490
 
-routine print
+define print routine
   inputs foo
   trashes a, z, n
 {
@@ -13,7 +13,7 @@ routine print
     call chrout
 }
 
-routine main
+define main routine
   trashes a, y, z, n, foo
 {
     ld y, 65
