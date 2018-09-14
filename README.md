@@ -6,16 +6,16 @@ _Version 0.17.  Work-in-progress, everything is subject to change._
 **SixtyPical** is a low-level programming language with advanced
 static analysis.  Many of its primitive instructions resemble
 those of the 6502 CPU — in fact it is intended to be compiled to
-6502 machine code — but along with these are constructs which
-ease structuring and analysizing the code.
-
-SixtyPical aims to fill this niche:
+6502 machine code — but along with these instructions are
+constructs which ease structuring and analyzing the code.  The
+language aims to fill this niche:
 
 *   You'd use assembly, but you don't want to spend hours
     debugging (say) a memory overrun that happened because of a
     ridiculous silly error.
-*   You'd use C, but you don't want the overhead of compiler-added
-    code to manage the stack and registers.
+*   You'd use C or some other "high-level" language, but you don't
+    want the extra overhead added by the compiler to manage the
+    stack and registers.
 
 SixtyPical gives the programmer a coding regimen on par with assembly
 language in terms of size and hands-on-ness, but also able to catch
@@ -43,8 +43,8 @@ machine-language programming idioms, such as
 
 SixtyPical is defined by a specification document, a set of test cases,
 and a reference implementation written in Python 2.  The reference
-implementation can analyze and compile SixtyPical programs to 6502 machine code,
-which can be run on several 6502-based 8-bit architectures:
+implementation can analyze and compile SixtyPical programs to 6502 machine
+code, which can be run on several 6502-based 8-bit architectures:
 
 *   Commodore 64
 *   Commodore VIC-20

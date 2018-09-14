@@ -10,6 +10,7 @@ History of SixtyPical
     references in _all_ operations will be resolved after parsing.
 *   As a consequence, trying to call or goto a non-routine-typed symbol
     is now an analysis error, not a syntax error.
+*   Deprecated `routine foo ...` syntax has been removed.
 *   Split TODO off into own file.
 *   `sixtypical` no longer writes the compiled binary to standard
     output.  The `--output` command-line argument should be given
