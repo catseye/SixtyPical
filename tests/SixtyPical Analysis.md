@@ -1808,7 +1808,9 @@ You need to initialize the loop variable before the loop.
     | }
     ? UnmeaningfulReadError
 
-Because routines current do not express range constraints, It may not do to take the loop variable as an input. (?)
+Because routines currently do not include range constraints,
+the loop variable may not be useful as an input (the location
+is assumed to have the maximum range.)
 
     | byte table[16] tab
     | 
@@ -1925,6 +1927,35 @@ initialized at the start of that loop.
     | }
     ? UnmeaningfulReadError: y
 
+The "for" loop does not preserve the `z` or `n` registers.
+
+    | define foo routine trashes x {
+    |     ld x, 0
+    |     for x up to 15 {
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+But it does preserve the other registers, such as `c`.
+
+    | define foo routine trashes x, z, n {
+    |     ld x, 0
+    |     for x up to 15 {
+    |     }
+    | }
+    = ok
+
+In fact it does not strictly trash `z` and `n`, as they are
+always set to known values after the loop.  TODO: document
+what these known values are!
+
+    | define foo routine outputs z, n trashes x {
+    |     ld x, 0
+    |     for x up to 15 {
+    |     }
+    | }
+    = ok
+
 #### downward-counting variant
 
 In a "for" loop (downward-counting variant), we know the exact range the loop variable takes on.
@@ -1983,6 +2014,35 @@ If the range isn't known to be larger than the final value, you can't go down to
     |     }
     | }
     ? RangeExceededError
+
+The "for" loop does not preserve the `z` or `n` registers.
+
+    | define foo routine trashes x {
+    |     ld x, 15
+    |     for x down to 0 {
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+But it does preserve the other registers, such as `c`.
+
+    | define foo routine trashes x, z, n {
+    |     ld x, 15
+    |     for x down to 0 {
+    |     }
+    | }
+    = ok
+
+In fact it does not strictly trash `z` and `n`, as they are
+always set to known values after the loop.  TODO: document
+what these known values are!
+
+    | define foo routine outputs z, n trashes x {
+    |     ld x, 15
+    |     for x down to 0 {
+    |     }
+    | }
+    = ok
 
 ### save ###
 
