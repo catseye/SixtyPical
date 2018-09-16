@@ -1772,7 +1772,10 @@ While `repeat` is most often used with `z`, it can also be used with `n`.
 
 Basic "open-faced for" loop.  We'll start with the "upto" variant.
 
-In a "for" loop, we know the exact range the loop variable takes on.
+#### upward-counting variant
+
+Even though we do not give the starting value in the "for" construct,
+we know the exact range the loop variable takes on.
 
     | byte table[16] tab
     | 
@@ -1804,6 +1807,19 @@ You need to initialize the loop variable before the loop.
     |     }
     | }
     ? UnmeaningfulReadError
+
+Because routines current do not express range constraints, It may not do to take the loop variable as an input. (?)
+
+    | byte table[16] tab
+    | 
+    | define foo routine
+    |   inputs tab, x
+    |   trashes a, x, c, z, v, n {
+    |     for x up to 15 {
+    |         ld a, 0
+    |     }
+    | }
+    ? RangeExceededError
 
 You cannot modify the loop variable in a "for" loop.
 
@@ -1875,6 +1891,42 @@ If the range isn't known to be smaller than the final value, you can't go up to 
     | }
     ? RangeExceededError
 
+You can initialize something inside the loop that was uninitialized outside.
+
+    | define main routine
+    |   outputs x, y, n, z
+    |   trashes c
+    | {
+    |     ld x, 0
+    |     for x up to 15 {
+    |         ld y, 15
+    |     }
+    | }
+    = ok
+
+But you can't UNinitialize something at the end of the loop that you need
+initialized at the start of that loop.
+
+    | define foo routine
+    |   trashes y
+    | {
+    | }
+    | 
+    | define main routine
+    |   outputs x, y, n, z
+    |   trashes c
+    | {
+    |     ld x, 0
+    |     ld y, 15
+    |     for x up to 15 {
+    |         inc y
+    |         call foo
+    |     }
+    | }
+    ? UnmeaningfulReadError: y
+
+#### downward-counting variant
+
 In a "for" loop (downward-counting variant), we know the exact range the loop variable takes on.
 
     | byte table[16] tab
@@ -1931,40 +1983,6 @@ If the range isn't known to be larger than the final value, you can't go down to
     |     }
     | }
     ? RangeExceededError
-
-You can initialize something inside the loop that was uninitialized outside.
-
-    | define main routine
-    |   outputs x, y, n, z
-    |   trashes c
-    | {
-    |     ld x, 0
-    |     for x up to 15 {
-    |         ld y, 15
-    |     }
-    | }
-    = ok
-
-But you can't UNinitialize something at the end of the loop that you need
-initialized at the start of that loop.
-
-    | define foo routine
-    |   trashes y
-    | {
-    | }
-    | 
-    | define main routine
-    |   outputs x, y, n, z
-    |   trashes c
-    | {
-    |     ld x, 0
-    |     ld y, 15
-    |     for x up to 15 {
-    |         inc y
-    |         call foo
-    |     }
-    | }
-    ? UnmeaningfulReadError: y
 
 ### save ###
 
