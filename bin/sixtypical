@@ -18,23 +18,10 @@ from pprint import pprint
 import sys
 import traceback
 
-from sixtypical.parser import Parser, ParsingContext
+from sixtypical.parser import Parser, ParsingContext, merge_programs
 from sixtypical.analyzer import Analyzer
-from sixtypical.emitter import Emitter, Byte, Word
+from sixtypical.outputter import outputter_class_for
 from sixtypical.compiler import Compiler
-
-
-def merge_programs(programs):
-    """Assumes that the programs do not have any conflicts."""
-
-    from sixtypical.ast import Program
-
-    full = Program(1, defns=[], routines=[])
-    for p in programs:
-        full.defns.extend(p.defns)
-        full.routines.extend(p.routines)
-
-    return full
 
 
 def process_input_files(filenames, options):
@@ -68,7 +55,7 @@ def process_input_files(filenames, options):
                 return
             if label:
                 sys.stdout.write("*** {}:\n".format(label))
-            sys.stdout.write(json.dumps(data, indent=4, sort_keys=True))
+            sys.stdout.write(json.dumps(data, indent=4, sort_keys=True, separators=(',', ':')))
             sys.stdout.write("\n")
 
         fa = FallthruAnalyzer(debug=options.debug)
@@ -76,60 +63,26 @@ def process_input_files(filenames, options):
         compilation_roster = fa.serialize()
         dump(compilation_roster)
 
-    if options.analyze_only:
+    if options.analyze_only or options.output is None:
         return
 
-    fh = sys.stdout
-
-    if options.output_format == 'raw':
-        start_addr = 0x0000
-        prelude = []
-    elif options.output_format == 'prg':
-        start_addr = 0xc000
-        prelude = []
-    elif options.output_format == 'c64-basic-prg':
-        start_addr = 0x0801
-        prelude = [0x10, 0x08, 0xc9, 0x07, 0x9e, 0x32,
-                   0x30, 0x36, 0x31, 0x00, 0x00, 0x00]
-    elif options.output_format == 'vic20-basic-prg':
-        start_addr = 0x1001
-        prelude = [0x0b, 0x10, 0xc9, 0x07, 0x9e, 0x34,
-                   0x31, 0x30, 0x39, 0x00, 0x00, 0x00]
-    elif options.output_format == 'atari2600-cart':
-        start_addr = 0xf000
-        prelude = [0x78, 0xd8, 0xa2, 0xff, 0x9a, 0xa9,
-                   0x00, 0x95, 0x00, 0xca, 0xd0, 0xfb]
-    else:
-        raise NotImplementedError("Unknown output format: {}".format(options.output_format))
-
+    start_addr = None
     if options.origin is not None:
         if options.origin.startswith('0x'):
             start_addr = int(options.origin, 16)
         else:
             start_addr = int(options.origin, 10)
 
-    # If we are outputting a .PRG, we output the load address first.
-    # We don't use the Emitter for this b/c not part of addr space.
-    if options.output_format in ('prg', 'c64-basic-prg', 'vic20-basic-prg'):
-        fh.write(Word(start_addr).serialize(0))
-
-    emitter = Emitter(start_addr)
-    for byte in prelude:
-        emitter.emit(Byte(byte))
-    compiler = Compiler(emitter)
-    compiler.compile_program(program, compilation_roster=compilation_roster)
-
-    # If we are outputting a cartridge with boot and BRK address
-    # at the end, pad to ROM size minus 4 bytes, and emit addresses.
-    if options.output_format == 'atari2600-cart':
-        emitter.pad_to_size(4096 - 4)
-        emitter.emit(Word(start_addr))
-        emitter.emit(Word(start_addr))
-
-    if options.debug:
-        pprint(emitter.accum)
-    else:
-        emitter.serialize(fh)
+    with open(options.output, 'wb') as fh:
+        outputter = outputter_class_for(options.output_format)(fh, start_addr=start_addr)
+        outputter.write_prelude()
+        compiler = Compiler(outputter.emitter)
+        compiler.compile_program(program, compilation_roster=compilation_roster)
+        outputter.write_postlude()
+        if options.debug:
+            pprint(outputter.emitter)
+        else:
+            outputter.emitter.serialize_to(fh)
 
 
 if __name__ == '__main__':
@@ -140,6 +93,10 @@ if __name__ == '__main__':
         help="The SixtyPical source files to compile."
     )
 
+    argparser.add_argument(
+        "--output", "-o", type=str, metavar='FILENAME',
+        help="File to which generated 6502 code will be written."
+    )
     argparser.add_argument(
         "--origin", type=str, default=None,
         help="Location in memory where the `main` routine will be "

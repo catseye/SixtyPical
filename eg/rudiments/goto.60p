@@ -1,14 +1,14 @@
-routine chrout
+define chrout routine
   inputs a
   trashes a
   @ 65490
 
-routine bar trashes a, z, n {
+define bar routine trashes a, z, n {
     ld a, 66
     call chrout
 }
 
-routine main trashes a, z, n {
+define main routine trashes a, z, n {
     ld a, 65
     call chrout
     goto bar

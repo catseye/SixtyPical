@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff, Save
+from sixtypical.ast import Program, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff, Save
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
     TableType, BufferType, PointerType, VectorType, RoutineType,
@@ -372,23 +372,23 @@ class Analyzer(object):
         context = Context(self.routines, routine, type_.inputs, type_.outputs, type_.trashes)
 
         if self.debug:
-            print "at start of routine `{}`:".format(routine.name)
-            print context
+            print("at start of routine `{}`:".format(routine.name))
+            print(context)
 
         self.analyze_block(routine.block, context)
         trashed = set(context.each_touched()) - set(context.each_meaningful())
 
         if self.debug:
-            print "at end of routine `{}`:".format(routine.name)
-            print context
-            print "trashed: ", LocationRef.format_set(trashed)
-            print "outputs: ", LocationRef.format_set(type_.outputs)
+            print("at end of routine `{}`:".format(routine.name))
+            print(context)
+            print("trashed: ", LocationRef.format_set(trashed))
+            print("outputs: ", LocationRef.format_set(type_.outputs))
             trashed_outputs = type_.outputs & trashed
             if trashed_outputs:
-                print "TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs)
-            print ''
-            print '-' * 79
-            print ''
+                print("TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs))
+            print('')
+            print('-' * 79)
+            print('')
 
         # even if we goto another routine, we can't trash an output.
         for ref in trashed:
@@ -550,6 +550,8 @@ class Analyzer(object):
                 context.invalidate_range(dest)
         elif opcode == 'call':
             type = instr.location.type
+            if not isinstance(type, (RoutineType, VectorType)):
+                raise TypeMismatchError(instr, instr.location)
             if isinstance(type, VectorType):
                 type = type.of_type
             for ref in type.inputs:
@@ -771,17 +773,22 @@ class Analyzer(object):
         context.set_writeable(instr.dest)
 
     def analyze_save(self, instr, context):
-        if len(instr.locations) != 1:
-            raise NotImplementedError("Only 1 location in save is supported right now")
-        location = instr.locations[0]
-        self.assert_type(TYPE_BYTE, location)
+        batons = []
+        for location in instr.locations:
+            self.assert_type(TYPE_BYTE, location)
+            baton = context.extract(location)
+            batons.append(baton)
 
-        baton = context.extract(location)
         self.analyze_block(instr.block, context)
         if context.encountered_gotos():
             raise IllegalJumpError(instr, instr)
-        context.re_introduce(baton)
 
+        for location in reversed(instr.locations):
+            baton = batons.pop()
+            context.re_introduce(baton)
+
+        # We do this check outside the loop, because A is only preserved
+        # if it is the outermost thing being `save`d.
         if location == REG_A:
             pass
         else:

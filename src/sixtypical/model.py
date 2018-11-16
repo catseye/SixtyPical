@@ -18,20 +18,6 @@ class Type(object):
     def __hash__(self):
         return hash(self.name)
 
-    def backpatch_constraint_labels(self, resolver):
-        def resolve(w):
-             if not isinstance(w, basestring):
-                 return w
-             return resolver(w)
-        if isinstance(self, TableType):
-            self.of_type.backpatch_constraint_labels(resolver)
-        elif isinstance(self, VectorType):
-            self.of_type.backpatch_constraint_labels(resolver)
-        elif isinstance(self, RoutineType):
-            self.inputs = set([resolve(w) for w in self.inputs])
-            self.outputs = set([resolve(w) for w in self.outputs])
-            self.trashes = set([resolve(w) for w in self.trashes])
-
 
 TYPE_BIT = Type('bit', max_range=(0, 1))
 TYPE_BYTE = Type('byte', max_range=(0, 255))
@@ -41,11 +27,11 @@ TYPE_WORD = Type('word', max_range=(0, 65535))
 
 class RoutineType(Type):
     """This memory location contains the code for a routine."""
-    def __init__(self, inputs=None, outputs=None, trashes=None):
+    def __init__(self, inputs, outputs, trashes):
         self.name = 'routine'
-        self.inputs = inputs or set()
-        self.outputs = outputs or set()
-        self.trashes = trashes or set()
+        self.inputs = inputs
+        self.outputs = outputs
+        self.trashes = trashes
 
     def __repr__(self):
         return '%s(%r, inputs=%r, outputs=%r, trashes=%r)' % (
@@ -172,7 +158,7 @@ class LocationRef(Ref):
 
     @classmethod
     def format_set(cls, location_refs):
-        return '{%s}' % ', '.join([str(loc) for loc in sorted(location_refs)])
+        return '{%s}' % ', '.join([str(loc) for loc in sorted(location_refs, key=lambda x: x.name)])
 
 
 class IndirectRef(Ref):

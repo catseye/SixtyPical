@@ -1,6 +1,23 @@
 History of SixtyPical
 =====================
 
+0.17
+----
+
+*   `save X, Y, Z { }` now allowed as a shortcut for nested `save`s.
+*   If the name in a location expression isn't found in the symbol
+    table, a forward reference will _always_ be generated; and forward
+    references in _all_ operations will be resolved after parsing.
+*   As a consequence, trying to call or goto a non-routine-typed symbol
+    is now an analysis error, not a syntax error.
+*   Deprecated `routine foo ...` syntax has been removed.
+*   Split TODO off into own file.
+*   `sixtypical` no longer writes the compiled binary to standard
+    output.  The `--output` command-line argument should be given
+    to get a compiled binary; otherwise only analysis is run.
+*   Internal cleanups, including a hierarchy of `Outputters`.
+*   All tests pass when `sixtypical` is run under Python 3.5.2.
+
 0.16
 ----
 

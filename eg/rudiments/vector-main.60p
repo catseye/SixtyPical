@@ -12,7 +12,7 @@ vector routine
 //     call chrout
 // }
 
-routine main
+define main routine
   trashes print, a, z, n
 {
     copy printa, print

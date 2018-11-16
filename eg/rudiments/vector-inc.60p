@@ -1,19 +1,19 @@
 // This will not compile on its own, because there is no `main`.
 // But this and `vector-main.60p` together will compile.
 
-routine chrout
+define chrout routine
   inputs a
   trashes a
   @ 65490
 
-routine printa
+define printa routine 
   trashes a, z, n
 {
     ld a, 65
     call chrout
 }
 
-routine printb
+define printb routine 
   trashes a, z, n
 {
     ld a, 66

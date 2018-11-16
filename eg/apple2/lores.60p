@@ -1,0 +1,20 @@
+byte ds_graphics @ $C050
+byte ds_text     @ $C051
+byte ds_full     @ $C052
+byte ds_split    @ $C053
+byte ds_page1    @ $C054
+byte ds_page2    @ $C055
+byte ds_lores    @ $C056
+byte ds_hires    @ $C057
+
+define main routine
+  inputs a
+  outputs ds_lores, ds_page1, ds_split, ds_graphics
+  trashes a, z, n
+{
+    ld a, 0
+    st a, ds_lores
+    st a, ds_page1
+    st a, ds_split
+    st a, ds_graphics
+}

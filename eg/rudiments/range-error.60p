@@ -1,6 +1,6 @@
 byte table[8] message : "WHAT?"
 
-routine main
+define main routine
   inputs message
   outputs x, a, z, n
 {

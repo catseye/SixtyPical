@@ -8,7 +8,7 @@ class AddressingMode(Emittable):
         """Size of the operand for the mode (not including the opcode)"""
         raise NotImplementedError
 
-    def serialize(self, addr=None):
+    def serialize(self, addr):
         raise NotImplementedError
 
     def __repr__(self):
@@ -19,8 +19,8 @@ class Implied(AddressingMode):
     def size(self):
         return 0
 
-    def serialize(self, addr=None):
-        return ''
+    def serialize(self, addr):
+        return []
 
     def __repr__(self):
         return "%s()" % (self.__class__.__name__)
@@ -34,8 +34,8 @@ class Immediate(AddressingMode):
     def size(self):
         return 1
 
-    def serialize(self, addr=None):
-        return self.value.serialize()
+    def serialize(self, addr):
+        return self.value.serialize(addr)
 
 
 class Absolute(AddressingMode):
@@ -46,8 +46,8 @@ class Absolute(AddressingMode):
     def size(self):
         return 2
 
-    def serialize(self, addr=None):
-        return self.value.serialize()
+    def serialize(self, addr):
+        return self.value.serialize(addr)
 
 
 class AbsoluteX(Absolute):
@@ -66,8 +66,8 @@ class ZeroPage(AddressingMode):
     def size(self):
         return 1
 
-    def serialize(self, addr=None):
-        return self.value.serialize_as_zero_page()
+    def serialize(self, addr):
+        return self.value.serialize_as_zero_page(addr)
 
 
 class Indirect(AddressingMode):
@@ -78,8 +78,8 @@ class Indirect(AddressingMode):
     def size(self):
         return 2
 
-    def serialize(self, addr=None):
-        return self.value.serialize()
+    def serialize(self, addr):
+        return self.value.serialize(addr)
 
 
 class IndirectY(ZeroPage):
@@ -94,7 +94,7 @@ class Relative(AddressingMode):
     def size(self):
         return 1
 
-    def serialize(self, addr=None):
+    def serialize(self, addr):
         return self.value.serialize_relative_to(addr)
 
 
@@ -108,11 +108,8 @@ class Instruction(Emittable):
     def size(self):
         return 1 + self.operand.size() if self.operand else 0
 
-    def serialize(self, addr=None):
-        return (
-            chr(self.opcodes[self.operand.__class__]) +
-            self.operand.serialize(addr)
-        )
+    def serialize(self, addr):
+        return [self.opcodes[self.operand.__class__]] + self.operand.serialize(addr)
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.operand)

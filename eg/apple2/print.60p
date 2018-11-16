@@ -1,0 +1,19 @@
+// Write ">AB>" to "standard output"
+
+define cout routine
+  inputs a
+  trashes a
+  @ $FDED
+
+define main routine
+  trashes a, z, n
+{
+    ld a, 62
+    call cout
+    ld a, 65
+    call cout
+    ld a, 66
+    call cout
+    ld a, 62
+    call cout
+}

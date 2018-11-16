@@ -3,7 +3,7 @@
 // Define where the screen starts in memory:
 byte table[256] screen @ 7680
 
-routine main
+define main routine
   // These are the values that will be written to by this routine:
   trashes a, x, z, n, screen
 {

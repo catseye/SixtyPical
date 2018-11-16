@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Routine, Block, Instr, SingleOp, If, Repeat, For, WithInterruptsOff, Save
+from sixtypical.ast import Program, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff, Save
 from sixtypical.model import (
     ConstantRef, LocationRef, IndexedRef, IndirectRef, AddressRef,
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
@@ -112,7 +112,7 @@ class Compiler(object):
             routine_name = roster_row[-1]
             self.compile_routine(self.routines[routine_name])
 
-        for location, label in self.trampolines.iteritems():
+        for location, label in self.trampolines.items():
             self.emitter.resolve_label(label)
             self.emitter.emit(JMP(Indirect(self.get_label(location.name))))
             self.emitter.emit(RTS())
@@ -618,27 +618,32 @@ class Compiler(object):
         self.emitter.emit(CLI())
 
     def compile_save(self, instr):
-        location = instr.locations[0]
-        if location == REG_A:
-            self.emitter.emit(PHA())
-            self.compile_block(instr.block)
-            self.emitter.emit(PLA())
-        elif location == REG_X:
-            self.emitter.emit(TXA())
-            self.emitter.emit(PHA())
-            self.compile_block(instr.block)
-            self.emitter.emit(PLA())
-            self.emitter.emit(TAX())
-        elif location == REG_Y:
-            self.emitter.emit(TYA())
-            self.emitter.emit(PHA())
-            self.compile_block(instr.block)
-            self.emitter.emit(PLA())
-            self.emitter.emit(TAY())
-        else:
-            src_label = self.get_label(location.name)
-            self.emitter.emit(LDA(Absolute(src_label)))
-            self.emitter.emit(PHA())
-            self.compile_block(instr.block)
-            self.emitter.emit(PLA())
-            self.emitter.emit(STA(Absolute(src_label)))
+        for location in instr.locations:
+            if location == REG_A:
+                self.emitter.emit(PHA())
+            elif location == REG_X:
+                self.emitter.emit(TXA())
+                self.emitter.emit(PHA())
+            elif location == REG_Y:
+                self.emitter.emit(TYA())
+                self.emitter.emit(PHA())
+            else:
+                src_label = self.get_label(location.name)
+                self.emitter.emit(LDA(Absolute(src_label)))
+                self.emitter.emit(PHA())
+
+        self.compile_block(instr.block)
+
+        for location in reversed(instr.locations):
+            if location == REG_A:
+                self.emitter.emit(PLA())
+            elif location == REG_X:
+                self.emitter.emit(PLA())
+                self.emitter.emit(TAX())
+            elif location == REG_Y:
+                self.emitter.emit(PLA())
+                self.emitter.emit(TAY())
+            else:
+                src_label = self.get_label(location.name)
+                self.emitter.emit(PLA())
+                self.emitter.emit(STA(Absolute(src_label)))

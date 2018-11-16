@@ -8,12 +8,15 @@ class Emittable(object):
         raise NotImplementedError
 
     def serialize(self, addr):
+        """Should return an array of unsigned bytes (integers from 0 to 255.)
+        `addr` is the address the value is being serialized at; for most objects
+        it makes no difference, but some objects (like relative branches) do care."""
         raise NotImplementedError
 
 
 class Byte(Emittable):
     def __init__(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             value = ord(value)
         if value < -127 or value > 255:
             raise IndexError(value)
@@ -24,8 +27,8 @@ class Byte(Emittable):
     def size(self):
         return 1
 
-    def serialize(self, addr=None):
-        return chr(self.value)
+    def serialize(self, addr):
+        return [self.value]
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.value)
@@ -39,11 +42,11 @@ class Word(Emittable):
     def size(self):
         return 2
 
-    def serialize(self, addr=None):
+    def serialize(self, addr):
         word = self.value
         low = word & 255
         high = (word >> 8) & 255
-        return chr(low) + chr(high)
+        return [low, high]
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.value)
@@ -59,10 +62,12 @@ class Table(Emittable):
     def size(self):
         return self._size
 
-    def serialize(self, addr=None):
-        buf = ''.join([emittable.serialize() for emittable in self.value])
+    def serialize(self, addr):
+        buf = []
+        for emittable in self.value:
+            buf.extend(emittable.serialize(addr))  # FIXME: addr + offset
         while len(buf) < self.size():
-            buf += chr(0)
+            buf.append(0)
         return buf
 
     def __repr__(self):
@@ -84,17 +89,17 @@ class Label(Emittable):
     def size(self):
         return 2
 
-    def serialize(self, addr=None, offset=0):
+    def serialize(self, addr, offset=0):
         assert self.addr is not None, "unresolved label: %s" % self.name
-        return Word(self.addr + offset).serialize()
+        return Word(self.addr + offset).serialize(addr)
 
     def serialize_relative_to(self, addr):
         assert self.addr is not None, "unresolved label: %s" % self.name
-        return Byte(self.addr - (addr + 2)).serialize()
+        return Byte(self.addr - (addr + 2)).serialize(addr)
 
-    def serialize_as_zero_page(self, offset=0):
+    def serialize_as_zero_page(self, addr, offset=0):
         assert self.addr is not None, "unresolved label: %s" % self.name
-        return Byte(self.addr + offset).serialize()
+        return Byte(self.addr + offset).serialize(addr)
 
     def __repr__(self):
         addr_s = ', addr=%r' % self.addr if self.addr is not None else ''
@@ -111,11 +116,11 @@ class Offset(Emittable):
     def size(self):
         self.label.size()
 
-    def serialize(self, addr=None):
-        return self.label.serialize(offset=self.offset)
+    def serialize(self, addr):
+        return self.label.serialize(addr, offset=self.offset)
 
-    def serialize_as_zero_page(self, offset=0):
-        return self.label.serialize_as_zero_page(offset=self.offset)
+    def serialize_as_zero_page(self, addr, offset=0):
+        return self.label.serialize_as_zero_page(addr, offset=self.offset)
 
     def __repr__(self):
         return "%s(%r, %r)" % (self.__class__.__name__, self.label, self.offset)
@@ -129,8 +134,8 @@ class HighAddressByte(Emittable):
     def size(self):
         return 1
 
-    def serialize(self, addr=None):
-        return self.label.serialize()[0]
+    def serialize(self, addr):
+        return [self.label.serialize(addr)[0]]
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.label)
@@ -144,8 +149,8 @@ class LowAddressByte(Emittable):
     def size(self):
         return 1
 
-    def serialize(self, addr=None):
-        return self.label.serialize()[1]
+    def serialize(self, addr):
+        return [self.label.serialize(addr)[1]]
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.label)
@@ -166,11 +171,12 @@ class Emitter(object):
             self.accum.append(thing)
             self.addr += thing.size()
 
-    def serialize(self, stream):
+    def serialize_to(self, stream):
+        """`stream` should be a file opened in binary mode."""
         addr = self.start_addr
         for emittable in self.accum:
             chunk = emittable.serialize(addr)
-            stream.write(chunk)
+            stream.write(bytearray(chunk))
             addr += len(chunk)
 
     def make_label(self, name=None):

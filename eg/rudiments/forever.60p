@@ -1,4 +1,4 @@
-routine main
+define main routine
   trashes a, y, z, n, c
 {
     ld y, 65

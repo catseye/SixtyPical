@@ -48,7 +48,7 @@ Treat R as a mutable set and start with an empty list of lists L.  Then,
 -   Remove all elements occurring in C, from R.
 -   Repeat until R is empty.
 
-When times comes to generate code, generate it in the order given by L.
+When time comes to generate code, generate it in the order given by L.
 In addition, each sublist in L represents a number of routines to
 generate; all except the final routine in such a sublist need not have
 any jump instruction generated for its final `goto`.
@@ -65,7 +65,7 @@ to pass these tests to be considered an implementation of SixtyPical.
     -> shell command "bin/sixtypical --optimize-fallthru --dump-fallthru-info --analyze-only --traceback %(test-body-file)"
 
     -> Functionality "Compile SixtyPical program with fallthru optimization" is implemented by
-    -> shell command "bin/sixtypical --output-format=c64-basic-prg --optimize-fallthru --traceback %(test-body-file) >/tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
+    -> shell command "bin/sixtypical --output-format=c64-basic-prg --optimize-fallthru --traceback %(test-body-file) --output /tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
 
     -> Tests for functionality "Dump fallthru info for SixtyPical program"
 
@@ -94,7 +94,7 @@ If `main` does a `goto foo`, then it can fall through to `foo`.
     | }
     = [
     =     [
-    =         "main", 
+    =         "main",
     =         "foo"
     =     ]
     = ]
@@ -119,9 +119,9 @@ of them to fall through, when selecting the order of routines.
     | }
     = [
     =     [
-    =         "main", 
+    =         "main",
     =         "foo"
-    =     ], 
+    =     ],
     =     [
     =         "bar"
     =     ]
@@ -144,7 +144,7 @@ nothing ever falls through to `main`.
     = [
     =     [
     =         "main"
-    =     ], 
+    =     ],
     =     [
     =         "foo"
     =     ]
@@ -172,10 +172,10 @@ fall through to the other.
     = [
     =     [
     =         "main"
-    =     ], 
+    =     ],
     =     [
-    =         "bar", 
-    =         "foo"
+    =         "foo",
+    =         "bar"
     =     ]
     = ]
 
@@ -204,12 +204,12 @@ routine.
     = [
     =     [
     =         "main"
-    =     ], 
-    =     [
-    =         "bar"
-    =     ], 
+    =     ],
     =     [
     =         "foo"
+    =     ],
+    =     [
+    =         "bar"
     =     ]
     = ]
 
@@ -238,9 +238,9 @@ If, however, they are the same goto, one can be optimized away.
     = [
     =     [
     =         "main"
-    =     ], 
+    =     ],
     =     [
-    =         "foo", 
+    =         "foo",
     =         "bar"
     =     ]
     = ]
@@ -269,12 +269,12 @@ because we don't necessarily know what actual routine the vector contains.
     = [
     =     [
     =         "main"
-    =     ], 
-    =     [
-    =         "bar"
-    =     ], 
+    =     ],
     =     [
     =         "foo"
+    =     ],
+    =     [
+    =         "bar"
     =     ]
     = ]
 
@@ -321,14 +321,14 @@ Our algorithm might not be strictly optimal, but it does a good job.
     | }
     = [
     =     [
-    =         "main", 
-    =         "r1", 
-    =         "r2", 
-    =         "r3", 
+    =         "main",
+    =         "r1",
+    =         "r2",
+    =         "r3",
     =         "r4"
-    =     ], 
+    =     ],
     =     [
-    =         "r5", 
+    =         "r5",
     =         "r6"
     =     ]
     = ]
@@ -416,12 +416,12 @@ in the "true" branch is a `goto`.
     | {
     | }
     = $080D   RTS
-    = $080E   LDA #$FF
-    = $0810   RTS
-    = $0811   LDA #$00
-    = $0813   BNE $081D
-    = $0815   LDA #$01
-    = $0817   JMP $080E
-    = $081A   JMP $0822
-    = $081D   LDA #$02
-    = $081F   JMP $080D
+    = $080E   LDA #$00
+    = $0810   BNE $081A
+    = $0812   LDA #$01
+    = $0814   JMP $081F
+    = $0817   JMP $081F
+    = $081A   LDA #$02
+    = $081C   JMP $080D
+    = $081F   LDA #$FF
+    = $0821   RTS

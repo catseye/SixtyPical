@@ -1,6 +1,6 @@
 #!/bin/sh
 
-usage="Usage: loadngo.sh (c64|vic20|atari2600) [--dry-run] <source.60p>"
+usage="Usage: loadngo.sh (c64|vic20|atari2600|apple2) [--dry-run] <source.60p>"
 
 arch="$1"
 shift 1
@@ -21,6 +21,21 @@ elif [ "X$arch" = "Xvic20" ]; then
 elif [ "X$arch" = "Xatari2600" ]; then
   output_format='atari2600-cart'
   emu='stella'
+elif [ "X$arch" = "Xapple2" ]; then
+  src="$1"
+  out=/tmp/a-out.bin
+  bin/sixtypical --traceback --origin=0x2000 --output-format=raw $src --output $out || exit 1
+  ls -la $out
+  cp ~/scratchpad/linapple/res/Master.dsk sixtypical.dsk
+  # TODO: replace HELLO with something that does like
+  # BLOAD "PROG"
+  # CALL 8192
+  # (not BRUN because it does not always return to BASIC afterwards not sure why)
+  a2rm sixtypical.dsk PROG
+  a2in B sixtypical.dsk PROG $out
+  linapple -d1 sixtypical.dsk -autoboot
+  rm -f $out sixtypical.dsk
+  exit 0
 else
   echo $usage && exit 1
 fi
@@ -38,7 +53,7 @@ fi
 ### do it ###
 
 out=/tmp/a-out.prg
-bin/sixtypical --traceback --output-format=$output_format $src > $out || exit 1
+bin/sixtypical --traceback --output-format=$output_format $src --output $out || exit 1
 ls -la $out
 $emu $out
 rm -f $out
