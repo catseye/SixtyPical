@@ -1118,6 +1118,54 @@ Some rudimentary tests for `cmp`.
     | }
     ? UnmeaningfulReadError: a
 
+### compare ###
+
+Some rudimentary tests for `compare`.
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes a, z, c, n
+    | {
+    |     compare za, zb
+    | }
+    = ok
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes a, z, n
+    | {
+    |     compare za, zb
+    | }
+    ? ForbiddenWriteError: c
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes z, c, n
+    | {
+    |     compare za, zb
+    | }
+    ? ForbiddenWriteError: a
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za
+    |   trashes z, c, n
+    | {
+    |     compare za, zb
+    | }
+    ? UnmeaningfulReadError: zb
+
 ### and ###
 
 Some rudimentary tests for `and`.

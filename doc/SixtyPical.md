@@ -288,9 +288,9 @@ this mode is used.
 
     copy <src-memory-location>, <dest-memory-location>
 
-Reads from src and writes to dest.  Differs from `st` in that is able to
-copy more general types of data (for example, vectors,) and it trashes the
-`z` and `n` flags and the `a` register.
+Reads from src and writes to dest.  Differs from `ld` and `st` in that
+it is able to copy more general types of data (for example, vectors,)
+and it trashes the `z` and `n` flags and the `a` register.
 
 *   It is illegal if dest is read-only.
 *   It is illegal if dest does not occur in the WRITES of the current routine.
@@ -395,6 +395,20 @@ and initializing them afterwards.
 
 Subtracts the contents of src from dest (without considering carry) but
 does not store the result anywhere, only sets the resulting flags.
+
+*   It is illegal if src OR dest is uninitialized.
+
+Affects n, z, and c flags, requiring that they be in the WRITES,
+and initializing them afterwards.
+
+### compare ###
+
+    compare <dest-memory-location>, <src-memory-location>
+
+Subtracts the contents of src from dest, discarding the result
+and only setting the resulting flags.  Differs from `cmp` in
+that it is able to work on more general types of data (notably,
+words) and it trashes the `a` register.
 
 *   It is illegal if src OR dest is uninitialized.
 

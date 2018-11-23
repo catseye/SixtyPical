@@ -586,6 +586,16 @@ Buffers and pointers.
     | }
     = ok
 
+Comparison of words.
+
+    | word za
+    | word zb
+    | 
+    | define main routine inputs za, zb {
+    |     compare za, zb
+    | }
+    = ok
+
 Routines can be defined in a new style.
 
     | typedef routine
