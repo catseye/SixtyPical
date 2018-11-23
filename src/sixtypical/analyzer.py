@@ -505,14 +505,12 @@ class Analyzer(object):
             context.assert_meaningful(src, dest)
             if isinstance(src, IndexedRef):
                 context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
-            else:
+            elif src.type == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
-            context.set_written(FLAG_Z, FLAG_N, FLAG_C)
-        elif opcode == 'compare':
-            context.assert_meaningful(src, dest)
-            self.assert_type(TYPE_WORD, src, dest)
-            context.set_touched(REG_A)
-            context.set_unmeaningful(REG_A)
+            else:
+                self.assert_type(TYPE_WORD, src, dest)
+                context.set_touched(REG_A)
+                context.set_unmeaningful(REG_A)
             context.set_written(FLAG_Z, FLAG_N, FLAG_C)
         elif opcode == 'and':
             if isinstance(src, IndexedRef):

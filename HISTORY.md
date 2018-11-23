@@ -4,8 +4,8 @@ History of SixtyPical
 0.18
 ----
 
-*   Added `compare` instruction, which is like `cmp` but can
-    directly compare two `word` memory locations (trashing `a`.)
+*   `cmp` instruction can now perform a 16-bit unsigned comparison
+    of `word` memory locations (at the cost of trashing `a`.)
 *   Fixed pathological memory use in the lexical scanner - should
     be much less inefficient now when parsing large source files.
 

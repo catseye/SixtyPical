@@ -1118,9 +1118,7 @@ Some rudimentary tests for `cmp`.
     | }
     ? UnmeaningfulReadError: a
 
-### compare ###
-
-Some rudimentary tests for `compare`.
+`cmp` can work on words. In this case, it trashes `a`.
 
     | word za
     | word zb
@@ -1129,7 +1127,7 @@ Some rudimentary tests for `compare`.
     |   inputs za, zb
     |   trashes a, z, c, n
     | {
-    |     compare za, zb
+    |     cmp za, zb
     | }
     = ok
 
@@ -1140,7 +1138,7 @@ Some rudimentary tests for `compare`.
     |   inputs za, zb
     |   trashes a, z, n
     | {
-    |     compare za, zb
+    |     cmp za, zb
     | }
     ? ForbiddenWriteError: c
 
@@ -1151,7 +1149,7 @@ Some rudimentary tests for `compare`.
     |   inputs za, zb
     |   trashes z, c, n
     | {
-    |     compare za, zb
+    |     cmp za, zb
     | }
     ? ForbiddenWriteError: a
 
@@ -1162,7 +1160,7 @@ Some rudimentary tests for `compare`.
     |   inputs za
     |   trashes z, c, n
     | {
-    |     compare za, zb
+    |     cmp za, zb
     | }
     ? UnmeaningfulReadError: zb
 

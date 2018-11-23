@@ -376,6 +376,9 @@ and initializing them afterwards.
 
 dest and src continue to be initialized afterwards.
 
+In addition, if dest is of `word` type, then src must also be of `word`
+type, and in this case this instruction trashes the `a` register.
+
 ### dec ###
 
     dec <dest-memory-location>
@@ -401,24 +404,13 @@ does not store the result anywhere, only sets the resulting flags.
 Affects n, z, and c flags, requiring that they be in the WRITES,
 and initializing them afterwards.
 
-### compare ###
+In addition, if dest is of `word` type, then src must also be of `word`
+type, and in this case this instruction trashes the `a` register.
 
-    compare <dest-memory-location>, <src-memory-location>
-
-Subtracts the contents of src from dest, discarding the result
-and only setting the resulting flags.  Differs from `cmp` in
-that it is able to work on more general types of data (notably,
-words) and it trashes the `a` register.
-
-*   It is illegal if src OR dest is uninitialized.
-
-Affects n, z, and c flags, requiring that they be in the WRITES,
-and initializing them afterwards.
-
-Note that, like `cmp`, `compare` is not suitable for making a
+Note that, like `cmp` is not suitable for making a
 signed comparison; this article, which mentions
 techniques that a SixtyPical compiler could use to
-implement `compare`, also explains why that is:
+implement `cmp`, also explains why that is:
 [Beyond 8-bit Unsigned Comparisons, by Bruce Clark](http://www.6502.org/tutorials/compare_beyond.html).
 
 ### and, or, xor ###

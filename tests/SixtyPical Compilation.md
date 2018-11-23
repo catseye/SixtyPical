@@ -385,7 +385,7 @@ Some instructions on tables. (3/3)
     = $081B   DEC $081F,X
     = $081E   RTS
 
-Compiling `compare`.
+Compiling 16-bit `cmp`.
 
     | word za @ 60001
     | word zb : 3003
@@ -394,7 +394,7 @@ Compiling `compare`.
     |   inputs za, zb
     |   trashes a, z, c, n
     | {
-    |     compare za, zb
+    |     cmp za, zb
     | }
     = $080D   LDA $081C
     = $0810   CMP $EA61

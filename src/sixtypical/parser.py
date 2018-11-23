@@ -463,14 +463,6 @@ class Parser(object):
             dest = self.indlocexpr()
             instr = SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=src)
             return instr
-        elif self.scanner.token in ("compare",):
-            opcode = self.scanner.token
-            self.scanner.scan()
-            dest = self.locexpr()
-            self.scanner.expect(',')
-            src = self.indexed_locexpr()
-            instr = SingleOp(self.scanner.line_number, opcode=opcode, dest=dest, src=src)
-            return instr
         elif self.scanner.consume("with"):
             self.scanner.expect("interrupts")
             self.scanner.expect("off")

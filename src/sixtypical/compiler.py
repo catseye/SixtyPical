@@ -325,8 +325,6 @@ class Compiler(object):
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'cmp':
             self.compile_cmp(instr, instr.src, instr.dest)
-        elif opcode == 'compare':
-            self.compile_compare(instr, instr.src, instr.dest)
         elif opcode in ('and', 'or', 'xor',):
             cls = {
                 'and': AND,
@@ -393,6 +391,17 @@ class Compiler(object):
 
     def compile_cmp(self, instr, src, dest):
         """`instr` is only for reporting purposes"""
+        if isinstance(src, LocationRef) and src.type == TYPE_WORD:
+            src_label = self.get_label(src.name)
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(Absolute(src_label)))
+            self.emitter.emit(CMP(Absolute(dest_label)))
+            end_label = Label('end_label')
+            self.emitter.emit(BNE(Relative(end_label)))
+            self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
+            self.emitter.emit(CMP(Absolute(Offset(dest_label, 1))))
+            self.emitter.resolve_label(end_label)
+            return
         cls = {
             'a': CMP,
             'x': CPX,
@@ -407,23 +416,6 @@ class Compiler(object):
             self.emitter.emit(cls(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
         else:
             self.emitter.emit(cls(Absolute(self.get_label(src.name))))
-
-    def compile_compare(self, instr, src, dest):
-        """`instr` is only for reporting purposes"""
-        if not isinstance(src, LocationRef) or not isinstance(dest, LocationRef):
-            raise UnsupportedOpcodeError(instr)
-        if src.type != TYPE_WORD or dest.type != TYPE_WORD:
-            raise UnsupportedOpcodeError(instr)
-
-        src_label = self.get_label(src.name)
-        dest_label = self.get_label(dest.name)
-        self.emitter.emit(LDA(Absolute(src_label)))
-        self.emitter.emit(CMP(Absolute(dest_label)))
-        end_label = Label('end_label')
-        self.emitter.emit(BNE(Relative(end_label)))
-        self.emitter.emit(LDA(Absolute(Offset(src_label, 1))))
-        self.emitter.emit(CMP(Absolute(Offset(dest_label, 1))))
-        self.emitter.resolve_label(end_label)
 
     def compile_inc(self, instr, dest):
         """`instr` is only for reporting purposes"""
