@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-_Version 0.17.  Work-in-progress, everything is subject to change._
+_Version 0.18.  Work-in-progress, everything is subject to change._
 
 **SixtyPical** is a low-level programming language with advanced
 static analysis.  Many of its primitive instructions resemble

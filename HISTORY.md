@@ -1,6 +1,12 @@
 History of SixtyPical
 =====================
 
+0.18
+----
+
+*   Fixed pathological memory use in the lexical scanner - should
+    be much less inefficient now when parsing large source files.
+
 0.17
 ----
 
