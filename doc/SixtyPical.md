@@ -415,6 +415,12 @@ words) and it trashes the `a` register.
 Affects n, z, and c flags, requiring that they be in the WRITES,
 and initializing them afterwards.
 
+Note that, like `cmp`, `compare` is not suitable for making a
+signed comparison; this article, which mentions
+techniques that a SixtyPical compiler could use to
+implement `compare`, also explains why that is:
+[Beyond 8-bit Unsigned Comparisons, by Bruce Clark](http://www.6502.org/tutorials/compare_beyond.html).
+
 ### and, or, xor ###
 
     and <dest-memory-location>, <src-memory-location>
