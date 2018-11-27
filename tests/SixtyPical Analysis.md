@@ -2280,7 +2280,7 @@ But only if they are bytes.
     | }
     ? TypeMismatchError
 
-A `goto` cannot appear within a `save` block, even if it is otherwise in tail position.
+A `goto` cannot appear within a `save` block.
 
     | define other routine
     |   trashes a, z, n
@@ -2325,8 +2325,7 @@ A `goto` cannot appear within a `save` block, even if it is otherwise in tail po
     | }
     = ok
 
-A `goto` cannot appear within a `with interrupts` block, even if it is
-otherwise in tail position.
+A `goto` cannot appear within a `with interrupts` block.
 
     | vector routine
     |   inputs x
@@ -2973,7 +2972,26 @@ Calling the vector does indeed trash the things the vector says it does.
     | }
     ? UnmeaningfulOutputError: x
 
-`goto`, if present, must be in tail position (the final instruction in a routine.)
+For now at least, you cannot have a `goto` inside a loop.
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     repeat {
+    |         inc x
+    |         goto bar
+    |     } until z
+    | }
+    ? IllegalJumpError
+
+`goto`, as a matter of syntax, can only appear at the end
+of a block; but it need not be the final instruction in a
+routine.  It is only important that the type context at every
+`goto` is compatible with the type context at the end of
+the routine.
 
     | define bar routine trashes x, z, n {
     |     ld x, 200
@@ -2995,9 +3013,8 @@ Calling the vector does indeed trash the things the vector says it does.
     |         ld x, 1
     |         goto bar
     |     }
-    |     ld x, 0
     | }
-    ? IllegalJumpError
+    = ok
 
     | define bar routine trashes x, z, n {
     |     ld x, 200
@@ -3009,6 +3026,7 @@ Calling the vector does indeed trash the things the vector says it does.
     |         ld x, 1
     |         goto bar
     |     }
+    |     goto bar
     | }
     = ok
 
@@ -3023,22 +3041,6 @@ Calling the vector does indeed trash the things the vector says it does.
     |         goto bar
     |     }
     |     ld x, 0
-    | }
-    ? IllegalJumpError
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     if z {
-    |         ld x, 1
-    |         goto bar
-    |     } else {
-    |         ld x, 0
-    |         goto bar
-    |     }
     | }
     = ok
 
@@ -3053,11 +3055,10 @@ Calling the vector does indeed trash the things the vector says it does.
     |         goto bar
     |     } else {
     |         ld x, 0
+    |         goto bar
     |     }
     | }
     = ok
-
-For the purposes of `goto`, the end of a loop is never tail position.
 
     | define bar routine trashes x, z, n {
     |     ld x, 200
@@ -3065,12 +3066,46 @@ For the purposes of `goto`, the end of a loop is never tail position.
     | 
     | define main routine trashes x, z, n {
     |     ld x, 0
-    |     repeat {
-    |         inc x
+    |     if z {
+    |         ld x, 1
     |         goto bar
-    |     } until z
+    |     } else {
+    |         ld x, 0
+    |     }
     | }
-    ? IllegalJumpError
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    |     ld x, 0
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    |     goto bar
+    | }
+    = ok
 
 Can't `goto` a routine that outputs or trashes more than the current routine.
 

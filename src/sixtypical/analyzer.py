@@ -433,9 +433,6 @@ class Analyzer(object):
         dest = instr.dest
         src = instr.src
 
-        if context.encountered_gotos():
-            raise IllegalJumpError(instr, instr)
-
         if opcode == 'ld':
             if isinstance(src, IndexedRef):
                 context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
@@ -734,6 +731,9 @@ class Analyzer(object):
         self.analyze_block(instr.block, context)
         if instr.src is not None:
             context.assert_meaningful(instr.src)
+
+        if context.encountered_gotos():
+            raise IllegalJumpError(instr, instr)
 
     def analyze_for(self, instr, context):
         context.assert_meaningful(instr.dest)
