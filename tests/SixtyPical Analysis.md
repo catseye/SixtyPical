@@ -3223,6 +3223,103 @@ Here, we declare that main outputs a, and we goto a routine that outputs a so th
     | }
     = ok
 
+Here, we declare that main outputs `a`, and we `goto` two routines, and they both output `a`.
+
+    | define bar0 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, x
+    | }
+    | 
+    | define bar1 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar0
+    |     } else {
+    |         ld x, 2
+    |         goto bar1
+    |     }
+    | }
+    = ok
+
+Here is like just above, but one routine doesn't output `a`.
+
+    | define bar0 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, x
+    | }
+    | 
+    | define bar1 routine
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar0
+    |     } else {
+    |         ld x, 2
+    |         goto bar1
+    |     }
+    | }
+    ? InconsistentExitError
+
+Here is like the above, but the two routines have different inputs, and that's OK.
+
+    | define bar0 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, x
+    | }
+    | 
+    | define bar1 routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar0
+    |     } else {
+    |         ld x, 2
+    |         goto bar1
+    |     }
+    | }
+    = ok
+
 TODO: we should have a lot more test cases for the above, here.
 
 Can't `goto` a routine that outputs or trashes more than the current routine.
