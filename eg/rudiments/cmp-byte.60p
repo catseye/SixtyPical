@@ -1,7 +1,6 @@
-// Should print ENLGG
+// Should print ENGGL
 
-word w1
-word w2
+byte b
 
 define chrout routine
   inputs a
@@ -9,13 +8,13 @@ define chrout routine
   @ 65490
 
 define main routine
-  outputs w1, w2
+  outputs b
   trashes a, x, y, z, n, c, v
 {
-    copy 4000, w1
-    copy 4000, w2
+    ld a, 40
+    st a, b
 
-    cmp w1, w2
+    cmp a, b
     if z {
         ld a, 69  // E
         call chrout
@@ -24,10 +23,11 @@ define main routine
         call chrout
     }
 
-    copy 4000, w1
-    copy 4001, w2
+    ld a, 41
+    st a, b
+    ld a, 40
 
-    cmp w1, w2
+    cmp a, b
     if z {
         ld a, 69  // E
         call chrout
@@ -36,10 +36,12 @@ define main routine
         call chrout
     }
 
-    copy 20000, w1
-    copy 20001, w2
+    ld a, 20
+    st a, b
 
-    cmp w1, w2
+    ld a, 21
+
+    cmp a, b      // 21 >= 20
     if c {
         ld a, 71  // G
         call chrout
@@ -48,10 +50,9 @@ define main routine
         call chrout
     }
 
-    copy 20001, w1
-    copy 20001, w2
+    ld a, 20
 
-    cmp w1, w2
+    cmp a, b      // 20 >= 21
     if c {
         ld a, 71  // G
         call chrout
@@ -60,10 +61,9 @@ define main routine
         call chrout
     }
 
-    copy 20002, w1
-    copy 20001, w2
+    ld a, 19
 
-    cmp w1, w2
+    cmp a, b      // 19 < 21
     if c {
         ld a, 71  // G
         call chrout
