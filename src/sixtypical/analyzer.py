@@ -34,6 +34,11 @@ class InconsistentInitializationError(StaticAnalysisError):
     pass
 
 
+class InconsistentExitError(StaticAnalysisError):
+    """The type context differs at two different exit points of the routine."""
+    pass
+
+
 class ForbiddenWriteError(StaticAnalysisError):
     pass
 
@@ -154,6 +159,10 @@ class Context(object):
 
     def each_touched(self):
         for ref in self._touched:
+            yield ref
+
+    def each_writeable(self):
+        for ref in self._writeable:
             yield ref
 
     def assert_meaningful(self, *refs, **kwargs):
@@ -419,12 +428,14 @@ class Analyzer(object):
             exit_context = self.exit_contexts[0]
             exit_meaningful = set(exit_context.each_meaningful())
             exit_touched = set(exit_context.each_touched())
+            exit_writeable = set(exit_context.each_writeable())
             for ex in self.exit_contexts[1:]:
                 if set(ex.each_meaningful()) != exit_meaningful:
-                    raise InconsistentInitializationError('?')
+                    raise InconsistentExitError("Exit contexts are not consistent")
                 if set(ex.each_touched()) != exit_touched:
-                    raise InconsistentInitializationError('?')
-                # FIXME: confirm writeable sets are the same too?
+                    raise InconsistentExitError("Exit contexts are not consistent")
+                if set(ex.each_writeable()) != exit_writeable:
+                    raise InconsistentExitError("Exit contexts are not consistent")
             context.update_from(exit_context)
 
         trashed = set(context.each_touched()) - set(context.each_meaningful())
