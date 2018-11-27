@@ -3174,7 +3174,33 @@ Here, we declare that main outputs a, but we goto a routine that does not output
     |     }
     |     ld a, 1
     | }
-    ? UnmeaningfulReadError
+    ? UnmeaningfulOutputError: a
+
+Here, we declare that main outputs a, and we goto a routine that outputs a so that's OK.
+
+    | define bar routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    |     ld a, 1
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 2
+    |     }
+    |     ld a, 1
+    | }
+    = ok
 
 TODO: we should have a lot more test cases for the above, here.
 

@@ -101,6 +101,7 @@ class Context(object):
         self._touched = set()
         self._range = dict()
         self._writeable = set()
+        self._terminated = False
         self._gotos_encountered = set()
 
         for ref in inputs:
@@ -131,6 +132,13 @@ class Context(object):
         c._range = dict(self._range)
         c._writeable = set(self._writeable)
         return c
+
+    def update_from(self, other):
+        self.routines = other.routines
+        self.routine = other.routine
+        self._touched = set(other._touched)
+        self._range = dict(other._range)
+        self._writeable = set(other._writeable)
 
     def each_meaningful(self):
         for ref in self._range.keys():
@@ -279,6 +287,13 @@ class Context(object):
     def encountered_gotos(self):
         return self._gotos_encountered
 
+    def set_terminated(self):
+        # Having a terminated context and having encountered gotos is not the same thing.
+        self._terminated = True
+
+    def has_terminated(self):
+        return self._terminated
+
     def assert_types_for_read_table(self, instr, src, dest, type_):
         if (not TableType.is_a_table_type(src.ref.type, type_)) or (not dest.type == type_):
             raise TypeMismatchError(instr, '{} and {}'.format(src.ref.name, dest.name))
@@ -364,19 +379,20 @@ class Analyzer(object):
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
-        self.current_routine = routine
         if routine.block is None:
             # it's an extern, that's fine
             return
+
+        self.current_routine = routine
         type_ = routine.location.type
         context = Context(self.routines, routine, type_.inputs, type_.outputs, type_.trashes)
+        self.exit_contexts = []
 
         if self.debug:
             print("at start of routine `{}`:".format(routine.name))
             print(context)
 
         self.analyze_block(routine.block, context)
-        trashed = set(context.each_touched()) - set(context.each_meaningful())
 
         if self.debug:
             print("at end of routine `{}`:".format(routine.name))
@@ -389,6 +405,20 @@ class Analyzer(object):
             print('')
             print('-' * 79)
             print('')
+
+        if self.exit_contexts:
+            # check that they are all consistent
+            exit_context = self.exit_contexts[0]
+            exit_meaningful = set(exit_context.each_meaningful())
+            exit_touched = set(exit_context.each_touched())
+            for ex in self.exit_contexts[1:]:
+                if set(ex.each_meaningful()) != exit_meaningful:
+                    raise InconsistentInitializationError('?')
+                if set(ex.each_touched()) != exit_touched:
+                    raise InconsistentInitializationError('?')
+            context.update_from(exit_context)
+
+        trashed = set(context.each_touched()) - set(context.each_meaningful())
 
         # these all apply whether we encountered goto(s) in this routine, or not...:
 
@@ -406,6 +436,7 @@ class Analyzer(object):
             if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
                 raise ForbiddenWriteError(routine, ref.name)
 
+        self.exit_contexts = None
         self.current_routine = None
         return context
 
@@ -437,6 +468,9 @@ class Analyzer(object):
         opcode = instr.opcode
         dest = instr.dest
         src = instr.src
+
+        if context.has_terminated():
+            raise IllegalJumpError(instr, instr)  # TODO: maybe a better name for this
 
         if opcode == 'ld':
             if isinstance(src, IndexedRef):
@@ -677,26 +711,38 @@ class Analyzer(object):
 
             context.encounter_gotos(set([instr.location]))
 
-            # now that we have encountered a goto here, we set the
+            # Now that we have encountered a goto, we update the
             # context here to match what someone calling the goto'ed
             # function directly, would expect.  (which makes sense
             # when you think about it; if this goto's F, then calling
             # this is like calling F, from the perspective of what is
-            # returned.
+            # returned.)
+            #
+            # However, this isn't the current context anymore.  This
+            # is an exit context of this routine.
+
+            exit_context = context.clone()
 
             for ref in type_.outputs:
-                context.set_touched(ref)   # ?
-                context.set_written(ref)
+                exit_context.set_touched(ref)   # ?
+                exit_context.set_written(ref)
 
             for ref in type_.trashes:
-                context.assert_writeable(ref)
-                context.set_touched(ref)
-                context.set_unmeaningful(ref)
+                exit_context.assert_writeable(ref)
+                exit_context.set_touched(ref)
+                exit_context.set_unmeaningful(ref)
 
-            # TODO is that... all we have to do?  You'll note the above
-            # is a lot like call.  We do rely on, if we are in a branch,
-            # the branch-merge to take care of... a lot?  The fact that
-            # we don't actually continue on from here, I mean.
+            self.exit_contexts.append(exit_context)
+
+            # When we get to the end, we'll check that all the
+            # exit contexts are consistent with each other.
+
+            # We set the current context as having terminated.
+            # If we are in a branch, the merge will deal with
+            # having terminated.  If we are at the end of the
+            # routine, the routine end will deal with that.
+
+            context.set_terminated()
 
         elif opcode == 'trash':
             context.set_touched(instr.dest)
@@ -736,11 +782,21 @@ class Analyzer(object):
                 message='initialized in block 2 but not in block 1 of `if {}`'.format(instr.src)
             )
 
-        # merge the contexts.  this used to be a method called `set_from`
-        context._touched = set(context1._touched) | set(context2._touched)
-        context.set_meaningful(*list(outgoing_meaningful))
-        context._writeable = set(context1._writeable) | set(context2._writeable)
-        context.encounter_gotos(context1.encountered_gotos() | context2.encountered_gotos())
+        # merge the contexts.
+
+        # first, the easy case: if one of the contexts has terminated, just use the other one.
+        # if both have terminated, we return a terminated context, and that's OK.
+
+        if context1.has_terminated():
+            context.update_from(context2)
+        elif context2.has_terminated():
+            context.update_from(context1)
+        else:
+            # the more complicated case: merge the contents of the contexts.
+            context._touched = set(context1._touched) | set(context2._touched)
+            context.set_meaningful(*list(outgoing_meaningful))
+            context._writeable = set(context1._writeable) | set(context2._writeable)
+            context.encounter_gotos(context1.encountered_gotos() | context2.encountered_gotos())
 
         for ref in outgoing_trashes:
             context.set_touched(ref)
@@ -753,14 +809,14 @@ class Analyzer(object):
         if instr.src is not None:  # None indicates 'repeat forever'
             context.assert_meaningful(instr.src)
 
+        if context.encountered_gotos():
+            raise IllegalJumpError(instr, instr)
+
         # now analyze it having been executed a second time, with the context
         # of it having already been executed.
         self.analyze_block(instr.block, context)
         if instr.src is not None:
             context.assert_meaningful(instr.src)
-
-        if context.encountered_gotos():
-            raise IllegalJumpError(instr, instr)
 
     def analyze_for(self, instr, context):
         context.assert_meaningful(instr.dest)
