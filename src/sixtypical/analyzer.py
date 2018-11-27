@@ -676,6 +676,28 @@ class Analyzer(object):
             self.assert_affected_within('trashes', type_, current_type)
 
             context.encounter_gotos(set([instr.location]))
+
+            # now that we have encountered a goto here, we set the
+            # context here to match what someone calling the goto'ed
+            # function directly, would expect.  (which makes sense
+            # when you think about it; if this goto's F, then calling
+            # this is like calling F, from the perspective of what is
+            # returned.
+
+            for ref in type_.outputs:
+                context.set_touched(ref)   # ?
+                context.set_written(ref)
+
+            for ref in type_.trashes:
+                context.assert_writeable(ref)
+                context.set_touched(ref)
+                context.set_unmeaningful(ref)
+
+            # TODO is that... all we have to do?  You'll note the above
+            # is a lot like call.  We do rely on, if we are in a branch,
+            # the branch-merge to take care of... a lot?  The fact that
+            # we don't actually continue on from here, I mean.
+
         elif opcode == 'trash':
             context.set_touched(instr.dest)
             context.set_unmeaningful(instr.dest)
