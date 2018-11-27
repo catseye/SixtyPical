@@ -390,17 +390,22 @@ class Analyzer(object):
             print('-' * 79)
             print('')
 
-        # even if we goto another routine, we can't trash an output.
+        # these all apply whether we encountered goto(s) in this routine, or not...:
+
+        # can't trash an output.
         for ref in trashed:
             if ref in type_.outputs:
                 raise UnmeaningfulOutputError(routine, ref.name)
 
-        if not context.encountered_gotos():
-            for ref in type_.outputs:
-                context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
-            for ref in context.each_touched():
-                if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
-                    raise ForbiddenWriteError(routine, ref.name)
+        # all outputs are meaningful.
+        for ref in type_.outputs:
+            context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
+
+        # if something was touched, then it should have been declared to be writable.
+        for ref in context.each_touched():
+            if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
+                raise ForbiddenWriteError(routine, ref.name)
+
         self.current_routine = None
         return context
 
