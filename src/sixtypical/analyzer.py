@@ -816,7 +816,10 @@ class Analyzer(object):
             context._touched = set(context1._touched) | set(context2._touched)
             context.set_meaningful(*list(outgoing_meaningful))
             context._writeable = set(context1._writeable) | set(context2._writeable)
-            context.encounter_gotos(context1.encountered_gotos() | context2.encountered_gotos())
+
+        # in both cases, we need to merge the encountered gotos, in order that
+        # fallthru optimization continues to work correctly.
+        context.encounter_gotos(context1.encountered_gotos() | context2.encountered_gotos())
 
         for ref in outgoing_trashes:
             context.set_touched(ref)
