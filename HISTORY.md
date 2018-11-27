@@ -4,6 +4,7 @@ History of SixtyPical
 0.18
 ----
 
+*   Syntactically, `goto` may only appear at the end of a block.
 *   Fixed pathological memory use in the lexical scanner - should
     be much less inefficient now when parsing large source files.
 
