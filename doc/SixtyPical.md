@@ -398,6 +398,9 @@ and initializing them afterwards.
 
 Subtracts the contents of src from dest (without considering carry) but
 does not store the result anywhere, only sets the resulting flags.
+This means that `z` is set if src and dest are equal,
+and `c` is set if dest is greater than or equal to src
+(`c` is unset if dest is less than src.)
 
 *   It is illegal if src OR dest is uninitialized.
 
@@ -407,7 +410,7 @@ and initializing them afterwards.
 In addition, if dest is of `word` type, then src must also be of `word`
 type, and in this case this instruction trashes the `a` register.
 
-Note that, like `cmp` is not suitable for making a
+Note that `cmp` is not suitable for making a
 signed comparison; this article, which mentions
 techniques that a SixtyPical compiler could use to
 implement `cmp`, also explains why that is:

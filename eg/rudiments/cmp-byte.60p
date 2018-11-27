@@ -52,7 +52,7 @@ define main routine
 
     ld a, 20
 
-    cmp a, b      // 20 >= 21
+    cmp a, b      // 20 >= 20
     if c {
         ld a, 71  // G
         call chrout
@@ -63,7 +63,7 @@ define main routine
 
     ld a, 19
 
-    cmp a, b      // 19 < 21
+    cmp a, b      // 19 < 20
     if c {
         ld a, 71  // G
         call chrout

@@ -396,11 +396,11 @@ Compiling 16-bit `cmp`.
     | {
     |     cmp za, zb
     | }
-    = $080D   LDA $081C
-    = $0810   CMP $EA61
+    = $080D   LDA $EA61
+    = $0810   CMP $081C
     = $0813   BNE $081B
-    = $0815   LDA $081D
-    = $0818   CMP $EA62
+    = $0815   LDA $EA62
+    = $0818   CMP $081D
     = $081B   RTS
     = $081C   .byte $BB
     = $081D   .byte $0B
