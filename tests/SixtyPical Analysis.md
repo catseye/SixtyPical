@@ -3105,7 +3105,28 @@ routine.
     | }
     = ok
 
-It is, however, important that the type context at every
+Even though `goto` can only appear at the end of a block,
+you can still wind up with dead code; the analysis detects
+this.
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |         goto bar
+    |     }
+    |     ld x, 100
+    | }
+    ? TerminatedContextError
+
+It is important that the type context at every
 `goto` is compatible with the type context at the end of
 the routine.
 
@@ -3128,7 +3149,7 @@ the routine.
     | }
     = ok
 
-Here, we try to trash x before gotoing a routine that inputs x.
+Here, we try to trash `x` before `goto`ing a routine that inputs `x`.
 
     | define bar routine
     |   inputs x
@@ -3152,7 +3173,7 @@ Here, we try to trash x before gotoing a routine that inputs x.
     | }
     ? UnmeaningfulReadError: x
 
-Here, we declare that main outputs a, but we goto a routine that does not output a.
+Here, we declare that main outputs `a`, but we `goto` a routine that does not output `a`.
 
     | define bar routine
     |   inputs x
