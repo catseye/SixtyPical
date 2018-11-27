@@ -17,18 +17,20 @@ class Scanner(object):
         self.filename = filename
         self.token = None
         self.type = None
+        self.pos = 0
         self.line_number = 1
         self.scan()
 
-    def scan_pattern(self, pattern, type, token_group=1, rest_group=2):
-        pattern = r'^(' + pattern + r')(.*?)$'
-        match = re.match(pattern, self.text, re.DOTALL)
+    def scan_pattern(self, pattern, type, token_group=1):
+        pattern = r'(' + pattern + r')'
+        regexp = re.compile(pattern, flags=re.DOTALL)
+        match = regexp.match(self.text, pos=self.pos)
         if not match:
             return False
         else:
             self.type = type
             self.token = match.group(token_group)
-            self.text = match.group(rest_group)
+            self.pos += len(match.group(0))
             self.line_number += self.token.count('\n')
             return True
 
@@ -36,7 +38,7 @@ class Scanner(object):
         self.scan_pattern(r'[ \t\n\r]*', 'whitespace')
         while self.scan_pattern(r'\/\/.*?[\n\r]', 'comment'):
             self.scan_pattern(r'[ \t\n\r]*', 'whitespace')
-        if not self.text:
+        if self.pos >= len(self.text):
             self.token = None
             self.type = 'EOF'
             return
@@ -44,20 +46,18 @@ class Scanner(object):
             return
         if self.scan_pattern(r'\d+', 'integer literal'):
             return
-        if self.scan_pattern(r'\$([0-9a-fA-F]+)', 'integer literal',
-                             token_group=2, rest_group=3):
+        if self.scan_pattern(r'\$([0-9a-fA-F]+)', 'integer literal', token_group=2):
             # ecch
             self.token = str(eval('0x' + self.token))
             return
-        if self.scan_pattern(r'\"(.*?)\"', 'string literal',
-                             token_group=2, rest_group=3):
+        if self.scan_pattern(r'\"(.*?)\"', 'string literal', token_group=2):
             return
         if self.scan_pattern(r'\w+', 'identifier'):
             return
         if self.scan_pattern(r'.', 'unknown character'):
             return
         else:
-            raise AssertionError("this should never happen, self.text=({})".format(self.text))
+            raise AssertionError("this should never happen, self.text=({}), self.pos=({})".format(self.text, self.pos))
 
     def expect(self, token):
         if self.token == token:
