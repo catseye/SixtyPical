@@ -571,6 +571,18 @@ goto.
     | }
     ? SyntaxError
 
+`goto` may only be the final instruction in a block.
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     goto bar
+    |     ld x, 0
+    | }
+    ? Expected '}', but found 'ld'
+
 Buffers and pointers.
 
     | buffer[2048] buf

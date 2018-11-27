@@ -2990,7 +2990,11 @@ Calling the vector does indeed trash the things the vector says it does.
     | }
     | 
     | define main routine trashes x, z, n {
-    |     goto bar
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
     |     ld x, 0
     | }
     ? IllegalJumpError
