@@ -46,6 +46,12 @@ class IllegalJumpError(StaticAnalysisError):
     pass
 
 
+class TerminatedContextError(StaticAnalysisError):
+    """What the program is doing here is not valid, due to preceding `goto`s,
+    which make this dead code."""
+    pass
+
+
 class RangeExceededError(StaticAnalysisError):
     pass
 
@@ -139,6 +145,8 @@ class Context(object):
         self._touched = set(other._touched)
         self._range = dict(other._range)
         self._writeable = set(other._writeable)
+        self._terminated = other._terminated
+        self._gotos_encounters = set(other._gotos_encountered)
 
     def each_meaningful(self):
         for ref in self._range.keys():
@@ -416,6 +424,7 @@ class Analyzer(object):
                     raise InconsistentInitializationError('?')
                 if set(ex.each_touched()) != exit_touched:
                     raise InconsistentInitializationError('?')
+                # FIXME: confirm writeable sets are the same too?
             context.update_from(exit_context)
 
         trashed = set(context.each_touched()) - set(context.each_meaningful())
@@ -470,7 +479,7 @@ class Analyzer(object):
         src = instr.src
 
         if context.has_terminated():
-            raise IllegalJumpError(instr, instr)  # TODO: maybe a better name for this
+            raise TerminatedContextError(instr, instr)
 
         if opcode == 'ld':
             if isinstance(src, IndexedRef):
