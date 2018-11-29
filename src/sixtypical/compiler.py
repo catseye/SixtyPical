@@ -391,6 +391,17 @@ class Compiler(object):
 
     def compile_cmp(self, instr, src, dest):
         """`instr` is only for reporting purposes"""
+        if isinstance(src, LocationRef) and src.type == TYPE_WORD:
+            src_label = self.get_label(src.name)
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(Absolute(dest_label)))
+            self.emitter.emit(CMP(Absolute(src_label)))
+            end_label = Label('end_label')
+            self.emitter.emit(BNE(Relative(end_label)))
+            self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
+            self.emitter.emit(CMP(Absolute(Offset(src_label, 1))))
+            self.emitter.resolve_label(end_label)
+            return
         cls = {
             'a': CMP,
             'x': CPX,

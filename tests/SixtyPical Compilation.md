@@ -385,6 +385,26 @@ Some instructions on tables. (3/3)
     = $081B   DEC $081F,X
     = $081E   RTS
 
+Compiling 16-bit `cmp`.
+
+    | word za @ 60001
+    | word zb : 3003
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes a, z, c, n
+    | {
+    |     cmp za, zb
+    | }
+    = $080D   LDA $EA61
+    = $0810   CMP $081C
+    = $0813   BNE $081B
+    = $0815   LDA $EA62
+    = $0818   CMP $081D
+    = $081B   RTS
+    = $081C   .byte $BB
+    = $081D   .byte $0B
+
 Compiling `if`.
 
     | define main routine

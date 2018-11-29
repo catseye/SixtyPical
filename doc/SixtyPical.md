@@ -288,9 +288,9 @@ this mode is used.
 
     copy <src-memory-location>, <dest-memory-location>
 
-Reads from src and writes to dest.  Differs from `st` in that is able to
-copy more general types of data (for example, vectors,) and it trashes the
-`z` and `n` flags and the `a` register.
+Reads from src and writes to dest.  Differs from `ld` and `st` in that
+it is able to copy more general types of data (for example, vectors,)
+and it trashes the `z` and `n` flags and the `a` register.
 
 *   It is illegal if dest is read-only.
 *   It is illegal if dest does not occur in the WRITES of the current routine.
@@ -376,6 +376,9 @@ and initializing them afterwards.
 
 dest and src continue to be initialized afterwards.
 
+In addition, if dest is of `word` type, then src must also be of `word`
+type, and in this case this instruction trashes the `a` register.
+
 ### dec ###
 
     dec <dest-memory-location>
@@ -395,11 +398,23 @@ and initializing them afterwards.
 
 Subtracts the contents of src from dest (without considering carry) but
 does not store the result anywhere, only sets the resulting flags.
+This means that `z` is set if src and dest are equal,
+and `c` is set if dest is greater than or equal to src
+(`c` is unset if dest is less than src.)
 
 *   It is illegal if src OR dest is uninitialized.
 
 Affects n, z, and c flags, requiring that they be in the WRITES,
 and initializing them afterwards.
+
+In addition, if dest is of `word` type, then src must also be of `word`
+type, and in this case this instruction trashes the `a` register.
+
+Note that `cmp` is not suitable for making a
+signed comparison; this article, which mentions
+techniques that a SixtyPical compiler could use to
+implement `cmp`, also explains why that is:
+[Beyond 8-bit Unsigned Comparisons, by Bruce Clark](http://www.6502.org/tutorials/compare_beyond.html).
 
 ### and, or, xor ###
 
