@@ -1,17 +1,6 @@
 TODO for SixtyPical
 ===================
 
-### 16-bit `cmp`
-
-This is because we don't actually want `low` and `high` address operators
-that turn `word` type into `byte`.
-
-This is because this immediately makes things harder (that is, effectively
-impossible) to analyze.
-
-16-bit `cmp` also benefits from some special differences between `cmp`
-and `sub` on 6502, so it would be nice to capture them.
-
 ### Save values to other-than-the-stack
 
 Allow

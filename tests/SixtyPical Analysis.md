@@ -1118,6 +1118,52 @@ Some rudimentary tests for `cmp`.
     | }
     ? UnmeaningfulReadError: a
 
+`cmp` can work on words. In this case, it trashes `a`.
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes a, z, c, n
+    | {
+    |     cmp za, zb
+    | }
+    = ok
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes a, z, n
+    | {
+    |     cmp za, zb
+    | }
+    ? ForbiddenWriteError: c
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes z, c, n
+    | {
+    |     cmp za, zb
+    | }
+    ? ForbiddenWriteError: a
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za
+    |   trashes z, c, n
+    | {
+    |     cmp za, zb
+    | }
+    ? UnmeaningfulReadError: zb
+
 ### and ###
 
 Some rudimentary tests for `and`.
