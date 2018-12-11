@@ -13,6 +13,8 @@ History of SixtyPical
     of `word` memory locations (at the cost of trashing `a`.)
 *   Fixed pathological memory use in the lexical scanner - should
     be much less inefficient now when parsing large source files.
+*   Reorganized the examples in `eg/rudiments/` to make them
+    officially platform-agnostic and to state the expected output.
 
 0.17
 ----
