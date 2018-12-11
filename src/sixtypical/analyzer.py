@@ -597,7 +597,20 @@ class Analyzer(object):
             else:
                 self.assert_type(TYPE_BYTE, dest)
                 context.set_written(dest, FLAG_Z, FLAG_N)
-                context.invalidate_range(dest)
+                bottom = context.get_bottom_of_range(dest)
+                top = context.get_top_of_range(dest)
+                if opcode == 'inc':
+                    if bottom == top and top < 255:
+                        context.set_range(dest, bottom + 1, top + 1)
+                    else:
+                        context.invalidate_range(dest)
+                elif opcode == 'dec':
+                    if bottom == top and bottom > 0:
+                        context.set_range(dest, bottom - 1, top - 1)
+                    else:
+                        context.invalidate_range(dest)
+                else:
+                    raise NotImplementedError
         elif opcode in ('shl', 'shr'):
             context.assert_meaningful(dest, FLAG_C)
             if isinstance(dest, IndexedRef):

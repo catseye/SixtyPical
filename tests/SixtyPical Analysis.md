@@ -762,6 +762,49 @@ no longer be guaranteed.
     | }
     ? RangeExceededError
 
+When the range of a location is known, incrementing or
+decrementing that location's value will shift the known
+range.  It will not invalidate it unless the known range
+is at the limits of the possible ranges for the type.
+
+    | vector routine
+    |   trashes a, z, n
+    |     print
+    | 
+    | vector (routine
+    |   trashes a, z, n)
+    |     table[32] vectors
+    | 
+    | define main routine
+    |   inputs vectors, print
+    |   outputs vectors
+    |   trashes print, a, x, z, n, c
+    | {
+    |     ld x, 0
+    |     inc x
+    |     copy print, vectors + x
+    | }
+    = ok
+
+    | vector routine
+    |   trashes a, z, n
+    |     print
+    | 
+    | vector (routine
+    |   trashes a, z, n)
+    |     table[32] vectors
+    | 
+    | define main routine
+    |   inputs vectors, print
+    |   outputs vectors
+    |   trashes print, a, x, z, n, c
+    | {
+    |     ld x, 32
+    |     dec x
+    |     copy print, vectors + x
+    | }
+    = ok
+
 ### add ###
 
 Can't `add` from or to a memory location that isn't initialized.

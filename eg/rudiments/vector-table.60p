@@ -3,14 +3,6 @@
 // Prints "AABAB".
 //
 
-// TODO: this doesn't pass the analyzer currently, which suggests a bug.
-//
-//     RangeExceededError: Possible range of x:byte (0, 255) exceeds
-//     acceptable range of vectors:vector table[32] (0, 31) (in main, line 57)
-//
-// (despite various attempts to work around by calling a setup routine, etc.)
-// It should really be able to figure out that the range of x is 0..4 there.
-
 vector routine
   trashes a, z, n
     print

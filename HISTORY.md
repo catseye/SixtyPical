@@ -7,6 +7,8 @@ History of SixtyPical
 *   Syntactically, `goto` may only appear at the end of a block.
     It need no longer be the final instruction in a routine,
     as long as the type context is consistent at every exit.
+*   When the range of a location is known, `inc` and `dec`
+    on it will usually shift the known instead of invalidating it.
 *   `cmp` instruction can now perform a 16-bit unsigned comparison
     of `word` memory locations (at the cost of trashing `a`.)
 *   Fixed pathological memory use in the lexical scanner - should
