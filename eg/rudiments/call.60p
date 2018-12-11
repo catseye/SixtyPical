@@ -1,7 +1,5 @@
-define chrout routine
-  inputs a
-  trashes a
-  @ 65490
+// Include `support/${PLATFORM}.60p` before this source
+// Should print ???
 
 define print routine
   trashes a, z, n

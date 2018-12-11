@@ -1,0 +1,6 @@
+// Implementation of `chrout` for the Commodore VIC-20 platform.
+
+define chrout routine
+  inputs a
+  trashes a
+  @ 65490

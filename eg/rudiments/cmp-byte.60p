@@ -1,11 +1,7 @@
+// Include `support/${PLATFORM}.60p` before this source
 // Should print ENGGL
 
 byte b
-
-define chrout routine
-  inputs a
-  trashes a
-  @ 65490
 
 define main routine
   outputs b

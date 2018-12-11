@@ -1,12 +1,8 @@
+// Include `support/${PLATFORM}.60p` before this source
 // Should print ENGGL
 
 word w1
 word w2
-
-define chrout routine
-  inputs a
-  trashes a
-  @ 65490
 
 define main routine
   outputs w1, w2

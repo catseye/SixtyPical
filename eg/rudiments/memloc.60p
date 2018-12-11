@@ -1,9 +1,7 @@
-byte foo
+// Include `support/${PLATFORM}.60p` before this source
+// Should print ???
 
-define chrout routine
-  inputs a
-  trashes a
-  @ 65490
+byte foo
 
 define print routine
   inputs foo
