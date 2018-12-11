@@ -1,7 +1,8 @@
 This directory contains example sources which demonstrate
 the rudiments of SixtyPical.
 
-Some are meant to fail and produce an error message.
+Examples that are meant to fail and produce an error message
+are in the `errorful/` subdirectory.
 
 They are not meant to be specific to any architecture, but
 many do assume the existence of a routine at 65490 which
