@@ -411,14 +411,16 @@ class Analyzer(object):
 
         self.analyze_block(routine.block, context)
 
+        trashed = set(context.each_touched()) - set(context.each_meaningful())
+
         if self.debug:
             print("at end of routine `{}`:".format(routine.name))
             print(context)
-            #print("trashed: ", LocationRef.format_set(trashed))
+            print("trashed: ", LocationRef.format_set(trashed))
             print("outputs: ", LocationRef.format_set(type_.outputs))
-            #trashed_outputs = type_.outputs & trashed
-            #if trashed_outputs:
-            #    print("TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs))
+            trashed_outputs = type_.outputs & trashed
+            if trashed_outputs:
+                print("TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs))
             print('')
             print('-' * 79)
             print('')
@@ -437,8 +439,6 @@ class Analyzer(object):
                 if set(ex.each_writeable()) != exit_writeable:
                     raise InconsistentExitError("Exit contexts are not consistent")
             context.update_from(exit_context)
-
-        trashed = set(context.each_touched()) - set(context.each_meaningful())
 
         # these all apply whether we encountered goto(s) in this routine, or not...:
 
