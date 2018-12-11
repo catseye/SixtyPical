@@ -1607,7 +1607,7 @@ Both blocks of an `if` are analyzed.
     | }
     = ok
 
-If a location is initialized in one block, is must be initialized in the other as well
+If a location is initialized in one block, it must be initialized in the other as well
 in order to be considered to be initialized after the block.  If it is not consistent,
 it will be considered uninitialized.
 
@@ -1652,6 +1652,20 @@ it will be considered uninitialized.
     |     }
     | }
     ? UnmeaningfulOutputError: x
+
+    | define foo routine
+    |   inputs a
+    |   trashes a, x, z, n, c
+    | {
+    |     cmp a, 42
+    |     if not z {
+    |         ld a, 6
+    |     } else {
+    |         ld x, 7
+    |     }
+    |     ld a, x
+    | }
+    ? UnmeaningfulReadError: x
 
 If we don't care if it's uninitialized after the `if`, that's okay then.
 
