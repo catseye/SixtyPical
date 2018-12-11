@@ -2326,7 +2326,7 @@ But only if they are bytes.
     | }
     ? TypeMismatchError
 
-A `goto` cannot appear within a `save` block, even if it is otherwise in tail position.
+A `goto` cannot appear within a `save` block.
 
     | define other routine
     |   trashes a, z, n
@@ -2371,8 +2371,7 @@ A `goto` cannot appear within a `save` block, even if it is otherwise in tail po
     | }
     = ok
 
-A `goto` cannot appear within a `with interrupts` block, even if it is
-otherwise in tail position.
+A `goto` cannot appear within a `with interrupts` block.
 
     | vector routine
     |   inputs x
@@ -3019,87 +3018,7 @@ Calling the vector does indeed trash the things the vector says it does.
     | }
     ? UnmeaningfulOutputError: x
 
-`goto`, if present, must be in tail position (the final instruction in a routine.)
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     goto bar
-    | }
-    = ok
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     goto bar
-    |     ld x, 0
-    | }
-    ? IllegalJumpError
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     if z {
-    |         ld x, 1
-    |         goto bar
-    |     }
-    | }
-    = ok
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     if z {
-    |         ld x, 1
-    |         goto bar
-    |     }
-    |     ld x, 0
-    | }
-    ? IllegalJumpError
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     if z {
-    |         ld x, 1
-    |         goto bar
-    |     } else {
-    |         ld x, 0
-    |         goto bar
-    |     }
-    | }
-    = ok
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     if z {
-    |         ld x, 1
-    |         goto bar
-    |     } else {
-    |         ld x, 0
-    |     }
-    | }
-    = ok
-
-For the purposes of `goto`, the end of a loop is never tail position.
+For now at least, you cannot have a `goto` inside a `repeat` loop.
 
     | define bar routine trashes x, z, n {
     |     ld x, 200
@@ -3113,6 +3032,341 @@ For the purposes of `goto`, the end of a loop is never tail position.
     |     } until z
     | }
     ? IllegalJumpError
+
+`goto`, as a matter of syntax, can only appear at the end
+of a block; but it need not be the final instruction in a
+routine.
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     goto bar
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    |     goto bar
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    |     ld x, 0
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |         goto bar
+    |     }
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    |     ld x, 0
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    |     goto bar
+    | }
+    = ok
+
+Even though `goto` can only appear at the end of a block,
+you can still wind up with dead code; the analysis detects
+this.
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |         goto bar
+    |     }
+    |     ld x, 100
+    | }
+    ? TerminatedContextError
+
+It is important that the type context at every
+`goto` is compatible with the type context at the end of
+the routine.
+
+    | define bar routine
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    |     ld x, 1
+    | }
+    = ok
+
+Here, we try to trash `x` before `goto`ing a routine that inputs `x`.
+
+    | define bar routine
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         trash x
+    |         goto bar
+    |     } else {
+    |         trash x
+    |     }
+    |     ld a, 1
+    | }
+    ? UnmeaningfulReadError: x
+
+Here, we declare that main outputs `a`, but we `goto` a routine that does not output `a`.
+
+    | define bar routine
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 2
+    |     }
+    |     ld a, 1
+    | }
+    ? UnmeaningfulOutputError: a
+
+Here, we declare that main outputs a, and we goto a routine that outputs a so that's OK.
+
+    | define bar routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    |     ld a, 1
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 2
+    |     }
+    |     ld a, 1
+    | }
+    = ok
+
+Here, we declare that main outputs `a`, and we `goto` two routines, and they both output `a`.
+
+    | define bar0 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, x
+    | }
+    | 
+    | define bar1 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar0
+    |     } else {
+    |         ld x, 2
+    |         goto bar1
+    |     }
+    | }
+    = ok
+
+Here is like just above, but one routine doesn't output `a`.
+
+    | define bar0 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, x
+    | }
+    | 
+    | define bar1 routine
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar0
+    |     } else {
+    |         ld x, 2
+    |         goto bar1
+    |     }
+    | }
+    ? InconsistentExitError
+
+Here is like the above, but the two routines have different inputs, and that's OK.
+
+    | define bar0 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, x
+    | }
+    | 
+    | define bar1 routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar0
+    |     } else {
+    |         ld x, 2
+    |         goto bar1
+    |     }
+    | }
+    = ok
+
+TODO: we should have a lot more test cases for the above, here.
 
 Can't `goto` a routine that outputs or trashes more than the current routine.
 

@@ -55,13 +55,9 @@ error.
 
 ### Tail-call optimization
 
-More generally, define a block as having zero or one `goto`s at the end.  (and `goto`s cannot
-appear elsewhere.)
-
 If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can,
 if the block is in tail position.  The constraints should iron out the same both ways.
 
-And - once we have this - why do we need `goto` to be in tail position, strictly?
 As long as the routine has consistent type context every place it exits, that should be fine.
 
 ### "Include" directives

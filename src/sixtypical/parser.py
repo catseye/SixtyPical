@@ -380,6 +380,8 @@ class Parser(object):
         self.scanner.expect('{')
         while not self.scanner.on('}'):
             instrs.append(self.instr())
+            if isinstance(instrs[-1], SingleOp) and instrs[-1].opcode == 'goto':
+                break
         self.scanner.expect('}')
         return Block(self.scanner.line_number, instrs=instrs)
 
