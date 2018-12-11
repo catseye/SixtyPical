@@ -1,6 +1,6 @@
 // Demonstrates vector tables.
 // Include `support/${PLATFORM}.60p` before this source
-// Should print ???
+// Should print YN
 
 define main routine
   trashes a, x, y, z, n, c, v

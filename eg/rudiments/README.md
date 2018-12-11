@@ -12,6 +12,10 @@ under `platform/`, should be included first, like
 
 so that system entry points such as `chrout` are defined.
 
+There's a `loadngo.sh` script in this directory that does this.
+
+    ./loadngo.sh c64 vector-table.60p
+
 `chrout` is a routine with outputs the value of the accumulator
 as an ASCII character, disturbing none of the other registers,
 simply for the purposes of producing some observable output.

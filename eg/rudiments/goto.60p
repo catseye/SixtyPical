@@ -1,5 +1,5 @@
 // Include `support/${PLATFORM}.60p` before this source
-// Should print ???
+// Should print AB
 
 define bar routine trashes a, z, n {
     ld a, 66

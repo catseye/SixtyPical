@@ -1,5 +1,5 @@
 // Include `support/${PLATFORM}.60p` before this source
-// Should print ???
+// Should print AB
 
 byte foo
 
