@@ -414,11 +414,11 @@ class Analyzer(object):
         if self.debug:
             print("at end of routine `{}`:".format(routine.name))
             print(context)
-            print("trashed: ", LocationRef.format_set(trashed))
+            #print("trashed: ", LocationRef.format_set(trashed))
             print("outputs: ", LocationRef.format_set(type_.outputs))
-            trashed_outputs = type_.outputs & trashed
-            if trashed_outputs:
-                print("TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs))
+            #trashed_outputs = type_.outputs & trashed
+            #if trashed_outputs:
+            #    print("TRASHED OUTPUTS: ", LocationRef.format_set(trashed_outputs))
             print('')
             print('-' * 79)
             print('')
@@ -800,24 +800,6 @@ class Analyzer(object):
 
         outgoing_meaningful = set(context1.each_meaningful()) & set(context2.each_meaningful())
         outgoing_trashes = incoming_meaningful - outgoing_meaningful
-
-        # TODO may we need to deal with touched separately here too?
-        # probably not; if it wasn't meaningful in the first place, it
-        # doesn't really matter if you modified it or not, coming out.
-        for ref in context1.each_meaningful():
-            if ref in outgoing_trashes:
-                continue
-            context2.assert_meaningful(
-                ref, exception_class=InconsistentInitializationError,
-                message='initialized in block 1 but not in block 2 of `if {}`'.format(instr.src)
-            )
-        for ref in context2.each_meaningful():
-            if ref in outgoing_trashes:
-                continue
-            context1.assert_meaningful(
-                ref, exception_class=InconsistentInitializationError,
-                message='initialized in block 2 but not in block 1 of `if {}`'.format(instr.src)
-            )
 
         # merge the contexts.
 
