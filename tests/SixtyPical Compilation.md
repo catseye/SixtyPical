@@ -403,10 +403,10 @@ Compiling 16-bit `cmp`.
     = $0815   LDA $EA62
     = $0818   CMP $0829
     = $081B   LDA $EA61
-    = $081E   CMP #$0F
+    = $081E   CMP #$A0
     = $0820   BNE $0827
     = $0822   LDA $EA62
-    = $0825   CMP #$A0
+    = $0825   CMP #$0F
     = $0827   RTS
     = $0828   .byte $BB
     = $0829   .byte $0B

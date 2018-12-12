@@ -405,11 +405,11 @@ class Compiler(object):
         if isinstance(src, ConstantRef) and src.type == TYPE_WORD:
             dest_label = self.get_label(dest.name)
             self.emitter.emit(LDA(Absolute(dest_label)))
-            self.emitter.emit(CMP(Immediate(Byte(src.high_byte()))))
+            self.emitter.emit(CMP(Immediate(Byte(src.low_byte()))))
             end_label = Label('end_label')
             self.emitter.emit(BNE(Relative(end_label)))
             self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
-            self.emitter.emit(CMP(Immediate(Byte(src.low_byte()))))
+            self.emitter.emit(CMP(Immediate(Byte(src.high_byte()))))
             self.emitter.resolve_label(end_label)
             return
         cls = {
