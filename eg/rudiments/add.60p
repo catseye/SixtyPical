@@ -1,0 +1,36 @@
+// Include `support/${PLATFORM}.60p` before this source
+// Should print YY
+
+word score
+
+define main routine
+  inputs a, score
+  outputs score
+  trashes a, c, z, n, v
+{
+    ld a, 3
+    st off, c
+    add a, 4
+
+    cmp a, 7
+    if z {
+        ld a, 89
+        call chrout
+    } else {
+        ld a, 78
+        call chrout
+    }
+
+    copy 999, score
+    st off, c
+    add score, 1999
+
+    cmp score, 2998
+    if z {
+        ld a, 89
+        call chrout
+    } else {
+        ld a, 78
+        call chrout
+    }
+}

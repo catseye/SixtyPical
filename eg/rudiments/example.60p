@@ -1,3 +1,6 @@
+// Include `support/${PLATFORM}.60p` before this source
+// Should print 01
+
 byte lives
 
 byte table[16] hexchars : "0123456789ABCDEF"

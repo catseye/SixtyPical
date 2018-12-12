@@ -1,3 +1,6 @@
+// This program is expected to loop forever.
+// Be prepared to forcibly terminate your emulator.
+
 define main routine
   trashes a, y, z, n, c
 {

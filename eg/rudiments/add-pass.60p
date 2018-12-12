@@ -1,8 +1,0 @@
-define main routine
-  inputs a
-  outputs a
-  trashes c, z, n, v
-{
-    st off, c
-    add a, 4
-}
