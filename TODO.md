@@ -44,15 +44,6 @@ buffer; and the ones you establish must be disjoint.
 An alternative would be `static` pointers, which are currently not possible because
 pointers must be zero-page, thus `@`, thus uninitialized.
 
-### Question "consistent initialization"
-
-Question the value of the "consistent initialization" principle for `if` statement analysis.
-
-Part of this is the trashes at the end; I think what it should be is that the trashes
-after the `if` is the union of the trashes in each of the branches; this would obviate the
-need to `trash` values explicitly, but if you tried to access them afterwards, it would still
-error.
-
 ### Tail-call optimization
 
 If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can,

@@ -1629,7 +1629,9 @@ Both blocks of an `if` are analyzed.
     | }
     = ok
 
-If a location is initialized in one block, is must be initialized in the other as well.
+If a location is initialized in one block, it must be initialized in the other as well
+in order to be considered to be initialized after the block.  If it is not consistent,
+it will be considered uninitialized.
 
     | define foo routine
     |   inputs a
@@ -1643,7 +1645,7 @@ If a location is initialized in one block, is must be initialized in the other a
     |         ld a, 23
     |     }
     | }
-    ? InconsistentInitializationError: x
+    ? UnmeaningfulOutputError: x
 
     | define foo routine
     |   inputs a
@@ -1657,7 +1659,7 @@ If a location is initialized in one block, is must be initialized in the other a
     |         ld x, 7
     |     }
     | }
-    ? InconsistentInitializationError: x
+    ? UnmeaningfulOutputError: x
 
     | define foo routine
     |   inputs a
@@ -1671,7 +1673,53 @@ If a location is initialized in one block, is must be initialized in the other a
     |         ld x, 7
     |     }
     | }
-    ? InconsistentInitializationError: x
+    ? UnmeaningfulOutputError: x
+
+    | define foo routine
+    |   inputs a
+    |   trashes a, x, z, n, c
+    | {
+    |     cmp a, 42
+    |     if not z {
+    |         ld a, 6
+    |     } else {
+    |         ld x, 7
+    |     }
+    |     ld a, x
+    | }
+    ? UnmeaningfulReadError: x
+
+If we don't care if it's uninitialized after the `if`, that's okay then.
+
+    | define foo routine
+    |   inputs a
+    |   trashes a, x, z, n, c
+    | {
+    |     cmp a, 42
+    |     if not z {
+    |         ld a, 6
+    |     } else {
+    |         ld x, 7
+    |     }
+    | }
+    = ok
+
+Or, if it does get initialized on both branches, that's okay then.
+
+    | define foo routine
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     cmp a, 42
+    |     if not z {
+    |         ld x, 0
+    |         ld a, 6
+    |     } else {
+    |         ld x, 7
+    |     }
+    | }
+    = ok
 
 However, this only pertains to initialization.  If a value is already
 initialized, either because it was set previous to the `if`, or is an
@@ -1720,7 +1768,7 @@ An `if` with a single block is analyzed as if it had an empty `else` block.
     |         ld x, 7
     |     }
     | }
-    ? InconsistentInitializationError: x
+    ? UnmeaningfulOutputError: x
 
     | define foo routine
     |   inputs a

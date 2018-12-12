@@ -4,6 +4,9 @@ History of SixtyPical
 0.18
 ----
 
+*   The "consistent initialization" check inside `if` blocks has
+    been dropped.  If a location is initialized inside one block
+    but not the other, it is treated as uninitialized afterwards.
 *   Syntactically, `goto` may only appear at the end of a block.
     It need no longer be the final instruction in a routine,
     as long as the type context is consistent at every exit.

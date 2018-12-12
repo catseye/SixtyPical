@@ -411,6 +411,8 @@ class Analyzer(object):
 
         self.analyze_block(routine.block, context)
 
+        trashed = set(context.each_touched()) - set(context.each_meaningful())
+
         if self.debug:
             print("at end of routine `{}`:".format(routine.name))
             print(context)
@@ -437,8 +439,6 @@ class Analyzer(object):
                 if set(ex.each_writeable()) != exit_writeable:
                     raise InconsistentExitError("Exit contexts are not consistent")
             context.update_from(exit_context)
-
-        trashed = set(context.each_touched()) - set(context.each_meaningful())
 
         # these all apply whether we encountered goto(s) in this routine, or not...:
 
@@ -800,24 +800,6 @@ class Analyzer(object):
 
         outgoing_meaningful = set(context1.each_meaningful()) & set(context2.each_meaningful())
         outgoing_trashes = incoming_meaningful - outgoing_meaningful
-
-        # TODO may we need to deal with touched separately here too?
-        # probably not; if it wasn't meaningful in the first place, it
-        # doesn't really matter if you modified it or not, coming out.
-        for ref in context1.each_meaningful():
-            if ref in outgoing_trashes:
-                continue
-            context2.assert_meaningful(
-                ref, exception_class=InconsistentInitializationError,
-                message='initialized in block 1 but not in block 2 of `if {}`'.format(instr.src)
-            )
-        for ref in context2.each_meaningful():
-            if ref in outgoing_trashes:
-                continue
-            context1.assert_meaningful(
-                ref, exception_class=InconsistentInitializationError,
-                message='initialized in block 2 but not in block 1 of `if {}`'.format(instr.src)
-            )
 
         # merge the contexts.
 

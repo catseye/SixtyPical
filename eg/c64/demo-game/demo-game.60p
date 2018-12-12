@@ -311,14 +311,6 @@ define player_logic logic_routine
             ld a, 1
             st a, player_died
         }
-
-        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
-        // but currently the compiler cares a little too much about values that are
-        // initialized in one branch of an `if`, but not the other, but are trashed
-        // at the end of the routine anyway.
-        trash ptr
-        trash y
-        trash v
     }
 }
 
@@ -355,13 +347,6 @@ define enemy_logic logic_routine
             add ptr, pos
             copy 82, [ptr] + y
         }
-
-        // FIXME these trashes, strictly speaking, probably shouldn't be needed,
-        // but currently the compiler cares too much about values that are
-        // initialized in one branch of an `if`, but not the other, but trashed
-        // at the end of the routine anyway.
-        trash ptr
-        trash y
     } else {
         copy delta, compare_target
         st on, c
