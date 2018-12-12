@@ -12,6 +12,8 @@ History of SixtyPical
 *   `cmp` instruction can now perform a 16-bit unsigned comparison
     of `word` memory locations and `word` literals (at the cost of
     trashing the `a` register.)
+*   `add` (resp. `sub`) now support adding (resp. subtracting) a
+    byte location or a byte literal from a byte location.
 *   Fixed pathological memory use in the lexical scanner - should
     be much less inefficient now when parsing large source files.
 *   Reorganized the examples in `eg/rudiments/` to make them

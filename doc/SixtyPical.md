@@ -333,8 +333,9 @@ this mode is used.
 
 Adds the contents of src to dest and stores the result in dest.
 
-*   It is illegal if src OR dest OR c is uninitialized.
+*   It is illegal if src OR dest OR `c` is uninitialized.
 *   It is illegal if dest is read-only.
+*   It is illegal if dest is `x` or `y`.
 *   It is illegal if dest does not occur in the WRITES of the current routine.
 
 Affects n, z, c, and v flags, requiring that they be in the WRITES,
@@ -344,6 +345,9 @@ dest and src continue to be initialized afterwards.
 
 In addition, if dest is of `word` type, then src must also be of `word`
 type, and in this case this instruction trashes the `a` register.
+
+In fact, this instruction trashes the `a` register in all cases except
+when the dest is `a`.
 
 NOTE: If dest is a pointer, the addition does not check if the result of
 the pointer arithmetic continues to be valid (within a buffer) or not.
@@ -367,8 +371,9 @@ and initializing them afterwards.
 
 Subtracts the contents of src from dest and stores the result in dest.
 
-*   It is illegal if src OR dest OR c is uninitialized.
+*   It is illegal if src OR dest OR `c` is uninitialized.
 *   It is illegal if dest is read-only.
+*   It is illegal if dest is `x` or `y`.
 *   It is illegal if dest does not occur in the WRITES of the current routine.
 
 Affects n, z, c, and v flags, requiring that they be in the WRITES,
@@ -378,6 +383,9 @@ dest and src continue to be initialized afterwards.
 
 In addition, if dest is of `word` type, then src must also be of `word`
 type, and in this case this instruction trashes the `a` register.
+
+In fact, this instruction trashes the `a` register in all cases except
+when the dest is `a`.
 
 ### dec ###
 

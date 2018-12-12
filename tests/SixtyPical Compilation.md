@@ -1030,9 +1030,11 @@ Copying to and from a vector table.
 Various modes of `add`.
 
     | byte lives
+    | byte extra
     | word score
+    | word bonus
     | define main routine
-    |   inputs lives, score
+    |   inputs lives, score, extra, bonus
     |   outputs lives, score
     |   trashes a, x, y, c, z, v, n
     | {
@@ -1042,19 +1044,84 @@ Various modes of `add`.
     |     st off, c
     |     add a, 7
     |     add a, lives
-    |     // add x, 7
-    |     // add y, 7
     |     add lives, 2
+    |     add lives, extra
     |     add score, 1999
+    |     add score, bonus
     | }
-    = $080D   CLC
-    = $080E   LDA $081F
-    = $0811   ADC #$CF
-    = $0813   STA $081F
-    = $0816   LDA $0820
-    = $0819   ADC #$07
-    = $081B   STA $0820
-    = $081E   RTS
+    = $080D   LDA #$00
+    = $080F   LDX #$00
+    = $0811   LDY #$00
+    = $0813   CLC
+    = $0814   ADC #$07
+    = $0816   ADC $084D
+    = $0819   LDA $084D
+    = $081C   ADC #$02
+    = $081E   STA $084D
+    = $0821   LDA $084D
+    = $0824   ADC $084E
+    = $0827   STA $084D
+    = $082A   LDA $084F
+    = $082D   ADC #$CF
+    = $082F   STA $084F
+    = $0832   LDA $0850
+    = $0835   ADC #$07
+    = $0837   STA $0850
+    = $083A   LDA $084F
+    = $083D   ADC $0851
+    = $0840   STA $084F
+    = $0843   LDA $0850
+    = $0846   ADC $0852
+    = $0849   STA $0850
+    = $084C   RTS
+
+Various modes of `sub`.
+
+    | byte lives
+    | byte extra
+    | word score
+    | word bonus
+    | define main routine
+    |   inputs lives, score, extra, bonus
+    |   outputs lives, score
+    |   trashes a, x, y, c, z, v, n
+    | {
+    |     ld a, 0
+    |     ld x, 0
+    |     ld y, 0
+    |     st on, c
+    |     sub a, 7
+    |     sub a, lives
+    |     sub lives, 2
+    |     sub lives, extra
+    |     sub score, 1999
+    |     sub score, bonus
+    | }
+    = $080D   LDA #$00
+    = $080F   LDX #$00
+    = $0811   LDY #$00
+    = $0813   SEC
+    = $0814   SBC #$07
+    = $0816   SBC $084D
+    = $0819   LDA $084D
+    = $081C   SBC #$02
+    = $081E   STA $084D
+    = $0821   LDA $084D
+    = $0824   SBC $084E
+    = $0827   STA $084D
+    = $082A   LDA $084F
+    = $082D   SBC #$CF
+    = $082F   STA $084F
+    = $0832   LDA $0850
+    = $0835   SBC #$07
+    = $0837   STA $0850
+    = $083A   LDA $084F
+    = $083D   SBC $0851
+    = $0840   STA $084F
+    = $0843   LDA $0850
+    = $0846   SBC $0852
+    = $0849   STA $0850
+    = $084C   RTS
 
 ### word operations
 
