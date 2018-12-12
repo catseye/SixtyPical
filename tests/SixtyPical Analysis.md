@@ -852,6 +852,59 @@ Can't `add` to a memory location that isn't writeable.
     | }
     ? ForbiddenWriteError: a
 
+You can `add` a byte constant to a byte memory location.
+
+    | byte lives
+    | define main routine
+    |   inputs a, lives
+    |   outputs lives
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add lives, 3
+    | }
+    = ok
+
+`add`ing a byte constant to a byte memory location trashes `a`.
+
+    | byte lives
+    | define main routine
+    |   inputs a, lives
+    |   outputs a, lives
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add lives, 3
+    | }
+    ? UnmeaningfulOutputError: a
+
+You can `add` a byte memory location to another byte memory location.
+This trashes `a`.
+
+    | byte lives
+    | byte extra
+    | define main routine
+    |   inputs a, lives, extra
+    |   outputs lives
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add lives, extra
+    | }
+    = ok
+
+    | byte lives
+    | byte extra
+    | define main routine
+    |   inputs a, lives, extra
+    |   outputs a, lives
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add lives, extra
+    | }
+    ? UnmeaningfulOutputError: a
+
 You can `add` a word constant to a word memory location.
 
     | word score
@@ -995,6 +1048,59 @@ Can't `sub` to a memory location that isn't writeable.
     |     sub a, 0
     | }
     ? ForbiddenWriteError: a
+
+You can `sub` a byte constant from a byte memory location.
+
+    | byte lives
+    | define main routine
+    |   inputs a, lives
+    |   outputs lives
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub lives, 3
+    | }
+    = ok
+
+`sub`ing a byte constant from a byte memory location trashes `a`.
+
+    | byte lives
+    | define main routine
+    |   inputs a, lives
+    |   outputs a, lives
+    |   trashes c, z, v, n
+    | {
+    |     st on, c
+    |     sub lives, 3
+    | }
+    ? UnmeaningfulOutputError: a
+
+You can `sub` a byte memory location from another byte memory location.
+This trashes `a`.
+
+    | byte lives
+    | byte extra
+    | define main routine
+    |   inputs a, lives, extra
+    |   outputs lives
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub lives, extra
+    | }
+    = ok
+
+    | byte lives
+    | byte extra
+    | define main routine
+    |   inputs a, lives, extra
+    |   outputs a, lives
+    |   trashes c, z, v, n
+    | {
+    |     st on, c
+    |     sub lives, extra
+    | }
+    ? UnmeaningfulOutputError: a
 
 You can `sub` a word constant from a word memory location.
 

@@ -533,6 +533,9 @@ class Analyzer(object):
                 context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
             elif src.type == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
+                if dest != REG_A:
+                    context.set_touched(REG_A)
+                    context.set_unmeaningful(REG_A)
             else:
                 self.assert_type(TYPE_WORD, src)
                 if dest.type == TYPE_WORD:
@@ -551,6 +554,9 @@ class Analyzer(object):
                 context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
             elif src.type == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
+                if dest != REG_A:
+                    context.set_touched(REG_A)
+                    context.set_unmeaningful(REG_A)
             else:
                 self.assert_type(TYPE_WORD, src, dest)
                 context.set_touched(REG_A)
