@@ -1,16 +1,41 @@
+// Include `support/${PLATFORM}.60p` before this source
+// Should print YY
+
 word one
 word table[256] many
 
 define main routine
   inputs one, many
   outputs one, many
-  trashes a, x, y, n, z
+  trashes a, x, y, c, n, z
 {
     ld x, 0
-    ld y, 0
+    ld y, 1
     copy 777, one
     copy one, many + x
+    copy 888, one
     copy one, many + y
+
+    ld x, 1
+    ld y, 0
+
     copy many + x, one
+    cmp one, 888
+    if z {
+        ld a, 89
+        call chrout
+    } else {
+        ld a, 78
+        call chrout
+    }
+
     copy many + y, one
+    cmp one, 777
+    if z {
+        ld a, 89
+        call chrout
+    } else {
+        ld a, 78
+        call chrout
+    }
 }
