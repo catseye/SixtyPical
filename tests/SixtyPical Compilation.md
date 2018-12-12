@@ -1025,6 +1025,37 @@ Copying to and from a vector table.
     = $0842   JMP ($0846)
     = $0845   RTS
 
+### add, sub
+
+Various modes of `add`.
+
+    | byte lives
+    | word score
+    | define main routine
+    |   inputs lives, score
+    |   outputs lives, score
+    |   trashes a, x, y, c, z, v, n
+    | {
+    |     ld a, 0
+    |     ld x, 0
+    |     ld y, 0
+    |     st off, c
+    |     add a, 7
+    |     add a, lives
+    |     // add x, 7
+    |     // add y, 7
+    |     add lives, 2
+    |     add score, 1999
+    | }
+    = $080D   CLC
+    = $080E   LDA $081F
+    = $0811   ADC #$CF
+    = $0813   STA $081F
+    = $0816   LDA $0820
+    = $0819   ADC #$07
+    = $081B   STA $0820
+    = $081E   RTS
+
 ### word operations
 
 Adding a constant word to a word memory location.
