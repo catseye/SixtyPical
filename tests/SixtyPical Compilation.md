@@ -395,15 +395,21 @@ Compiling 16-bit `cmp`.
     |   trashes a, z, c, n
     | {
     |     cmp za, zb
+    |     cmp za, 4000
     | }
     = $080D   LDA $EA61
-    = $0810   CMP $081C
+    = $0810   CMP $0828
     = $0813   BNE $081B
     = $0815   LDA $EA62
-    = $0818   CMP $081D
-    = $081B   RTS
-    = $081C   .byte $BB
-    = $081D   .byte $0B
+    = $0818   CMP $0829
+    = $081B   LDA $EA61
+    = $081E   CMP #$0F
+    = $0820   BNE $0827
+    = $0822   LDA $EA62
+    = $0825   CMP #$A0
+    = $0827   RTS
+    = $0828   .byte $BB
+    = $0829   .byte $0B
 
 Compiling `if`.
 

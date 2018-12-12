@@ -1207,6 +1207,28 @@ Some rudimentary tests for `cmp`.
     | }
     ? UnmeaningfulReadError: zb
 
+`cmp` can compare against a literal word.
+
+    | word za
+    | 
+    | define main routine
+    |   inputs za
+    |   trashes a, z, c, n
+    | {
+    |     cmp za, 4000
+    | }
+    = ok
+
+    | word za
+    | 
+    | define main routine
+    |   inputs za
+    |   trashes z, c, n
+    | {
+    |     cmp za, 4000
+    | }
+    ? ForbiddenWriteError: a
+
 ### and ###
 
 Some rudimentary tests for `and`.
