@@ -1,14 +1,43 @@
 byte lives
 
+byte table[16] hexchars : "0123456789ABCDEF"
+
+define prbyte routine
+  inputs a, hexchars
+  trashes a, z, n, c, v
+{
+    save x {
+        save a {
+            st off, c
+            shr a
+            shr a
+            shr a
+            shr a
+            and a, 15
+            ld x, a
+            ld a, hexchars + x
+            call chrout
+        }
+        save a {
+            and a, 15
+            ld x, a
+            ld a, hexchars + x
+            call chrout
+        }
+    }
+}
+
 define main routine
-  inputs lives
+  inputs lives, hexchars
   outputs lives
   trashes a, x, z, n, c, v
-  {
-      ld a, 0
-      st a, lives
-      ld x, lives
-      st off, c
-      add x, 1
-      st x, lives
-  }
+{
+    ld a, 0
+    st a, lives
+    ld x, lives
+    st off, c
+    inc x
+    st x, lives
+    ld a, lives
+    call prbyte
+}
