@@ -30,7 +30,7 @@ fi
 ### do it ###
 
 out=/tmp/a-out.prg
-../../bin/sixtypical --traceback --output-format=$output_format support/$arch.60p $src --output $out || exit 1
+../../bin/sixtypical --traceback --output-format=$output_format support/$arch.60p support/stdlib.60p $src --output $out || exit 1
 ls -la $out
 $emu $out
 rm -f $out
