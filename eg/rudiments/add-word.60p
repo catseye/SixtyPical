@@ -1,9 +1,0 @@
-word score
-define main routine
-  inputs score
-  outputs score
-  trashes a, c, z, v, n
-{
-    st off, c
-    add score, 1999
-}

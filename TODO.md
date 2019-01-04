@@ -1,17 +1,6 @@
 TODO for SixtyPical
 ===================
 
-### 16-bit `cmp`
-
-This is because we don't actually want `low` and `high` address operators
-that turn `word` type into `byte`.
-
-This is because this immediately makes things harder (that is, effectively
-impossible) to analyze.
-
-16-bit `cmp` also benefits from some special differences between `cmp`
-and `sub` on 6502, so it would be nice to capture them.
-
 ### Save values to other-than-the-stack
 
 Allow
@@ -55,24 +44,11 @@ buffer; and the ones you establish must be disjoint.
 An alternative would be `static` pointers, which are currently not possible because
 pointers must be zero-page, thus `@`, thus uninitialized.
 
-### Question "consistent initialization"
-
-Question the value of the "consistent initialization" principle for `if` statement analysis.
-
-Part of this is the trashes at the end; I think what it should be is that the trashes
-after the `if` is the union of the trashes in each of the branches; this would obviate the
-need to `trash` values explicitly, but if you tried to access them afterwards, it would still
-error.
-
 ### Tail-call optimization
-
-More generally, define a block as having zero or one `goto`s at the end.  (and `goto`s cannot
-appear elsewhere.)
 
 If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can,
 if the block is in tail position.  The constraints should iron out the same both ways.
 
-And - once we have this - why do we need `goto` to be in tail position, strictly?
 As long as the routine has consistent type context every place it exits, that should be fine.
 
 ### "Include" directives

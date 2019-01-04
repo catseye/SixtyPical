@@ -1,6 +1,27 @@
 History of SixtyPical
 =====================
 
+0.18
+----
+
+*   The "consistent initialization" check inside `if` blocks has
+    been dropped.  If a location is initialized inside one block
+    but not the other, it is treated as uninitialized afterwards.
+*   Syntactically, `goto` may only appear at the end of a block.
+    It need no longer be the final instruction in a routine,
+    as long as the type context is consistent at every exit.
+*   When the range of a location is known, `inc` and `dec`
+    on it will usually shift the known instead of invalidating it.
+*   `cmp` instruction can now perform a 16-bit unsigned comparison
+    of `word` memory locations and `word` literals (at the cost of
+    trashing the `a` register.)
+*   `add` (resp. `sub`) now support adding (resp. subtracting) a
+    byte location or a byte literal from a byte location.
+*   Fixed pathological memory use in the lexical scanner - should
+    be much less inefficient now when parsing large source files.
+*   Reorganized the examples in `eg/rudiments/` to make them
+    officially platform-agnostic and to state the expected output.
+
 0.17
 ----
 

@@ -551,6 +551,9 @@ goto.
     | }
     = ok
 
+The label doesn't have to be defined yet at the point
+in the program text where it is `goto`d.
+
     | define main routine {
     |     goto foo
     | }
@@ -559,6 +562,8 @@ goto.
     | }
     = ok
 
+Syntactically, you can `goto` a vector.
+
     | vector routine foo
     | 
     | define main routine {
@@ -566,10 +571,24 @@ goto.
     | }
     = ok
 
+But you can't `goto` a label that never gets defined.
+
     | define main routine {
     |     goto foo
     | }
     ? SyntaxError
+
+`goto` may only be the final instruction in a block.
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     goto bar
+    |     ld x, 0
+    | }
+    ? Expected '}', but found 'ld'
 
 Buffers and pointers.
 

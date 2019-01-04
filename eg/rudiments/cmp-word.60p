@@ -1,0 +1,68 @@
+// Include `support/${PLATFORM}.60p` before this source
+// Should print ENGGL
+
+word w1
+word w2
+
+define main routine
+  outputs w1, w2
+  trashes a, x, y, z, n, c, v
+{
+    copy 4000, w1
+    copy 4000, w2
+
+    cmp w1, w2
+    if z {
+        ld a, 69  // E
+        call chrout
+    } else {
+        ld a, 78  // N
+        call chrout
+    }
+
+    copy 4000, w1
+    copy 4001, w2
+
+    cmp w1, w2
+    if z {
+        ld a, 69  // E
+        call chrout
+    } else {
+        ld a, 78  // N
+        call chrout
+    }
+
+    copy 20002, w1
+    copy 20001, w2
+
+    cmp w1, w2    // 20002 >= 20001
+    if c {
+        ld a, 71  // G
+        call chrout
+    } else {
+        ld a, 76  // L
+        call chrout
+    }
+
+    copy 20001, w1
+
+    cmp w1, w2    // 20001 >= 20001
+    if c {
+        ld a, 71  // G
+        call chrout
+    } else {
+        ld a, 76  // L
+        call chrout
+    }
+
+    copy 20000, w1
+
+    cmp w1, w2    // 20000 < 20001
+    if c {
+        ld a, 71  // G
+        call chrout
+    } else {
+        ld a, 76  // L
+        call chrout
+    }
+}

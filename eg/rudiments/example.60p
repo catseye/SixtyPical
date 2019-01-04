@@ -1,14 +1,19 @@
+// Include `support/${PLATFORM}.60p` and `support/stdlib.60p` before this source
+// Should print 01
+
 byte lives
 
 define main routine
-  inputs lives
+  inputs lives, hexchars
   outputs lives
   trashes a, x, z, n, c, v
-  {
-      ld a, 0
-      st a, lives
-      ld x, lives
-      st off, c
-      add x, 1
-      st x, lives
-  }
+{
+    ld a, 0
+    st a, lives
+    ld x, lives
+    st off, c
+    inc x
+    st x, lives
+    ld a, lives
+    call prbyte
+}

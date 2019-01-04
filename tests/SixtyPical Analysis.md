@@ -762,6 +762,49 @@ no longer be guaranteed.
     | }
     ? RangeExceededError
 
+When the range of a location is known, incrementing or
+decrementing that location's value will shift the known
+range.  It will not invalidate it unless the known range
+is at the limits of the possible ranges for the type.
+
+    | vector routine
+    |   trashes a, z, n
+    |     print
+    | 
+    | vector (routine
+    |   trashes a, z, n)
+    |     table[32] vectors
+    | 
+    | define main routine
+    |   inputs vectors, print
+    |   outputs vectors
+    |   trashes print, a, x, z, n, c
+    | {
+    |     ld x, 0
+    |     inc x
+    |     copy print, vectors + x
+    | }
+    = ok
+
+    | vector routine
+    |   trashes a, z, n
+    |     print
+    | 
+    | vector (routine
+    |   trashes a, z, n)
+    |     table[32] vectors
+    | 
+    | define main routine
+    |   inputs vectors, print
+    |   outputs vectors
+    |   trashes print, a, x, z, n, c
+    | {
+    |     ld x, 32
+    |     dec x
+    |     copy print, vectors + x
+    | }
+    = ok
+
 ### add ###
 
 Can't `add` from or to a memory location that isn't initialized.
@@ -808,6 +851,59 @@ Can't `add` to a memory location that isn't writeable.
     |     add a, 0
     | }
     ? ForbiddenWriteError: a
+
+You can `add` a byte constant to a byte memory location.
+
+    | byte lives
+    | define main routine
+    |   inputs a, lives
+    |   outputs lives
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add lives, 3
+    | }
+    = ok
+
+`add`ing a byte constant to a byte memory location trashes `a`.
+
+    | byte lives
+    | define main routine
+    |   inputs a, lives
+    |   outputs a, lives
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add lives, 3
+    | }
+    ? UnmeaningfulOutputError: a
+
+You can `add` a byte memory location to another byte memory location.
+This trashes `a`.
+
+    | byte lives
+    | byte extra
+    | define main routine
+    |   inputs a, lives, extra
+    |   outputs lives
+    |   trashes a, c, z, v, n
+    | {
+    |     st off, c
+    |     add lives, extra
+    | }
+    = ok
+
+    | byte lives
+    | byte extra
+    | define main routine
+    |   inputs a, lives, extra
+    |   outputs a, lives
+    |   trashes c, z, v, n
+    | {
+    |     st off, c
+    |     add lives, extra
+    | }
+    ? UnmeaningfulOutputError: a
 
 You can `add` a word constant to a word memory location.
 
@@ -952,6 +1048,59 @@ Can't `sub` to a memory location that isn't writeable.
     |     sub a, 0
     | }
     ? ForbiddenWriteError: a
+
+You can `sub` a byte constant from a byte memory location.
+
+    | byte lives
+    | define main routine
+    |   inputs a, lives
+    |   outputs lives
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub lives, 3
+    | }
+    = ok
+
+`sub`ing a byte constant from a byte memory location trashes `a`.
+
+    | byte lives
+    | define main routine
+    |   inputs a, lives
+    |   outputs a, lives
+    |   trashes c, z, v, n
+    | {
+    |     st on, c
+    |     sub lives, 3
+    | }
+    ? UnmeaningfulOutputError: a
+
+You can `sub` a byte memory location from another byte memory location.
+This trashes `a`.
+
+    | byte lives
+    | byte extra
+    | define main routine
+    |   inputs a, lives, extra
+    |   outputs lives
+    |   trashes a, c, z, v, n
+    | {
+    |     st on, c
+    |     sub lives, extra
+    | }
+    = ok
+
+    | byte lives
+    | byte extra
+    | define main routine
+    |   inputs a, lives, extra
+    |   outputs a, lives
+    |   trashes c, z, v, n
+    | {
+    |     st on, c
+    |     sub lives, extra
+    | }
+    ? UnmeaningfulOutputError: a
 
 You can `sub` a word constant from a word memory location.
 
@@ -1117,6 +1266,74 @@ Some rudimentary tests for `cmp`.
     |     cmp a, 4
     | }
     ? UnmeaningfulReadError: a
+
+`cmp` can work on words. In this case, it trashes `a`.
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes a, z, c, n
+    | {
+    |     cmp za, zb
+    | }
+    = ok
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes a, z, n
+    | {
+    |     cmp za, zb
+    | }
+    ? ForbiddenWriteError: c
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes z, c, n
+    | {
+    |     cmp za, zb
+    | }
+    ? ForbiddenWriteError: a
+
+    | word za
+    | word zb
+    | 
+    | define main routine
+    |   inputs za
+    |   trashes z, c, n
+    | {
+    |     cmp za, zb
+    | }
+    ? UnmeaningfulReadError: zb
+
+`cmp` can compare against a literal word.
+
+    | word za
+    | 
+    | define main routine
+    |   inputs za
+    |   trashes a, z, c, n
+    | {
+    |     cmp za, 4000
+    | }
+    = ok
+
+    | word za
+    | 
+    | define main routine
+    |   inputs za
+    |   trashes z, c, n
+    | {
+    |     cmp za, 4000
+    | }
+    ? ForbiddenWriteError: a
 
 ### and ###
 
@@ -1518,7 +1735,9 @@ Both blocks of an `if` are analyzed.
     | }
     = ok
 
-If a location is initialized in one block, is must be initialized in the other as well.
+If a location is initialized in one block, it must be initialized in the other as well
+in order to be considered to be initialized after the block.  If it is not consistent,
+it will be considered uninitialized.
 
     | define foo routine
     |   inputs a
@@ -1532,7 +1751,7 @@ If a location is initialized in one block, is must be initialized in the other a
     |         ld a, 23
     |     }
     | }
-    ? InconsistentInitializationError: x
+    ? UnmeaningfulOutputError: x
 
     | define foo routine
     |   inputs a
@@ -1546,7 +1765,7 @@ If a location is initialized in one block, is must be initialized in the other a
     |         ld x, 7
     |     }
     | }
-    ? InconsistentInitializationError: x
+    ? UnmeaningfulOutputError: x
 
     | define foo routine
     |   inputs a
@@ -1560,7 +1779,53 @@ If a location is initialized in one block, is must be initialized in the other a
     |         ld x, 7
     |     }
     | }
-    ? InconsistentInitializationError: x
+    ? UnmeaningfulOutputError: x
+
+    | define foo routine
+    |   inputs a
+    |   trashes a, x, z, n, c
+    | {
+    |     cmp a, 42
+    |     if not z {
+    |         ld a, 6
+    |     } else {
+    |         ld x, 7
+    |     }
+    |     ld a, x
+    | }
+    ? UnmeaningfulReadError: x
+
+If we don't care if it's uninitialized after the `if`, that's okay then.
+
+    | define foo routine
+    |   inputs a
+    |   trashes a, x, z, n, c
+    | {
+    |     cmp a, 42
+    |     if not z {
+    |         ld a, 6
+    |     } else {
+    |         ld x, 7
+    |     }
+    | }
+    = ok
+
+Or, if it does get initialized on both branches, that's okay then.
+
+    | define foo routine
+    |   inputs a
+    |   outputs x
+    |   trashes a, z, n, c
+    | {
+    |     cmp a, 42
+    |     if not z {
+    |         ld x, 0
+    |         ld a, 6
+    |     } else {
+    |         ld x, 7
+    |     }
+    | }
+    = ok
 
 However, this only pertains to initialization.  If a value is already
 initialized, either because it was set previous to the `if`, or is an
@@ -1609,7 +1874,7 @@ An `if` with a single block is analyzed as if it had an empty `else` block.
     |         ld x, 7
     |     }
     | }
-    ? InconsistentInitializationError: x
+    ? UnmeaningfulOutputError: x
 
     | define foo routine
     |   inputs a
@@ -2280,7 +2545,7 @@ But only if they are bytes.
     | }
     ? TypeMismatchError
 
-A `goto` cannot appear within a `save` block, even if it is otherwise in tail position.
+A `goto` cannot appear within a `save` block.
 
     | define other routine
     |   trashes a, z, n
@@ -2325,8 +2590,7 @@ A `goto` cannot appear within a `save` block, even if it is otherwise in tail po
     | }
     = ok
 
-A `goto` cannot appear within a `with interrupts` block, even if it is
-otherwise in tail position.
+A `goto` cannot appear within a `with interrupts` block.
 
     | vector routine
     |   inputs x
@@ -2973,87 +3237,7 @@ Calling the vector does indeed trash the things the vector says it does.
     | }
     ? UnmeaningfulOutputError: x
 
-`goto`, if present, must be in tail position (the final instruction in a routine.)
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     goto bar
-    | }
-    = ok
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     goto bar
-    |     ld x, 0
-    | }
-    ? IllegalJumpError
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     if z {
-    |         ld x, 1
-    |         goto bar
-    |     }
-    | }
-    = ok
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     if z {
-    |         ld x, 1
-    |         goto bar
-    |     }
-    |     ld x, 0
-    | }
-    ? IllegalJumpError
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     if z {
-    |         ld x, 1
-    |         goto bar
-    |     } else {
-    |         ld x, 0
-    |         goto bar
-    |     }
-    | }
-    = ok
-
-    | define bar routine trashes x, z, n {
-    |     ld x, 200
-    | }
-    | 
-    | define main routine trashes x, z, n {
-    |     ld x, 0
-    |     if z {
-    |         ld x, 1
-    |         goto bar
-    |     } else {
-    |         ld x, 0
-    |     }
-    | }
-    = ok
-
-For the purposes of `goto`, the end of a loop is never tail position.
+For now at least, you cannot have a `goto` inside a `repeat` loop.
 
     | define bar routine trashes x, z, n {
     |     ld x, 200
@@ -3067,6 +3251,341 @@ For the purposes of `goto`, the end of a loop is never tail position.
     |     } until z
     | }
     ? IllegalJumpError
+
+`goto`, as a matter of syntax, can only appear at the end
+of a block; but it need not be the final instruction in a
+routine.
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     goto bar
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    |     goto bar
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     }
+    |     ld x, 0
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |         goto bar
+    |     }
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    |     ld x, 0
+    | }
+    = ok
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    |     goto bar
+    | }
+    = ok
+
+Even though `goto` can only appear at the end of a block,
+you can still wind up with dead code; the analysis detects
+this.
+
+    | define bar routine trashes x, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |         goto bar
+    |     }
+    |     ld x, 100
+    | }
+    ? TerminatedContextError
+
+It is important that the type context at every
+`goto` is compatible with the type context at the end of
+the routine.
+
+    | define bar routine
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine trashes x, z, n {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 0
+    |     }
+    |     ld x, 1
+    | }
+    = ok
+
+Here, we try to trash `x` before `goto`ing a routine that inputs `x`.
+
+    | define bar routine
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         trash x
+    |         goto bar
+    |     } else {
+    |         trash x
+    |     }
+    |     ld a, 1
+    | }
+    ? UnmeaningfulReadError: x
+
+Here, we declare that main outputs `a`, but we `goto` a routine that does not output `a`.
+
+    | define bar routine
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 2
+    |     }
+    |     ld a, 1
+    | }
+    ? UnmeaningfulOutputError: a
+
+Here, we declare that main outputs a, and we goto a routine that outputs a so that's OK.
+
+    | define bar routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    |     ld a, 1
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar
+    |     } else {
+    |         ld x, 2
+    |     }
+    |     ld a, 1
+    | }
+    = ok
+
+Here, we declare that main outputs `a`, and we `goto` two routines, and they both output `a`.
+
+    | define bar0 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, x
+    | }
+    | 
+    | define bar1 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar0
+    |     } else {
+    |         ld x, 2
+    |         goto bar1
+    |     }
+    | }
+    = ok
+
+Here is like just above, but one routine doesn't output `a`.
+
+    | define bar0 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, x
+    | }
+    | 
+    | define bar1 routine
+    |   inputs x
+    |   trashes x, z, n
+    | {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar0
+    |     } else {
+    |         ld x, 2
+    |         goto bar1
+    |     }
+    | }
+    ? InconsistentExitError
+
+Here is like the above, but the two routines have different inputs, and that's OK.
+
+    | define bar0 routine
+    |   inputs x
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, x
+    | }
+    | 
+    | define bar1 routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld a, 200
+    | }
+    | 
+    | define main routine
+    |   outputs a
+    |   trashes x, z, n
+    | {
+    |     ld x, 0
+    |     if z {
+    |         ld x, 1
+    |         goto bar0
+    |     } else {
+    |         ld x, 2
+    |         goto bar1
+    |     }
+    | }
+    = ok
+
+TODO: we should have a lot more test cases for the above, here.
 
 Can't `goto` a routine that outputs or trashes more than the current routine.
 

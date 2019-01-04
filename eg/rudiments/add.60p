@@ -1,26 +1,18 @@
 // Include `support/${PLATFORM}.60p` before this source
 // Should print YY
 
-word one
-word table[256] many
+word score
 
 define main routine
-  inputs one, many
-  outputs one, many
-  trashes a, x, y, c, n, z
+  inputs a, score
+  outputs score
+  trashes a, c, z, n, v
 {
-    ld x, 0
-    ld y, 1
-    copy 777, one
-    copy one, many + x
-    copy 888, one
-    copy one, many + y
+    ld a, 3
+    st off, c
+    add a, 4
 
-    ld x, 1
-    ld y, 0
-
-    copy many + x, one
-    cmp one, 888
+    cmp a, 7
     if z {
         ld a, 89
         call chrout
@@ -29,8 +21,11 @@ define main routine
         call chrout
     }
 
-    copy many + y, one
-    cmp one, 777
+    copy 999, score
+    st off, c
+    add score, 1999
+
+    cmp score, 2998
     if z {
         ld a, 89
         call chrout

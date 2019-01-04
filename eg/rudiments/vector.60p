@@ -1,11 +1,9 @@
+// Include `support/${PLATFORM}.60p` before this source
+// Should print AB
+
 vector routine
   trashes a, z, n
     print
-
-define chrout routine
-  inputs a
-  trashes a
-  @ 65490
 
 define printa routine
   trashes a, z, n

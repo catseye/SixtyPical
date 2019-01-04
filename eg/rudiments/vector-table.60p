@@ -1,7 +1,6 @@
-//
 // Demonstrates vector tables.
-// Prints "AABAB".
-//
+// Include `support/${PLATFORM}.60p` before this source
+// Should print AABAB
 
 vector routine
   trashes a, z, n
@@ -10,11 +9,6 @@ vector routine
 vector (routine
   trashes a, z, n)
     table[32] vectors
-
-define chrout routine
-  inputs a
-  trashes a
-  @ 65490
 
 define printa routine
   trashes a, z, n
@@ -49,10 +43,8 @@ define main routine
     copy printb, vectors + x
 
     ld x, 0
-    repeat {
+    for x up to 4 {
         copy vectors + x, print
         call print
-        inc x
-        cmp x, 5
-    } until z
+    }
 }

@@ -34,6 +34,11 @@ class InconsistentInitializationError(StaticAnalysisError):
     pass
 
 
+class InconsistentExitError(StaticAnalysisError):
+    """The type context differs at two different exit points of the routine."""
+    pass
+
+
 class ForbiddenWriteError(StaticAnalysisError):
     pass
 
@@ -43,6 +48,12 @@ class TypeMismatchError(StaticAnalysisError):
 
 
 class IllegalJumpError(StaticAnalysisError):
+    pass
+
+
+class TerminatedContextError(StaticAnalysisError):
+    """What the program is doing here is not valid, due to preceding `goto`s,
+    which make this dead code."""
     pass
 
 
@@ -101,6 +112,7 @@ class Context(object):
         self._touched = set()
         self._range = dict()
         self._writeable = set()
+        self._terminated = False
         self._gotos_encountered = set()
 
         for ref in inputs:
@@ -132,12 +144,25 @@ class Context(object):
         c._writeable = set(self._writeable)
         return c
 
+    def update_from(self, other):
+        self.routines = other.routines
+        self.routine = other.routine
+        self._touched = set(other._touched)
+        self._range = dict(other._range)
+        self._writeable = set(other._writeable)
+        self._terminated = other._terminated
+        self._gotos_encounters = set(other._gotos_encountered)
+
     def each_meaningful(self):
         for ref in self._range.keys():
             yield ref
 
     def each_touched(self):
         for ref in self._touched:
+            yield ref
+
+    def each_writeable(self):
+        for ref in self._writeable:
             yield ref
 
     def assert_meaningful(self, *refs, **kwargs):
@@ -279,6 +304,13 @@ class Context(object):
     def encountered_gotos(self):
         return self._gotos_encountered
 
+    def set_terminated(self):
+        # Having a terminated context and having encountered gotos is not the same thing.
+        self._terminated = True
+
+    def has_terminated(self):
+        return self._terminated
+
     def assert_types_for_read_table(self, instr, src, dest, type_):
         if (not TableType.is_a_table_type(src.ref.type, type_)) or (not dest.type == type_):
             raise TypeMismatchError(instr, '{} and {}'.format(src.ref.name, dest.name))
@@ -364,18 +396,21 @@ class Analyzer(object):
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
-        self.current_routine = routine
         if routine.block is None:
             # it's an extern, that's fine
             return
+
+        self.current_routine = routine
         type_ = routine.location.type
         context = Context(self.routines, routine, type_.inputs, type_.outputs, type_.trashes)
+        self.exit_contexts = []
 
         if self.debug:
             print("at start of routine `{}`:".format(routine.name))
             print(context)
 
         self.analyze_block(routine.block, context)
+
         trashed = set(context.each_touched()) - set(context.each_meaningful())
 
         if self.debug:
@@ -390,17 +425,38 @@ class Analyzer(object):
             print('-' * 79)
             print('')
 
-        # even if we goto another routine, we can't trash an output.
+        if self.exit_contexts:
+            # check that they are all consistent
+            exit_context = self.exit_contexts[0]
+            exit_meaningful = set(exit_context.each_meaningful())
+            exit_touched = set(exit_context.each_touched())
+            exit_writeable = set(exit_context.each_writeable())
+            for ex in self.exit_contexts[1:]:
+                if set(ex.each_meaningful()) != exit_meaningful:
+                    raise InconsistentExitError("Exit contexts are not consistent")
+                if set(ex.each_touched()) != exit_touched:
+                    raise InconsistentExitError("Exit contexts are not consistent")
+                if set(ex.each_writeable()) != exit_writeable:
+                    raise InconsistentExitError("Exit contexts are not consistent")
+            context.update_from(exit_context)
+
+        # these all apply whether we encountered goto(s) in this routine, or not...:
+
+        # can't trash an output.
         for ref in trashed:
             if ref in type_.outputs:
                 raise UnmeaningfulOutputError(routine, ref.name)
 
-        if not context.encountered_gotos():
-            for ref in type_.outputs:
-                context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
-            for ref in context.each_touched():
-                if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
-                    raise ForbiddenWriteError(routine, ref.name)
+        # all outputs are meaningful.
+        for ref in type_.outputs:
+            context.assert_meaningful(ref, exception_class=UnmeaningfulOutputError)
+
+        # if something was touched, then it should have been declared to be writable.
+        for ref in context.each_touched():
+            if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
+                raise ForbiddenWriteError(routine, ref.name)
+
+        self.exit_contexts = None
         self.current_routine = None
         return context
 
@@ -433,8 +489,8 @@ class Analyzer(object):
         dest = instr.dest
         src = instr.src
 
-        if context.encountered_gotos():
-            raise IllegalJumpError(instr, instr)
+        if context.has_terminated():
+            raise TerminatedContextError(instr, instr)
 
         if opcode == 'ld':
             if isinstance(src, IndexedRef):
@@ -477,6 +533,9 @@ class Analyzer(object):
                 context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
             elif src.type == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
+                if dest != REG_A:
+                    context.set_touched(REG_A)
+                    context.set_unmeaningful(REG_A)
             else:
                 self.assert_type(TYPE_WORD, src)
                 if dest.type == TYPE_WORD:
@@ -495,6 +554,9 @@ class Analyzer(object):
                 context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
             elif src.type == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
+                if dest != REG_A:
+                    context.set_touched(REG_A)
+                    context.set_unmeaningful(REG_A)
             else:
                 self.assert_type(TYPE_WORD, src, dest)
                 context.set_touched(REG_A)
@@ -505,8 +567,12 @@ class Analyzer(object):
             context.assert_meaningful(src, dest)
             if isinstance(src, IndexedRef):
                 context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE)
-            else:
+            elif src.type == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
+            else:
+                self.assert_type(TYPE_WORD, src, dest)
+                context.set_touched(REG_A)
+                context.set_unmeaningful(REG_A)
             context.set_written(FLAG_Z, FLAG_N, FLAG_C)
         elif opcode == 'and':
             if isinstance(src, IndexedRef):
@@ -537,7 +603,20 @@ class Analyzer(object):
             else:
                 self.assert_type(TYPE_BYTE, dest)
                 context.set_written(dest, FLAG_Z, FLAG_N)
-                context.invalidate_range(dest)
+                bottom = context.get_bottom_of_range(dest)
+                top = context.get_top_of_range(dest)
+                if opcode == 'inc':
+                    if bottom == top and top < 255:
+                        context.set_range(dest, bottom + 1, top + 1)
+                    else:
+                        context.invalidate_range(dest)
+                elif opcode == 'dec':
+                    if bottom == top and bottom > 0:
+                        context.set_range(dest, bottom - 1, top - 1)
+                    else:
+                        context.invalidate_range(dest)
+                else:
+                    raise NotImplementedError
         elif opcode in ('shl', 'shr'):
             context.assert_meaningful(dest, FLAG_C)
             if isinstance(dest, IndexedRef):
@@ -674,6 +753,40 @@ class Analyzer(object):
             self.assert_affected_within('trashes', type_, current_type)
 
             context.encounter_gotos(set([instr.location]))
+
+            # Now that we have encountered a goto, we update the
+            # context here to match what someone calling the goto'ed
+            # function directly, would expect.  (which makes sense
+            # when you think about it; if this goto's F, then calling
+            # this is like calling F, from the perspective of what is
+            # returned.)
+            #
+            # However, this isn't the current context anymore.  This
+            # is an exit context of this routine.
+
+            exit_context = context.clone()
+
+            for ref in type_.outputs:
+                exit_context.set_touched(ref)   # ?
+                exit_context.set_written(ref)
+
+            for ref in type_.trashes:
+                exit_context.assert_writeable(ref)
+                exit_context.set_touched(ref)
+                exit_context.set_unmeaningful(ref)
+
+            self.exit_contexts.append(exit_context)
+
+            # When we get to the end, we'll check that all the
+            # exit contexts are consistent with each other.
+
+            # We set the current context as having terminated.
+            # If we are in a branch, the merge will deal with
+            # having terminated.  If we are at the end of the
+            # routine, the routine end will deal with that.
+
+            context.set_terminated()
+
         elif opcode == 'trash':
             context.set_touched(instr.dest)
             context.set_unmeaningful(instr.dest)
@@ -694,28 +807,23 @@ class Analyzer(object):
         outgoing_meaningful = set(context1.each_meaningful()) & set(context2.each_meaningful())
         outgoing_trashes = incoming_meaningful - outgoing_meaningful
 
-        # TODO may we need to deal with touched separately here too?
-        # probably not; if it wasn't meaningful in the first place, it
-        # doesn't really matter if you modified it or not, coming out.
-        for ref in context1.each_meaningful():
-            if ref in outgoing_trashes:
-                continue
-            context2.assert_meaningful(
-                ref, exception_class=InconsistentInitializationError,
-                message='initialized in block 1 but not in block 2 of `if {}`'.format(instr.src)
-            )
-        for ref in context2.each_meaningful():
-            if ref in outgoing_trashes:
-                continue
-            context1.assert_meaningful(
-                ref, exception_class=InconsistentInitializationError,
-                message='initialized in block 2 but not in block 1 of `if {}`'.format(instr.src)
-            )
+        # merge the contexts.
 
-        # merge the contexts.  this used to be a method called `set_from`
-        context._touched = set(context1._touched) | set(context2._touched)
-        context.set_meaningful(*list(outgoing_meaningful))
-        context._writeable = set(context1._writeable) | set(context2._writeable)
+        # first, the easy case: if one of the contexts has terminated, just use the other one.
+        # if both have terminated, we return a terminated context, and that's OK.
+
+        if context1.has_terminated():
+            context.update_from(context2)
+        elif context2.has_terminated():
+            context.update_from(context1)
+        else:
+            # the more complicated case: merge the contents of the contexts.
+            context._touched = set(context1._touched) | set(context2._touched)
+            context.set_meaningful(*list(outgoing_meaningful))
+            context._writeable = set(context1._writeable) | set(context2._writeable)
+
+        # in both cases, we need to merge the encountered gotos, in order that
+        # fallthru optimization continues to work correctly.
         context.encounter_gotos(context1.encountered_gotos() | context2.encountered_gotos())
 
         for ref in outgoing_trashes:
@@ -728,6 +836,9 @@ class Analyzer(object):
         self.analyze_block(instr.block, context)
         if instr.src is not None:  # None indicates 'repeat forever'
             context.assert_meaningful(instr.src)
+
+        if context.encountered_gotos():
+            raise IllegalJumpError(instr, instr)
 
         # now analyze it having been executed a second time, with the context
         # of it having already been executed.

@@ -385,6 +385,32 @@ Some instructions on tables. (3/3)
     = $081B   DEC $081F,X
     = $081E   RTS
 
+Compiling 16-bit `cmp`.
+
+    | word za @ 60001
+    | word zb : 3003
+    | 
+    | define main routine
+    |   inputs za, zb
+    |   trashes a, z, c, n
+    | {
+    |     cmp za, zb
+    |     cmp za, 4000
+    | }
+    = $080D   LDA $EA61
+    = $0810   CMP $0828
+    = $0813   BNE $081B
+    = $0815   LDA $EA62
+    = $0818   CMP $0829
+    = $081B   LDA $EA61
+    = $081E   CMP #$A0
+    = $0820   BNE $0827
+    = $0822   LDA $EA62
+    = $0825   CMP #$0F
+    = $0827   RTS
+    = $0828   .byte $BB
+    = $0829   .byte $0B
+
 Compiling `if`.
 
     | define main routine
@@ -998,6 +1024,104 @@ Copying to and from a vector table.
     = $0841   RTS
     = $0842   JMP ($0846)
     = $0845   RTS
+
+### add, sub
+
+Various modes of `add`.
+
+    | byte lives
+    | byte extra
+    | word score
+    | word bonus
+    | define main routine
+    |   inputs lives, score, extra, bonus
+    |   outputs lives, score
+    |   trashes a, x, y, c, z, v, n
+    | {
+    |     ld a, 0
+    |     ld x, 0
+    |     ld y, 0
+    |     st off, c
+    |     add a, 7
+    |     add a, lives
+    |     add lives, 2
+    |     add lives, extra
+    |     add score, 1999
+    |     add score, bonus
+    | }
+    = $080D   LDA #$00
+    = $080F   LDX #$00
+    = $0811   LDY #$00
+    = $0813   CLC
+    = $0814   ADC #$07
+    = $0816   ADC $084D
+    = $0819   LDA $084D
+    = $081C   ADC #$02
+    = $081E   STA $084D
+    = $0821   LDA $084D
+    = $0824   ADC $084E
+    = $0827   STA $084D
+    = $082A   LDA $084F
+    = $082D   ADC #$CF
+    = $082F   STA $084F
+    = $0832   LDA $0850
+    = $0835   ADC #$07
+    = $0837   STA $0850
+    = $083A   LDA $084F
+    = $083D   ADC $0851
+    = $0840   STA $084F
+    = $0843   LDA $0850
+    = $0846   ADC $0852
+    = $0849   STA $0850
+    = $084C   RTS
+
+Various modes of `sub`.
+
+    | byte lives
+    | byte extra
+    | word score
+    | word bonus
+    | define main routine
+    |   inputs lives, score, extra, bonus
+    |   outputs lives, score
+    |   trashes a, x, y, c, z, v, n
+    | {
+    |     ld a, 0
+    |     ld x, 0
+    |     ld y, 0
+    |     st on, c
+    |     sub a, 7
+    |     sub a, lives
+    |     sub lives, 2
+    |     sub lives, extra
+    |     sub score, 1999
+    |     sub score, bonus
+    | }
+    = $080D   LDA #$00
+    = $080F   LDX #$00
+    = $0811   LDY #$00
+    = $0813   SEC
+    = $0814   SBC #$07
+    = $0816   SBC $084D
+    = $0819   LDA $084D
+    = $081C   SBC #$02
+    = $081E   STA $084D
+    = $0821   LDA $084D
+    = $0824   SBC $084E
+    = $0827   STA $084D
+    = $082A   LDA $084F
+    = $082D   SBC #$CF
+    = $082F   STA $084F
+    = $0832   LDA $0850
+    = $0835   SBC #$07
+    = $0837   STA $0850
+    = $083A   LDA $084F
+    = $083D   SBC $0851
+    = $0840   STA $084F
+    = $0843   LDA $0850
+    = $0846   SBC $0852
+    = $0849   STA $0850
+    = $084C   RTS
 
 ### word operations
 

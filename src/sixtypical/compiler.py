@@ -244,6 +244,8 @@ class Compiler(object):
                     raise UnsupportedOpcodeError(instr)
                 self.emitter.emit(op_cls(operand))
         elif opcode == 'add':
+            if dest == REG_X or dest == REG_Y:
+                raise UnsupportedOpcodeError(instr)
             if dest == REG_A:
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(ADC(Immediate(Byte(src.value))))
@@ -251,6 +253,20 @@ class Compiler(object):
                     self.emitter.emit(ADC(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
                 else:
                     self.emitter.emit(ADC(Absolute(self.get_label(src.name))))
+            elif isinstance(dest, LocationRef) and src.type == TYPE_BYTE and dest.type == TYPE_BYTE:
+                if isinstance(src, ConstantRef):
+                    dest_label = self.get_label(dest.name)
+                    self.emitter.emit(LDA(Absolute(dest_label)))
+                    self.emitter.emit(ADC(Immediate(Byte(src.low_byte()))))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                elif isinstance(src, LocationRef):
+                    src_label = self.get_label(src.name)
+                    dest_label = self.get_label(dest.name)
+                    self.emitter.emit(LDA(Absolute(dest_label)))
+                    self.emitter.emit(ADC(Absolute(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                else:
+                    raise UnsupportedOpcodeError(instr)
             elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and dest.type == TYPE_WORD:
                 if isinstance(src, ConstantRef):
                     dest_label = self.get_label(dest.name)
@@ -294,6 +310,8 @@ class Compiler(object):
             else:
                 raise UnsupportedOpcodeError(instr)
         elif opcode == 'sub':
+            if dest == REG_X or dest == REG_Y:
+                raise UnsupportedOpcodeError(instr)
             if dest == REG_A:
                 if isinstance(src, ConstantRef):
                     self.emitter.emit(SBC(Immediate(Byte(src.value))))
@@ -301,6 +319,20 @@ class Compiler(object):
                     self.emitter.emit(SBC(self.addressing_mode_for_index(src.index)(self.get_label(src.ref.name))))
                 else:
                     self.emitter.emit(SBC(Absolute(self.get_label(src.name))))
+            elif isinstance(dest, LocationRef) and src.type == TYPE_BYTE and dest.type == TYPE_BYTE:
+                if isinstance(src, ConstantRef):
+                    dest_label = self.get_label(dest.name)
+                    self.emitter.emit(LDA(Absolute(dest_label)))
+                    self.emitter.emit(SBC(Immediate(Byte(src.low_byte()))))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                elif isinstance(src, LocationRef):
+                    src_label = self.get_label(src.name)
+                    dest_label = self.get_label(dest.name)
+                    self.emitter.emit(LDA(Absolute(dest_label)))
+                    self.emitter.emit(SBC(Absolute(src_label)))
+                    self.emitter.emit(STA(Absolute(dest_label)))
+                else:
+                    raise UnsupportedOpcodeError(instr)
             elif isinstance(dest, LocationRef) and src.type == TYPE_WORD and dest.type == TYPE_WORD:
                 if isinstance(src, ConstantRef):
                     dest_label = self.get_label(dest.name)
@@ -391,6 +423,27 @@ class Compiler(object):
 
     def compile_cmp(self, instr, src, dest):
         """`instr` is only for reporting purposes"""
+        if isinstance(src, LocationRef) and src.type == TYPE_WORD:
+            src_label = self.get_label(src.name)
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(Absolute(dest_label)))
+            self.emitter.emit(CMP(Absolute(src_label)))
+            end_label = Label('end_label')
+            self.emitter.emit(BNE(Relative(end_label)))
+            self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
+            self.emitter.emit(CMP(Absolute(Offset(src_label, 1))))
+            self.emitter.resolve_label(end_label)
+            return
+        if isinstance(src, ConstantRef) and src.type == TYPE_WORD:
+            dest_label = self.get_label(dest.name)
+            self.emitter.emit(LDA(Absolute(dest_label)))
+            self.emitter.emit(CMP(Immediate(Byte(src.low_byte()))))
+            end_label = Label('end_label')
+            self.emitter.emit(BNE(Relative(end_label)))
+            self.emitter.emit(LDA(Absolute(Offset(dest_label, 1))))
+            self.emitter.emit(CMP(Immediate(Byte(src.high_byte()))))
+            self.emitter.resolve_label(end_label)
+            return
         cls = {
             'a': CMP,
             'x': CPX,

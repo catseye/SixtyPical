@@ -1,3 +1,6 @@
+// Include `support/${PLATFORM}.60p` before this source
+// Should print Y
+
 buffer[2048] buf
 pointer ptr @ 254
 byte foo
@@ -5,11 +8,23 @@ byte foo
 define main routine
   inputs buf
   outputs buf, y, foo
-  trashes a, z, n, ptr
+  trashes a, z, n, c, ptr
 {
     ld y, 0
     copy ^buf, ptr
     copy 123, [ptr] + y
     copy [ptr] + y, foo
     copy foo, [ptr] + y
+
+    // TODO: support saying `cmp foo, 123`, maybe
+    ld a, foo
+    cmp a, 123
+
+    if z {
+        ld a, 89
+        call chrout
+    } else {
+        ld a, 78
+        call chrout
+    }
 }

@@ -1,7 +1,5 @@
-define chrout routine
-  inputs a
-  trashes a
-  @ 65490
+// Include `support/${PLATFORM}.60p` before this source
+// Should print AB
 
 define bar routine trashes a, z, n {
     ld a, 66

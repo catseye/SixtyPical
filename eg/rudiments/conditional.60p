@@ -1,7 +1,6 @@
-define chrout routine
-  inputs a
-  trashes a
-  @ 65490
+// Demonstrates vector tables.
+// Include `support/${PLATFORM}.60p` before this source
+// Should print YN
 
 define main routine
   trashes a, x, y, z, n, c, v
