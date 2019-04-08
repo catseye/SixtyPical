@@ -141,7 +141,11 @@ class Context(object):
         )
 
     def to_json_data(self):
+        type_ = self.routine.location.type
         return {
+            'routine_inputs': ','.join(sorted(loc.name for loc in type_.inputs)),
+            'routine_outputs': ','.join(sorted(loc.name for loc in type_.outputs)),
+            'routine_trashes': ','.join(sorted(loc.name for loc in type_.trashes)),
             'touched': ','.join(sorted(loc.name for loc in self._touched)),
             'range': dict((loc.name, '{}-{}'.format(rng[0], rng[1])) for (loc, rng) in self._range.items()),
             'writeable': ','.join(sorted(loc.name for loc in self._writeable)),
