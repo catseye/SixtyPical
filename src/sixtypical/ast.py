@@ -72,7 +72,15 @@ class Instr(AST):
 
 
 class SingleOp(Instr):
-    value_attrs = ('opcode', 'dest', 'src', 'location',)
+    value_attrs = ('opcode', 'dest', 'src',)
+
+
+class Call(Instr):
+    value_attrs = ('location',)
+
+
+class GoTo(Instr):
+    value_attrs = ('location',)
 
 
 class If(Instr):

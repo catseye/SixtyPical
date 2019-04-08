@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 from sixtypical.ast import (
-    Program, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff, Save, PointInto
+    Program, Routine, Block, SingleOp, Call, GoTo, If, Repeat, For, WithInterruptsOff, Save, PointInto
 )
 from sixtypical.model import (
     TYPE_BYTE, TYPE_WORD,
@@ -493,6 +493,10 @@ class Analyzer(object):
     def analyze_instr(self, instr, context):
         if isinstance(instr, SingleOp):
             self.analyze_single_op(instr, context)
+        elif isinstance(instr, Call):
+            self.analyze_call(instr, context)
+        elif isinstance(instr, GoTo):
+            self.analyze_goto(instr, context)
         elif isinstance(instr, If):
             self.analyze_if(instr, context)
         elif isinstance(instr, Repeat):
@@ -667,20 +671,6 @@ class Analyzer(object):
                 self.assert_type(TYPE_BYTE, dest)
                 context.set_written(dest, FLAG_Z, FLAG_N, FLAG_C)
                 context.invalidate_range(dest)
-        elif opcode == 'call':
-            type = instr.location.type
-            if not isinstance(type, (RoutineType, VectorType)):
-                raise TypeMismatchError(instr, instr.location)
-            if isinstance(type, VectorType):
-                type = type.of_type
-            for ref in type.inputs:
-                context.assert_meaningful(ref)
-            for ref in type.outputs:
-                context.set_written(ref)
-            for ref in type.trashes:
-                context.assert_writeable(ref)
-                context.set_touched(ref)
-                context.set_unmeaningful(ref)
         elif opcode == 'copy':
             if dest == REG_A:
                 raise ForbiddenWriteError(instr, "{} cannot be used as destination for copy".format(dest))
@@ -789,59 +779,6 @@ class Analyzer(object):
 
             context.set_touched(REG_A, FLAG_Z, FLAG_N)
             context.set_unmeaningful(REG_A, FLAG_Z, FLAG_N)
-        elif opcode == 'goto':
-            location = instr.location
-            type_ = location.type
-    
-            if not isinstance(type_, (RoutineType, VectorType)):
-                raise TypeMismatchError(instr, location)
-    
-            # assert that the dest routine's inputs are all initialized
-            if isinstance(type_, VectorType):
-                type_ = type_.of_type
-            for ref in type_.inputs:
-                context.assert_meaningful(ref)
-    
-            # and that this routine's trashes and output constraints are a
-            # superset of the called routine's
-            current_type = self.current_routine.location.type
-            self.assert_affected_within('outputs', type_, current_type)
-            self.assert_affected_within('trashes', type_, current_type)
-
-            context.encounter_gotos(set([instr.location]))
-
-            # Now that we have encountered a goto, we update the
-            # context here to match what someone calling the goto'ed
-            # function directly, would expect.  (which makes sense
-            # when you think about it; if this goto's F, then calling
-            # this is like calling F, from the perspective of what is
-            # returned.)
-            #
-            # However, this isn't the current context anymore.  This
-            # is an exit context of this routine.
-
-            exit_context = context.clone()
-
-            for ref in type_.outputs:
-                exit_context.set_touched(ref)   # ?
-                exit_context.set_written(ref)
-
-            for ref in type_.trashes:
-                exit_context.assert_writeable(ref)
-                exit_context.set_touched(ref)
-                exit_context.set_unmeaningful(ref)
-
-            self.exit_contexts.append(exit_context)
-
-            # When we get to the end, we'll check that all the
-            # exit contexts are consistent with each other.
-
-            # We set the current context as having terminated.
-            # If we are in a branch, the merge will deal with
-            # having terminated.  If we are at the end of the
-            # routine, the routine end will deal with that.
-
-            context.set_terminated()
 
         elif opcode == 'trash':
             context.set_touched(instr.dest)
@@ -850,6 +787,75 @@ class Analyzer(object):
             pass
         else:
             raise NotImplementedError(opcode)
+
+    def analyze_call(self, instr, context):
+        type = instr.location.type
+        if not isinstance(type, (RoutineType, VectorType)):
+            raise TypeMismatchError(instr, instr.location)
+        if isinstance(type, VectorType):
+            type = type.of_type
+        for ref in type.inputs:
+            context.assert_meaningful(ref)
+        for ref in type.outputs:
+            context.set_written(ref)
+        for ref in type.trashes:
+            context.assert_writeable(ref)
+            context.set_touched(ref)
+            context.set_unmeaningful(ref)
+
+    def analyze_goto(self, instr, context):
+        location = instr.location
+        type_ = location.type
+
+        if not isinstance(type_, (RoutineType, VectorType)):
+            raise TypeMismatchError(instr, location)
+
+        # assert that the dest routine's inputs are all initialized
+        if isinstance(type_, VectorType):
+            type_ = type_.of_type
+        for ref in type_.inputs:
+            context.assert_meaningful(ref)
+
+        # and that this routine's trashes and output constraints are a
+        # superset of the called routine's
+        current_type = self.current_routine.location.type
+        self.assert_affected_within('outputs', type_, current_type)
+        self.assert_affected_within('trashes', type_, current_type)
+
+        context.encounter_gotos(set([instr.location]))
+
+        # Now that we have encountered a goto, we update the
+        # context here to match what someone calling the goto'ed
+        # function directly, would expect.  (which makes sense
+        # when you think about it; if this goto's F, then calling
+        # this is like calling F, from the perspective of what is
+        # returned.)
+        #
+        # However, this isn't the current context anymore.  This
+        # is an exit context of this routine.
+
+        exit_context = context.clone()
+
+        for ref in type_.outputs:
+            exit_context.set_touched(ref)   # ?
+            exit_context.set_written(ref)
+
+        for ref in type_.trashes:
+            exit_context.assert_writeable(ref)
+            exit_context.set_touched(ref)
+            exit_context.set_unmeaningful(ref)
+
+        self.exit_contexts.append(exit_context)
+
+        # When we get to the end, we'll check that all the
+        # exit contexts are consistent with each other.
+
+        # We set the current context as having terminated.
+        # If we are in a branch, the merge will deal with
+        # having terminated.  If we are at the end of the
+        # routine, the routine end will deal with that.
+
+        context.set_terminated()
 
     def analyze_if(self, instr, context):
         incoming_meaningful = set(context.each_meaningful())

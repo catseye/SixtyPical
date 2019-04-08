@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 from sixtypical.ast import (
-    Program, Defn, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff, Save, PointInto
+    Program, Defn, Routine, Block, SingleOp, Call, GoTo, If, Repeat, For, WithInterruptsOff, Save, PointInto
 )
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
@@ -113,6 +113,8 @@ class Parser(object):
                 resolve_fwd_reference(node, 'location')
                 resolve_fwd_reference(node, 'src')
                 resolve_fwd_reference(node, 'dest')
+            if isinstance(node, (Call, GoTo)):
+                resolve_fwd_reference(node, 'location')
 
     # --- grammar productions
 
@@ -380,7 +382,7 @@ class Parser(object):
         self.scanner.expect('{')
         while not self.scanner.on('}'):
             instrs.append(self.instr())
-            if isinstance(instrs[-1], SingleOp) and instrs[-1].opcode == 'goto':
+            if isinstance(instrs[-1], GoTo):
                 break
         self.scanner.expect('}')
         return Block(self.scanner.line_number, instrs=instrs)
@@ -450,12 +452,15 @@ class Parser(object):
             opcode = self.scanner.token
             self.scanner.scan()
             return SingleOp(self.scanner.line_number, opcode=opcode, dest=None, src=None)
-        elif self.scanner.token in ("call", "goto"):
-            opcode = self.scanner.token
-            self.scanner.scan()
+        elif self.scanner.consume("call"):
             name = self.scanner.token
             self.scanner.scan()
-            instr = SingleOp(self.scanner.line_number, opcode=opcode, location=ForwardReference(name), dest=None, src=None)
+            instr = Call(self.scanner.line_number, location=ForwardReference(name))
+            return instr
+        elif self.scanner.consume("goto"):
+            name = self.scanner.token
+            self.scanner.scan()
+            instr = GoTo(self.scanner.line_number, location=ForwardReference(name))
             return instr
         elif self.scanner.token in ("copy",):
             opcode = self.scanner.token

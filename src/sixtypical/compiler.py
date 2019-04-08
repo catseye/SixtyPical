@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 from sixtypical.ast import (
-    Program, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff, Save, PointInto
+    Program, Routine, Block, SingleOp, Call, GoTo, If, Repeat, For, WithInterruptsOff, Save, PointInto
 )
 from sixtypical.model import (
     ConstantRef, LocationRef, IndexedRef, IndirectRef,
@@ -162,6 +162,10 @@ class Compiler(object):
     def compile_instr(self, instr):
         if isinstance(instr, SingleOp):
             return self.compile_single_op(instr)
+        elif isinstance(instr, Call):
+            return self.compile_call(instr)
+        elif isinstance(instr, GoTo):
+            return self.compile_goto(instr)
         elif isinstance(instr, If):
             return self.compile_if(instr)
         elif isinstance(instr, Repeat):
@@ -393,31 +397,6 @@ class Compiler(object):
                 self.emitter.emit(cls(mode(Offset(self.get_label(dest.ref.name), dest.offset.value))))
             else:
                 self.emitter.emit(cls(self.absolute_or_zero_page(self.get_label(dest.name))))
-        elif opcode == 'call':
-            location = instr.location
-            label = self.get_label(instr.location.name)
-            if isinstance(location.type, RoutineType):
-                self.emitter.emit(JSR(Absolute(label)))
-            elif isinstance(location.type, VectorType):
-                trampoline = self.trampolines.setdefault(
-                    location, Label(location.name + '_trampoline')
-                )
-                self.emitter.emit(JSR(Absolute(trampoline)))
-            else:
-                raise NotImplementedError
-        elif opcode == 'goto':
-            self.final_goto_seen = True
-            if self.skip_final_goto:
-                pass
-            else:
-                location = instr.location
-                label = self.get_label(instr.location.name)
-                if isinstance(location.type, RoutineType):
-                    self.emitter.emit(JMP(Absolute(label)))
-                elif isinstance(location.type, VectorType):
-                    self.emitter.emit(JMP(Indirect(label)))
-                else:
-                    raise NotImplementedError
         elif opcode == 'copy':
             self.compile_copy(instr, instr.src, instr.dest)
         elif opcode == 'trash':
@@ -426,6 +405,33 @@ class Compiler(object):
             self.emitter.emit(NOP())
         else:
             raise NotImplementedError(opcode)
+
+    def compile_call(self, instr):
+        location = instr.location
+        label = self.get_label(instr.location.name)
+        if isinstance(location.type, RoutineType):
+            self.emitter.emit(JSR(Absolute(label)))
+        elif isinstance(location.type, VectorType):
+            trampoline = self.trampolines.setdefault(
+                location, Label(location.name + '_trampoline')
+            )
+            self.emitter.emit(JSR(Absolute(trampoline)))
+        else:
+            raise NotImplementedError
+
+    def compile_goto(self, instr):
+        self.final_goto_seen = True
+        if self.skip_final_goto:
+            pass
+        else:
+            location = instr.location
+            label = self.get_label(instr.location.name)
+            if isinstance(location.type, RoutineType):
+                self.emitter.emit(JMP(Absolute(label)))
+            elif isinstance(location.type, VectorType):
+                self.emitter.emit(JMP(Indirect(label)))
+            else:
+                raise NotImplementedError
 
     def compile_cmp(self, instr, src, dest):
         """`instr` is only for reporting purposes"""
