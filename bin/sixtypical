@@ -12,8 +12,9 @@ sys.path.insert(0, join(dirname(realpath(sys.argv[0])), '..', 'src'))
 
 # ----------------------------------------------------------------- #
 
-import codecs
 from argparse import ArgumentParser
+import codecs
+import json
 from pprint import pprint
 import sys
 import traceback
@@ -43,14 +44,19 @@ def process_input_files(filenames, options):
     program = merge_programs(programs)
 
     analyzer = Analyzer(debug=options.debug)
-    analyzer.analyze_program(program)
+
+    try:
+        analyzer.analyze_program(program)
+    finally:
+        if options.dump_exit_contexts:
+            sys.stdout.write(json.dumps(analyzer.exit_contexts_map, indent=4, sort_keys=True, separators=(',', ':')))
+            sys.stdout.write("\n")
 
     compilation_roster = None
     if options.optimize_fallthru:
         from sixtypical.fallthru import FallthruAnalyzer
 
         def dump(data, label=None):
-            import json
             if not options.dump_fallthru_info:
                 return
             if label:
@@ -115,6 +121,12 @@ if __name__ == '__main__':
         help="Only parse and analyze the program; do not compile it."
     )
     argparser.add_argument(
+        "--dump-exit-contexts",
+        action="store_true",
+        help="Dump a map, in JSON, of the analysis context at each exit of each routine "
+             "after analyzing the program."
+    )
+    argparser.add_argument(
         "--optimize-fallthru",
         action="store_true",
         help="Reorder the routines in the program to maximize the number of tail calls "
@@ -123,7 +135,7 @@ if __name__ == '__main__':
     argparser.add_argument(
         "--dump-fallthru-info",
         action="store_true",
-        help="Dump the fallthru map and ordering to stdout after analyzing the program."
+        help="Dump the ordered fallthru map, in JSON, to stdout after analyzing the program."
     )
     argparser.add_argument(
         "--parse-only",

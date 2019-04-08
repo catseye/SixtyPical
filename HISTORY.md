@@ -1,6 +1,24 @@
 History of SixtyPical
 =====================
 
+0.19
+----
+
+*   A `table` may be defined with more than 256 entries, even
+    though the conventional index syntax can only refer to the
+    first 256 entries.
+*   A `pointer` may point inside values of type `byte table`,
+    allowing access to entries beyond the 256th.
+*   `buffer` types have been eliminated from the language,
+    as the above two improvements allow `byte table`s to
+    do everything `buffer`s previously did.
+*   When accessing a table with an index, a constant offset
+    can also be given.
+*   Accessing a `table` through a `pointer` must be done in
+    the context of a `point ... into` block.  This allows the
+    analyzer to check *which* table is being modified.
+*   Added `--dump-exit-contexts` option to `sixtypical`.
+
 0.18
 ----
 

@@ -21,24 +21,16 @@
 // and the end of their own routines, so the type needs to be compatible.
 // (In a good sense, it is a continuation.)
 //
-// Further,
-//
-// It's very arguable that screen1/2/3/4 and colormap1/2/3/4 are not REALLY inputs.
-// They're only there to support the fact that game states sometimes clear the
-// screen, and sometimes don't.  When they don't, they preserve the screen, and
-// currently the way to say "we preserve the screen" is to have it as both input
-// and output.  There is probably a better way to do this, but it needs thought.
-//
 
 typedef routine
   inputs joy2, press_fire_msg, dispatch_game_state,
          actor_pos, actor_delta, actor_logic,
          player_died,
-         screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+         screen, colormap
   outputs dispatch_game_state,
           actor_pos, actor_delta, actor_logic,
           player_died,
-          screen, screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+          screen, colormap
   trashes a, x, y, c, z, n, v, pos, new_pos, delta, ptr, dispatch_logic
     game_state_routine
 
@@ -62,18 +54,8 @@ typedef routine
 
 byte vic_border @ 53280
 byte vic_bg @ 53281
-
-byte table[256] screen1 @ 1024
-byte table[256] screen2 @ 1274
-byte table[256] screen3 @ 1524
-byte table[256] screen4 @ 1774
-
-byte table[256] colormap1 @ 55296
-byte table[256] colormap2 @ 55546
-byte table[256] colormap3 @ 55796
-byte table[256] colormap4 @ 56046
-
-buffer[2048] screen @ 1024
+byte table[2048] screen @ 1024
+byte table[2048] colormap @ 55296
 byte joy2 @ $dc00
 
 // ----------------------------------------------------------------
@@ -187,22 +169,22 @@ define check_button routine
 }
 
 define clear_screen routine
-  outputs screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs screen, colormap
   trashes a, y, c, n, z
 {
     ld y, 0
     repeat {
         ld a, 1
-        st a, colormap1 + y
-        st a, colormap2 + y
-        st a, colormap3 + y
-        st a, colormap4 + y
+        st a, colormap + y
+        st a, colormap + 250 + y
+        st a, colormap + 500 + y
+        st a, colormap + 750 + y
 
         ld a, 32
-        st a, screen1 + y
-        st a, screen2 + y
-        st a, screen3 + y
-        st a, screen4 + y
+        st a, screen + y
+        st a, screen + 250 + y
+        st a, screen + 500 + y
+        st a, screen + 750 + y
 
         inc y
         cmp y, 250
@@ -282,13 +264,14 @@ define player_logic logic_routine
     call check_new_position_in_bounds
 
     if c {
-        copy ^screen, ptr
-        st off, c
-        add ptr, new_pos
-        ld y, 0
+        point ptr into screen {
+            st off, c
+            add ptr, new_pos
+            ld y, 0
+            // check collision.
+            ld a, [ptr] + y
+        }
 
-        // check collision.
-        ld a, [ptr] + y
         // if "collision" is with your own self, treat it as if it's blank space!
         cmp a, 81
         if z {
@@ -296,17 +279,19 @@ define player_logic logic_routine
         }
         cmp a, 32
         if z {
-            copy ^screen, ptr
-            st off, c
-            add ptr, pos
-            copy 32, [ptr] + y
+            point ptr into screen {
+                st off, c
+                add ptr, pos
+                copy 32, [ptr] + y
+            }
 
             copy new_pos, pos
 
-            copy ^screen, ptr
-            st off, c
-            add ptr, pos
-            copy 81, [ptr] + y
+            point ptr into screen {
+                st off, c
+                add ptr, pos
+                copy 81, [ptr] + y
+            }
         } else {
             ld a, 1
             st a, player_died
@@ -321,13 +306,13 @@ define enemy_logic logic_routine
     call check_new_position_in_bounds
 
     if c {
-        copy ^screen, ptr
-        st off, c
-        add ptr, new_pos
-        ld y, 0
-
-        // check collision.
-        ld a, [ptr] + y
+        point ptr into screen {
+            st off, c
+            add ptr, new_pos
+            ld y, 0
+            // check collision.
+            ld a, [ptr] + y
+        }
         // if "collision" is with your own self, treat it as if it's blank space!
         cmp a, 82
         if z {
@@ -335,17 +320,19 @@ define enemy_logic logic_routine
         }
         cmp a, 32
         if z {
-            copy ^screen, ptr
-            st off, c
-            add ptr, pos
-            copy 32, [ptr] + y
+            point ptr into screen {
+                st off, c
+                add ptr, pos
+                copy 32, [ptr] + y
+            }
 
             copy new_pos, pos
 
-            copy ^screen, ptr
-            st off, c
-            add ptr, pos
-            copy 82, [ptr] + y
+            point ptr into screen {
+                st off, c
+                add ptr, pos
+                copy 82, [ptr] + y
+            }
         }
     } else {
         copy delta, compare_target
@@ -372,7 +359,7 @@ define game_state_title_screen game_state_routine
         st on, c
         sub a, 64   // yuck.  oh well
 
-        st a, screen1 + y
+        st a, screen + y
     }
 
     st off, c
@@ -444,8 +431,7 @@ define our_cinv game_state_routine
 
 define main routine
   inputs cinv
-  outputs cinv, save_cinv, pos, dispatch_game_state,
-          screen1, screen2, screen3, screen4, colormap1, colormap2, colormap3, colormap4
+  outputs cinv, save_cinv, pos, dispatch_game_state, screen, colormap
   trashes a, y, n, c, z, vic_border, vic_bg
 {
     ld a, 5

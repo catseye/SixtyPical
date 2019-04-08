@@ -97,3 +97,8 @@ class WithInterruptsOff(Instr):
 class Save(Instr):
     value_attrs = ('locations',)
     child_attrs = ('block',)
+
+
+class PointInto(Instr):
+    value_attrs = ('pointer', 'table',)
+    child_attrs = ('block',)

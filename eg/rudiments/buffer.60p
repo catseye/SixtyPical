@@ -1,7 +1,7 @@
 // Include `support/${PLATFORM}.60p` before this source
 // Should print Y
 
-buffer[2048] buf
+byte table[2048] buf
 pointer ptr @ 254
 byte foo
 

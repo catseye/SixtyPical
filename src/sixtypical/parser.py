@@ -1,10 +1,12 @@
 # encoding: UTF-8
 
-from sixtypical.ast import Program, Defn, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff, Save
+from sixtypical.ast import (
+    Program, Defn, Routine, Block, SingleOp, If, Repeat, For, WithInterruptsOff, Save, PointInto
+)
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
-    RoutineType, VectorType, TableType, BufferType, PointerType,
-    LocationRef, ConstantRef, IndirectRef, IndexedRef, AddressRef,
+    RoutineType, VectorType, TableType, PointerType,
+    LocationRef, ConstantRef, IndirectRef, IndexedRef,
 )
 from sixtypical.scanner import Scanner
 
@@ -81,9 +83,9 @@ class Parser(object):
 
         def backpatch_constraint_labels(type_):
             def resolve(w):
-                 if not isinstance(w, ForwardReference):
-                     return w
-                 return self.lookup(w.name)
+                if not isinstance(w, ForwardReference):
+                    return w
+                return self.lookup(w.name)
             if isinstance(type_, TableType):
                 backpatch_constraint_labels(type_.of_type)
             elif isinstance(type_, VectorType):
@@ -122,7 +124,7 @@ class Parser(object):
                 self.typedef()
             if self.scanner.on('const'):
                 self.defn_const()
-        typenames = ['byte', 'word', 'table', 'vector', 'buffer', 'pointer']  # 'routine',
+        typenames = ['byte', 'word', 'table', 'vector', 'pointer']  # 'routine',
         typenames.extend(self.context.typedefs.keys())
         while self.scanner.on(*typenames):
             defn = self.defn()
@@ -222,8 +224,8 @@ class Parser(object):
 
         if self.scanner.consume('table'):
             size = self.defn_size()
-            if size <= 0 or size > 256:
-                self.syntax_error("Table size must be > 0 and <= 256")
+            if size <= 0 or size > 65536:
+                self.syntax_error("Table size must be > 0 and <= 65536")
             type_ = TableType(type_, size)
 
         return type_
@@ -248,9 +250,6 @@ class Parser(object):
         elif self.scanner.consume('routine'):
             (inputs, outputs, trashes) = self.constraints()
             type_ = RoutineType(inputs=inputs, outputs=outputs, trashes=trashes)
-        elif self.scanner.consume('buffer'):
-            size = self.defn_size()
-            type_ = BufferType(size)
         elif self.scanner.consume('pointer'):
             type_ = PointerType()
         else:
@@ -351,9 +350,6 @@ class Parser(object):
             self.scanner.expect('+')
             self.scanner.expect('y')
             return IndirectRef(loc)
-        elif self.scanner.consume('^'):
-            loc = self.locexpr()
-            return AddressRef(loc)
         else:
             return self.indexed_locexpr()
 
@@ -361,9 +357,13 @@ class Parser(object):
         loc = self.locexpr()
         if not isinstance(loc, str):
             index = None
+            offset = ConstantRef(TYPE_BYTE, 0)
             if self.scanner.consume('+'):
+                if self.scanner.token in self.context.consts or self.scanner.on_type('integer literal'):
+                    offset = self.const()
+                    self.scanner.expect('+')
                 index = self.locexpr()
-                loc = IndexedRef(loc, index)
+                loc = IndexedRef(loc, offset, index)
         return loc
 
     def statics(self):
@@ -474,6 +474,12 @@ class Parser(object):
             locations = self.locexprs()
             block = self.block()
             return Save(self.scanner.line_number, locations=locations, block=block)
+        elif self.scanner.consume("point"):
+            pointer = self.locexpr()
+            self.scanner.expect("into")
+            table = self.locexpr()
+            block = self.block()
+            return PointInto(self.scanner.line_number, pointer=pointer, table=table, block=block)
         elif self.scanner.consume("trash"):
             dest = self.locexpr()
             return SingleOp(self.scanner.line_number, opcode='trash', src=None, dest=dest)

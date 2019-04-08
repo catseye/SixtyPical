@@ -9,14 +9,8 @@ class Type(object):
     def __repr__(self):
         return 'Type(%r)' % self.name
 
-    def __str__(self):
-        return self.name
-
     def __eq__(self, other):
-        return isinstance(other, Type) and other.name == self.name
-
-    def __hash__(self):
-        return hash(self.name)
+        return other.__class__ == self.__class__ and other.name == self.name
 
 
 TYPE_BIT = Type('bit', max_range=(0, 1))
@@ -24,30 +18,24 @@ TYPE_BYTE = Type('byte', max_range=(0, 255))
 TYPE_WORD = Type('word', max_range=(0, 65535))
 
 
-
 class RoutineType(Type):
     """This memory location contains the code for a routine."""
     def __init__(self, inputs, outputs, trashes):
-        self.name = 'routine'
         self.inputs = inputs
         self.outputs = outputs
         self.trashes = trashes
 
     def __repr__(self):
-        return '%s(%r, inputs=%r, outputs=%r, trashes=%r)' % (
-            self.__class__.__name__, self.name, self.inputs, self.outputs, self.trashes
+        return '%s(inputs=%r, outputs=%r, trashes=%r)' % (
+            self.__class__.__name__, self.inputs, self.outputs, self.trashes
         )
 
     def __eq__(self, other):
         return isinstance(other, RoutineType) and (
-            other.name == self.name and
             other.inputs == self.inputs and
             other.outputs == self.outputs and
             other.trashes == self.trashes
         )
-
-    def __hash__(self):
-        return hash(self.name) ^ hash(self.inputs) ^ hash(self.outputs) ^ hash(self.trashes)
 
     @classmethod
     def executable_types_compatible(cls_, src, dest):
@@ -70,7 +58,6 @@ class RoutineType(Type):
 class VectorType(Type):
     """This memory location contains the address of some other type (currently, only RoutineType)."""
     def __init__(self, of_type):
-        self.name = 'vector'
         self.of_type = of_type
 
     def __repr__(self):
@@ -79,37 +66,37 @@ class VectorType(Type):
         )
 
     def __eq__(self, other):
-        return self.name == other.name and self.of_type == other.of_type
-
-    def __hash__(self):
-        return hash(self.name) ^ hash(self.of_type)
+        return isinstance(other, VectorType) and self.of_type == other.of_type
 
 
 class TableType(Type):
     def __init__(self, of_type, size):
         self.of_type = of_type
         self.size = size
-        self.name = '{} table[{}]'.format(self.of_type.name, self.size)
 
     def __repr__(self):
         return '%s(%r, %r)' % (
             self.__class__.__name__, self.of_type, self.size
         )
 
+    def __eq__(self, other):
+        return isinstance(other, TableType) and self.of_type == other.of_type and self.size == other.size
+
+    @property
+    def max_range(self):
+        return (0, self.size - 1)
+
     @classmethod
     def is_a_table_type(cls_, x, of_type):
         return isinstance(x, TableType) and x.of_type == of_type
 
 
-class BufferType(Type):
-    def __init__(self, size):
-        self.size = size
-        self.name = 'buffer[%s]' % self.size
-
-
 class PointerType(Type):
     def __init__(self):
         self.name = 'pointer'
+
+    def __eq__(self, other):
+        return other.__class__ == self.__class__
 
 
 class Ref(object):
@@ -139,7 +126,7 @@ class LocationRef(Ref):
         return equal
 
     def __hash__(self):
-        return hash(self.name + str(self.type))
+        return hash(self.name + repr(self.type))
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.type, self.name)
@@ -183,75 +170,26 @@ class IndirectRef(Ref):
 
 
 class IndexedRef(Ref):
-    def __init__(self, ref, index):
+    def __init__(self, ref, offset, index):
         self.ref = ref
+        self.offset = offset
         self.index = index
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.ref == other.ref and self.index == other.index
+        return isinstance(other, self.__class__) and self.ref == other.ref and self.offset == other.offset and self.index == other.index
 
     def __hash__(self):
-        return hash(self.__class__.name) ^ hash(self.ref) ^ hash(self.index)
+        return hash(self.__class__.name) ^ hash(self.ref) ^ hash(self.offset) ^ hash(self.index)
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__, self.ref, self.index)
+        return '%s(%r, %r, %r)' % (self.__class__.__name__, self.ref, self.offset, self.index)
 
     @property
     def name(self):
-        return '{}+{}'.format(self.ref.name, self.index.name)
+        return '{}+{}+{}'.format(self.ref.name, self.offset, self.index.name)
 
     def is_constant(self):
         return False
-
-
-class AddressRef(Ref):
-    def __init__(self, ref):
-        self.ref = ref
-
-    def __eq__(self, other):
-        return self.ref == other.ref
-
-    def __hash__(self):
-        return hash(self.__class__.name) ^ hash(self.ref)
-
-    def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.ref)
-
-    @property
-    def name(self):
-        return '^{}'.format(self.ref.name)
-
-    def is_constant(self):
-        return True
-
-
-class PartRef(Ref):
-    """For 'low byte of' location and 'high byte of' location modifiers.
-
-    height=0 = low byte, height=1 = high byte.
-
-    NOTE: Not actually used yet.  Might require more thought before it's usable.
-    """
-    def __init__(self, ref, height):
-        assert isinstance(ref, Ref)
-        assert ref.type == TYPE_WORD
-        self.ref = ref
-        self.height = height
-        self.type = TYPE_BYTE
-
-    def __eq__(self, other):
-        return isinstance(other, PartRef) and (
-            other.height == self.height and other.ref == self.ref
-        )
-
-    def __hash__(self):
-        return hash(self.ref) ^ hash(self.height) ^ hash(self.type)
-
-    def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__, self.ref, self.height)
-
-    def is_constant(self):
-        return self.ref.is_constant()
 
 
 class ConstantRef(Ref):
@@ -295,6 +233,10 @@ class ConstantRef(Ref):
         while value > 255:
             value -= 256
         return ConstantRef(self.type, value)
+
+    @property
+    def name(self):
+        return 'constant({})'.format(self.value)
 
 
 REG_A = LocationRef(TYPE_BYTE, 'a')
