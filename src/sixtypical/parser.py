@@ -12,12 +12,12 @@ from sixtypical.scanner import Scanner
 
 
 class SymEntry(object):
-    def __init__(self, ast_node, model):
+    def __init__(self, ast_node, type_):
         self.ast_node = ast_node
-        self.model = model
+        self.type_ = type_
 
     def __repr__(self):
-        return "%s(%r, %r)" % (self.__class__.__name__, self.ast_node, self.model)
+        return "%s(%r, %r)" % (self.__class__.__name__, self.ast_node, self.type_)
 
 
 class ForwardReference(object):
@@ -35,19 +35,19 @@ class ParsingContext(object):
         self.typedefs = {}         # token -> Type AST
         self.consts = {}           # token -> Loc
 
-        for token in ('a', 'x', 'y'):
-            self.symbols[token] = SymEntry(None, LocationRef(TYPE_BYTE, token))
-        for token in ('c', 'z', 'n', 'v'):
-            self.symbols[token] = SymEntry(None, LocationRef(TYPE_BIT, token))
+        for name in ('a', 'x', 'y'):
+            self.symbols[name] = SymEntry(None, TYPE_BYTE)
+        for name in ('c', 'z', 'n', 'v'):
+            self.symbols[name] = SymEntry(None, TYPE_BIT)
 
     def __str__(self):
         return "Symbols: {}\nStatics: {}\nTypedefs: {}\nConsts: {}".format(self.symbols, self.statics, self.typedefs, self.consts)
 
-    def fetch(self, name):
+    def fetch_ref(self, name):
         if name in self.statics:
-            return self.statics[name].model
+            return LocationRef(self.statics[name].type_, name)
         if name in self.symbols:
-            return self.symbols[name].model
+            return LocationRef(self.symbols[name].type_, name)
         return None
 
 
@@ -60,18 +60,18 @@ class Parser(object):
         self.scanner.syntax_error(msg)
 
     def lookup(self, name):
-        model = self.context.fetch(name)
+        model = self.context.fetch_ref(name)
         if model is None:
             self.syntax_error('Undefined symbol "{}"'.format(name))
         return model
 
-    def declare(self, name, symentry, static=False):
-        if self.context.fetch(name):
+    def declare(self, name, ast_node, type_, static=False):
+        if self.context.fetch_ref(name):
             self.syntax_error('Symbol "%s" already declared' % name)
         if static:
-            self.context.statics[name] = symentry
+            self.context.statics[name] = SymEntry(ast_node, type_)
         else:
-            self.context.symbols[name] = symentry
+            self.context.symbols[name] = SymEntry(ast_node, type_)
 
     def clear_statics(self):
         self.context.statics = {}
@@ -129,14 +129,14 @@ class Parser(object):
         typenames = ['byte', 'word', 'table', 'vector', 'pointer']  # 'routine',
         typenames.extend(self.context.typedefs.keys())
         while self.scanner.on(*typenames):
-            defn = self.defn()
-            self.declare(defn.name, SymEntry(defn, defn.location))
+            type_, defn = self.defn()
+            self.declare(defn.name, defn, type_)
             defns.append(defn)
         while self.scanner.consume('define'):
             name = self.scanner.token
             self.scanner.scan()
-            routine = self.routine(name)
-            self.declare(name, SymEntry(routine, routine.location))
+            type_, routine = self.routine(name)
+            self.declare(name, routine, type_)
             routines.append(routine)
         self.scanner.check_type('EOF')
 
@@ -191,7 +191,7 @@ class Parser(object):
 
         location = LocationRef(type_, name)
 
-        return Defn(self.scanner.line_number, name=name, addr=addr, initial=initial, location=location)
+        return type_, Defn(self.scanner.line_number, name=name, addr=addr, initial=initial, location=location)
 
     def const(self):
         if self.scanner.token in ('on', 'off'):
@@ -300,16 +300,16 @@ class Parser(object):
 
             self.clear_statics()
             for defn in statics:
-                self.declare(defn.name, SymEntry(defn, defn.location), static=True)
+                self.declare(defn.name, defn, defn.location.type, static=True)
             block = self.block()
             self.clear_statics()
 
             addr = None
         location = LocationRef(type_, name)
-        return Routine(
+        return type_, Routine(
             self.scanner.line_number,
             name=name, block=block, addr=addr,
-            location=location, statics=statics
+            location=location, statics=statics,
         )
 
     def labels(self):
@@ -339,7 +339,7 @@ class Parser(object):
         else:
             name = self.scanner.token
             self.scanner.scan()
-            loc = self.context.fetch(name)
+            loc = self.context.fetch_ref(name)
             if loc:
                 return loc
             else:
@@ -371,7 +371,7 @@ class Parser(object):
     def statics(self):
         defns = []
         while self.scanner.consume('static'):
-            defn = self.defn()
+            type_, defn = self.defn()
             if defn.initial is None:
                 self.syntax_error("Static definition {} must have initial value".format(defn))
             defns.append(defn)
