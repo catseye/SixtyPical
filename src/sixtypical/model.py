@@ -1,41 +1,35 @@
 """Data/storage model for SixtyPical."""
 
-
-class Type(object):
-    def __init__(self, name, max_range=None):
-        self.name = name
-        self.max_range = max_range
-
-    def __repr__(self):
-        return 'Type(%r)' % self.name
-
-    def __eq__(self, other):
-        return other.__class__ == self.__class__ and other.name == self.name
+from collections import namedtuple
 
 
-TYPE_BIT = Type('bit', max_range=(0, 1))
-TYPE_BYTE = Type('byte', max_range=(0, 255))
-TYPE_WORD = Type('word', max_range=(0, 65535))
+class BitType(namedtuple('BitType', ['typename'])):
+    max_range = (0, 1)
+    def __new__(cls):
+        return super(BitType, cls).__new__(cls, 'bit')
+TYPE_BIT = BitType()
 
 
-class RoutineType(Type):
+class ByteType(namedtuple('ByteType', ['typename'])):
+    max_range = (0, 255)
+    def __new__(cls):
+        return super(ByteType, cls).__new__(cls, 'byte')
+TYPE_BYTE = ByteType()
+
+
+class WordType(namedtuple('WordType', ['typename'])):
+    max_range = (0, 65535)
+    def __new__(cls):
+        return super(WordType, cls).__new__(cls, 'word')
+TYPE_WORD = WordType()
+
+
+class RoutineType(namedtuple('RoutineType', ['typename', 'inputs', 'outputs', 'trashes'])):
     """This memory location contains the code for a routine."""
-    def __init__(self, inputs, outputs, trashes):
-        self.inputs = inputs
-        self.outputs = outputs
-        self.trashes = trashes
+    max_range = (0, 0)
 
-    def __repr__(self):
-        return '%s(inputs=%r, outputs=%r, trashes=%r)' % (
-            self.__class__.__name__, self.inputs, self.outputs, self.trashes
-        )
-
-    def __eq__(self, other):
-        return isinstance(other, RoutineType) and (
-            other.inputs == self.inputs and
-            other.outputs == self.outputs and
-            other.trashes == self.trashes
-        )
+    def __new__(cls, *args):
+        return super(RoutineType, cls).__new__(cls, 'routine', *args)
 
     @classmethod
     def executable_types_compatible(cls_, src, dest):
@@ -55,34 +49,18 @@ class RoutineType(Type):
             return False
 
 
-class VectorType(Type):
+class VectorType(namedtuple('VectorType', ['typename', 'of_type'])):
     """This memory location contains the address of some other type (currently, only RoutineType)."""
-    max_range = (0, 0)
+    max_range = (0, 65535)
 
-    def __init__(self, of_type):
-        self.of_type = of_type
-
-    def __repr__(self):
-        return '%s(%r)' % (
-            self.__class__.__name__, self.of_type
-        )
-
-    def __eq__(self, other):
-        return isinstance(other, VectorType) and self.of_type == other.of_type
+    def __new__(cls, *args):
+        return super(VectorType, cls).__new__(cls, 'vector', *args)
 
 
-class TableType(Type):
-    def __init__(self, of_type, size):
-        self.of_type = of_type
-        self.size = size
+class TableType(namedtuple('TableType', ['typename', 'of_type', 'size'])):
 
-    def __repr__(self):
-        return '%s(%r, %r)' % (
-            self.__class__.__name__, self.of_type, self.size
-        )
-
-    def __eq__(self, other):
-        return isinstance(other, TableType) and self.of_type == other.of_type and self.size == other.size
+    def __new__(cls, *args):
+        return super(TableType, cls).__new__(cls, 'table', *args)
 
     @property
     def max_range(self):
@@ -93,94 +71,46 @@ class TableType(Type):
         return isinstance(x, TableType) and x.of_type == of_type
 
 
-class PointerType(Type):
-    max_range = (0, 0)
+class PointerType(namedtuple('PointerType', ['typename'])):
+    max_range = (0, 65535)
 
-    def __init__(self):
-        self.name = 'pointer'
-
-    def __eq__(self, other):
-        return other.__class__ == self.__class__
+    def __new__(cls):
+        return super(PointerType, cls).__new__(cls, 'pointer')
 
 
-class Ref(object):
-    pass
+# --------------------------------------------------------
 
 
-class LocationRef(Ref):
-    def __init__(self, type, name):
-        self.name = name
-
-    def __eq__(self, other):
-        return self.__class__ is other.__class__ and self.name == other.name
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.name)
-
-    def __str__(self):
-        return self.name
+class LocationRef(namedtuple('LocationRef', ['reftype', 'name'])):
+    def __new__(cls, *args):
+        return super(LocationRef, cls).__new__(cls, 'location', *args)
 
     @classmethod
     def format_set(cls, location_refs):
         return '{%s}' % ', '.join([str(loc) for loc in sorted(location_refs, key=lambda x: x.name)])
 
 
-class IndirectRef(Ref):
-    def __init__(self, ref):
-        self.ref = ref
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.ref == other.ref
-
-    def __hash__(self):
-        return hash(self.__class__.name) ^ hash(self.ref)
-
-    def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.ref)
+class IndirectRef(namedtuple('IndirectRef', ['reftype', 'ref'])):
+    def __new__(cls, *args):
+        return super(IndirectRef, cls).__new__(cls, 'indirect', *args)
 
     @property
     def name(self):
         return '[{}]+y'.format(self.ref.name)
 
 
-class IndexedRef(Ref):
-    def __init__(self, ref, offset, index):
-        self.ref = ref
-        self.offset = offset
-        self.index = index
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.ref == other.ref and self.offset == other.offset and self.index == other.index
-
-    def __hash__(self):
-        return hash(self.__class__.name) ^ hash(self.ref) ^ hash(self.offset) ^ hash(self.index)
-
-    def __repr__(self):
-        return '%s(%r, %r, %r)' % (self.__class__.__name__, self.ref, self.offset, self.index)
+class IndexedRef(namedtuple('IndexedRef', ['reftype', 'ref', 'offset', 'index'])):
+    def __new__(cls, *args):
+        return super(IndexedRef, cls).__new__(cls, 'indexed', *args)
 
     @property
     def name(self):
         return '{}+{}+{}'.format(self.ref.name, self.offset, self.index.name)
 
 
-class ConstantRef(Ref):
-    def __init__(self, type, value):
-        self.type = type
-        self.value = value
-
-    def __eq__(self, other):
-        return isinstance(other, ConstantRef) and (
-            other.type == self.type and other.value == self.value
-        )
-
-    def __hash__(self):
-        return hash(str(self.value) + str(self.type))
-
-    def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__, self.type, self.value)
+class ConstantRef(namedtuple('ConstantRef', ['reftype', 'type', 'value'])):
+    def __new__(cls, *args):
+        return super(ConstantRef, cls).__new__(cls, 'constant', *args)
 
     def high_byte(self):
         return (self.value >> 8) & 255
@@ -207,11 +137,11 @@ class ConstantRef(Ref):
         return 'constant({})'.format(self.value)
 
 
-REG_A = LocationRef(TYPE_BYTE, 'a')
-REG_X = LocationRef(TYPE_BYTE, 'x')
-REG_Y = LocationRef(TYPE_BYTE, 'y')
+REG_A = LocationRef('a')
+REG_X = LocationRef('x')
+REG_Y = LocationRef('y')
 
-FLAG_Z = LocationRef(TYPE_BIT, 'z')
-FLAG_C = LocationRef(TYPE_BIT, 'c')
-FLAG_N = LocationRef(TYPE_BIT, 'n')
-FLAG_V = LocationRef(TYPE_BIT, 'v')
+FLAG_Z = LocationRef('z')
+FLAG_C = LocationRef('c')
+FLAG_N = LocationRef('n')
+FLAG_V = LocationRef('v')

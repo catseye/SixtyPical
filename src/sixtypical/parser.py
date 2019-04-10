@@ -54,13 +54,13 @@ class SymbolTable(object):
 
     def fetch_global_ref(self, name):
         if name in self.symbols:
-            return LocationRef(self.symbols[name].type_, name)
+            return LocationRef(name)
         return None
 
     def fetch_static_ref(self, routine_name, name):
         routine_statics = self.statics.get(routine_name, {})
         if name in routine_statics:
-            return LocationRef(routine_statics[name].type_, name)
+            return LocationRef(name)
         return None
 
 
@@ -98,22 +98,25 @@ class Parser(object):
     def resolve_symbols(self, program):
         # This could stand to be better unified.
 
-        def backpatch_constraint_labels(type_):
-            def resolve(w):
-                if not isinstance(w, ForwardReference):
-                    return w
-                return self.lookup(w.name)
+        def resolve(w):
+             return self.lookup(w.name) if isinstance(w, ForwardReference) else w
+
+        def backpatched_type(type_):
             if isinstance(type_, TableType):
-                backpatch_constraint_labels(type_.of_type)
+                return TableType(backpatched_type(type_.of_type), type_.size)
             elif isinstance(type_, VectorType):
-                backpatch_constraint_labels(type_.of_type)
+                return VectorType(backpatched_type(type_.of_type))
             elif isinstance(type_, RoutineType):
-                type_.inputs = set([resolve(w) for w in type_.inputs])
-                type_.outputs = set([resolve(w) for w in type_.outputs])
-                type_.trashes = set([resolve(w) for w in type_.trashes])
+                return RoutineType(
+                    frozenset([resolve(w) for w in type_.inputs]),
+                    frozenset([resolve(w) for w in type_.outputs]),
+                    frozenset([resolve(w) for w in type_.trashes]),
+                )
+            else:
+                return type_
 
         for name, symentry in self.symtab.symbols.items():
-            backpatch_constraint_labels(symentry.type_)
+            symentry.type_ = backpatched_type(symentry.type_)
 
         def resolve_fwd_reference(obj, field):
             field_value = getattr(obj, field, None)
@@ -265,7 +268,7 @@ class Parser(object):
             type_ = VectorType(type_)
         elif self.scanner.consume('routine'):
             (inputs, outputs, trashes) = self.constraints()
-            type_ = RoutineType(inputs=inputs, outputs=outputs, trashes=trashes)
+            type_ = RoutineType(frozenset(inputs), frozenset(outputs), frozenset(trashes))
         elif self.scanner.consume('pointer'):
             type_ = PointerType()
         else:
@@ -302,7 +305,7 @@ class Parser(object):
     def routine(self, name):
         type_ = self.defn_type()
         if not isinstance(type_, RoutineType):
-            self.syntax_error("Can only define a routine, not %r" % type_)
+            self.syntax_error("Can only define a routine, not {}".format(repr(type_)))
         statics = []
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')

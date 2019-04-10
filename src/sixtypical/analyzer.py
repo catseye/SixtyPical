@@ -184,7 +184,7 @@ class AnalysisContext(object):
         exception_class = kwargs.get('exception_class', UnmeaningfulReadError)
         for ref in refs:
             # statics are always meaningful
-            if self.symtab.fetch_static_ref(self.routine.name, ref.name):
+            if self.symtab.has_static(self.routine.name, ref.name):
                 continue
             if self.is_constant(ref):
                 pass
@@ -204,7 +204,7 @@ class AnalysisContext(object):
         exception_class = kwargs.get('exception_class', ForbiddenWriteError)
         for ref in refs:
             # statics are always writeable
-            if self.symtab.fetch_static_ref(self.routine.name, ref.name):
+            if self.symtab.has_static(self.routine.name, ref.name):
                 continue
             if ref not in self._writeable:
                 message = ref.name
@@ -505,10 +505,7 @@ class Analyzer(object):
 
         # if something was touched, then it should have been declared to be writable.
         for ref in context.each_touched():
-            # FIXME once we have namedtuples, go back to comparing the ref directly!
-            outputs_names = [r.name for r in type_.outputs]
-            trashes_names = [r.name for r in type_.trashes]
-            if ref.name not in outputs_names and ref.name not in trashes_names and not self.symtab.has_static(routine.name, ref.name):
+            if ref not in type_.outputs and ref not in type_.trashes and not self.symtab.has_static(routine.name, ref.name):
                 raise ForbiddenWriteError(routine, ref.name)
 
         self.exit_contexts = None
@@ -822,7 +819,7 @@ class Analyzer(object):
     def analyze_call(self, instr, context):
         type = self.get_type(instr.location)
         if not isinstance(type, (RoutineType, VectorType)):
-            raise TypeMismatchError(instr, instr.location)
+            raise TypeMismatchError(instr, instr.location.name)
         if isinstance(type, VectorType):
             type = type.of_type
         for ref in type.inputs:
@@ -839,7 +836,7 @@ class Analyzer(object):
         type_ = self.get_type(instr.location)
 
         if not isinstance(type_, (RoutineType, VectorType)):
-            raise TypeMismatchError(instr, location)
+            raise TypeMismatchError(instr, location.name)
 
         # assert that the dest routine's inputs are all initialized
         if isinstance(type_, VectorType):
