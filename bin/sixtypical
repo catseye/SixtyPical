@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-"""Usage: sixtypical [OPTIONS] FILES
-
-Analyzes and compiles a Sixtypical program.
-"""
-
 from os.path import realpath, dirname, join
 import sys
 
@@ -92,7 +87,7 @@ def process_input_files(filenames, options):
 
 
 if __name__ == '__main__':
-    argparser = ArgumentParser(__doc__.strip())
+    argparser = ArgumentParser()
 
     argparser.add_argument(
         'filenames', metavar='FILENAME', type=str, nargs='+',
@@ -151,6 +146,11 @@ if __name__ == '__main__':
         "--traceback",
         action="store_true",
         help="When an error occurs, display a full Python traceback."
+    )
+    argparser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s 0.19"
     )
 
     options, unknown = argparser.parse_known_args(sys.argv[1:])
