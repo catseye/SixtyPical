@@ -5,9 +5,8 @@ _Version 0.19.  Work-in-progress, everything is subject to change._
 
 **SixtyPical** is a [very low-level](#very-low-level) programming language
 supporting a [sophisticated static analysis](#sophisticated-static-analysis).
-
 Its reference compiler can generate [efficient code](#efficient-code) for
-[several 6502-based platforms](#target-platforms) while catching many
+several 6502-based [target platforms](#target-platforms) while catching many
 common mistakes at compile-time, reducing the time spent in debugging.
 
 Quick Start
@@ -15,7 +14,7 @@ Quick Start
 
 Make sure you have Python (2.7 or 3.5+) installed.  Then
 clone this repository and put its `bin` directory on your
-executable search path.  Then run:
+executable search path.  Then you can run:
 
     sixtypical
 
@@ -84,8 +83,8 @@ it conforms to it.  It can detect common mistakes such as
 Unlike most languages, in SixtyPical the programmer must manage memory very
 explicitly, selecting the registers and memory locations to store all data in.
 So, unlike a C compiler such as [cc65][], a SixtyPical compiler doesn't need
-to generate code to handle stack management or register spilling.  This results
-in smaller (and thus faster) programs.
+to generate code to handle [call stack management][] or [register allocation][].
+This results in smaller (and thus faster) programs.
 
 The flagship demo, a minigame for the Commodore 64, compiles to
 a **930**-byte `.PRG` file.
@@ -95,10 +94,12 @@ a **930**-byte `.PRG` file.
 The reference implementation can analyze and compile SixtyPical programs to
 6502 machine code formats which can run on several 6502-based 8-bit architectures:
 
-*   [Commodore 64][] -- examples in [eg/c64/](eg/c64/)
-*   [Commodore VIC-20][] -- examples in [eg/vic20/](eg/vic20/)
-*   [Atari 2600][] -- examples in [eg/atari2600/](eg/atari2600/)
-*   [Apple II series][] -- examples in [eg/apple2/](eg/apple2/)
+*   [Commodore 64][]
+*   [Commodore VIC-20][]
+*   [Atari 2600][]
+*   [Apple II series][]
+
+For example programs for each of these, see [eg/README.md](eg/README.md).
 
 Documentation
 -------------
@@ -117,6 +118,10 @@ and a reference implementation written in Python.
 *   [Output formats supported by `sixtypical`](doc/Output%20Formats.md)
 *   [TODO](TODO.md)
 
+[effect system]: https://en.wikipedia.org/wiki/Effect_system
+[abstractly interprets]: https://en.wikipedia.org/wiki/Abstract_interpretation
+[call stack management]: https://en.wikipedia.org/wiki/Call_stack
+[register allocation]: https://en.wikipedia.org/wiki/Register_allocation
 [VICE]: http://vice-emu.sourceforge.net/
 [cc65]: https://cc65.github.io/
 [Commodore 64]: https://en.wikipedia.org/wiki/Commodore_64

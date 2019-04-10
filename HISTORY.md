@@ -17,6 +17,10 @@ History of SixtyPical
 *   Accessing a `table` through a `pointer` must be done in
     the context of a `point ... into` block.  This allows the
     analyzer to check *which* table is being accessed.
+*   Refactored compiler internals so that type information
+    is stored in a single symbol table shared by all phases.
+*   Refactored internal data structures that represent
+    references and types to be immutable `namedtuple`s.
 *   Added `--dump-exit-contexts` option to `sixtypical`.
 
 0.18
