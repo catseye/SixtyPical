@@ -3,7 +3,7 @@ SixtyPical
 
 _Version 0.19.  Work-in-progress, everything is subject to change._
 
-**SixtyPical** is a [very low-level](#very-low-level) programming language
+**SixtyPical** is a [low-level](#low-level) programming language
 supporting a [sophisticated static analysis](#sophisticated-static-analysis).
 Its reference compiler can generate [efficient code](#efficient-code) for
 several 6502-based [target platforms](#target-platforms) while catching many
@@ -47,7 +47,7 @@ SixtyPical gives the programmer a coding regimen on par with assembly
 language in terms of size and hands-on-ness, but also able to catch
 many ridiculous silly errors at compile time.
 
-### Very low level
+### Low level
 
 Many of SixtyPical's primitive instructions resemble
 those of the 6502 CPU — in fact it is intended to be compiled to
