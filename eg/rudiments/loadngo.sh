@@ -6,18 +6,10 @@ arch="$1"
 shift 1
 if [ "X$arch" = "Xc64" ]; then
   output_format='c64-basic-prg'
-  if [ -e vicerc ]; then
-    emu="x64 -config vicerc"
-  else
-    emu="x64"
-  fi
+  emu="x64 -config vicerc"
 elif [ "X$arch" = "Xvic20" ]; then
   output_format='vic20-basic-prg'
-  if [ -e vicerc ]; then
-    emu="xvic -config vicerc"
-  else
-    emu="xvic"
-  fi
+  emu="xvic -config vicerc"
 else
   echo $usage && exit 1
 fi
