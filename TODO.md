@@ -29,6 +29,14 @@ inner block has finished -- even if there is no `call`.)
 
 These holes need to be plugged.
 
+### Reset pointer in `point into` blocks
+
+We have `point into` blocks, but maybe the action when entering such a
+block shouldn't always be to set the given pointer to the start of the given table.
+
+That is, sometimes we would like to start at some fixed offset.  And
+sometimes we want to (re)set the pointer, without closing and starting a new block.
+
 ### Pointers associated globally with a table
 
 We have `point into` blocks, but we would also like to sometimes pass a pointer

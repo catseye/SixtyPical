@@ -16,7 +16,7 @@ History of SixtyPical
     can also be given.
 *   Accessing a `table` through a `pointer` must be done in
     the context of a `point ... into` block.  This allows the
-    analyzer to check *which* table is being modified.
+    analyzer to check *which* table is being accessed.
 *   Added `--dump-exit-contexts` option to `sixtypical`.
 
 0.18
