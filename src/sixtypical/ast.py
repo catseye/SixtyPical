@@ -54,11 +54,11 @@ class Program(AST):
 
 
 class Defn(AST):
-    value_attrs = ('name', 'addr', 'initial', 'location',)
+    value_attrs = ('name', 'addr', 'initial',)
 
 
 class Routine(AST):
-    value_attrs = ('name', 'addr', 'initial', 'location',)
+    value_attrs = ('name', 'addr', 'initial',)
     children_attrs = ('statics',)
     child_attrs = ('block',)
 

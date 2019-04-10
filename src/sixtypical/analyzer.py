@@ -80,16 +80,7 @@ class IncompatibleConstraintsError(ConstraintsError):
     pass
 
 
-def routine_has_static(routine, ref):
-    if not hasattr(routine, 'statics'):
-        return False
-    for static in routine.statics:
-        if static.location == ref:
-            return True
-    return False
-
-
-class Context(object):
+class AnalysisContext(object):
     """
     A location is touched if it was changed (or even potentially
     changed) during this routine, or some routine called by this routine.
@@ -108,8 +99,8 @@ class Context(object):
     lists of this routine.  A location can also be temporarily marked
     unwriteable in certain contexts, such as `for` loops.
     """
-    def __init__(self, routines, routine, inputs, outputs, trashes):
-        self.routines = routines         # LocationRef -> Routine (AST node)
+    def __init__(self, symtab, routine, inputs, outputs, trashes):
+        self.symtab = symtab
         self.routine = routine           # Routine (AST node)
         self._touched = set()            # {LocationRef}
         self._range = dict()             # LocationRef -> (Int, Int)
@@ -119,29 +110,30 @@ class Context(object):
         self._pointer_assoc = dict()
 
         for ref in inputs:
-            if ref.is_constant():
+            if self.is_constant(ref):
                 raise ConstantConstraintError(self.routine, ref.name)
-            self._range[ref] = ref.max_range()
+            self._range[ref] = self.max_range(ref)
         output_names = set()
         for ref in outputs:
-            if ref.is_constant():
+            if self.is_constant(ref):
                 raise ConstantConstraintError(self.routine, ref.name)
             output_names.add(ref.name)
             self._writeable.add(ref)
         for ref in trashes:
-            if ref.is_constant():
+            if self.is_constant(ref):
                 raise ConstantConstraintError(self.routine, ref.name)
             if ref.name in output_names:
                 raise InconsistentConstraintsError(self.routine, ref.name)
             self._writeable.add(ref)
 
     def __str__(self):
-        return "Context(\n  _touched={},\n  _range={},\n  _writeable={}\n)".format(
+        return "{}(\n  _touched={},\n  _range={},\n  _writeable={}\n)".format(
+            self.__class__.__name__,
             LocationRef.format_set(self._touched), LocationRef.format_set(self._range), LocationRef.format_set(self._writeable)
         )
 
     def to_json_data(self):
-        type_ = self.routine.location.type
+        type_ = self.symtab.fetch_global_type(self.routine.name)
         return {
             'routine_inputs': ','.join(sorted(loc.name for loc in type_.inputs)),
             'routine_outputs': ','.join(sorted(loc.name for loc in type_.outputs)),
@@ -154,7 +146,7 @@ class Context(object):
         }
 
     def clone(self):
-        c = Context(self.routines, self.routine, [], [], [])
+        c = AnalysisContext(self.symtab, self.routine, [], [], [])
         c._touched = set(self._touched)
         c._range = dict(self._range)
         c._writeable = set(self._writeable)
@@ -169,7 +161,6 @@ class Context(object):
         We do not replace the gotos_encountered for technical reasons.  (In `analyze_if`,
         we merge those sets afterwards; at the end of `analyze_routine`, they are not distinct in the
         set of contexts we are updating from, and we want to retain our own.)"""
-        self.routines = other.routines
         self.routine = other.routine
         self._touched = set(other._touched)
         self._range = dict(other._range)
@@ -193,9 +184,9 @@ class Context(object):
         exception_class = kwargs.get('exception_class', UnmeaningfulReadError)
         for ref in refs:
             # statics are always meaningful
-            if routine_has_static(self.routine, ref):
+            if self.symtab.fetch_static_ref(self.routine.name, ref.name):
                 continue
-            if ref.is_constant() or ref in self.routines:
+            if self.is_constant(ref):
                 pass
             elif isinstance(ref, LocationRef):
                 if ref not in self._range:
@@ -213,7 +204,7 @@ class Context(object):
         exception_class = kwargs.get('exception_class', ForbiddenWriteError)
         for ref in refs:
             # statics are always writeable
-            if routine_has_static(self.routine, ref):
+            if self.symtab.fetch_static_ref(self.routine.name, ref.name):
                 continue
             if ref not in self._writeable:
                 message = ref.name
@@ -234,7 +225,7 @@ class Context(object):
         if outside in self._range:
             outside_range = self._range[outside]
         else:
-            outside_range = outside.max_range()
+            outside_range = self.max_range(outside)
 
         if (inside_range[0] + offset.value) < outside_range[0] or (inside_range[1] + offset.value) > outside_range[1]:
             raise RangeExceededError(self.routine,
@@ -251,7 +242,7 @@ class Context(object):
     def set_meaningful(self, *refs):
         for ref in refs:
             if ref not in self._range:
-                self._range[ref] = ref.max_range()
+                self._range[ref] = self.max_range(ref)
 
     def set_top_of_range(self, ref, top):
         self.assert_meaningful(ref)
@@ -293,12 +284,12 @@ class Context(object):
         if src in self._range:
             src_range = self._range[src]
         else:
-            src_range = src.max_range()
+            src_range = self.max_range(src)
         self._range[dest] = src_range
 
     def invalidate_range(self, ref):
         self.assert_meaningful(ref)
-        self._range[ref] = ref.max_range()
+        self._range[ref] = self.max_range(ref)
 
     def set_unmeaningful(self, *refs):
         for ref in refs:
@@ -335,19 +326,6 @@ class Context(object):
 
     def has_terminated(self):
         return self._terminated
-
-    def assert_types_for_read_table(self, instr, src, dest, type_, offset):
-        if (not TableType.is_a_table_type(src.ref.type, type_)) or (not dest.type == type_):
-            raise TypeMismatchError(instr, '{} and {}'.format(src.ref.name, dest.name))
-        self.assert_meaningful(src, src.index)
-        self.assert_in_range(src.index, src.ref, offset)
-
-    def assert_types_for_update_table(self, instr, dest, type_, offset):
-        if not TableType.is_a_table_type(dest.ref.type, type_):
-            raise TypeMismatchError(instr, '{}'.format(dest.ref.name))
-        self.assert_meaningful(dest.index)
-        self.assert_in_range(dest.index, dest.ref, offset)
-        self.set_written(dest.ref)
 
     def extract(self, location):
         """Sets the given location as writeable in the context, and returns a 'baton' representing
@@ -390,18 +368,53 @@ class Context(object):
     def set_assoc(self, pointer, table):
         self._pointer_assoc[pointer] = table
 
+    def is_constant(self, ref):
+        """read-only means that the program cannot change the value
+        of a location.  constant means that the value of the location
+        will not change during the lifetime of the program."""
+        if isinstance(ref, ConstantRef):
+            return True
+        if isinstance(ref, (IndirectRef, IndexedRef)):
+            return False
+        if isinstance(ref, LocationRef):
+            type_ = self.symtab.fetch_global_type(ref.name)
+            return isinstance(type_, RoutineType)
+        raise NotImplementedError
+
+    def max_range(self, ref):
+        if isinstance(ref, ConstantRef):
+            return (ref.value, ref.value)
+        elif self.symtab.has_static(self.routine.name, ref.name):
+            return self.symtab.fetch_static_type(self.routine.name, ref.name).max_range
+        else:
+            return self.symtab.fetch_global_type(ref.name).max_range
+
 
 class Analyzer(object):
 
-    def __init__(self, debug=False):
+    def __init__(self, symtab, debug=False):
+        self.symtab = symtab
         self.current_routine = None
-        self.routines = {}
         self.debug = debug
         self.exit_contexts_map = {}
 
+    # - - - - helper methods - - - -
+
+    def get_type_for_name(self, name):
+        if self.current_routine and self.symtab.has_static(self.current_routine.name, name):
+            return self.symtab.fetch_static_type(self.current_routine.name, name)
+        return self.symtab.fetch_global_type(name)
+
+    def get_type(self, ref):
+        if isinstance(ref, ConstantRef):
+            return ref.type
+        if not isinstance(ref, LocationRef):
+            raise NotImplementedError
+        return self.get_type_for_name(ref.name)
+
     def assert_type(self, type_, *locations):
         for location in locations:
-            if location.type != type_:
+            if self.get_type(location) != type_:
                 raise TypeMismatchError(self.current_routine, location.name)
 
     def assert_affected_within(self, name, affecting_type, limiting_type):
@@ -419,9 +432,23 @@ class Analyzer(object):
         )
         raise IncompatibleConstraintsError(self.current_routine, message)
 
+    def assert_types_for_read_table(self, context, instr, src, dest, type_, offset):
+        if (not TableType.is_a_table_type(self.get_type(src.ref), type_)) or (not self.get_type(dest) == type_):
+            raise TypeMismatchError(instr, '{} and {}'.format(src.ref.name, dest.name))
+        context.assert_meaningful(src, src.index)
+        context.assert_in_range(src.index, src.ref, offset)
+
+    def assert_types_for_update_table(self, context, instr, dest, type_, offset):
+        if not TableType.is_a_table_type(self.get_type(dest.ref), type_):
+            raise TypeMismatchError(instr, '{}'.format(dest.ref.name))
+        context.assert_meaningful(dest.index)
+        context.assert_in_range(dest.index, dest.ref, offset)
+        context.set_written(dest.ref)
+
+    # - - - - visitor methods - - - -
+
     def analyze_program(self, program):
         assert isinstance(program, Program)
-        self.routines = {r.location: r for r in program.routines}
         for routine in program.routines:
             context = self.analyze_routine(routine)
             routine.encountered_gotos = list(context.encountered_gotos()) if context else []
@@ -433,8 +460,8 @@ class Analyzer(object):
             return None
 
         self.current_routine = routine
-        type_ = routine.location.type
-        context = Context(self.routines, routine, type_.inputs, type_.outputs, type_.trashes)
+        type_ = self.get_type_for_name(routine.name)
+        context = AnalysisContext(self.symtab, routine, type_.inputs, type_.outputs, type_.trashes)
         self.exit_contexts = []
 
         self.analyze_block(routine.block, context)
@@ -478,7 +505,10 @@ class Analyzer(object):
 
         # if something was touched, then it should have been declared to be writable.
         for ref in context.each_touched():
-            if ref not in type_.outputs and ref not in type_.trashes and not routine_has_static(routine, ref):
+            # FIXME once we have namedtuples, go back to comparing the ref directly!
+            outputs_names = [r.name for r in type_.outputs]
+            trashes_names = [r.name for r in type_.trashes]
+            if ref.name not in outputs_names and ref.name not in trashes_names and not self.symtab.has_static(routine.name, ref.name):
                 raise ForbiddenWriteError(routine, ref.name)
 
         self.exit_contexts = None
@@ -525,10 +555,10 @@ class Analyzer(object):
 
         if opcode == 'ld':
             if isinstance(src, IndexedRef):
-                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE, src.offset)
+                self.assert_types_for_read_table(context, instr, src, dest, TYPE_BYTE, src.offset)
             elif isinstance(src, IndirectRef):
                 # copying this analysis from the matching branch in `copy`, below
-                if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
+                if isinstance(self.get_type(src.ref), PointerType) and self.get_type(dest) == TYPE_BYTE:
                     pass
                 else:
                     raise TypeMismatchError(instr, (src, dest))
@@ -539,7 +569,7 @@ class Analyzer(object):
                 context.assert_meaningful(origin)
 
                 context.assert_meaningful(src.ref, REG_Y)
-            elif src.type != dest.type:
+            elif self.get_type(src) != self.get_type(dest):
                 raise TypeMismatchError(instr, '{} and {}'.format(src.name, dest.name))
             else:
                 context.assert_meaningful(src)
@@ -547,12 +577,12 @@ class Analyzer(object):
             context.set_written(dest, FLAG_Z, FLAG_N)
         elif opcode == 'st':
             if isinstance(dest, IndexedRef):
-                if src.type != TYPE_BYTE:
+                if self.get_type(src) != TYPE_BYTE:
                     raise TypeMismatchError(instr, (src, dest))
-                context.assert_types_for_update_table(instr, dest, TYPE_BYTE, dest.offset)
+                self.assert_types_for_update_table(context, instr, dest, TYPE_BYTE, dest.offset)
             elif isinstance(dest, IndirectRef):
                 # copying this analysis from the matching branch in `copy`, below
-                if isinstance(dest.ref.type, PointerType) and src.type == TYPE_BYTE:
+                if isinstance(self.get_type(dest.ref), PointerType) and self.get_type(src) == TYPE_BYTE:
                     pass
                 else:
                     raise TypeMismatchError(instr, (src, dest))
@@ -565,7 +595,7 @@ class Analyzer(object):
                 context.set_touched(target)
                 context.set_written(target)
 
-            elif src.type != dest.type:
+            elif self.get_type(src) != self.get_type(dest):
                 raise TypeMismatchError(instr, '{} and {}'.format(src, dest))
             else:
                 context.set_written(dest)
@@ -574,18 +604,19 @@ class Analyzer(object):
         elif opcode == 'add':
             context.assert_meaningful(src, dest, FLAG_C)
             if isinstance(src, IndexedRef):
-                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE, src.offset)
-            elif src.type == TYPE_BYTE:
+                self.assert_types_for_read_table(context, instr, src, dest, TYPE_BYTE, src.offset)
+            elif self.get_type(src) == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
                 if dest != REG_A:
                     context.set_touched(REG_A)
                     context.set_unmeaningful(REG_A)
             else:
                 self.assert_type(TYPE_WORD, src)
-                if dest.type == TYPE_WORD:
+                dest_type = self.get_type(dest)
+                if dest_type == TYPE_WORD:
                     context.set_touched(REG_A)
                     context.set_unmeaningful(REG_A)
-                elif isinstance(dest.type, PointerType):
+                elif isinstance(dest_type, PointerType):
                     context.set_touched(REG_A)
                     context.set_unmeaningful(REG_A)
                 else:
@@ -595,8 +626,8 @@ class Analyzer(object):
         elif opcode == 'sub':
             context.assert_meaningful(src, dest, FLAG_C)
             if isinstance(src, IndexedRef):
-                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE, src.offset)
-            elif src.type == TYPE_BYTE:
+                self.assert_types_for_read_table(context, instr, src, dest, TYPE_BYTE, src.offset)
+            elif self.get_type(src) == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
                 if dest != REG_A:
                     context.set_touched(REG_A)
@@ -610,8 +641,8 @@ class Analyzer(object):
         elif opcode == 'cmp':
             context.assert_meaningful(src, dest)
             if isinstance(src, IndexedRef):
-                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE, src.offset)
-            elif src.type == TYPE_BYTE:
+                self.assert_types_for_read_table(context, instr, src, dest, TYPE_BYTE, src.offset)
+            elif self.get_type(src) == TYPE_BYTE:
                 self.assert_type(TYPE_BYTE, src, dest)
             else:
                 self.assert_type(TYPE_WORD, src, dest)
@@ -620,7 +651,7 @@ class Analyzer(object):
             context.set_written(FLAG_Z, FLAG_N, FLAG_C)
         elif opcode == 'and':
             if isinstance(src, IndexedRef):
-                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE, src.offset)
+                self.assert_types_for_read_table(context, instr, src, dest, TYPE_BYTE, src.offset)
             else:
                 self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
@@ -632,7 +663,7 @@ class Analyzer(object):
                 context.set_top_of_range(dest, context.get_top_of_range(src))
         elif opcode in ('or', 'xor'):
             if isinstance(src, IndexedRef):
-                context.assert_types_for_read_table(instr, src, dest, TYPE_BYTE, src.offset)
+                self.assert_types_for_read_table(context, instr, src, dest, TYPE_BYTE, src.offset)
             else:
                 self.assert_type(TYPE_BYTE, src, dest)
             context.assert_meaningful(src, dest)
@@ -641,7 +672,7 @@ class Analyzer(object):
         elif opcode in ('inc', 'dec'):
             context.assert_meaningful(dest)
             if isinstance(dest, IndexedRef):
-                context.assert_types_for_update_table(instr, dest, TYPE_BYTE, dest.offset)
+                self.assert_types_for_update_table(context, instr, dest, TYPE_BYTE, dest.offset)
                 context.set_written(dest.ref, FLAG_Z, FLAG_N)
                 #context.invalidate_range(dest)
             else:
@@ -664,7 +695,7 @@ class Analyzer(object):
         elif opcode in ('shl', 'shr'):
             context.assert_meaningful(dest, FLAG_C)
             if isinstance(dest, IndexedRef):
-                context.assert_types_for_update_table(instr, dest, TYPE_BYTE, dest.offset)
+                self.assert_types_for_update_table(context, instr, dest, TYPE_BYTE, dest.offset)
                 context.set_written(dest.ref, FLAG_Z, FLAG_N, FLAG_C)
                 #context.invalidate_range(dest)
             else:
@@ -678,51 +709,51 @@ class Analyzer(object):
             # 1. check that their types are compatible
 
             if isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndirectRef):
-                if src.type == TYPE_BYTE and isinstance(dest.ref.type, PointerType):
+                if self.get_type(src) == TYPE_BYTE and isinstance(self.get_type(dest.ref), PointerType):
                     pass
                 else:
                     raise TypeMismatchError(instr, (src, dest))
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
-                if isinstance(src.ref.type, PointerType) and dest.type == TYPE_BYTE:
+                if isinstance(self.get_type(src.ref), PointerType) and self.get_type(dest) == TYPE_BYTE:
                     pass
                 else:
                     raise TypeMismatchError(instr, (src, dest))
             elif isinstance(src, IndirectRef) and isinstance(dest, IndirectRef):
-                if isinstance(src.ref.type, PointerType) and isinstance(dest.ref.type, PointerType):
+                if isinstance(self.get_type(src.ref), PointerType) and isinstance(self.get_type(dest.ref), PointerType):
                     pass
                 else:
                     raise TypeMismatchError(instr, (src, dest))
 
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, IndexedRef):
-                if src.type == TYPE_WORD and TableType.is_a_table_type(dest.ref.type, TYPE_WORD):
+                if self.get_type(src) == TYPE_WORD and TableType.is_a_table_type(self.get_type(dest.ref), TYPE_WORD):
                     pass
-                elif (isinstance(src.type, VectorType) and isinstance(dest.ref.type, TableType) and
-                      RoutineType.executable_types_compatible(src.type.of_type, dest.ref.type.of_type)):
+                elif (isinstance(self.get_type(src), VectorType) and isinstance(self.get_type(dest.ref), TableType) and
+                      RoutineType.executable_types_compatible(self.get_type(src).of_type, self.get_type(dest.ref).of_type)):
                     pass
-                elif (isinstance(src.type, RoutineType) and isinstance(dest.ref.type, TableType) and
-                      RoutineType.executable_types_compatible(src.type, dest.ref.type.of_type)):
+                elif (isinstance(self.get_type(src), RoutineType) and isinstance(self.get_type(dest.ref), TableType) and
+                      RoutineType.executable_types_compatible(self.get_type(src), self.get_type(dest.ref).of_type)):
                     pass
                 else:
                     raise TypeMismatchError(instr, (src, dest))
                 context.assert_in_range(dest.index, dest.ref, dest.offset)
 
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
-                if TableType.is_a_table_type(src.ref.type, TYPE_WORD) and dest.type == TYPE_WORD:
+                if TableType.is_a_table_type(self.get_type(src.ref), TYPE_WORD) and self.get_type(dest) == TYPE_WORD:
                     pass
-                elif (isinstance(src.ref.type, TableType) and isinstance(dest.type, VectorType) and
-                      RoutineType.executable_types_compatible(src.ref.type.of_type, dest.type.of_type)):
+                elif (isinstance(self.get_type(src.ref), TableType) and isinstance(self.get_type(dest), VectorType) and
+                      RoutineType.executable_types_compatible(self.get_type(src.ref).of_type, self.get_type(dest).of_type)):
                     pass
                 else:
                     raise TypeMismatchError(instr, (src, dest))
                 context.assert_in_range(src.index, src.ref, src.offset)
 
             elif isinstance(src, (LocationRef, ConstantRef)) and isinstance(dest, LocationRef):
-                if src.type == dest.type:
+                if self.get_type(src) == self.get_type(dest):
                     pass
-                elif isinstance(src.type, RoutineType) and isinstance(dest.type, VectorType):
-                    self.assert_affected_within('inputs', src.type, dest.type.of_type)
-                    self.assert_affected_within('outputs', src.type, dest.type.of_type)
-                    self.assert_affected_within('trashes', src.type, dest.type.of_type)
+                elif isinstance(self.get_type(src), RoutineType) and isinstance(self.get_type(dest), VectorType):
+                    self.assert_affected_within('inputs', self.get_type(src), self.get_type(dest).of_type)
+                    self.assert_affected_within('outputs', self.get_type(src), self.get_type(dest).of_type)
+                    self.assert_affected_within('trashes', self.get_type(src), self.get_type(dest).of_type)
                 else:
                     raise TypeMismatchError(instr, (src, dest))
             else:
@@ -789,7 +820,7 @@ class Analyzer(object):
             raise NotImplementedError(opcode)
 
     def analyze_call(self, instr, context):
-        type = instr.location.type
+        type = self.get_type(instr.location)
         if not isinstance(type, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, instr.location)
         if isinstance(type, VectorType):
@@ -805,7 +836,7 @@ class Analyzer(object):
 
     def analyze_goto(self, instr, context):
         location = instr.location
-        type_ = location.type
+        type_ = self.get_type(instr.location)
 
         if not isinstance(type_, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, location)
@@ -818,7 +849,7 @@ class Analyzer(object):
 
         # and that this routine's trashes and output constraints are a
         # superset of the called routine's
-        current_type = self.current_routine.location.type
+        current_type = self.get_type_for_name(self.current_routine.name)
         self.assert_affected_within('outputs', type_, current_type)
         self.assert_affected_within('trashes', type_, current_type)
 
@@ -969,9 +1000,9 @@ class Analyzer(object):
             context.set_unmeaningful(REG_A)
 
     def analyze_point_into(self, instr, context):
-        if not isinstance(instr.pointer.type, PointerType):
+        if not isinstance(self.get_type(instr.pointer), PointerType):
             raise TypeMismatchError(instr, instr.pointer)
-        if not TableType.is_a_table_type(instr.table.type, TYPE_BYTE):
+        if not TableType.is_a_table_type(self.get_type(instr.table), TYPE_BYTE):
             raise TypeMismatchError(instr, instr.table)
 
         # check that pointer is not yet associated with any table.

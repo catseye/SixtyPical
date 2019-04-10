@@ -57,6 +57,8 @@ class RoutineType(Type):
 
 class VectorType(Type):
     """This memory location contains the address of some other type (currently, only RoutineType)."""
+    max_range = (0, 0)
+
     def __init__(self, of_type):
         self.of_type = of_type
 
@@ -92,6 +94,8 @@ class TableType(Type):
 
 
 class PointerType(Type):
+    max_range = (0, 0)
+
     def __init__(self):
         self.name = 'pointer'
 
@@ -100,48 +104,24 @@ class PointerType(Type):
 
 
 class Ref(object):
-    def is_constant(self):
-        """read-only means that the program cannot change the value
-        of a location.  constant means that the value of the location
-        will not change during the lifetime of the program.""" 
-        raise NotImplementedError("class {} must implement is_constant()".format(self.__class__.__name__))
-
-    def max_range(self):
-        raise NotImplementedError("class {} must implement max_range()".format(self.__class__.__name__))
+    pass
 
 
 class LocationRef(Ref):
     def __init__(self, type, name):
-        self.type = type
         self.name = name
 
     def __eq__(self, other):
-        # Ordinarily there will only be one ref with a given name,
-        # but because we store the type in here and we want to treat
-        # these objects as immutable, we compare the types, too,
-        # just to be sure.
-        equal = isinstance(other, self.__class__) and other.name == self.name
-        if equal:
-            assert other.type == self.type, repr((self, other))
-        return equal
+        return self.__class__ is other.__class__ and self.name == other.name
 
     def __hash__(self):
-        return hash(self.name + repr(self.type))
+        return hash(self.name)
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__, self.type, self.name)
+        return '%s(%r)' % (self.__class__.__name__, self.name)
 
     def __str__(self):
-        return "{}:{}".format(self.name, self.type)
-
-    def is_constant(self):
-        return isinstance(self.type, RoutineType)
-
-    def max_range(self):
-        try:
-            return self.type.max_range
-        except:
-            return (0, 0)
+        return self.name
 
     @classmethod
     def format_set(cls, location_refs):
@@ -165,9 +145,6 @@ class IndirectRef(Ref):
     def name(self):
         return '[{}]+y'.format(self.ref.name)
 
-    def is_constant(self):
-        return False
-
 
 class IndexedRef(Ref):
     def __init__(self, ref, offset, index):
@@ -188,9 +165,6 @@ class IndexedRef(Ref):
     def name(self):
         return '{}+{}+{}'.format(self.ref.name, self.offset, self.index.name)
 
-    def is_constant(self):
-        return False
-
 
 class ConstantRef(Ref):
     def __init__(self, type, value):
@@ -207,12 +181,6 @@ class ConstantRef(Ref):
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.type, self.value)
-
-    def is_constant(self):
-        return True
-
-    def max_range(self):
-        return (self.value, self.value)
 
     def high_byte(self):
         return (self.value >> 8) & 255

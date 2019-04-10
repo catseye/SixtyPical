@@ -19,22 +19,22 @@ from pprint import pprint
 import sys
 import traceback
 
-from sixtypical.parser import Parser, ParsingContext, merge_programs
+from sixtypical.parser import Parser, SymbolTable, merge_programs
 from sixtypical.analyzer import Analyzer
 from sixtypical.outputter import outputter_class_for
 from sixtypical.compiler import Compiler
 
 
 def process_input_files(filenames, options):
-    context = ParsingContext()
+    symtab = SymbolTable()
 
     programs = []
 
     for filename in options.filenames:
         text = open(filename).read()
-        parser = Parser(context, text, filename)
+        parser = Parser(symtab, text, filename)
         if options.debug:
-            print(context)
+            print(symtab)
         program = parser.program()
         programs.append(program)
 
@@ -43,7 +43,7 @@ def process_input_files(filenames, options):
 
     program = merge_programs(programs)
 
-    analyzer = Analyzer(debug=options.debug)
+    analyzer = Analyzer(symtab, debug=options.debug)
 
     try:
         analyzer.analyze_program(program)
@@ -64,7 +64,7 @@ def process_input_files(filenames, options):
             sys.stdout.write(json.dumps(data, indent=4, sort_keys=True, separators=(',', ':')))
             sys.stdout.write("\n")
 
-        fa = FallthruAnalyzer(debug=options.debug)
+        fa = FallthruAnalyzer(symtab, debug=options.debug)
         fa.analyze_program(program)
         compilation_roster = fa.serialize()
         dump(compilation_roster)
@@ -82,7 +82,7 @@ def process_input_files(filenames, options):
     with open(options.output, 'wb') as fh:
         outputter = outputter_class_for(options.output_format)(fh, start_addr=start_addr)
         outputter.write_prelude()
-        compiler = Compiler(outputter.emitter)
+        compiler = Compiler(symtab, outputter.emitter)
         compiler.compile_program(program, compilation_roster=compilation_roster)
         outputter.write_postlude()
         if options.debug:

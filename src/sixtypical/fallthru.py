@@ -7,7 +7,8 @@ from sixtypical.model import RoutineType
 
 class FallthruAnalyzer(object):
 
-    def __init__(self, debug=False):
+    def __init__(self, symtab, debug=False):
+        self.symtab = symtab
         self.debug = debug
 
     def analyze_program(self, program):
@@ -16,7 +17,7 @@ class FallthruAnalyzer(object):
         self.fallthru_map = {}
         for routine in program.routines:
             encountered_gotos = list(routine.encountered_gotos)
-            if len(encountered_gotos) == 1 and isinstance(encountered_gotos[0].type, RoutineType):
+            if len(encountered_gotos) == 1 and isinstance(self.symtab.fetch_global_type(encountered_gotos[0].name), RoutineType):
                 self.fallthru_map[routine.name] = encountered_gotos[0].name
             else:
                 self.fallthru_map[routine.name] = None

@@ -28,12 +28,12 @@ class ForwardReference(object):
         return "%s(%r)" % (self.__class__.__name__, self.name)
 
 
-class ParsingContext(object):
+class SymbolTable(object):
     def __init__(self):
-        self.symbols = {}          # token -> SymEntry
-        self.statics = {}          # token -> SymEntry
-        self.typedefs = {}         # token -> Type AST
-        self.consts = {}           # token -> Loc
+        self.symbols = {}          # symbol name  -> SymEntry
+        self.statics = {}          # routine name -> (symbol name -> SymEntry)
+        self.typedefs = {}         # type name    -> Type AST
+        self.consts = {}           # const name   -> ConstantRef
 
         for name in ('a', 'x', 'y'):
             self.symbols[name] = SymEntry(None, TYPE_BYTE)
@@ -43,38 +43,55 @@ class ParsingContext(object):
     def __str__(self):
         return "Symbols: {}\nStatics: {}\nTypedefs: {}\nConsts: {}".format(self.symbols, self.statics, self.typedefs, self.consts)
 
-    def fetch_ref(self, name):
-        if name in self.statics:
-            return LocationRef(self.statics[name].type_, name)
+    def has_static(self, routine_name, name):
+        return name in self.statics.get(routine_name, {})
+
+    def fetch_global_type(self, name):
+        return self.symbols[name].type_
+
+    def fetch_static_type(self, routine_name, name):
+        return self.statics[routine_name][name].type_
+
+    def fetch_global_ref(self, name):
         if name in self.symbols:
             return LocationRef(self.symbols[name].type_, name)
         return None
 
+    def fetch_static_ref(self, routine_name, name):
+        routine_statics = self.statics.get(routine_name, {})
+        if name in routine_statics:
+            return LocationRef(routine_statics[name].type_, name)
+        return None
+
 
 class Parser(object):
-    def __init__(self, context, text, filename):
-        self.context = context
+    def __init__(self, symtab, text, filename):
+        self.symtab = symtab
         self.scanner = Scanner(text, filename)
+        self.current_routine_name = None
 
     def syntax_error(self, msg):
         self.scanner.syntax_error(msg)
 
-    def lookup(self, name):
-        model = self.context.fetch_ref(name)
+    def lookup(self, name, allow_forward=False, routine_name=None):
+        model = self.symtab.fetch_global_ref(name)
+        if model is None and routine_name:
+            model = self.symtab.fetch_static_ref(routine_name, name)
+        if model is None and allow_forward:
+            return ForwardReference(name)
         if model is None:
             self.syntax_error('Undefined symbol "{}"'.format(name))
         return model
 
-    def declare(self, name, ast_node, type_, static=False):
-        if self.context.fetch_ref(name):
+    def declare(self, name, ast_node, type_):
+        if self.symtab.fetch_global_ref(name):
             self.syntax_error('Symbol "%s" already declared' % name)
-        if static:
-            self.context.statics[name] = SymEntry(ast_node, type_)
-        else:
-            self.context.symbols[name] = SymEntry(ast_node, type_)
+        self.symtab.symbols[name] = SymEntry(ast_node, type_)
 
-    def clear_statics(self):
-        self.context.statics = {}
+    def declare_static(self, routine_name, name, ast_node, type_):
+        if self.symtab.fetch_global_ref(name):
+            self.syntax_error('Symbol "%s" already declared' % name)
+        self.symtab.statics.setdefault(routine_name, {})[name] = SymEntry(ast_node, type_)
 
     # ---- symbol resolution
 
@@ -95,10 +112,8 @@ class Parser(object):
                 type_.outputs = set([resolve(w) for w in type_.outputs])
                 type_.trashes = set([resolve(w) for w in type_.trashes])
 
-        for defn in program.defns:
-            backpatch_constraint_labels(defn.location.type)
-        for routine in program.routines:
-            backpatch_constraint_labels(routine.location.type)
+        for name, symentry in self.symtab.symbols.items():
+            backpatch_constraint_labels(symentry.type_)
 
         def resolve_fwd_reference(obj, field):
             field_value = getattr(obj, field, None)
@@ -110,7 +125,6 @@ class Parser(object):
 
         for node in program.all_children():
             if isinstance(node, SingleOp):
-                resolve_fwd_reference(node, 'location')
                 resolve_fwd_reference(node, 'src')
                 resolve_fwd_reference(node, 'dest')
             if isinstance(node, (Call, GoTo)):
@@ -127,7 +141,7 @@ class Parser(object):
             if self.scanner.on('const'):
                 self.defn_const()
         typenames = ['byte', 'word', 'table', 'vector', 'pointer']  # 'routine',
-        typenames.extend(self.context.typedefs.keys())
+        typenames.extend(self.symtab.typedefs.keys())
         while self.scanner.on(*typenames):
             type_, defn = self.defn()
             self.declare(defn.name, defn, type_)
@@ -135,9 +149,11 @@ class Parser(object):
         while self.scanner.consume('define'):
             name = self.scanner.token
             self.scanner.scan()
+            self.current_routine_name = name
             type_, routine = self.routine(name)
             self.declare(name, routine, type_)
             routines.append(routine)
+            self.current_routine_name = None
         self.scanner.check_type('EOF')
 
         program = Program(self.scanner.line_number, defns=defns, routines=routines)
@@ -148,18 +164,18 @@ class Parser(object):
         self.scanner.expect('typedef')
         type_ = self.defn_type()
         name = self.defn_name()
-        if name in self.context.typedefs:
+        if name in self.symtab.typedefs:
             self.syntax_error('Type "%s" already declared' % name)
-        self.context.typedefs[name] = type_
+        self.symtab.typedefs[name] = type_
         return type_
 
     def defn_const(self):
         self.scanner.expect('const')
         name = self.defn_name()
-        if name in self.context.consts:
+        if name in self.symtab.consts:
             self.syntax_error('Const "%s" already declared' % name)
         loc = self.const()
-        self.context.consts[name] = loc
+        self.symtab.consts[name] = loc
         return loc
 
     def defn(self):
@@ -189,9 +205,7 @@ class Parser(object):
         if initial is not None and addr is not None:
             self.syntax_error("Definition cannot have both initial value and explicit address")
 
-        location = LocationRef(type_, name)
-
-        return type_, Defn(self.scanner.line_number, name=name, addr=addr, initial=initial, location=location)
+        return type_, Defn(self.scanner.line_number, name=name, addr=addr, initial=initial)
 
     def const(self):
         if self.scanner.token in ('on', 'off'):
@@ -208,8 +222,8 @@ class Parser(object):
             loc = ConstantRef(TYPE_WORD, int(self.scanner.token))
             self.scanner.scan()
             return loc
-        elif self.scanner.token in self.context.consts:
-            loc = self.context.consts[self.scanner.token]
+        elif self.scanner.token in self.symtab.consts:
+            loc = self.symtab.consts[self.scanner.token]
             self.scanner.scan()
             return loc
         else:
@@ -257,9 +271,9 @@ class Parser(object):
         else:
             type_name = self.scanner.token
             self.scanner.scan()
-            if type_name not in self.context.typedefs:
+            if type_name not in self.symtab.typedefs:
                 self.syntax_error("Undefined type '%s'" % type_name)
-            type_ = self.context.typedefs[type_name]
+            type_ = self.symtab.typedefs[type_name]
 
         return type_
 
@@ -297,20 +311,9 @@ class Parser(object):
             self.scanner.scan()
         else:
             statics = self.statics()
-
-            self.clear_statics()
-            for defn in statics:
-                self.declare(defn.name, defn, defn.location.type, static=True)
             block = self.block()
-            self.clear_statics()
-
             addr = None
-        location = LocationRef(type_, name)
-        return type_, Routine(
-            self.scanner.line_number,
-            name=name, block=block, addr=addr,
-            location=location, statics=statics,
-        )
+        return type_, Routine(self.scanner.line_number, name=name, block=block, addr=addr, statics=statics)
 
     def labels(self):
         accum = []
@@ -334,16 +337,12 @@ class Parser(object):
         return accum
 
     def locexpr(self):
-        if self.scanner.token in ('on', 'off', 'word') or self.scanner.token in self.context.consts or self.scanner.on_type('integer literal'):
+        if self.scanner.token in ('on', 'off', 'word') or self.scanner.token in self.symtab.consts or self.scanner.on_type('integer literal'):
             return self.const()
         else:
             name = self.scanner.token
             self.scanner.scan()
-            loc = self.context.fetch_ref(name)
-            if loc:
-                return loc
-            else:
-                return ForwardReference(name)
+            return self.lookup(name, allow_forward=True, routine_name=self.current_routine_name)
 
     def indlocexpr(self):
         if self.scanner.consume('['):
@@ -361,7 +360,7 @@ class Parser(object):
             index = None
             offset = ConstantRef(TYPE_BYTE, 0)
             if self.scanner.consume('+'):
-                if self.scanner.token in self.context.consts or self.scanner.on_type('integer literal'):
+                if self.scanner.token in self.symtab.consts or self.scanner.on_type('integer literal'):
                     offset = self.const()
                     self.scanner.expect('+')
                 index = self.locexpr()
@@ -374,6 +373,7 @@ class Parser(object):
             type_, defn = self.defn()
             if defn.initial is None:
                 self.syntax_error("Static definition {} must have initial value".format(defn))
+            self.declare_static(self.current_routine_name, defn.name, defn, type_)
             defns.append(defn)
         return defns
 
