@@ -49,12 +49,9 @@ many ridiculous silly errors at compile time.
 
 ### Low level
 
-Many of SixtyPical's primitive instructions resemble
-those of the 6502 CPU — in fact it is intended to be compiled to
-6502 machine code — but along with these instructions are
-constructs which ease structuring and analyzing the code.
-
-However, SixtyPical also does provide some "higher-level" operations
+Many of SixtyPical's primitive instructions resemble those of the
+[MOS Technology 6502][] — it is in fact intended to be compiled to 6502
+machine code.  However, it also does provide some "higher-level" operations
 based on common 8-bit machine-language programming idioms, including
 
 *   copying values from one register to another (via a third register when
@@ -83,7 +80,7 @@ it conforms to it.  It can detect common mistakes such as
 Unlike most languages, in SixtyPical the programmer must manage memory very
 explicitly, selecting the registers and memory locations to store all data in.
 So, unlike a C compiler such as [cc65][], a SixtyPical compiler doesn't need
-to generate code to handle [call stack management][] or [register allocation][].
+to generate code to handle [calling conventions][] or [register allocation][].
 This results in smaller (and thus faster) programs.
 
 The flagship demo, a minigame for the Commodore 64, compiles to
@@ -118,9 +115,10 @@ and a reference implementation written in Python.
 *   [Output formats supported by `sixtypical`](doc/Output%20Formats.md)
 *   [TODO](TODO.md)
 
+[MOS Technology 6520]: https://en.wikipedia.org/wiki/MOS_Technology_6502
 [effect system]: https://en.wikipedia.org/wiki/Effect_system
 [abstractly interprets]: https://en.wikipedia.org/wiki/Abstract_interpretation
-[call stack management]: https://en.wikipedia.org/wiki/Call_stack
+[calling conventions]: https://en.wikipedia.org/wiki/Calling_convention
 [register allocation]: https://en.wikipedia.org/wiki/Register_allocation
 [VICE]: http://vice-emu.sourceforge.net/
 [cc65]: https://cc65.github.io/
