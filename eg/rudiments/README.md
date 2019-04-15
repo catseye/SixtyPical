@@ -6,15 +6,12 @@ are in the `errorful/` subdirectory.
 
 These files are intended to be architecture-agnostic.
 For the ones that do produce output, an appropriate source
-under `platform/`, should be included first, like
+under `support/` should be included first, so that system entry
+points such as `chrout` are defined.  In addition, some of these
+programs use "standard" support modules, so those should be included
+first too.  For example:
 
-    sixtypical platform/c64.60p vector-table.60p
-
-so that system entry points such as `chrout` are defined.
-
-There's a `loadngo.sh` script in this directory that does this.
-
-    ./loadngo.sh c64 vector-table.60p
+    sixtypical --output-format=c64-basic-prg --run support/c64.60p support/stdlib.60p vector-table.60p
 
 `chrout` is a routine with outputs the value of the accumulator
 as an ASCII character, disturbing none of the other registers,
