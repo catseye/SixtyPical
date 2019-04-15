@@ -481,11 +481,11 @@ class Analyzer(object):
             exit_writeable = set(exit_context.each_writeable())
             for ex in self.exit_contexts[1:]:
                 if set(ex.each_meaningful()) != exit_meaningful:
-                    raise InconsistentExitError("Exit contexts are not consistent")
+                    raise InconsistentExitError(routine, "Exit contexts are not consistent")
                 if set(ex.each_touched()) != exit_touched:
-                    raise InconsistentExitError("Exit contexts are not consistent")
+                    raise InconsistentExitError(routine, "Exit contexts are not consistent")
                 if set(ex.each_writeable()) != exit_writeable:
-                    raise InconsistentExitError("Exit contexts are not consistent")
+                    raise InconsistentExitError(routine, "Exit contexts are not consistent")
 
             # We now set the main context to the (consistent) exit context
             # so that this routine is perceived as having the same effect

@@ -50,8 +50,9 @@ byte scanline : 85  //   %01010101
 // be practical.  So we just jump to this location instead.
 
 define pla_tay_pla_tax_pla_rti routine
-  inputs a
-  trashes a
+  inputs border_color, vic_intr
+  outputs border_color, vic_intr
+  trashes a, z, n, c
     @ $EA81
 
 // ----- Interrupt Handler -----
