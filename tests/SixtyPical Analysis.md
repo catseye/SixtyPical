@@ -3921,7 +3921,83 @@ Here is like the above, but the two routines have different inputs, and that's O
     | }
     = ok
 
-TODO: we should have a lot more test cases for the above, here.
+Another inconsistent exit test, this one based on "real" code
+(the `ribos2` demo).
+
+    | typedef routine
+    |   inputs border_color, vic_intr
+    |   outputs border_color, vic_intr
+    |   trashes a, z, n, c
+    |     irq_handler
+    | 
+    | vector irq_handler cinv @ $314
+    | vector irq_handler saved_irq_vec
+    | byte vic_intr         @ $d019
+    | byte border_color     @ $d020
+    | 
+    | define pla_tay_pla_tax_pla_rti routine
+    |   inputs a
+    |   trashes a
+    |     @ $EA81
+    | 
+    | define our_service_routine irq_handler
+    | {
+    |     ld a, vic_intr
+    |     st a, vic_intr
+    |     and a, 1
+    |     cmp a, 1
+    |     if not z {
+    |         goto saved_irq_vec
+    |     } else {
+    |         ld a, border_color
+    |         xor a, $ff
+    |         st a, border_color
+    |         goto pla_tay_pla_tax_pla_rti
+    |     }
+    | }
+    | 
+    | define main routine
+    | {
+    | }
+    ? InconsistentExitError
+
+    | typedef routine
+    |   inputs border_color, vic_intr
+    |   outputs border_color, vic_intr
+    |   trashes a, z, n, c
+    |     irq_handler
+    | 
+    | vector irq_handler cinv @ $314
+    | vector irq_handler saved_irq_vec
+    | byte vic_intr         @ $d019
+    | byte border_color     @ $d020
+    | 
+    | define pla_tay_pla_tax_pla_rti routine
+    |   inputs border_color, vic_intr
+    |   outputs border_color, vic_intr
+    |   trashes a, z, n, c
+    |     @ $EA81
+    | 
+    | define our_service_routine irq_handler
+    | {
+    |     ld a, vic_intr
+    |     st a, vic_intr
+    |     and a, 1
+    |     cmp a, 1
+    |     if not z {
+    |         goto saved_irq_vec
+    |     } else {
+    |         ld a, border_color
+    |         xor a, $ff
+    |         st a, border_color
+    |         goto pla_tay_pla_tax_pla_rti
+    |     }
+    | }
+    | 
+    | define main routine
+    | {
+    | }
+    = ok
 
 Can't `goto` a routine that outputs or trashes more than the current routine.
 
