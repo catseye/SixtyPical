@@ -51,7 +51,7 @@ many ridiculous silly errors at compile time.
 
 Many of SixtyPical's primitive instructions resemble those of the
 [MOS Technology 6502][] — it is in fact intended to be compiled to 6502
-machine code.  However, it also does provide some "higher-level" operations
+machine code.  However, it also provides some "higher-level" operations
 based on common 8-bit machine-language programming idioms, including
 
 *   copying values from one register to another (via a third register when
@@ -65,7 +65,7 @@ inclusion in the language is primarily to make programs easier to analyze.
 
 ### Static analysis
 
-The language defines an [effect system][], and the reference
+The SixtyPical language defines an [effect system][], and the reference
 compiler [abstractly interprets][] the input program to check that
 it conforms to it.  It can detect common mistakes such as
 
@@ -77,11 +77,11 @@ it conforms to it.  It can detect common mistakes such as
 
 ### Efficient code
 
-Unlike most languages, in SixtyPical the programmer must manage memory very
-explicitly, selecting the registers and memory locations to store all data in.
-So, unlike a C compiler such as [cc65][], a SixtyPical compiler doesn't need
-to generate code to handle [calling conventions][] or [register allocation][].
-This results in smaller (and thus faster) programs.
+Unlike most conventional languages, in SixtyPical the programmer must manage
+memory very explicitly, selecting the registers and memory locations to store
+each piece of data in.  So, unlike a C compiler such as [cc65][], a SixtyPical
+compiler doesn't need to generate code to handle [calling conventions][] or
+[register allocation][].  This results in smaller (and thus faster) programs.
 
 The flagship demo, a minigame for the Commodore 64, compiles to
 a **930**-byte `.PRG` file.
@@ -98,19 +98,26 @@ The reference implementation can analyze and compile SixtyPical programs to
 
 For example programs for each of these, see [eg/README.md](eg/README.md).
 
-Documentation
+Specification
 -------------
 
 SixtyPical is defined by a specification document, a set of test cases,
 and a reference implementation written in Python.
 
-*   [Design Goals](doc/Design%20Goals.md)
+There are over 400 test cases, written in [Falderal][] format for readability.
+In order to run the tests for compilation, [dcc6502][] needs to be installed.
+
 *   [SixtyPical specification](doc/SixtyPical.md)
-*   [SixtyPical revision history](HISTORY.md)
 *   [Literate test suite for SixtyPical syntax](tests/SixtyPical%20Syntax.md)
 *   [Literate test suite for SixtyPical analysis](tests/SixtyPical%20Analysis.md)
 *   [Literate test suite for SixtyPical compilation](tests/SixtyPical%20Compilation.md)
 *   [Literate test suite for SixtyPical fallthru optimization](tests/SixtyPical%20Fallthru.md)
+
+Documentation
+-------------
+
+*   [Design Goals](doc/Design%20Goals.md)
+*   [SixtyPical revision history](HISTORY.md)
 *   [6502 Opcodes used/not used in SixtyPical](doc/6502%20Opcodes.md)
 *   [Output formats supported by `sixtypical`](doc/Output%20Formats.md)
 *   [TODO](TODO.md)
@@ -126,3 +133,5 @@ and a reference implementation written in Python.
 [Commodore VIC-20]: https://en.wikipedia.org/wiki/Commodore_VIC-20
 [Atari 2600]: https://en.wikipedia.org/wiki/Atari_2600
 [Apple II series]: https://en.wikipedia.org/wiki/Apple_II_series
+[Falderal]: https://catseye.tc/node/Falderal
+[dcc6502]: https://github.com/tcarmelveilleux/dcc6502

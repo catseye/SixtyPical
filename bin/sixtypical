@@ -173,7 +173,7 @@ if __name__ == '__main__':
     argparser.add_argument(
         "--run-on", type=str, default=None,
         help="If given, engage 'load-and-go' operation with the given emulator: write "
-             "the output to a temporary filename, using an appropriate --output-format "
+             "the output to a temporary filename using an appropriate --output-format, "
              "and boot the emulator with it. Options are: x64, xvic, stella."
     )
     argparser.add_argument(
