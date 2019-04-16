@@ -46,4 +46,10 @@ Atari 2600 (4K cartridge).  The directory itself contains a simple
 demo, [smiley.60p](atari2600/smiley.60p) which was converted from an
 older Atari 2600 skeleton program written in [Ophis][].
 
+### apple2
+
+In the [apple2](apple2/) directory are programs that run on
+Apple II series computers (Apple II+, Apple //e).  `sixtypical`'s
+support for this architecture could be called embryonic.
+
 [Ophis]: http://michaelcmartin.github.io/Ophis/

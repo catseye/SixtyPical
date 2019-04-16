@@ -503,6 +503,52 @@ The index must be initialized.
     | }
     ? UnmeaningfulReadError: x
 
+Storing to a table, you may also include a constant offset.
+
+    | byte one
+    | byte table[256] many
+    | 
+    | define main routine
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st a, many + 100 + x
+    | }
+    = ok
+
+Reading from a table, you may also include a constant offset.
+
+    | byte table[256] many
+    | 
+    | define main routine
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, many + 100 + x
+    | }
+    = ok
+
+Using a constant offset, you can read and write entries in
+the table beyond the 256th.
+
+    | byte one
+    | byte table[1024] many
+    | 
+    | define main routine
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, many + 999 + x
+    |     st a, many + 1000 + x
+    | }
+    = ok
+
 There are other operations you can do on tables. (1/3)
 
     | byte table[256] many
@@ -614,13 +660,35 @@ You can also copy a literal word to a word table.
     | }
     = ok
 
+Copying to and from a word table with a constant offset.
+
+    | word one
+    | word table[256] many
+    | 
+    | define main routine
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy one, many + 100 + x
+    |     copy many + 100 + x, one
+    |     copy 9999, many + 1 + x
+    | }
+    = ok
+
 #### tables: range checking ####
 
 It is a static analysis error if it cannot be proven that a read or write
 to a table falls within the defined size of that table.
 
-(If a table has 256 entries, then there is never a problem, because a byte
-cannot index any entry outside of 0..255.)
+If a table has 256 entries, then there is never a problem (so long as
+no constant offset is supplied), because a byte cannot index any entry
+outside of 0..255.
+
+But if the table has fewer than 256 entries, or if a constant offset is
+supplied, there is the possibility that the index will refer to an
+entry in the table which does not exist.
 
 A SixtyPical implementation must be able to prove that the index is inside
 the range of the table in various ways.  The simplest is to show that a
@@ -661,6 +729,33 @@ constant value falls inside or outside the range of the table.
     |     ld x, 32
     |     ld a, 0
     |     st a, many + x
+    | }
+    ? RangeExceededError
+
+Any constant offset is taken into account in this check.
+
+    | byte table[32] many
+    | 
+    | define main routine
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 31
+    |     ld a, many + 1 + x
+    | }
+    ? RangeExceededError
+
+    | byte table[32] many
+    | 
+    | define main routine
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 31
+    |     ld a, 0
+    |     st a, many + 1 + x
     | }
     ? RangeExceededError
 
@@ -706,6 +801,34 @@ This applies to `copy` as well.
     | }
     ? RangeExceededError
 
+Any constant offset is taken into account in this check.
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | define main routine
+    |   inputs many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 31
+    |     copy many + 1 + x, one
+    | }
+    ? RangeExceededError
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | define main routine
+    |   inputs many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 31
+    |     copy one, many + 1 + x
+    | }
+    ? RangeExceededError
+
 `AND`'ing a register with a value ensures the range of the
 register will not exceed the range of the value.  This can
 be used to "clip" the range of an index so that it fits in
@@ -726,7 +849,7 @@ a table.
     | }
     = ok
 
-Test for "clipping", but not enough.
+Tests for "clipping", but not enough.
 
     | word one: 77
     | word table[32] many
@@ -740,6 +863,21 @@ Test for "clipping", but not enough.
     |     ld x, a
     |     copy one, many + x
     |     copy many + x, one
+    | }
+    ? RangeExceededError
+
+    | word one: 77
+    | word table[32] many
+    | 
+    | define main routine
+    |   inputs a, many, one
+    |   outputs many, one
+    |   trashes a, x, n, z
+    | {
+    |     and a, 31
+    |     ld x, a
+    |     copy one, many + 1 + x
+    |     copy many + 1 + x, one
     | }
     ? RangeExceededError
 
@@ -2779,140 +2917,338 @@ Can't `copy` from a `word` to a `byte`.
     | }
     ? TypeMismatchError
 
-### Buffers and pointers ###
+### point ... into blocks ###
 
-Note that `^buf` is a constant value, so it by itself does not require `buf` to be
-listed in any input/output sets.
+Pointer must be a pointer type.
 
-However, if the code reads from it through a pointer, it *should* be in `inputs`.
-
-Likewise, if the code writes to it through a pointer, it *should* be in `outputs`.
-
-Of course, unless you write to *all* the bytes in a buffer, some of those bytes
-might not be meaningful.  So how meaningful is this check?
-
-This is an open problem.
-
-For now, convention says: if it is being read, list it in `inputs`, and if it is
-being modified, list it in both `inputs` and `outputs`.
-
-Write literal through a pointer.
-
-    | buffer[2048] buf
-    | pointer ptr
+    | byte table[256] tab
+    | word ptr
     | 
     | define main routine
-    |   inputs buf
-    |   outputs y, buf
+    |   inputs tab
+    |   outputs y, tab
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
-    |     copy 123, [ptr] + y
+    |     point ptr into tab {
+    |         copy 123, [ptr] + y
+    |     }
     | }
-    = ok
+    ? TypeMismatchError
 
-It does use `y`.
+Cannot write through pointer outside a `point ... into` block.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr
     | 
     | define main routine
-    |   inputs buf
-    |   outputs buf
+    |   inputs tab, ptr
+    |   outputs y, tab
     |   trashes a, z, n, ptr
     | {
-    |     copy ^buf, ptr
+    |     ld y, 0
     |     copy 123, [ptr] + y
+    | }
+    ? ForbiddenWriteError
+
+    | byte table[256] tab
+    | pointer ptr
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs y, tab
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         copy 123, [ptr] + y
+    |     }
+    |     copy 123, [ptr] + y
+    | }
+    ? ForbiddenWriteError
+
+Write literal through a pointer into a table.
+
+    | byte table[256] tab
+    | pointer ptr
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs y, tab
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         copy 123, [ptr] + y
+    |     }
+    | }
+    = ok
+
+Writing into a table via a pointer does use `y`.
+
+    | byte table[256] tab
+    | pointer ptr
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs tab
+    |   trashes a, z, n, ptr
+    | {
+    |     point ptr into tab {
+    |         copy 123, [ptr] + y
+    |     }
     | }
     ? UnmeaningfulReadError
 
-Write stored value through a pointer.
+Write stored value through a pointer into a table.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr
     | byte foo
     | 
     | define main routine
-    |   inputs foo, buf
-    |   outputs y, buf
+    |   inputs foo, tab
+    |   outputs y, tab
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
-    |     copy foo, [ptr] + y
+    |     point ptr into tab {
+    |         copy foo, [ptr] + y
+    |     }
     | }
     = ok
 
-Read through a pointer.
+Read a table entry via a pointer.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr
     | byte foo
     | 
     | define main routine
-    |   inputs buf
+    |   inputs tab
     |   outputs foo
     |   trashes a, y, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
+    |     point ptr into tab {
     |     copy [ptr] + y, foo
+    |     }
     | }
     = ok
 
-Read and write through two pointers.
+Read and write through two pointers into a table.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptra
     | pointer ptrb
     | 
     | define main routine
-    |   inputs buf
-    |   outputs buf
+    |   inputs tab
+    |   outputs tab
     |   trashes a, y, z, n, ptra, ptrb
     | {
     |     ld y, 0
-    |     copy ^buf, ptra
-    |     copy ^buf, ptrb
-    |     copy [ptra] + y, [ptrb] + y
+    |     point ptra into tab {
+    |         point ptrb into tab {
+    |             copy [ptra] + y, [ptrb] + y
+    |         }
+    |     }
     | }
     = ok
 
-Read through a pointer to the `a` register.  Note that this is done with `ld`,
+Read through a pointer into a table, to the `a` register.  Note that this is done with `ld`,
 not `copy`.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr
     | byte foo
     | 
     | define main routine
-    |   inputs buf
+    |   inputs tab
     |   outputs a
     |   trashes y, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
-    |     ld a, [ptr] + y
+    |     point ptr into tab {
+    |         ld a, [ptr] + y
+    |     }
     | }
     = ok
 
-Write the `a` register through a pointer.  Note that this is done with `st`,
+Write the `a` register through a pointer into a table.  Note that this is done with `st`,
 not `copy`.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr
     | byte foo
     | 
     | define main routine
-    |   inputs buf
-    |   outputs buf
+    |   inputs tab
+    |   outputs tab
     |   trashes a, y, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
-    |     ld a, 255
-    |     st a, [ptr] + y
+    |     point ptr into tab {
+    |         ld a, 255
+    |         st a, [ptr] + y
+    |     }
+    | }
+    = ok
+
+Cannot get a pointer into a non-byte (for instance, word) table.
+
+    | word table[256] tab
+    | pointer ptr
+    | byte foo
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs foo
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         copy [ptr] + y, foo
+    |     }
+    | }
+    ? TypeMismatchError
+
+Cannot get a pointer into a non-byte (for instance, vector) table.
+
+    | vector (routine trashes a, z, n) table[256] tab
+    | pointer ptr
+    | vector (routine trashes a, z, n) foo
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs foo
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         copy [ptr] + y, foo
+    |     }
+    | }
+    ? TypeMismatchError
+
+`point into` by itself only requires `ptr` to be writeable.  By itself,
+it does not require `tab` to be readable or writeable.
+
+    | byte table[256] tab
+    | pointer ptr
+    | 
+    | define main routine
+    |   trashes a, z, n, ptr
+    | {
+    |     point ptr into tab {
+    |         ld a, 0
+    |     }
+    | }
+    = ok
+
+    | byte table[256] tab
+    | pointer ptr
+    | 
+    | define main routine
+    |   trashes a, z, n
+    | {
+    |     point ptr into tab {
+    |         ld a, 0
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+After a `point into` block, the pointer is no longer meaningful and cannot
+be considered an output of the routine.
+
+    | byte table[256] tab
+    | pointer ptr
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs y, tab, ptr
+    |   trashes a, z, n
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         copy 123, [ptr] + y
+    |     }
+    | }
+    ? UnmeaningfulOutputError
+
+If code in a routine reads from a table through a pointer, the table must be in
+the `inputs` of that routine.
+
+    | byte table[256] tab
+    | pointer ptr
+    | byte foo
+    | 
+    | define main routine
+    |   outputs foo
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         copy [ptr] + y, foo
+    |     }
+    | }
+    ? UnmeaningfulReadError
+
+Likewise, if code in a routine writes into a table via a pointer, the table must
+be in the `outputs` of that routine.
+
+    | byte table[256] tab
+    | pointer ptr
+    | 
+    | define main routine
+    |   inputs tab
+    |   trashes a, y, z, n, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         copy 123, [ptr] + y
+    |     }
+    | }
+    ? ForbiddenWriteError
+
+If code in a routine reads from a table through a pointer, the pointer *should*
+remain inside the range of the  table.  This is currently not checked.
+
+    | byte table[32] tab
+    | pointer ptr
+    | byte foo
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs foo
+    |   trashes a, y, c, z, n, v, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         st off, c
+    |         add ptr, word 100
+    |         copy [ptr] + y, foo
+    |     }
+    | }
+    = ok
+
+Likewise, if code in a routine writes into a table through a pointer, the pointer
+*should* remain inside the range of the  table.  This is currently not checked.
+
+    | byte table[32] tab
+    | pointer ptr
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs tab
+    |   trashes a, y, c, z, n, v, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         st off, c
+    |         add ptr, word 100
+    |         copy 123, [ptr] + y
+    |     }
     | }
     = ok
 
@@ -3585,7 +3921,83 @@ Here is like the above, but the two routines have different inputs, and that's O
     | }
     = ok
 
-TODO: we should have a lot more test cases for the above, here.
+Another inconsistent exit test, this one based on "real" code
+(the `ribos2` demo).
+
+    | typedef routine
+    |   inputs border_color, vic_intr
+    |   outputs border_color, vic_intr
+    |   trashes a, z, n, c
+    |     irq_handler
+    | 
+    | vector irq_handler cinv @ $314
+    | vector irq_handler saved_irq_vec
+    | byte vic_intr         @ $d019
+    | byte border_color     @ $d020
+    | 
+    | define pla_tay_pla_tax_pla_rti routine
+    |   inputs a
+    |   trashes a
+    |     @ $EA81
+    | 
+    | define our_service_routine irq_handler
+    | {
+    |     ld a, vic_intr
+    |     st a, vic_intr
+    |     and a, 1
+    |     cmp a, 1
+    |     if not z {
+    |         goto saved_irq_vec
+    |     } else {
+    |         ld a, border_color
+    |         xor a, $ff
+    |         st a, border_color
+    |         goto pla_tay_pla_tax_pla_rti
+    |     }
+    | }
+    | 
+    | define main routine
+    | {
+    | }
+    ? InconsistentExitError
+
+    | typedef routine
+    |   inputs border_color, vic_intr
+    |   outputs border_color, vic_intr
+    |   trashes a, z, n, c
+    |     irq_handler
+    | 
+    | vector irq_handler cinv @ $314
+    | vector irq_handler saved_irq_vec
+    | byte vic_intr         @ $d019
+    | byte border_color     @ $d020
+    | 
+    | define pla_tay_pla_tax_pla_rti routine
+    |   inputs border_color, vic_intr
+    |   outputs border_color, vic_intr
+    |   trashes a, z, n, c
+    |     @ $EA81
+    | 
+    | define our_service_routine irq_handler
+    | {
+    |     ld a, vic_intr
+    |     st a, vic_intr
+    |     and a, 1
+    |     cmp a, 1
+    |     if not z {
+    |         goto saved_irq_vec
+    |     } else {
+    |         ld a, border_color
+    |         xor a, $ff
+    |         st a, border_color
+    |         goto pla_tay_pla_tax_pla_rti
+    |     }
+    | }
+    | 
+    | define main routine
+    | {
+    | }
+    = ok
 
 Can't `goto` a routine that outputs or trashes more than the current routine.
 

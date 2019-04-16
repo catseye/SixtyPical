@@ -163,6 +163,9 @@ Basic "open-faced for" loops, up and down.
 
 Other blocks.
 
+    | byte table[256] tab
+    | pointer ptr
+    | 
     | define main routine trashes a, x, c, z, v {
     |     with interrupts off {
     |         save a, x, c {
@@ -172,6 +175,9 @@ Other blocks.
     |     save a, x, c {
     |         ld a, 0
     |     }
+    |     point ptr into tab {
+    |         ld a, [ptr] + y
+    |     }
     | }
     = ok
 
@@ -180,7 +186,7 @@ User-defined memory addresses of different types.
     | byte byt
     | word wor
     | vector routine trashes a vec
-    | buffer[2048] buf
+    | byte table[2048] buf
     | pointer ptr
     | 
     | define main routine {
@@ -192,6 +198,8 @@ Tables of different types and some operations on them.
     | byte table[256] many
     | word table[256] wmany
     | vector (routine trashes a) table[256] vmany
+    | byte bval
+    | word wval
     | 
     | define main routine {
     |     ld x, 0
@@ -207,11 +215,48 @@ Tables of different types and some operations on them.
     |     shr many + x
     |     inc many + x
     |     dec many + x
+    |     ld a, many + x
+    |     st a, many + x
+    |     copy wval, wmany + x
+    |     copy wmany + x, wval
+    | }
+    = ok
+
+Indexing with an offset in some tables.
+
+    | byte table[256] many
+    | word table[256] wmany
+    | byte bval
+    | word wval
+    | 
+    | define main routine {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     add a, many + 100 + x
+    |     sub a, many + 100 + x
+    |     cmp a, many + 100 + x
+    |     and a, many + 100 + x
+    |     or a, many + 100 + x
+    |     xor a, many + 100 + x
+    |     shl many + 100 + x
+    |     shr many + 100 + x
+    |     inc many + 100 + x
+    |     dec many + 100 + x
+    |     ld a, many + 100 + x
+    |     st a, many + 100 + x
+    |     copy wval, wmany + 100 + x
+    |     copy wmany + 100 + x, wval
     | }
     = ok
 
 The number of entries in a table must be
-greater than 0 and less than or equal to 256.
+greater than 0 and less than or equal to 65536.
+
+(In previous versions, a table could have at
+most 256 entries.  They can now have more, however
+the offset-access syntax can only access the
+first 256.  To access more, a pointer is required.)
 
     | word table[512] many
     | 
@@ -222,6 +267,30 @@ greater than 0 and less than or equal to 256.
     | {
     |     ld x, 0
     |     copy 9999, many + x
+    | }
+    = ok
+
+    | byte table[65536] many
+    | 
+    | define main routine
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 99, many + x
+    | }
+    = ok
+
+    | byte table[65537] many
+    | 
+    | define main routine
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy 99, many + x
     | }
     ? SyntaxError
 
@@ -282,6 +351,19 @@ Constants.
     | 
     | define main routine {
     |   ld a, lives
+    | }
+    = ok
+
+Named constants can be used as offsets.
+
+    | const lives 3
+    | const w1 1000
+    | 
+    | byte table[w1] those
+    | 
+    | define main routine {
+    |   ld y, 0
+    |   ld a, those + lives + y
     | }
     = ok
 
@@ -590,18 +672,19 @@ But you can't `goto` a label that never gets defined.
     | }
     ? Expected '}', but found 'ld'
 
-Buffers and pointers.
+Tables and pointers.
 
-    | buffer[2048] buf
+    | byte table[2048] buf
     | pointer ptr
     | pointer ptrb
     | byte foo
     | 
     | define main routine {
-    |     copy ^buf, ptr
-    |     copy 123, [ptr] + y
-    |     copy [ptr] + y, foo
-    |     copy [ptr] + y, [ptrb] + y
+    |     point ptr into buf {
+    |         copy 123, [ptr] + y
+    |         copy [ptr] + y, foo
+    |         copy [ptr] + y, [ptrb] + y
+    |     }
     | }
     = ok
 

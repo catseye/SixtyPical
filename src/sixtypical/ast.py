@@ -54,11 +54,11 @@ class Program(AST):
 
 
 class Defn(AST):
-    value_attrs = ('name', 'addr', 'initial', 'location',)
+    value_attrs = ('name', 'addr', 'initial',)
 
 
 class Routine(AST):
-    value_attrs = ('name', 'addr', 'initial', 'location',)
+    value_attrs = ('name', 'addr', 'initial',)
     children_attrs = ('statics',)
     child_attrs = ('block',)
 
@@ -72,7 +72,15 @@ class Instr(AST):
 
 
 class SingleOp(Instr):
-    value_attrs = ('opcode', 'dest', 'src', 'location',)
+    value_attrs = ('opcode', 'dest', 'src',)
+
+
+class Call(Instr):
+    value_attrs = ('location',)
+
+
+class GoTo(Instr):
+    value_attrs = ('location',)
 
 
 class If(Instr):
@@ -96,4 +104,9 @@ class WithInterruptsOff(Instr):
 
 class Save(Instr):
     value_attrs = ('locations',)
+    child_attrs = ('block',)
+
+
+class PointInto(Instr):
+    value_attrs = ('pointer', 'table',)
     child_attrs = ('block',)

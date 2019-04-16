@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.15,
+This document describes the SixtyPical programming language version 0.19,
 both its static semantics (the capabilities and limits of the static
 analyses it defines) and its runtime semantics (with reference to the
 semantics of 6502 machine code.)
@@ -12,34 +12,55 @@ are even more normative.
 Refer to the bottom of this document for an EBNF grammar of the syntax of
 the language.
 
-Types
------
+Data Model
+----------
 
-There are five *primitive types* in SixtyPical:
+SixtyPical defines a data model where every value has some type
+information associated with it.  The values include those that are
+directly manipulable by a SixtyPical program, but are not limited to them.
+Type information includes not only what kind of structure the data has,
+but other properties as well (sometimes called "type annotations".)
+
+### Basic types ###
+
+SixtyPical defines a handful of basic types.  There are three types that
+are "primitive" in that they are not parameterized in any way:
 
 *   bit (2 possible values)
 *   byte (256 possible values)
 *   word (65536 possible values)
-*   routine (code stored somewhere in memory, read-only)
-*   pointer (address of a byte in a buffer)
 
-There are also three *type constructors*:
+Types can also be parameterized and constructed from other types
+(which is a kind of parameterization).  One such type constructor is
 
-*   T table[N] (N entries, 1 ≤ N ≤ 256; each entry holds a value
-                of type T, where T is `byte`, `word`, or `vector`)
-*   buffer[N] (N entries; each entry is a byte; 1 ≤ N ≤ 65536)
+*   pointer (16-bit address of a byte inside a byte table)
 *   vector T (address of a value of type T; T must be a routine type)
 
-### User-defined ###
+Values of the above-listed types are directly manipulable by a SixtyPical
+program.  Other types describe values which can only be indirectly
+manipulated by a program:
+
+*   routine (code stored somewhere in memory, read-only)
+*   T table[N] (series of 1 ≤ N ≤ 65536 values of type T)
+
+There are some restrictions here; for example, a table may only
+consist of `byte`, `word`, or `vector` types.  A pointer may only
+point to a byte inside a `table` of `byte` type.
+
+Each routine is associated with a rich set of type information,
+which is basically the types and statuses of memory locations that
+have been declared as being relevant to that routine.
+
+#### User-defined ####
 
 A program may define its own types using the `typedef` feature.  Typedefs
 must occur before everything else in the program.  A typedef takes a
 type expression and an identifier which has not previously been used in
 the program.  It associates that identifer with that type.  This is merely
-a type alias; two types with different names will compare as equal.
+a type alias; if two types have identical structure but different names,
+they will compare as equal.
 
-Memory locations
-----------------
+### Memory locations ###
 
 A primary concept in SixtyPical is the *memory location*.  At any given point
 in time during execution, each memory location is either *uninitialized* or
@@ -51,7 +72,7 @@ the program text; thus, it is a static property.
 There are four general kinds of memory location.  The first three are
 pre-defined and built-in.
 
-### Registers ###
+#### Registers ####
 
 Each of these hold a byte.  They are initially uninitialized.
 
@@ -59,7 +80,7 @@ Each of these hold a byte.  They are initially uninitialized.
     x
     y
 
-### Flags ###
+#### Flags ####
 
 Each of these hold a bit.  They are initially uninitialized.
 
@@ -68,7 +89,7 @@ Each of these hold a bit.  They are initially uninitialized.
     v (overflow)
     n (negative)
 
-### Constants ###
+#### Constants ####
 
 It may be strange to think of constants as memory locations, but keep in mind
 that a memory location in SixtyPical need not map to a memory location in the
@@ -97,7 +118,7 @@ and sixty-five thousand five hundred and thirty-six word constants,
 Note that if a word constant is between 256 and 65535, the leading `word`
 token can be omitted.
 
-### User-defined ###
+#### User-defined ####
 
 There may be any number of user-defined memory locations.  They are defined
 by giving the type (which may be any type except `bit` and `routine`) and the
@@ -137,13 +158,37 @@ This is actually useful, at least at this point, as you can rely on the fact
 that literal integers in the code are always immediate values.  (But this
 may change at some point.)
 
-### Buffers and Pointers ###
+### Tables and Pointers ###
 
-Roughly speaking, a `buffer` is a table that can be longer than 256 bytes,
-and a `pointer` is an address within a buffer.
+A table is a collection of memory locations that can be indexed in a number
+of ways.
+
+The simplest way is to use another memory location as an index.  There
+are restrictions on which memory locations can be used as indexes;
+only the `x` and `y` locations can be used this way.  Since those can
+only hold a byte, this method, by itself, only allows access to the first
+256 entries of the table.
+
+    byte table[1024] tab
+    ...
+    ld a, tab + x
+    st a, tab + y
+
+However, by combining indexing with a constant _offset_, entries beyond the
+256th entry can be accessed.
+
+    byte table[1024] tab
+    ...
+    ld a, tab + 512 + x
+    st a, tab + 512 + y
+
+Even with an offset, the range of indexing still cannot exceed 256 entries.
+Accessing entries at an arbitrary address inside a table can be done with
+a `pointer`.  Pointers can only be point inside `byte` tables.  When a
+pointer is used, indexing with `x` or `y` will also take place.
 
 A `pointer` is implemented as a zero-page memory location, and accessing the
-buffer pointed to is implemented with "indirect indexed" addressing, as in
+table pointed to is implemented with "indirect indexed" addressing, as in
 
     LDA ($02), Y
     STA ($02), Y
@@ -151,14 +196,15 @@ buffer pointed to is implemented with "indirect indexed" addressing, as in
 There are extended instruction modes for using these types of memory location.
 See `copy` below, but here is some illustrative example code:
 
-    copy ^buf, ptr           // this is the only way to initialize a pointer
-    add ptr, 4               // ok, but only if it does not exceed buffer's size
-    ld y, 0                  // you must set this to something yourself
-    copy [ptr] + y, byt      // read memory through pointer, into byte
-    copy 100, [ptr] + y      // write memory through pointer (still trashes a)
+    point ptr into buf {     // this is the only way to initialize a pointer
+      add ptr, 4             // note, this is unchecked against table's size!
+      ld y, 0                // you must set this to something yourself
+      copy [ptr] + y, byt    // read memory through pointer, into byte
+      copy 100, [ptr] + y    // write memory through pointer (still trashes a)
+    }                        // after this block, ptr can no longer be used
 
-where `ptr` is a user-defined storage location of `pointer` type, and the
-`+ y` part is mandatory.
+where `ptr` is a user-defined storage location of `pointer` type, `buf`
+is a `table` of `byte` type, and the `+ y` part is mandatory.
 
 Routines
 --------
@@ -300,17 +346,7 @@ and it trashes the `z` and `n` flags and the `a` register.
 After execution, dest is considered initialized, and `z` and `n`, and
 `a` are considered uninitialized.
 
-There are two extra modes that this instruction can be used in.  The first is
-to load an address into a pointer:
-
-    copy ^<src-memory-location>, <dest-memory-location>
-
-This copies the address of src into dest.  In this case, src must be
-of type buffer, and dest must be of type pointer.  src will not be
-considered a memory location that is read, since it is only its address
-that is being retrieved.
-
-The second is to read or write indirectly through a pointer.
+There is an extra mode that this instruction can be used in:
 
     copy [<src-memory-location>] + y, <dest-memory-location>
     copy <src-memory-location>, [<dest-memory-location>] + y
@@ -350,7 +386,7 @@ In fact, this instruction trashes the `a` register in all cases except
 when the dest is `a`.
 
 NOTE: If dest is a pointer, the addition does not check if the result of
-the pointer arithmetic continues to be valid (within a buffer) or not.
+the pointer arithmetic continues to be valid (within a table) or not.
 
 ### inc ###
 
@@ -581,11 +617,10 @@ Grammar
     Program ::= {ConstDefn | TypeDefn} {Defn} {Routine}.
     ConstDefn::= "const" Ident<new> Const.
     TypeDefn::= "typedef" Type Ident<new>.
-    Defn    ::= Type Ident<new> [Constraints] (":" Const | "@" LitWord).
+    Defn    ::= Type Ident<new> (":" Const | "@" LitWord).
     Type    ::= TypeTerm ["table" TypeSize].
     TypeExpr::= "byte"
               | "word"
-              | "buffer" TypeSize
               | "pointer"
               | "vector" TypeTerm
               | "routine" Constraints
@@ -594,10 +629,8 @@ Grammar
     TypeSize::= "[" LitWord "]".
     Constrnt::= ["inputs" LocExprs] ["outputs" LocExprs] ["trashes" LocExprs].
     Routine ::= "define" Ident<new> Type (Block | "@" LitWord).
-              | "routine" Ident<new> Constraints (Block | "@" LitWord)
-              .
     LocExprs::= LocExpr {"," LocExpr}.
-    LocExpr ::= Register | Flag | Const | Ident.
+    LocExpr ::= Register | Flag | Const | Ident [["+" Const] "+" Register].
     Register::= "a" | "x" | "y".
     Flag    ::= "c" | "z" | "n" | "v".
     Const   ::= Literal | Ident<const>.

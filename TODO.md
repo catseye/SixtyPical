@@ -12,37 +12,74 @@ Allow
 Which uses some other storage location instead of the stack.  A local static
 would be a good candidate for such.
 
-### Associate each pointer with the buffer it points into
+### Analyze `call` within blocks?
 
-Check that the buffer being read or written to through pointer, appears in appropriate
-inputs or outputs set.
+What happens if you call another routine from inside a `with interrupts off` block?
 
-In the analysis, when we obtain a pointer, we need to record, in context, what buffer
-that pointer came from.
+What happens if you call another routine from inside a `save` block?
 
-When we write through that pointer, we need to set that buffer as written.
+What happens if you call another routine from inside a `point into` block?
 
-When we read through the pointer, we need to check that the buffer is readable.
+What happens if you call another routine from inside a `for` block?
 
-### Table overlays
+Remember that any of these may have a `goto` ... and they may have a second
+instance of the same block (e.g. `with interrupts off` nested within
+`with interrupts off` shouldn't be allowed to turn them back on after the
+inner block has finished -- even if there is no `call`.)
 
-They are uninitialized, but the twist is, the address is a buffer that is
-an input to and/or output of the routine.  So, they are defined (insofar
-as the buffer is defined.)
+These holes need to be plugged.
 
-They are therefore a "view" of a section of a buffer.
+### Reset pointer in `point into` blocks
 
-This is slightly dangerous since it does permit aliases: the buffer and the
-table refer to the same memory.
+We have `point into` blocks, but maybe the action when entering such a
+block shouldn't always be to set the given pointer to the start of the given table.
 
-Although, if they are `static`, you could say, in the routine in which they
-are `static`, as soon as you've established one, you can no longer use the
-buffer; and the ones you establish must be disjoint.
+That is, sometimes we would like to start at some fixed offset.  And
+sometimes we want to (re)set the pointer, without closing and starting a new block.
 
-(That seems to be the most compelling case for restricting them to `static`.)
+### Pointers associated globally with a table
 
-An alternative would be `static` pointers, which are currently not possible because
-pointers must be zero-page, thus `@`, thus uninitialized.
+We have `point into` blocks, but we would also like to sometimes pass a pointer
+around to different routines, and have them all "know" what table it operates on.
+
+We could associate every pointer variable with a specific table variable, in its
+declaration.  This makes some things simple, and would allow us to know what table a
+pointer is supposed to point into, even if that pointer was passed into our routine.
+
+One drawback is that it would limit each pointer to be used only on one table.  Since a
+pointer basically represents a zero-page location, and since those are a relatively scarce
+resource, we would prefer if a single pointer could be used to point into different tables
+at different times.
+
+These can co-exist with general, non-specific-table-linked `pointer` variables.
+
+### Local non-statics
+
+Somewhat related to the above, it should be possible to declare a local storage
+location which is not static.
+
+In this case, it would be considered uninitialized each time the routine was
+entered.
+
+So, you do not have a guarantee that it has a valid value.  But you are guaranteed
+that no other routine can read or modify it.
+
+It also enables a trick: if there are two routines A and B, and A never calls B
+(even indirectly), and B never calls A (even indirectly), then their locals can
+be allocated at the same space.
+
+A local could also be given an explicit address.  In this case, two locals in
+different routines could be given the same address, and as long as the condition
+in the above paragraph holds, that's okay.  (If it doesn't, the analyzer should
+detect it.)
+
+This would permit local pointers, which would be one way of addressing the
+"same pointer to different tables" problem.
+
+### Copy byte to/from table
+
+Do we want a `copy bytevar, table + x` instruction?  We don't currently have one.
+You have to `ld a`, `st a`.  I think maybe we should have one.
 
 ### Tail-call optimization
 

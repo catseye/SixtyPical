@@ -385,6 +385,68 @@ Some instructions on tables. (3/3)
     = $081B   DEC $081F,X
     = $081E   RTS
 
+Using a constant offset, you can read and write entries in
+the table beyond the 256th.
+
+    | byte one
+    | byte table[1024] many
+    | 
+    | define main routine
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     ld a, many + x
+    |     st a, many + x
+    |     ld a, many + 999 + x
+    |     st a, many + 1000 + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA $081D,X
+    = $0812   STA $081D,X
+    = $0815   LDA $0C04,X
+    = $0818   STA $0C05,X
+    = $081B   RTS
+
+Instructions on tables, with constant offsets.
+
+    | byte table[256] many
+    | 
+    | define main routine
+    |   inputs many
+    |   outputs many
+    |   trashes a, x, c, n, z, v
+    | {
+    |     ld x, 0
+    |     ld a, 0
+    |     st off, c
+    |     add a, many + 1 + x
+    |     sub a, many + 2 + x
+    |     cmp a, many + 3 + x
+    |     and a, many + 4 + x
+    |     or a, many + 5 + x
+    |     xor a, many + 6 + x
+    |     shl many + 7 + x
+    |     shr many + 8 + x
+    |     inc many + 9 + x
+    |     dec many + 10 + x
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$00
+    = $0811   CLC
+    = $0812   ADC $0832,X
+    = $0815   SBC $0833,X
+    = $0818   CMP $0834,X
+    = $081B   AND $0835,X
+    = $081E   ORA $0836,X
+    = $0821   EOR $0837,X
+    = $0824   ROL $0838,X
+    = $0827   ROR $0839,X
+    = $082A   INC $083A,X
+    = $082D   DEC $083B,X
+    = $0830   RTS
+
 Compiling 16-bit `cmp`.
 
     | word za @ 60001
@@ -876,6 +938,42 @@ Copy routine (by forward reference) to vector.
     = $0818   INX
     = $0819   RTS
 
+Copy byte to byte table and back, with both `x` and `y` as indexes,
+plus constant offsets.
+
+    | byte one
+    | byte table[256] many
+    | 
+    | define main routine
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, y, n, z
+    | {
+    |     ld x, 0
+    |     ld y, 0
+    |     ld a, 77
+    |     st a, many + x
+    |     st a, many + y
+    |     st a, many + 1 + x
+    |     st a, many + 1 + y
+    |     ld a, many + x
+    |     ld a, many + y
+    |     ld a, many + 8 + x
+    |     ld a, many + 8 + y
+    | }
+    = $080D   LDX #$00
+    = $080F   LDY #$00
+    = $0811   LDA #$4D
+    = $0813   STA $082D,X
+    = $0816   STA $082D,Y
+    = $0819   STA $082E,X
+    = $081C   STA $082E,Y
+    = $081F   LDA $082D,X
+    = $0822   LDA $082D,Y
+    = $0825   LDA $0835,X
+    = $0828   LDA $0835,Y
+    = $082B   RTS
+
 Copy word to word table and back, with both `x` and `y` as indexes.
 
     | word one
@@ -915,6 +1013,48 @@ Copy word to word table and back, with both `x` and `y` as indexes.
     = $083F   LDA $084E,Y
     = $0842   STA $084C
     = $0845   LDA $094E,Y
+    = $0848   STA $084D
+    = $084B   RTS
+
+Copy word to word table and back, with constant offsets.
+
+    | word one
+    | word table[256] many
+    | 
+    | define main routine
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, y, n, z
+    | {
+    |     ld x, 0
+    |     ld y, 0
+    |     copy 777, one
+    |     copy one, many + 1 + x
+    |     copy one, many + 2 + y
+    |     copy many + 3 + x, one
+    |     copy many + 4 + y, one
+    | }
+    = $080D   LDX #$00
+    = $080F   LDY #$00
+    = $0811   LDA #$09
+    = $0813   STA $084C
+    = $0816   LDA #$03
+    = $0818   STA $084D
+    = $081B   LDA $084C
+    = $081E   STA $084F,X
+    = $0821   LDA $084D
+    = $0824   STA $094F,X
+    = $0827   LDA $084C
+    = $082A   STA $0850,Y
+    = $082D   LDA $084D
+    = $0830   STA $0950,Y
+    = $0833   LDA $0851,X
+    = $0836   STA $084C
+    = $0839   LDA $0951,X
+    = $083C   STA $084D
+    = $083F   LDA $0852,Y
+    = $0842   STA $084C
+    = $0845   LDA $0952,Y
     = $0848   STA $084D
     = $084B   RTS
 
@@ -1017,6 +1157,57 @@ Copying to and from a vector table.
     = $082F   LDA $0848,X
     = $0832   STA $0846
     = $0835   LDA $0948,X
+    = $0838   STA $0847
+    = $083B   JSR $0842
+    = $083E   RTS
+    = $083F   LDX #$C8
+    = $0841   RTS
+    = $0842   JMP ($0846)
+    = $0845   RTS
+
+Copying to and from a vector table, with constant offsets.
+
+    | vector routine
+    |   outputs x
+    |   trashes a, z, n
+    |     one
+    | vector routine
+    |   outputs x
+    |   trashes a, z, n
+    |     table[256] many
+    | 
+    | define bar routine outputs x trashes a, z, n {
+    |     ld x, 200
+    | }
+    | 
+    | define main routine
+    |   inputs one, many
+    |   outputs one, many
+    |   trashes a, x, n, z
+    | {
+    |     ld x, 0
+    |     copy bar, one
+    |     copy bar, many + 1 + x
+    |     copy one, many + 2 + x
+    |     copy many + 3 + x, one
+    |     call one
+    | }
+    = $080D   LDX #$00
+    = $080F   LDA #$3F
+    = $0811   STA $0846
+    = $0814   LDA #$08
+    = $0816   STA $0847
+    = $0819   LDA #$3F
+    = $081B   STA $0849,X
+    = $081E   LDA #$08
+    = $0820   STA $0949,X
+    = $0823   LDA $0846
+    = $0826   STA $084A,X
+    = $0829   LDA $0847
+    = $082C   STA $094A,X
+    = $082F   LDA $084B,X
+    = $0832   STA $0846
+    = $0835   LDA $094B,X
     = $0838   STA $0847
     = $083B   JSR $0842
     = $083E   RTS
@@ -1207,20 +1398,21 @@ Subtracting a word memory location from another word memory location.
     = $081D   STA $0822
     = $0820   RTS
 
-### Buffers and Pointers
+### Tables and Pointers
 
-Load address into pointer.
+Load address of table into pointer.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr @ 254
     | 
     | define main routine
-    |   inputs buf
-    |   outputs buf, y
+    |   inputs tab
+    |   outputs tab, y
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
+    |     point ptr into tab {
+    |     }
     | }
     = $080D   LDY #$00
     = $080F   LDA #$18
@@ -1231,17 +1423,18 @@ Load address into pointer.
 
 Write literal through a pointer.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr @ 254
     | 
     | define main routine
-    |   inputs buf
-    |   outputs buf, y
+    |   inputs tab
+    |   outputs tab, y
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
-    |     copy 123, [ptr] + y
+    |     point ptr into tab {
+    |         copy 123, [ptr] + y
+    |     }
     | }
     = $080D   LDY #$00
     = $080F   LDA #$1C
@@ -1254,43 +1447,45 @@ Write literal through a pointer.
 
 Write stored value through a pointer.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr @ 254
     | byte foo
     | 
     | define main routine
-    |   inputs foo, buf
-    |   outputs y, buf
+    |   inputs foo, tab
+    |   outputs y, tab
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
-    |     copy foo, [ptr] + y
+    |     point ptr into tab {
+    |         copy foo, [ptr] + y
+    |     }
     | }
     = $080D   LDY #$00
     = $080F   LDA #$1D
     = $0811   STA $FE
     = $0813   LDA #$08
     = $0815   STA $FF
-    = $0817   LDA $101D
+    = $0817   LDA $091D
     = $081A   STA ($FE),Y
     = $081C   RTS
 
 Read through a pointer, into a byte storage location, or the `a` register.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr @ 254
     | byte foo
     | 
     | define main routine
-    |   inputs buf
+    |   inputs tab
     |   outputs y, foo
     |   trashes a, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
-    |     copy [ptr] + y, foo
-    |     ld a, [ptr] + y
+    |     point ptr into tab {
+    |         copy [ptr] + y, foo
+    |         ld a, [ptr] + y
+    |     }
     | }
     = $080D   LDY #$00
     = $080F   LDA #$1F
@@ -1298,25 +1493,27 @@ Read through a pointer, into a byte storage location, or the `a` register.
     = $0813   LDA #$08
     = $0815   STA $FF
     = $0817   LDA ($FE),Y
-    = $0819   STA $101F
+    = $0819   STA $091F
     = $081C   LDA ($FE),Y
     = $081E   RTS
 
 Read and write through two pointers.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptra @ 252
     | pointer ptrb @ 254
     | 
     | define main routine
-    |   inputs buf
-    |   outputs buf
+    |   inputs tab
+    |   outputs tab
     |   trashes a, y, z, n, ptra, ptrb
     | {
     |     ld y, 0
-    |     copy ^buf, ptra
-    |     copy ^buf, ptrb
-    |     copy [ptra] + y, [ptrb] + y
+    |     point ptra into tab {
+    |         point ptrb into tab {
+    |             copy [ptra] + y, [ptrb] + y
+    |         }
+    |     }
     | }
     = $080D   LDY #$00
     = $080F   LDA #$24
@@ -1333,19 +1530,20 @@ Read and write through two pointers.
 
 Write the `a` register through a pointer.
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr @ 254
     | byte foo
     | 
     | define main routine
-    |   inputs buf
-    |   outputs buf
+    |   inputs tab
+    |   outputs tab
     |   trashes a, y, z, n, ptr
     | {
     |     ld y, 0
-    |     copy ^buf, ptr
-    |     ld a, 255
-    |     st a, [ptr] + y
+    |     point ptr into tab {
+    |         ld a, 255
+    |         st a, [ptr] + y
+    |     }
     | }
     = $080D   LDY #$00
     = $080F   LDA #$1C
@@ -1359,28 +1557,29 @@ Write the `a` register through a pointer.
 Add a word memory location, and a literal word, to a pointer, and then read through it.
 Note that this is *not* range-checked.  (Yet.)
 
-    | buffer[2048] buf
+    | byte table[256] tab
     | pointer ptr @ 254
     | byte foo
     | word delta
     | 
     | define main routine
-    |   inputs buf
+    |   inputs tab
     |   outputs y, foo, delta
     |   trashes a, c, v, z, n, ptr
     | {
     |     copy 619, delta
     |     ld y, 0
     |     st off, c
-    |     copy ^buf, ptr
-    |     add ptr, delta
-    |     add ptr, word 1
-    |     copy [ptr] + y, foo
+    |     point ptr into tab {
+    |         add ptr, delta
+    |         add ptr, word 1
+    |         copy [ptr] + y, foo
+    |     }
     | }
     = $080D   LDA #$6B
-    = $080F   STA $1043
+    = $080F   STA $0943
     = $0812   LDA #$02
-    = $0814   STA $1044
+    = $0814   STA $0944
     = $0817   LDY #$00
     = $0819   CLC
     = $081A   LDA #$42
@@ -1388,10 +1587,10 @@ Note that this is *not* range-checked.  (Yet.)
     = $081E   LDA #$08
     = $0820   STA $FF
     = $0822   LDA $FE
-    = $0824   ADC $1043
+    = $0824   ADC $0943
     = $0827   STA $FE
     = $0829   LDA $FF
-    = $082B   ADC $1044
+    = $082B   ADC $0944
     = $082E   STA $FF
     = $0830   LDA $FE
     = $0832   ADC #$01
@@ -1400,7 +1599,7 @@ Note that this is *not* range-checked.  (Yet.)
     = $0838   ADC #$00
     = $083A   STA $FF
     = $083C   LDA ($FE),Y
-    = $083E   STA $1042
+    = $083E   STA $0942
     = $0841   RTS
 
 ### Trash

@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-"""Usage: sixtypical [OPTIONS] FILES
-
-Analyzes and compiles a Sixtypical program.
-"""
-
 from os.path import realpath, dirname, join
 import sys
 
@@ -12,28 +7,31 @@ sys.path.insert(0, join(dirname(realpath(sys.argv[0])), '..', 'src'))
 
 # ----------------------------------------------------------------- #
 
-import codecs
 from argparse import ArgumentParser
+import codecs
+import json
 from pprint import pprint
+from subprocess import check_call
 import sys
+from tempfile import NamedTemporaryFile
 import traceback
 
-from sixtypical.parser import Parser, ParsingContext, merge_programs
+from sixtypical.parser import Parser, SymbolTable, merge_programs
 from sixtypical.analyzer import Analyzer
 from sixtypical.outputter import outputter_class_for
 from sixtypical.compiler import Compiler
 
 
 def process_input_files(filenames, options):
-    context = ParsingContext()
+    symtab = SymbolTable()
 
     programs = []
 
     for filename in options.filenames:
         text = open(filename).read()
-        parser = Parser(context, text, filename)
+        parser = Parser(symtab, text, filename)
         if options.debug:
-            print(context)
+            print(symtab)
         program = parser.program()
         programs.append(program)
 
@@ -42,15 +40,20 @@ def process_input_files(filenames, options):
 
     program = merge_programs(programs)
 
-    analyzer = Analyzer(debug=options.debug)
-    analyzer.analyze_program(program)
+    analyzer = Analyzer(symtab, debug=options.debug)
+
+    try:
+        analyzer.analyze_program(program)
+    finally:
+        if options.dump_exit_contexts:
+            sys.stdout.write(json.dumps(analyzer.exit_contexts_map, indent=4, sort_keys=True, separators=(',', ':')))
+            sys.stdout.write("\n")
 
     compilation_roster = None
     if options.optimize_fallthru:
         from sixtypical.fallthru import FallthruAnalyzer
 
         def dump(data, label=None):
-            import json
             if not options.dump_fallthru_info:
                 return
             if label:
@@ -58,12 +61,12 @@ def process_input_files(filenames, options):
             sys.stdout.write(json.dumps(data, indent=4, sort_keys=True, separators=(',', ':')))
             sys.stdout.write("\n")
 
-        fa = FallthruAnalyzer(debug=options.debug)
+        fa = FallthruAnalyzer(symtab, debug=options.debug)
         fa.analyze_program(program)
         compilation_roster = fa.serialize()
         dump(compilation_roster)
 
-    if options.analyze_only or options.output is None:
+    if options.analyze_only or (options.output is None and not options.run_on):
         return
 
     start_addr = None
@@ -73,20 +76,46 @@ def process_input_files(filenames, options):
         else:
             start_addr = int(options.origin, 10)
 
-    with open(options.output, 'wb') as fh:
-        outputter = outputter_class_for(options.output_format)(fh, start_addr=start_addr)
-        outputter.write_prelude()
-        compiler = Compiler(outputter.emitter)
-        compiler.compile_program(program, compilation_roster=compilation_roster)
-        outputter.write_postlude()
-        if options.debug:
-            pprint(outputter.emitter)
-        else:
-            outputter.emitter.serialize_to(fh)
+    if options.run_on:
+        fh = NamedTemporaryFile(delete=False)
+        output_filename = fh.name
+        Outputter = outputter_class_for({
+            'x64': 'c64-basic-prg',
+            'xvic': 'vic20-basic-prg',
+            'stella': 'atari2600-cart',
+        }.get(options.run_on))
+    else:
+        fh = open(options.output, 'wb')
+        output_filename = options.output
+        Outputter = outputter_class_for(options.output_format)
+
+    outputter = Outputter(fh, start_addr=start_addr)
+    outputter.write_prelude()
+    compiler = Compiler(symtab, outputter.emitter)
+    compiler.compile_program(program, compilation_roster=compilation_roster)
+    outputter.write_postlude()
+    if options.debug:
+        pprint(outputter.emitter)
+    else:
+        outputter.emitter.serialize_to(fh)
+
+    fh.close()
+
+    if options.run_on:
+        emu = {
+            'x64': "x64 -config vicerc",
+            'xvic': "xvic -config vicerc",
+            'stella': "stella"
+        }.get(options.run_on)
+        if not emu:
+            raise ValueError("No emulator configured for selected --run-on '{}'".format(options.output_format))
+
+        command = "{} {}".format(emu, output_filename)
+        check_call(command, shell=True)
 
 
 if __name__ == '__main__':
-    argparser = ArgumentParser(__doc__.strip())
+    argparser = ArgumentParser()
 
     argparser.add_argument(
         'filenames', metavar='FILENAME', type=str, nargs='+',
@@ -115,6 +144,12 @@ if __name__ == '__main__':
         help="Only parse and analyze the program; do not compile it."
     )
     argparser.add_argument(
+        "--dump-exit-contexts",
+        action="store_true",
+        help="Dump a map, in JSON, of the analysis context at each exit of each routine "
+             "after analyzing the program."
+    )
+    argparser.add_argument(
         "--optimize-fallthru",
         action="store_true",
         help="Reorder the routines in the program to maximize the number of tail calls "
@@ -123,7 +158,7 @@ if __name__ == '__main__':
     argparser.add_argument(
         "--dump-fallthru-info",
         action="store_true",
-        help="Dump the fallthru map and ordering to stdout after analyzing the program."
+        help="Dump the ordered fallthru map, in JSON, to stdout after analyzing the program."
     )
     argparser.add_argument(
         "--parse-only",
@@ -136,9 +171,20 @@ if __name__ == '__main__':
         help="Display debugging information when analyzing and compiling."
     )
     argparser.add_argument(
+        "--run-on", type=str, default=None,
+        help="If given, engage 'load-and-go' operation with the given emulator: write "
+             "the output to a temporary filename using an appropriate --output-format, "
+             "and boot the emulator with it. Options are: x64, xvic, stella."
+    )
+    argparser.add_argument(
         "--traceback",
         action="store_true",
         help="When an error occurs, display a full Python traceback."
+    )
+    argparser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s 0.19"
     )
 
     options, unknown = argparser.parse_known_args(sys.argv[1:])
