@@ -122,7 +122,7 @@ Documentation
 *   [Output formats supported by `sixtypical`](doc/Output%20Formats.md)
 *   [TODO](TODO.md)
 
-[MOS Technology 6520]: https://en.wikipedia.org/wiki/MOS_Technology_6502
+[MOS Technology 6502]: https://en.wikipedia.org/wiki/MOS_Technology_6502
 [effect system]: https://en.wikipedia.org/wiki/Effect_system
 [abstractly interprets]: https://en.wikipedia.org/wiki/Abstract_interpretation
 [calling conventions]: https://en.wikipedia.org/wiki/Calling_convention
