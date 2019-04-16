@@ -11,7 +11,7 @@ points such as `chrout` are defined.  In addition, some of these
 programs use "standard" support modules, so those should be included
 first too.  For example:
 
-    sixtypical --output-format=c64-basic-prg --run support/c64.60p support/stdlib.60p vector-table.60p
+    sixtypical --run-on=x64 support/c64.60p support/stdlib.60p vector-table.60p
 
 `chrout` is a routine with outputs the value of the accumulator
 as an ASCII character, disturbing none of the other registers,

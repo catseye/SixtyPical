@@ -4,7 +4,7 @@ SixtyPical
 _Version 0.19.  Work-in-progress, everything is subject to change._
 
 **SixtyPical** is a [low-level](#low-level) programming language
-supporting a [sophisticated static analysis](#sophisticated-static-analysis).
+supporting a sophisticated [static analysis](#static-analysis).
 Its reference compiler can generate [efficient code](#efficient-code) for
 several 6502-based [target platforms](#target-platforms) while catching many
 common mistakes at compile-time, reducing the time spent in debugging.
@@ -18,16 +18,16 @@ executable search path.  Then you can run:
 
     sixtypical
 
-If you have the [VICE][] emulator installed, you can run
+If you have the [VICE][] emulator suite installed, you can run
 
-    sixtypical --output-format=c64-basic-prg --run eg/c64/hearts.60p
+    sixtypical --run-on=x64 eg/c64/hearts.60p
 
 and it will compile the [hearts.60p source code](eg/c64/hearts.60p) and
 automatically start it in the `x64` emulator, and you should see:
 
 ![Screenshot of result of running hearts.60p](images/hearts.png?raw=true)
 
-You can try `sixtypical --run` on other sources in the `eg` directory
+You can try `sixtypical --run-on` on other sources in the `eg` directory
 tree, which contains more extensive examples, including an entire
 game(-like program); see [eg/README.md](eg/README.md) for a listing.
 
@@ -63,7 +63,7 @@ based on common 8-bit machine-language programming idioms, including
 While a programmer will find these constructs convenient, their
 inclusion in the language is primarily to make programs easier to analyze.
 
-### Sophisticated static analysis
+### Static analysis
 
 The language defines an [effect system][], and the reference
 compiler [abstractly interprets][] the input program to check that

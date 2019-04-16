@@ -22,8 +22,8 @@ History of SixtyPical
 *   Refactored internal data structures that represent
     references and types to be immutable `namedtuple`s.
 *   Added `--dump-exit-contexts` option to `sixtypical`.
-*   Added a new `--run` option to `sixtypical`, which replaces
-    the old `loadngo.sh` script.
+*   Added a new `--run-on=<emu>` option to `sixtypical`, which
+    replaces the old `loadngo.sh` script.
 
 0.18
 ----

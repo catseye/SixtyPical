@@ -66,7 +66,7 @@ def process_input_files(filenames, options):
         compilation_roster = fa.serialize()
         dump(compilation_roster)
 
-    if options.analyze_only or (options.output is None and not options.run):
+    if options.analyze_only or (options.output is None and not options.run_on):
         return
 
     start_addr = None
@@ -76,14 +76,20 @@ def process_input_files(filenames, options):
         else:
             start_addr = int(options.origin, 10)
 
-    if options.run:
+    if options.run_on:
         fh = NamedTemporaryFile(delete=False)
         output_filename = fh.name
+        Outputter = outputter_class_for({
+            'x64': 'c64-basic-prg',
+            'xvic': 'vic20-basic-prg',
+            'stella': 'atari2600-cart',
+        }.get(options.run_on))
     else:
         fh = open(options.output, 'wb')
         output_filename = options.output
+        Outputter = outputter_class_for(options.output_format)
 
-    outputter = outputter_class_for(options.output_format)(fh, start_addr=start_addr)
+    outputter = Outputter(fh, start_addr=start_addr)
     outputter.write_prelude()
     compiler = Compiler(symtab, outputter.emitter)
     compiler.compile_program(program, compilation_roster=compilation_roster)
@@ -95,14 +101,14 @@ def process_input_files(filenames, options):
 
     fh.close()
 
-    if options.run:
+    if options.run_on:
         emu = {
-            'c64-basic-prg': "x64 -config vicerc",
-            'vic20-basic-prg': "xvic -config vicerc",
-            'atari2600-cart': "stella"
-        }.get(options.output_format)
+            'x64': "x64 -config vicerc",
+            'xvic': "xvic -config vicerc",
+            'stella': "stella"
+        }.get(options.run_on)
         if not emu:
-            raise ValueError("No emulator configured for selected --output-format '{}'".format(options.output_format))
+            raise ValueError("No emulator configured for selected --run-on '{}'".format(options.output_format))
 
         command = "{} {}".format(emu, output_filename)
         check_call(command, shell=True)
@@ -165,10 +171,10 @@ if __name__ == '__main__':
         help="Display debugging information when analyzing and compiling."
     )
     argparser.add_argument(
-        "--run",
-        action="store_true",
-        help="Engage 'load-and-go' operation: write the output to a temporary filename, "
-             "infer an emulator from the given --output-format, and boot the emulator."
+        "--run-on", type=str, default=None,
+        help="If given, engage 'load-and-go' operation with the given emulator: write "
+             "the output to a temporary filename, using an appropriate --output-format "
+             "and boot the emulator with it. Options are: x64, xvic, stella."
     )
     argparser.add_argument(
         "--traceback",
