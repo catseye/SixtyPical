@@ -81,6 +81,22 @@ This would permit local pointers, which would be one way of addressing the
 Do we want a `copy bytevar, table + x` instruction?  We don't currently have one.
 You have to `ld a`, `st a`.  I think maybe we should have one.
 
+### Analyze memory usage
+
+If you define two variables that occupy the same address, an analysis error ought
+to be raised.  (But there should also be a way to annotate this as intentional.
+Intentionally making two tables overlap could be valuable.  However, the analysis
+will probably completely miss this fact.)
+
+### Character literals
+
+For goodness sake, let the programmer say `'A'` instead of `65`.
+
+### Character set mapping
+
+Not all computers think `'A'` should be `65`.  Allow the character set to be
+mapped.  Probably copy what Ophis does.
+
 ### Tail-call optimization
 
 If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can,
