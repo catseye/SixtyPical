@@ -183,9 +183,14 @@ class AnalysisContext(object):
     def assert_meaningful(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', UnmeaningfulReadError)
         for ref in refs:
-            # statics are always meaningful
-            if self.symtab.has_static(self.routine.name, ref.name):
-                continue
+            if self.symtab.has_local(self.routine.name, ref.name):
+                if ref not in self._range:
+                    message = ref.name
+                    if kwargs.get('message'):
+                        message += ' (%s)' % kwargs['message']
+                    raise exception_class(self.routine, message)
+                else:
+                    continue
             if self.is_constant(ref):
                 pass
             elif isinstance(ref, LocationRef):
@@ -203,8 +208,8 @@ class AnalysisContext(object):
     def assert_writeable(self, *refs, **kwargs):
         exception_class = kwargs.get('exception_class', ForbiddenWriteError)
         for ref in refs:
-            # statics are always writeable
-            if self.symtab.has_static(self.routine.name, ref.name):
+            # locals are always writeable
+            if self.symtab.has_local(self.routine.name, ref.name):
                 continue
             if ref not in self._writeable:
                 message = ref.name
@@ -384,8 +389,8 @@ class AnalysisContext(object):
     def max_range(self, ref):
         if isinstance(ref, ConstantRef):
             return (ref.value, ref.value)
-        elif self.symtab.has_static(self.routine.name, ref.name):
-            return self.symtab.fetch_static_type(self.routine.name, ref.name).max_range
+        elif self.symtab.has_local(self.routine.name, ref.name):
+            return self.symtab.fetch_local_type(self.routine.name, ref.name).max_range
         else:
             return self.symtab.fetch_global_type(ref.name).max_range
 
@@ -401,8 +406,8 @@ class Analyzer(object):
     # - - - - helper methods - - - -
 
     def get_type_for_name(self, name):
-        if self.current_routine and self.symtab.has_static(self.current_routine.name, name):
-            return self.symtab.fetch_static_type(self.current_routine.name, name)
+        if self.current_routine and self.symtab.has_local(self.current_routine.name, name):
+            return self.symtab.fetch_local_type(self.current_routine.name, name)
         return self.symtab.fetch_global_type(name)
 
     def get_type(self, ref):
@@ -462,6 +467,14 @@ class Analyzer(object):
         self.current_routine = routine
         type_ = self.get_type_for_name(routine.name)
         context = AnalysisContext(self.symtab, routine, type_.inputs, type_.outputs, type_.trashes)
+
+        # register any local statics as already-initialized
+        for local_name, local_symentry in self.symtab.locals.get(routine.name, {}).items():
+            ref = self.symtab.fetch_local_ref(routine.name, local_name)
+            if local_symentry.ast_node.initial is not None:
+                context.set_meaningful(ref)
+                context.set_range(ref, local_symentry.ast_node.initial, local_symentry.ast_node.initial)
+
         self.exit_contexts = []
 
         self.analyze_block(routine.block, context)
@@ -505,7 +518,7 @@ class Analyzer(object):
 
         # if something was touched, then it should have been declared to be writable.
         for ref in context.each_touched():
-            if ref not in type_.outputs and ref not in type_.trashes and not self.symtab.has_static(routine.name, ref.name):
+            if ref not in type_.outputs and ref not in type_.trashes and not self.symtab.has_local(routine.name, ref.name):
                 raise ForbiddenWriteError(routine, ref.name)
 
         self.exit_contexts = None

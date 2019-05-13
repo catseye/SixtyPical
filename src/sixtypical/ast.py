@@ -59,7 +59,7 @@ class Defn(AST):
 
 class Routine(AST):
     value_attrs = ('name', 'addr', 'initial',)
-    children_attrs = ('statics',)
+    children_attrs = ('locals',)
     child_attrs = ('block',)
 
 

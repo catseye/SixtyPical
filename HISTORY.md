@@ -1,6 +1,14 @@
 History of SixtyPical
 =====================
 
+0.20
+----
+
+*   Fixed a bug where two local statics could be declared with
+    the same name.
+*   Local locations need no longer be static.  If they are not
+    static, they are considered uninitialized until assigned.
+
 0.19
 ----
 

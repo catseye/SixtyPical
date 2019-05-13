@@ -31,7 +31,7 @@ class ForwardReference(object):
 class SymbolTable(object):
     def __init__(self):
         self.symbols = {}          # symbol name  -> SymEntry
-        self.statics = {}          # routine name -> (symbol name -> SymEntry)
+        self.locals = {}           # routine name -> (symbol name -> SymEntry)
         self.typedefs = {}         # type name    -> Type AST
         self.consts = {}           # const name   -> ConstantRef
 
@@ -41,25 +41,25 @@ class SymbolTable(object):
             self.symbols[name] = SymEntry(None, TYPE_BIT)
 
     def __str__(self):
-        return "Symbols: {}\nStatics: {}\nTypedefs: {}\nConsts: {}".format(self.symbols, self.statics, self.typedefs, self.consts)
+        return "Symbols: {}\nLocals: {}\nTypedefs: {}\nConsts: {}".format(self.symbols, self.locals, self.typedefs, self.consts)
 
-    def has_static(self, routine_name, name):
-        return name in self.statics.get(routine_name, {})
+    def has_local(self, routine_name, name):
+        return name in self.locals.get(routine_name, {})
 
     def fetch_global_type(self, name):
         return self.symbols[name].type_
 
-    def fetch_static_type(self, routine_name, name):
-        return self.statics[routine_name][name].type_
+    def fetch_local_type(self, routine_name, name):
+        return self.locals[routine_name][name].type_
 
     def fetch_global_ref(self, name):
         if name in self.symbols:
             return LocationRef(name)
         return None
 
-    def fetch_static_ref(self, routine_name, name):
-        routine_statics = self.statics.get(routine_name, {})
-        if name in routine_statics:
+    def fetch_local_ref(self, routine_name, name):
+        routine_locals = self.locals.get(routine_name, {})
+        if name in routine_locals:
             return LocationRef(name)
         return None
 
@@ -76,7 +76,7 @@ class Parser(object):
     def lookup(self, name, allow_forward=False, routine_name=None):
         model = self.symtab.fetch_global_ref(name)
         if model is None and routine_name:
-            model = self.symtab.fetch_static_ref(routine_name, name)
+            model = self.symtab.fetch_local_ref(routine_name, name)
         if model is None and allow_forward:
             return ForwardReference(name)
         if model is None:
@@ -88,10 +88,12 @@ class Parser(object):
             self.syntax_error('Symbol "%s" already declared' % name)
         self.symtab.symbols[name] = SymEntry(ast_node, type_)
 
-    def declare_static(self, routine_name, name, ast_node, type_):
+    def declare_local(self, routine_name, name, ast_node, type_):
+        if self.symtab.fetch_local_ref(routine_name, name):
+            self.syntax_error('Symbol "%s" already declared locally' % name)
         if self.symtab.fetch_global_ref(name):
-            self.syntax_error('Symbol "%s" already declared' % name)
-        self.symtab.statics.setdefault(routine_name, {})[name] = SymEntry(ast_node, type_)
+            self.syntax_error('Symbol "%s" already declared globally' % name)
+        self.symtab.locals.setdefault(routine_name, {})[name] = SymEntry(ast_node, type_)
 
     # ---- symbol resolution
 
@@ -306,17 +308,17 @@ class Parser(object):
         type_ = self.defn_type()
         if not isinstance(type_, RoutineType):
             self.syntax_error("Can only define a routine, not {}".format(repr(type_)))
-        statics = []
+        locals_ = []
         if self.scanner.consume('@'):
             self.scanner.check_type('integer literal')
             block = None
             addr = int(self.scanner.token)
             self.scanner.scan()
         else:
-            statics = self.statics()
+            locals_ = self.locals()
             block = self.block()
             addr = None
-        return type_, Routine(self.scanner.line_number, name=name, block=block, addr=addr, statics=statics)
+        return type_, Routine(self.scanner.line_number, name=name, block=block, addr=addr, locals=locals_)
 
     def labels(self):
         accum = []
@@ -370,13 +372,19 @@ class Parser(object):
                 loc = IndexedRef(loc, offset, index)
         return loc
 
-    def statics(self):
+    def locals(self):
         defns = []
         while self.scanner.consume('static'):
             type_, defn = self.defn()
             if defn.initial is None:
                 self.syntax_error("Static definition {} must have initial value".format(defn))
-            self.declare_static(self.current_routine_name, defn.name, defn, type_)
+            self.declare_local(self.current_routine_name, defn.name, defn, type_)
+            defns.append(defn)
+        while self.scanner.consume('local'):
+            type_, defn = self.defn()
+            if defn.initial is not None:
+                self.syntax_error("Local definition {} may not have initial value".format(defn))
+            self.declare_local(self.current_routine_name, defn.name, defn, type_)
             defns.append(defn)
         return defns
 

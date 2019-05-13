@@ -4251,7 +4251,7 @@ The new style routine definitions support typedefs.
     | }
     = ok
 
-### static ###
+### locals ###
 
 When memory locations are defined static to a routine, they cannot be
 directly input, nor directly output; and since they are always initialized,
@@ -4276,3 +4276,30 @@ they cannot be trashed.  Thus, they really don't participate in the analysis.
     |   call foo
     | }
     = ok
+
+When memory locations are defined local to a routine, but not static,
+they cannot be directly input, nor directly output; but they are considered
+uninitialized from the time the routine is called to until a value is stored
+in them.
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   local byte t
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    = ok
+
+    | define main routine
+    |   outputs x
+    |   trashes z, n
+    |   local byte t
+    | {
+    |   inc t
+    |   ld x, t
+    | }
+    ? UnmeaningfulReadError: t

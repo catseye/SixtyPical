@@ -34,7 +34,7 @@ class Compiler(object):
         self.symtab = symtab
         self.emitter = emitter
         self.routines = {}           # routine.name -> Routine
-        self.routine_statics = {}    # routine.name -> { static.name -> Label }
+        self.routine_locals = {}     # routine.name -> { local.name -> Label }
         self.labels = {}             # global.name -> Label  ("global" includes routines)
         self.trampolines = {}        # Location -> Label
         self.current_routine = None
@@ -42,8 +42,8 @@ class Compiler(object):
     # - - - - helper methods - - - -
 
     def get_type_for_name(self, name):
-        if self.current_routine and self.symtab.has_static(self.current_routine.name, name):
-            return self.symtab.fetch_static_type(self.current_routine.name, name)
+        if self.current_routine and self.symtab.has_local(self.current_routine.name, name):
+            return self.symtab.fetch_local_type(self.current_routine.name, name)
         return self.symtab.fetch_global_type(name)
 
     def get_type(self, ref):
@@ -76,9 +76,9 @@ class Compiler(object):
 
     def get_label(self, name):
         if self.current_routine:
-            static_label = self.routine_statics.get(self.current_routine.name, {}).get(name)
-            if static_label:
-                return static_label
+            local_label = self.routine_locals.get(self.current_routine.name, {}).get(name)
+            if local_label:
+                return local_label
         return self.labels[name]
 
     def absolute_or_zero_page(self, label):
@@ -107,16 +107,15 @@ class Compiler(object):
                 label.set_addr(routine.addr)
             self.labels[routine.name] = label
 
-            if hasattr(routine, 'statics'):
-                self.current_routine = routine
-                static_labels = {}
-                for defn in routine.statics:
-                    length = self.compute_length_of_defn(defn)
-                    label = Label(defn.name, addr=defn.addr, length=length)
-                    static_labels[defn.name] = label
-                    declarations.append((defn, self.symtab.fetch_static_type(routine.name, defn.name), label))
-                self.routine_statics[routine.name] = static_labels
-                self.current_routine = None
+            self.current_routine = routine
+            local_labels = {}
+            for defn in routine.locals:
+                length = self.compute_length_of_defn(defn)
+                label = Label(defn.name, addr=defn.addr, length=length)
+                local_labels[defn.name] = label
+                declarations.append((defn, self.symtab.fetch_local_type(routine.name, defn.name), label))
+            self.routine_locals[routine.name] = local_labels
+            self.current_routine = None
 
         if compilation_roster is None:
             compilation_roster = [['main']] + [[routine.name] for routine in program.routines if routine.name != 'main']

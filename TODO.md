@@ -53,20 +53,16 @@ at different times.
 
 These can co-exist with general, non-specific-table-linked `pointer` variables.
 
-### Local non-statics
+### Space optimization of local non-statics
 
-Somewhat related to the above, it should be possible to declare a local storage
-location which is not static.
-
-In this case, it would be considered uninitialized each time the routine was
-entered.
-
-So, you do not have a guarantee that it has a valid value.  But you are guaranteed
-that no other routine can read or modify it.
-
-It also enables a trick: if there are two routines A and B, and A never calls B
-(even indirectly), and B never calls A (even indirectly), then their locals can
+If there are two routines A and B, and A never calls B (even indirectly), and
+B never calls A (even indirectly), then their non-static locals can
 be allocated at the same space.
+
+This is more an impressive trick than a really useful feature, but still.
+Impressive tricks are impressive.
+
+### Locals with explicit addresses
 
 A local could also be given an explicit address.  In this case, two locals in
 different routines could be given the same address, and as long as the condition
