@@ -1,6 +1,9 @@
 TODO for SixtyPical
 ===================
 
+Language
+--------
+
 ### Save values to other-than-the-stack
 
 Allow
@@ -9,35 +12,111 @@ Allow
         ...
     }
 
-Which uses some other storage location instead of the stack.  A local static
-would be a good candidate for such.
+Which uses some other storage location instead of the stack.  A local non-static
+would be a good candidate for such.  At any rate, the location must not
+be writeable by anything that is called from within the block.  So, probably
+just restrict this to local non-statics.
 
-### Analyze `call` within blocks?
+### Copy byte to/from table
 
-What happens if you call another routine from inside a `with interrupts off` block?
+Do we want a `copy bytevar, table + x` instruction?  We don't currently have one.
+You have to `ld a`, `st a`.  I think maybe we should have one.
 
-What happens if you call another routine from inside a `save` block?
+### Character literals
 
-What happens if you call another routine from inside a `point into` block?
+For goodness sake, let the programmer say `'A'` instead of `65`.
 
-What happens if you call another routine from inside a `for` block?
+### Character set mapping
 
-Remember that any of these may have a `goto` ... and they may have a second
-instance of the same block (e.g. `with interrupts off` nested within
-`with interrupts off` shouldn't be allowed to turn them back on after the
-inner block has finished -- even if there is no `call`.)
+Not all computers think `'A'` should be `65`.  Allow the character set to be
+mapped.  Probably copy what Ophis does.
 
-These holes need to be plugged.
+### "Include" directives
 
-### Reset pointer in `point into` blocks
+Search a searchlist of include paths.  And use them to make libraries of routines.
 
-We have `point into` blocks, but maybe the action when entering such a
-block shouldn't always be to set the given pointer to the start of the given table.
+One such library routine might be an `interrupt routine` type for various architectures.
+Since "the supervisor" has stored values on the stack, we should be able to trash them
+with impunity, in such a routine.
 
-That is, sometimes we would like to start at some fixed offset.  And
-sometimes we want to (re)set the pointer, without closing and starting a new block.
+### Pointers into non-byte tables
 
-### Pointers associated globally with a table
+Right now you cannot get a pointer into a non-byte (for instance, word or vector) table.
+
+Word and vector tables are stored as two byte tables in memory.  This is useful for
+indexed access, but makes pointer access more difficult.
+
+Laying them out for pointer access would make indexed access more difficult.
+
+### Saving non-byte values
+
+Right now you cannot save a word value.
+
+There doesn't seem to be a hugely pressing reason why not.
+
+Analysis
+--------
+
+### Forbid recursion
+
+What happens if a routine calls itself, directly or indirectly?  Many
+constraints might be violated in this case.  We should probably disallow
+recursion by default.  (Which means assembling the callgraph in all cases.)
+
+### Analyze memory usage
+
+If you define two variables that occupy the same address, an analysis error ought
+to be raised.  (But there should also be a way to annotate this as intentional.
+Intentionally making two tables overlap could be valuable.  However, the analysis
+will probably completely miss this fact.)
+
+Optimization
+------------
+
+### Space optimization of local non-statics
+
+If there are two routines A and B, and A never calls B (even indirectly), and
+B never calls A (even indirectly), then their non-static locals can
+be allocated at the same space.
+
+This is not just an impressive trick -- in the presence of local pointers, which
+use up a word in zero-page, which we consider a precious resource, it allow those
+zero-page locations to be re-used.
+
+### Tail-call optimization
+
+If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can,
+if the block is in tail position.  The constraints should iron out the same both ways.
+
+As long as the routine has consistent type context every place it exits, that should be fine.
+
+### Branch optimization in `if`
+
+Currently the `if` generator is not smart enough to avoid generating silly
+jump instructions.  (See the Fallthru tests.)  Improve it.
+
+### Dead code removal
+
+Once we have a call graph we can omit routines that we're sure aren't called.
+
+This would let us use include-files and standard-libraries nicely: any
+routines they define, but that you don't use, don't get included.
+
+Analyzing the set of possible routines that a vector can take on would help
+this immensely.
+
+Implementation
+--------------
+
+### Line numbers in analysis error messages
+
+For analysis errors, there is a line number, but it's the line of the routine
+after the routine in which the analysis error occurred.  Fix this.
+
+Blue-skying
+-----------
+
+### Pointers associated globally with a table(?)
 
 We have `point into` blocks, but we would also like to sometimes pass a pointer
 around to different routines, and have them all "know" what table it operates on.
@@ -53,66 +132,5 @@ at different times.
 
 These can co-exist with general, non-specific-table-linked `pointer` variables.
 
-### Local non-statics
-
-Somewhat related to the above, it should be possible to declare a local storage
-location which is not static.
-
-In this case, it would be considered uninitialized each time the routine was
-entered.
-
-So, you do not have a guarantee that it has a valid value.  But you are guaranteed
-that no other routine can read or modify it.
-
-It also enables a trick: if there are two routines A and B, and A never calls B
-(even indirectly), and B never calls A (even indirectly), then their locals can
-be allocated at the same space.
-
-A local could also be given an explicit address.  In this case, two locals in
-different routines could be given the same address, and as long as the condition
-in the above paragraph holds, that's okay.  (If it doesn't, the analyzer should
-detect it.)
-
-This would permit local pointers, which would be one way of addressing the
-"same pointer to different tables" problem.
-
-### Copy byte to/from table
-
-Do we want a `copy bytevar, table + x` instruction?  We don't currently have one.
-You have to `ld a`, `st a`.  I think maybe we should have one.
-
-### Analyze memory usage
-
-If you define two variables that occupy the same address, an analysis error ought
-to be raised.  (But there should also be a way to annotate this as intentional.
-Intentionally making two tables overlap could be valuable.  However, the analysis
-will probably completely miss this fact.)
-
-### Character literals
-
-For goodness sake, let the programmer say `'A'` instead of `65`.
-
-### Character set mapping
-
-Not all computers think `'A'` should be `65`.  Allow the character set to be
-mapped.  Probably copy what Ophis does.
-
-### Tail-call optimization
-
-If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can,
-if the block is in tail position.  The constraints should iron out the same both ways.
-
-As long as the routine has consistent type context every place it exits, that should be fine.
-
-### "Include" directives
-
-Search a searchlist of include paths.  And use them to make libraries of routines.
-
-One such library routine might be an `interrupt routine` type for various architectures.
-Since "the supervisor" has stored values on the stack, we should be able to trash them
-with impunity, in such a routine.
-
-### Line numbers in analysis error messages
-
-For analysis errors, there is a line number, but it's the line of the routine
-after the routine in which the analysis error occurred.  Fix this.
+If we have local pointers and space optimization for local non-statics, though,
+these don't add as much.

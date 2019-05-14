@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-This document describes the SixtyPical programming language version 0.19,
+This document describes the SixtyPical programming language version 0.20,
 both its static semantics (the capabilities and limits of the static
 analyses it defines) and its runtime semantics (with reference to the
 semantics of 6502 machine code.)
@@ -196,7 +196,8 @@ table pointed to is implemented with "indirect indexed" addressing, as in
 There are extended instruction modes for using these types of memory location.
 See `copy` below, but here is some illustrative example code:
 
-    point ptr into buf {     // this is the only way to initialize a pointer
+    point ptr into buf {     // this associates this pointer with this table
+      reset ptr 0            // this is the only way to initialize a pointer
       add ptr, 4             // note, this is unchecked against table's size!
       ld y, 0                // you must set this to something yourself
       copy [ptr] + y, byt    // read memory through pointer, into byte
@@ -658,4 +659,6 @@ Grammar
               | "repeat" Block ("until" ["not"] LocExpr | "forever")
               | "for" LocExpr ("up"|"down") "to" Const Block
               | "with" "interrupts" LitBit Block
+              | "point" LocExpr "into" LocExpr Block
+              | "reset" LocExpr Const
               .

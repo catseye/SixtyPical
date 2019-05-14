@@ -265,37 +265,37 @@ define player_logic logic_routine
 
     if c {
         point ptr into screen {
+            reset ptr 0
             st off, c
             add ptr, new_pos
             ld y, 0
+
             // check collision.
             ld a, [ptr] + y
-        }
 
-        // if "collision" is with your own self, treat it as if it's blank space!
-        cmp a, 81
-        if z {
-            ld a, 32
-        }
-        cmp a, 32
-        if z {
-            point ptr into screen {
+            // if "collision" is with your own self, treat it as if it's blank space!
+            cmp a, 81
+            if z {
+                ld a, 32
+            }
+            cmp a, 32
+            if z {
+                reset ptr 0
                 st off, c
                 add ptr, pos
                 copy 32, [ptr] + y
-            }
 
-            copy new_pos, pos
+                copy new_pos, pos
 
-            point ptr into screen {
+                reset ptr 0
                 st off, c
                 add ptr, pos
                 copy 81, [ptr] + y
             }
-        } else {
-            ld a, 1
-            st a, player_died
         }
+    } else {
+        ld a, 1
+        st a, player_died
     }
 }
 
@@ -307,28 +307,29 @@ define enemy_logic logic_routine
 
     if c {
         point ptr into screen {
+            reset ptr 0
             st off, c
             add ptr, new_pos
             ld y, 0
+
             // check collision.
             ld a, [ptr] + y
-        }
-        // if "collision" is with your own self, treat it as if it's blank space!
-        cmp a, 82
-        if z {
-            ld a, 32
-        }
-        cmp a, 32
-        if z {
-            point ptr into screen {
+
+            // if "collision" is with your own self, treat it as if it's blank space!
+            cmp a, 82
+            if z {
+                ld a, 32
+            }
+            cmp a, 32
+            if z {
+                reset ptr 0
                 st off, c
                 add ptr, pos
                 copy 32, [ptr] + y
-            }
 
-            copy new_pos, pos
+                copy new_pos, pos
 
-            point ptr into screen {
+                reset ptr 0
                 st off, c
                 add ptr, pos
                 copy 82, [ptr] + y

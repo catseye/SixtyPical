@@ -9,9 +9,6 @@ but not necessarily sensible programs.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Check syntax of SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --parse-only --traceback %(test-body-file) && echo ok"
-
     -> Tests for functionality "Check syntax of SixtyPical program"
 
 Rudimentary program.
@@ -176,6 +173,7 @@ Other blocks.
     |         ld a, 0
     |     }
     |     point ptr into tab {
+    |         reset ptr 0
     |         ld a, [ptr] + y
     |     }
     | }
@@ -681,6 +679,7 @@ Tables and pointers.
     | 
     | define main routine {
     |     point ptr into buf {
+    |         reset ptr 0
     |         copy 123, [ptr] + y
     |         copy [ptr] + y, foo
     |         copy [ptr] + y, [ptrb] + y
@@ -746,13 +745,14 @@ Only routines can be defined in the new style.
     | }
     ? SyntaxError
 
-Memory locations can be defined static to a routine.
+Memory locations can be defined local to a routine.
 
     | define foo routine
     |   inputs x
     |   outputs x
     |   trashes z, n
     |   static byte t : 0
+    |   local word w
     | {
     |   st x, t
     |   inc t
@@ -762,13 +762,14 @@ Memory locations can be defined static to a routine.
     | define main routine
     |   trashes a, x, z, n
     |   static byte t : 0
+    |   local word w
     | {
     |   ld x, t
     |   call foo
     | }
     = ok
 
-Static memory locations must always be given an initial value.
+Local static memory locations must always be given an initial value.
 
     | define main routine
     |   inputs x
@@ -782,7 +783,49 @@ Static memory locations must always be given an initial value.
     | }
     ? SyntaxError
 
-Name of a static cannot shadow an existing global or static.
+Local static memory locations may not be given an address.
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t @ 1024
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
+
+Local dynamic memory locations may not be given an initial value.
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   local byte t : 10
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
+
+Local dynamic memory locations may be given an address.
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   local byte t @ 1024
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    = ok
+
+Name of a local cannot shadow an existing global or local.
 
     | byte t
     | 
@@ -790,7 +833,7 @@ Name of a static cannot shadow an existing global or static.
     |   inputs x
     |   outputs x
     |   trashes z, n
-    |   static byte t
+    |   static byte t : 10
     | {
     |   st x, t
     |   inc t
@@ -802,11 +845,89 @@ Name of a static cannot shadow an existing global or static.
     |   inputs x
     |   outputs x
     |   trashes z, n
-    |   static byte t
-    |   static byte t
+    |   static byte t : 10
+    |   static byte t : 20
     | {
     |   st x, t
     |   inc t
     |   ld x, t
+    | }
+    ? SyntaxError
+
+    | byte t
+    | 
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   local byte t
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   local word w
+    |   local word w
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
+
+Since the names of locals are lexically local to a routine, they cannot
+appear in the inputs, outputs, trashes list of the routine.
+
+    | define main routine
+    |   inputs t
+    |   static byte t : 0
+    | {
+    |   inc t
+    | }
+    ? SyntaxError
+
+    | define main routine
+    |   outputs t
+    |   static byte t : 0
+    | {
+    |   inc t
+    | }
+    ? SyntaxError
+
+    | define main routine
+    |   trashes t
+    |   static byte t : 0
+    | {
+    |   inc t
+    | }
+    ? SyntaxError
+
+    | define main routine
+    |   inputs t
+    |   local byte t
+    | {
+    |   inc t
+    | }
+    ? SyntaxError
+
+    | define main routine
+    |   outputs t
+    |   local byte t
+    | {
+    |   inc t
+    | }
+    ? SyntaxError
+
+    | define main routine
+    |   trashes t
+    |   local byte t
+    | {
+    |   inc t
     | }
     ? SyntaxError

@@ -59,7 +59,7 @@ class Defn(AST):
 
 class Routine(AST):
     value_attrs = ('name', 'addr', 'initial',)
-    children_attrs = ('statics',)
+    children_attrs = ('locals',)
     child_attrs = ('block',)
 
 
@@ -73,6 +73,10 @@ class Instr(AST):
 
 class SingleOp(Instr):
     value_attrs = ('opcode', 'dest', 'src',)
+
+
+class Reset(Instr):
+    value_attrs = ('pointer', 'offset',)
 
 
 class Call(Instr):

@@ -16,7 +16,8 @@ import sys
 from tempfile import NamedTemporaryFile
 import traceback
 
-from sixtypical.parser import Parser, SymbolTable, merge_programs
+from sixtypical.symtab import SymbolTable
+from sixtypical.parser import Parser, merge_programs
 from sixtypical.analyzer import Analyzer
 from sixtypical.outputter import outputter_class_for
 from sixtypical.compiler import Compiler
@@ -184,7 +185,7 @@ if __name__ == '__main__':
     argparser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.19"
+        version="%(prog)s 0.20"
     )
 
     options, unknown = argparser.parse_known_args(sys.argv[1:])

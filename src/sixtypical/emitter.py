@@ -128,7 +128,7 @@ class Offset(Emittable):
 
 class HighAddressByte(Emittable):
     def __init__(self, label):
-        assert isinstance(label, Label)
+        assert isinstance(label, (Label, Offset))
         self.label = label
 
     def size(self):
@@ -143,7 +143,7 @@ class HighAddressByte(Emittable):
 
 class LowAddressByte(Emittable):
     def __init__(self, label):
-        assert isinstance(label, Label)
+        assert isinstance(label, (Label, Offset))
         self.label = label
 
     def size(self):
