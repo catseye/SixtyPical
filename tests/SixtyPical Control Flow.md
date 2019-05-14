@@ -704,6 +704,82 @@ initialized at the start of that loop.
     | }
     ? UnmeaningfulReadError: y
 
+And in particular, you can't uninitialize the loop variable, in the loop.
+
+    | define foo routine
+    |   trashes x
+    | {
+    | }
+    | 
+    | define main routine
+    |   outputs x, y, n, z
+    |   trashes c
+    | {
+    |     ld x, 0
+    |     ld y, 15
+    |     for x up to 15 {
+    |         inc y
+    |         call foo
+    |     }
+    | }
+    ? ForbiddenWriteError: x
+
+So, if you call a routine from inside the loop, it better not also
+loop on the same variable.
+
+    | define foo routine
+    |   inputs y
+    |   outputs x, y, n, z
+    |   trashes c
+    | {
+    |     ld x, 0
+    |     for x up to 15 {
+    |         inc y
+    |     }
+    | }
+    | 
+    | define main routine
+    |   outputs x, y, n, z
+    |   trashes c
+    | {
+    |     ld x, 0
+    |     ld y, 15
+    |     for x up to 15 {
+    |         inc y
+    |         call foo
+    |     }
+    | }
+    ? ForbiddenWriteError: x
+
+But if you take care to save and restore the loop variable in the
+called routine, it will be okay.
+
+    | define foo routine
+    |   inputs y
+    |   outputs y, n, z
+    |   trashes a, c
+    | {
+    |     save x {
+    |         ld x, 0
+    |         for x up to 15 {
+    |             inc y
+    |         }
+    |     }
+    | }
+    | 
+    | define main routine
+    |   outputs x, y, n, z
+    |   trashes a, c
+    | {
+    |     ld x, 0
+    |     ld y, 15
+    |     for x up to 15 {
+    |         inc y
+    |         call foo
+    |     }
+    | }
+    = ok
+
 The "for" loop does not preserve the `z` or `n` registers.
 
     | define foo routine trashes x {

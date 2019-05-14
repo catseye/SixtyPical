@@ -61,12 +61,6 @@ to pass these tests to be considered an implementation of SixtyPical.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Dump fallthru info for SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --optimize-fallthru --dump-fallthru-info --analyze-only --traceback %(test-body-file)"
-
-    -> Functionality "Compile SixtyPical program with fallthru optimization" is implemented by
-    -> shell command "bin/sixtypical --output-format=c64-basic-prg --optimize-fallthru --traceback %(test-body-file) --output /tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
-
     -> Tests for functionality "Dump fallthru info for SixtyPical program"
 
 A single routine, obviously, falls through to nothing and has nothing fall

@@ -1,7 +1,7 @@
 SixtyPical
 ==========
 
-_Version 0.19.  Work-in-progress, everything is subject to change._
+_Version 0.20.  Work-in-progress, everything is subject to change._
 
 **SixtyPical** is a [low-level](#low-level) programming language
 supporting a sophisticated [static analysis](#static-analysis).
@@ -109,7 +109,9 @@ In order to run the tests for compilation, [dcc6502][] needs to be installed.
 
 *   [SixtyPical specification](doc/SixtyPical.md)
 *   [Literate test suite for SixtyPical syntax](tests/SixtyPical%20Syntax.md)
-*   [Literate test suite for SixtyPical analysis](tests/SixtyPical%20Analysis.md)
+*   [Literate test suite for SixtyPical analysis (operations)](tests/SixtyPical%20Analysis.md)
+*   [Literate test suite for SixtyPical analysis (storage)](tests/SixtyPical%20Storage.md)
+*   [Literate test suite for SixtyPical analysis (control flow)](tests/SixtyPical%20Control%20Flow.md)
 *   [Literate test suite for SixtyPical compilation](tests/SixtyPical%20Compilation.md)
 *   [Literate test suite for SixtyPical fallthru optimization](tests/SixtyPical%20Fallthru.md)
 

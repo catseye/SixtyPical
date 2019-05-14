@@ -9,9 +9,6 @@ but not necessarily sensible programs.
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Check syntax of SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --parse-only --traceback %(test-body-file) && echo ok"
-
     -> Tests for functionality "Check syntax of SixtyPical program"
 
 Rudimentary program.

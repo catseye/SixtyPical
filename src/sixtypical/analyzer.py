@@ -230,9 +230,7 @@ class Analyzer(object):
         elif isinstance(instr, For):
             self.analyze_for(instr, context)
         elif isinstance(instr, WithInterruptsOff):
-            self.analyze_block(instr.block, context)
-            if context.encountered_gotos():
-                raise IllegalJumpError(instr, instr)
+            self.analyze_with_interrupts_off(instr, context)
         elif isinstance(instr, Save):
             self.analyze_save(instr, context)
         elif isinstance(instr, PointInto):
@@ -290,7 +288,6 @@ class Analyzer(object):
                 target = context.get_assoc(dest.ref)
                 if not target:
                     raise ForbiddenWriteError(instr, dest.ref)
-                context.set_touched(target)
                 context.set_written(target)
 
             elif self.get_type(src) != self.get_type(dest):
@@ -465,8 +462,6 @@ class Analyzer(object):
                 target = context.get_assoc(dest.ref)
                 if not target:
                     raise ForbiddenWriteError(instr, dest.ref)
-                context.assert_writeable(target)
-                context.set_touched(target)
                 context.set_written(target)
 
             elif isinstance(src, IndirectRef) and isinstance(dest, LocationRef):
@@ -477,9 +472,8 @@ class Analyzer(object):
                     raise UnmeaningfulReadError(instr, src.ref)
                 context.assert_meaningful(origin)
 
-                context.assert_writeable(dest)
-                context.set_touched(dest)
                 context.set_written(dest)
+
             elif isinstance(src, IndirectRef) and isinstance(dest, IndirectRef):
                 context.assert_meaningful(src.ref, dest.ref, REG_Y)
 
@@ -491,8 +485,6 @@ class Analyzer(object):
                 target = context.get_assoc(dest.ref)
                 if not target:
                     raise ForbiddenWriteError(instr, dest.ref)
-                context.assert_writeable(target)
-                context.set_touched(target)
                 context.set_written(target)
 
             elif isinstance(src, LocationRef) and isinstance(dest, IndexedRef):
@@ -503,7 +495,6 @@ class Analyzer(object):
                 context.set_written(dest.ref)
             elif isinstance(src, IndexedRef) and isinstance(dest, LocationRef):
                 context.assert_meaningful(src.ref, src.index)
-                context.set_touched(dest)
                 context.set_written(dest)
             else:
                 context.assert_meaningful(src)
@@ -569,7 +560,6 @@ class Analyzer(object):
         exit_context = context.clone()
 
         for ref in type_.outputs:
-            exit_context.set_touched(ref)   # ?
             exit_context.set_written(ref)
 
         for ref in type_.trashes:
@@ -676,6 +666,13 @@ class Analyzer(object):
         # after it is executed, we know the range of the loop variable.
         context.set_range(instr.dest, instr.final, instr.final)
         context.set_writeable(instr.dest)
+
+    def analyze_with_interrupts_off(self, instr, context):
+        block = instr.block
+        for instr in block.instrs:
+            if isinstance(instr, (Call, GoTo, WithInterruptsOff)):
+                raise IllegalJumpError(instr, instr)
+            self.analyze_instr(instr, context)
 
     def analyze_save(self, instr, context):
         batons = []

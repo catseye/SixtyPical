@@ -12,10 +12,18 @@ History of SixtyPical
 *   Local locations need no longer be static.  If they are not
     static, they are considered uninitialized until assigned,
     and they can be declared with an explicit fixed address.
+*   Along with `goto`, `call` and `with interrupts off` are
+    now forbidden inside a `with interrupts off` block.
+*   More tests to assure that using `call` inside a `point into`
+    block or inside a `for` block does not cause trouble,
+    particularly when the routine being called also uses the
+    variable named in that block.
 *   Fixed a bug where two local statics could be declared with
     the same name.
-*   Split context off from analyzer and put it in its own module.
-*   Split the SixtyPical Analysis tests across three files.
+*   Split analysis context support off from analyzer, and
+    symbol table support from parse, and it their own modules.
+*   Split the SixtyPical Analysis tests across three files,
+    and placed test appliances for `sixtypical` in own file.
 
 0.19
 ----

@@ -1,0 +1,33 @@
+// Include `support/${PLATFORM}.60p` before this source
+// Should print H (being ASCII 72 = 8 * 9)
+
+// Increase y by 7, circuitously
+//
+define foo routine
+  inputs y
+  outputs y, n, z
+  trashes a, c
+{
+    save x {
+        ld x, 0
+        for x up to 6 {
+            inc y
+        }
+    }
+}
+
+// Each iteration increases y by 8; there are 9 iterations
+//
+define main routine
+  outputs x, y, n, z
+  trashes a, c
+{
+    ld x, 0
+    ld y, 0
+    for x up to 8 {
+        inc y
+        call foo
+    }
+    ld a, y
+    call chrout
+}

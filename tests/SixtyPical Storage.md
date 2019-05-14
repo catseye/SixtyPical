@@ -1589,6 +1589,68 @@ The offset in `reset` may not exceed the table's size.
     | }
     ? RangeExceededError
 
+### dynamic recurrence of `point ... into` blocks
+
+You cannot call a routine which trashes the pointer from inside a
+`point ... into` block.  Remember that `point ... into` by
+itself doesn't change anything, so doesn't trash anything.
+
+    | byte table[256] tab
+    | byte table[256] other
+    | pointer ptr
+    | 
+    | define sub routine
+    |   inputs other
+    |   outputs other
+    | {
+    |     point ptr into other {
+    |     }
+    | }
+    | 
+    | define main routine
+    |   inputs tab, other
+    |   outputs tab, other
+    |   trashes a, y, c, z, n, v, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         reset ptr 0
+    |         copy 123, [ptr] + y
+    |         call sub
+    |         copy 123, [ptr] + y
+    |     }
+    | }
+    = ok
+
+    | byte table[256] tab
+    | byte table[256] other
+    | pointer ptr
+    | 
+    | define sub routine
+    |   inputs other
+    |   outputs other
+    |   trashes ptr
+    | {
+    |     point ptr into other {
+    |         reset ptr 0
+    |     }
+    | }
+    | 
+    | define main routine
+    |   inputs tab, other
+    |   outputs tab, other
+    |   trashes a, y, c, z, n, v, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         reset ptr 0
+    |         copy 123, [ptr] + y
+    |         call sub
+    |         copy 123, [ptr] + y
+    |     }
+    | }
+    ? UnmeaningfulReadError
+
 ### locals ###
 
 When memory locations are defined static to a routine, they cannot be

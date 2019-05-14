@@ -10,9 +10,6 @@ For control flow, see [SixtyPical Control Flow](SixtyPical%20Control%20Flow.md).
 
 [Falderal]:     http://catseye.tc/node/Falderal
 
-    -> Functionality "Analyze SixtyPical program" is implemented by
-    -> shell command "bin/sixtypical --analyze-only --traceback %(test-body-file) && echo ok"
-
     -> Tests for functionality "Analyze SixtyPical program"
 
 ### add ###
@@ -750,6 +747,66 @@ A `goto` cannot appear within a `with interrupts` block.
     |   with interrupts off {
     |     copy foo, bar
     |     goto other
+    |   }
+    | }
+    ? IllegalJumpError
+
+A `call` cannot appear within a `with interrupts` block.
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    | 
+    | define other routine
+    |   trashes bar, a, n, z
+    | {
+    |    ld a, 0
+    | }
+    | 
+    | define main routine
+    |   trashes bar, a, n, z
+    | {
+    |   with interrupts off {
+    |     copy foo, bar
+    |     call other
+    |   }
+    | }
+    ? IllegalJumpError
+
+A `with interrupts` block cannot appear within a `with interrupts` block.
+
+    | vector routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |     bar
+    | 
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    | {
+    |     inc x
+    | }
+    | 
+    | define main routine
+    |   trashes bar, a, n, z
+    | {
+    |   with interrupts off {
+    |     copy foo, bar
+    |     with interrupts off {
+    |       copy foo, bar
+    |     }
     |   }
     | }
     ? IllegalJumpError
