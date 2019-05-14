@@ -265,6 +265,7 @@ define player_logic logic_routine
 
     if c {
         point ptr into screen {
+            reset ptr 0
             st off, c
             add ptr, new_pos
             ld y, 0
@@ -280,6 +281,7 @@ define player_logic logic_routine
         cmp a, 32
         if z {
             point ptr into screen {
+                reset ptr 0
                 st off, c
                 add ptr, pos
                 copy 32, [ptr] + y
@@ -288,6 +290,7 @@ define player_logic logic_routine
             copy new_pos, pos
 
             point ptr into screen {
+                reset ptr 0
                 st off, c
                 add ptr, pos
                 copy 81, [ptr] + y
@@ -307,6 +310,7 @@ define enemy_logic logic_routine
 
     if c {
         point ptr into screen {
+            reset ptr 0
             st off, c
             add ptr, new_pos
             ld y, 0
@@ -321,6 +325,7 @@ define enemy_logic logic_routine
         cmp a, 32
         if z {
             point ptr into screen {
+                reset ptr 0
                 st off, c
                 add ptr, pos
                 copy 32, [ptr] + y
@@ -329,6 +334,7 @@ define enemy_logic logic_routine
             copy new_pos, pos
 
             point ptr into screen {
+                reset ptr 0
                 st off, c
                 add ptr, pos
                 copy 82, [ptr] + y

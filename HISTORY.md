@@ -4,10 +4,18 @@ History of SixtyPical
 0.20
 ----
 
+*   A `point ... into` block no longer initializes the pointer
+    by default.  A subequent `reset` instruction must be used
+    to initialize the pointer.  The pointer may be reset to any
+    valid offset within the table (not only 0) and it may be
+    reset multiple times inside the block.
+*   Local locations need no longer be static.  If they are not
+    static, they are considered uninitialized until assigned,
+    and they can be declared with an explicit fixed address.
 *   Fixed a bug where two local statics could be declared with
     the same name.
-*   Local locations need no longer be static.  If they are not
-    static, they are considered uninitialized until assigned.
+*   Split context off from analyzer and put it in its own module.
+*   Split the SixtyPical Analysis tests across three files.
 
 0.19
 ----

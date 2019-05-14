@@ -11,10 +11,12 @@ define main routine
   trashes a, z, n, c, ptr
 {
     ld y, 0
-    copy ^buf, ptr
-    copy 123, [ptr] + y
-    copy [ptr] + y, foo
-    copy foo, [ptr] + y
+    point ptr into buf {
+        reset ptr 0
+        copy 123, [ptr] + y
+        copy [ptr] + y, foo
+        copy foo, [ptr] + y
+    }
 
     // TODO: support saying `cmp foo, 123`, maybe
     ld a, foo

@@ -176,6 +176,7 @@ Other blocks.
     |         ld a, 0
     |     }
     |     point ptr into tab {
+    |         reset ptr 0
     |         ld a, [ptr] + y
     |     }
     | }
@@ -681,6 +682,7 @@ Tables and pointers.
     | 
     | define main routine {
     |     point ptr into buf {
+    |         reset ptr 0
     |         copy 123, [ptr] + y
     |         copy [ptr] + y, foo
     |         copy [ptr] + y, [ptrb] + y
@@ -784,6 +786,20 @@ Local static memory locations must always be given an initial value.
     | }
     ? SyntaxError
 
+Local static memory locations may not be given an address.
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   static byte t @ 1024
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    ? SyntaxError
+
 Local dynamic memory locations may not be given an initial value.
 
     | define main routine
@@ -797,6 +813,20 @@ Local dynamic memory locations may not be given an initial value.
     |   ld x, t
     | }
     ? SyntaxError
+
+Local dynamic memory locations may be given an address.
+
+    | define main routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   local byte t @ 1024
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    = ok
 
 Name of a local cannot shadow an existing global or local.
 

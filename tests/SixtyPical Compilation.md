@@ -1400,7 +1400,7 @@ Subtracting a word memory location from another word memory location.
 
 ### Tables and Pointers
 
-Load address of table into pointer.
+Associate pointer with table.  Does nothing by itself.
 
     | byte table[256] tab
     | pointer ptr @ 254
@@ -1412,6 +1412,24 @@ Load address of table into pointer.
     | {
     |     ld y, 0
     |     point ptr into tab {
+    |     }
+    | }
+    = $080D   LDY #$00
+    = $080F   RTS
+
+Reset pointer to table.
+
+    | byte table[256] tab
+    | pointer ptr @ 254
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs tab, y
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         reset ptr 0
     |     }
     | }
     = $080D   LDY #$00
@@ -1433,6 +1451,7 @@ Write literal through a pointer.
     | {
     |     ld y, 0
     |     point ptr into tab {
+    |         reset ptr 0
     |         copy 123, [ptr] + y
     |     }
     | }
@@ -1458,6 +1477,7 @@ Write stored value through a pointer.
     | {
     |     ld y, 0
     |     point ptr into tab {
+    |         reset ptr 0
     |         copy foo, [ptr] + y
     |     }
     | }
@@ -1483,6 +1503,7 @@ Read through a pointer, into a byte storage location, or the `a` register.
     | {
     |     ld y, 0
     |     point ptr into tab {
+    |         reset ptr 0
     |         copy [ptr] + y, foo
     |         ld a, [ptr] + y
     |     }
@@ -1497,6 +1518,39 @@ Read through a pointer, into a byte storage location, or the `a` register.
     = $081C   LDA ($FE),Y
     = $081E   RTS
 
+Multiple `reset`s may occur inside the same block.
+
+    | byte table[256] tab @ 1024
+    | pointer ptr @ 254
+    | byte foo
+    | 
+    | define main routine
+    |   inputs tab
+    |   outputs y, foo
+    |   trashes a, z, n, ptr
+    | {
+    |     ld y, 0
+    |     point ptr into tab {
+    |         reset ptr 16
+    |         copy [ptr] + y, foo
+    |         reset ptr 18
+    |         ld a, [ptr] + y
+    |     }
+    | }
+    = $080D   LDY #$00
+    = $080F   LDA #$10
+    = $0811   STA $FE
+    = $0813   LDA #$04
+    = $0815   STA $FF
+    = $0817   LDA ($FE),Y
+    = $0819   STA $0827
+    = $081C   LDA #$12
+    = $081E   STA $FE
+    = $0820   LDA #$04
+    = $0822   STA $FF
+    = $0824   LDA ($FE),Y
+    = $0826   RTS
+
 Read and write through two pointers.
 
     | byte table[256] tab
@@ -1510,7 +1564,9 @@ Read and write through two pointers.
     | {
     |     ld y, 0
     |     point ptra into tab {
+    |         reset ptra 0
     |         point ptrb into tab {
+    |             reset ptrb 0
     |             copy [ptra] + y, [ptrb] + y
     |         }
     |     }
@@ -1541,6 +1597,7 @@ Write the `a` register through a pointer.
     | {
     |     ld y, 0
     |     point ptr into tab {
+    |         reset ptr 0
     |         ld a, 255
     |         st a, [ptr] + y
     |     }
@@ -1571,6 +1628,7 @@ Note that this is *not* range-checked.  (Yet.)
     |     ld y, 0
     |     st off, c
     |     point ptr into tab {
+    |         reset ptr 0
     |         add ptr, delta
     |         add ptr, word 1
     |         copy [ptr] + y, foo
@@ -1619,9 +1677,9 @@ Trash does nothing except indicate that we do not care about the value anymore.
     = $080E   LDA #$00
     = $0810   RTS
 
-### static ###
+### locals ###
 
-Memory locations defined static to a routine are allocated
+Memory locations defined local static to a routine are allocated
 just the same as initialized global storage locations are.
 
     | define foo routine
@@ -1651,3 +1709,66 @@ just the same as initialized global storage locations are.
     = $081D   RTS
     = $081E   .byte $FF
     = $081F   .byte $07
+
+Memory locations defined local dynamic to a routine are allocated
+just the same as uninitialized global storage locations are.
+
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   local byte t
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    | 
+    | define main routine
+    |   trashes a, x, z, n
+    |   local byte t
+    | {
+    |   ld x, 0
+    |   st x, t
+    |   call foo
+    | }
+    = $080D   LDX #$00
+    = $080F   STX $0821
+    = $0812   JSR $0816
+    = $0815   RTS
+    = $0816   STX $0820
+    = $0819   INC $0820
+    = $081C   LDX $0820
+    = $081F   RTS
+
+Memory locations defined local dynamic to a routine are allocated
+just the same as uninitialized global storage locations are, even
+when declared with a fixed address.
+
+    | define foo routine
+    |   inputs x
+    |   outputs x
+    |   trashes z, n
+    |   local byte t @ 1024
+    | {
+    |   st x, t
+    |   inc t
+    |   ld x, t
+    | }
+    | 
+    | define main routine
+    |   trashes a, x, z, n
+    |   local byte t @ 1025
+    | {
+    |   ld x, 0
+    |   st x, t
+    |   call foo
+    | }
+    = $080D   LDX #$00
+    = $080F   STX $0401
+    = $0812   JSR $0816
+    = $0815   RTS
+    = $0816   STX $0400
+    = $0819   INC $0400
+    = $081C   LDX $0400
+    = $081F   RTS

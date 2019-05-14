@@ -29,15 +29,7 @@ inner block has finished -- even if there is no `call`.)
 
 These holes need to be plugged.
 
-### Reset pointer in `point into` blocks
-
-We have `point into` blocks, but maybe the action when entering such a
-block shouldn't always be to set the given pointer to the start of the given table.
-
-That is, sometimes we would like to start at some fixed offset.  And
-sometimes we want to (re)set the pointer, without closing and starting a new block.
-
-### Pointers associated globally with a table
+### Pointers associated globally with a table(?)
 
 We have `point into` blocks, but we would also like to sometimes pass a pointer
 around to different routines, and have them all "know" what table it operates on.
@@ -61,16 +53,6 @@ be allocated at the same space.
 
 This is more an impressive trick than a really useful feature, but still.
 Impressive tricks are impressive.
-
-### Locals with explicit addresses
-
-A local could also be given an explicit address.  In this case, two locals in
-different routines could be given the same address, and as long as the condition
-in the above paragraph holds, that's okay.  (If it doesn't, the analyzer should
-detect it.)
-
-This would permit local pointers, which would be one way of addressing the
-"same pointer to different tables" problem.
 
 ### Copy byte to/from table
 

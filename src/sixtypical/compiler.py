@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 from sixtypical.ast import (
-    Program, Routine, Block, SingleOp, Call, GoTo, If, Repeat, For, WithInterruptsOff, Save, PointInto
+    Program, Routine, Block, SingleOp, Reset, Call, GoTo, If, Repeat, For, WithInterruptsOff, Save, PointInto
 )
 from sixtypical.model import (
     ConstantRef, LocationRef, IndexedRef, IndirectRef,
@@ -37,6 +37,7 @@ class Compiler(object):
         self.routine_locals = {}     # routine.name -> { local.name -> Label }
         self.labels = {}             # global.name -> Label  ("global" includes routines)
         self.trampolines = {}        # Location -> Label
+        self.pointer_assoc = {}      # pointer name -> table name  (I'm not entirely happy about this)
         self.current_routine = None
 
     # - - - - helper methods - - - -
@@ -191,6 +192,8 @@ class Compiler(object):
             return self.compile_save(instr)
         elif isinstance(instr, PointInto):
             return self.compile_point_into(instr)
+        elif isinstance(instr, Reset):
+            return self.compile_reset(instr)
         else:
             raise NotImplementedError
 
@@ -741,12 +744,16 @@ class Compiler(object):
                 self.emitter.emit(STA(Absolute(src_label)))
 
     def compile_point_into(self, instr):
-        src_label = self.get_label(instr.table.name)
+        self.pointer_assoc[instr.pointer.name] = instr.table.name
+        self.compile_block(instr.block)
+        del self.pointer_assoc[instr.pointer.name]
+
+    def compile_reset(self, instr):
+        table_name = self.pointer_assoc[instr.pointer.name]
+        src_label = Offset(self.get_label(table_name), instr.offset.value)
         dest_label = self.get_label(instr.pointer.name)
 
         self.emitter.emit(LDA(Immediate(HighAddressByte(src_label))))
         self.emitter.emit(STA(ZeroPage(dest_label)))
         self.emitter.emit(LDA(Immediate(LowAddressByte(src_label))))
         self.emitter.emit(STA(ZeroPage(Offset(dest_label, 1))))
-
-        self.compile_block(instr.block)

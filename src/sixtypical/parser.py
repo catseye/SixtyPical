@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 from sixtypical.ast import (
-    Program, Defn, Routine, Block, SingleOp, Call, GoTo, If, Repeat, For, WithInterruptsOff, Save, PointInto
+    Program, Defn, Routine, Block, SingleOp, Reset, Call, GoTo, If, Repeat, For, WithInterruptsOff, Save, PointInto
 )
 from sixtypical.model import (
     TYPE_BIT, TYPE_BYTE, TYPE_WORD,
@@ -432,6 +432,10 @@ class Parser(object):
             final = self.const()
             block = self.block()
             return For(self.scanner.line_number, dest=dest, direction=direction, final=final, block=block)
+        elif self.scanner.consume('reset'):
+            pointer = self.locexpr()
+            offset = self.const()
+            return Reset(self.scanner.line_number, pointer=pointer, offset=offset)
         elif self.scanner.token in ("ld",):
             # the same as add, sub, cmp etc below, except supports an indlocexpr for the src
             opcode = self.scanner.token

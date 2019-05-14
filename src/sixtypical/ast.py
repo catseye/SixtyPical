@@ -75,6 +75,10 @@ class SingleOp(Instr):
     value_attrs = ('opcode', 'dest', 'src',)
 
 
+class Reset(Instr):
+    value_attrs = ('pointer', 'offset',)
+
+
 class Call(Instr):
     value_attrs = ('location',)
 
