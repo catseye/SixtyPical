@@ -16,6 +16,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
+            echo "hi"
             git clone https://github.com/catseye/Falderal
             git clone https://github.com/catseye/dcc6502
             (cd dcc6502 && make)
