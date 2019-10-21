@@ -111,8 +111,12 @@ class Parser(object):
             name = self.scanner.token
             self.scanner.scan()
             self.current_routine_name = name
+            preserved = False
+            if self.scanner.consume('preserved'):
+                preserved = True
             type_, routine = self.routine(name)
             self.declare(name, routine, type_)
+            routine.preserved = preserved
             routines.append(routine)
             self.current_routine_name = None
         self.scanner.check_type('EOF')

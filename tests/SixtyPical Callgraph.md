@@ -12,7 +12,7 @@ called.
 
 The `main` routine is always called.  The thing that it will
 be called by is the system, but the callgraph analyzer will
-simply consider it to be "marked as called".
+simply consider it to be "marked as preserved".
 
     | define main routine
     | {
@@ -20,7 +20,7 @@ simply consider it to be "marked as called".
     = {
     =     "main": {
     =         "potentially-called-by": [
-    =             "*marked*"
+    =             "*preserved*"
     =         ],
     =         "potentially-calls": []
     =     }
@@ -39,7 +39,7 @@ If a routine is called by another routine, this fact will be noted.
     = {
     =     "main": {
     =         "potentially-called-by": [
-    =             "*marked*"
+    =             "*preserved*"
     =         ],
     =         "potentially-calls": [
     =             "other"
@@ -68,12 +68,41 @@ the final executable.
     = {
     =     "main": {
     =         "potentially-called-by": [
-    =             "*marked*"
+    =             "*preserved*"
     =         ],
     =         "potentially-calls": []
     =     },
     =     "other": {
     =         "potentially-called-by": [],
+    =         "potentially-calls": []
+    =     }
+    = }
+
+If a routine is not called by another routine, but it is declared
+explicitly as `preserved`, then it will not be considered unused,
+and a compiler or linker will not be permitted to omit it from
+the final executable.  This is useful for interrupt routines and
+such that really are used by some part of the system, even if not
+directly by another SixtyPical routine.
+
+    | define main routine
+    | {
+    | }
+    | 
+    | define other preserved routine
+    | {
+    | }
+    = {
+    =     "main": {
+    =         "potentially-called-by": [
+    =             "*preserved*"
+    =         ],
+    =         "potentially-calls": []
+    =     },
+    =     "other": {
+    =         "potentially-called-by": [
+    =             "*preserved*"
+    =         ],
     =         "potentially-calls": []
     =     }
     = }
@@ -98,7 +127,7 @@ This may change in the future.
     = {
     =     "main": {
     =         "potentially-called-by": [
-    =             "*marked*"
+    =             "*preserved*"
     =         ],
     =         "potentially-calls": []
     =     },

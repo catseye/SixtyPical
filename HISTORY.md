@@ -8,6 +8,9 @@ History of SixtyPical
     approximates the set of routines which are not called
     by any other routine, with an eye to omitting them from
     the final executable.
+*   A routine can be declared `preserved`, which prevents a
+    compiler from omitting it from the final executable, even
+    if it determines it is not called by any other routine.
 *   The `dcc6502-adapter` test adapter was updated to conform
     to the output of the latest version of `dcc6502`.
 
