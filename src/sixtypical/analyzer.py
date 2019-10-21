@@ -141,18 +141,22 @@ class Analyzer(object):
     def analyze_program(self, program):
         assert isinstance(program, Program)
         for routine in program.routines:
-            context = self.analyze_routine(routine)
+            context, type_ = self.analyze_routine(routine)
+            if type_:
+                routine.routine_type = type_
             routine.encountered_gotos = list(context.encountered_gotos()) if context else []
             routine.called_routines = list(context.called_routines) if context else []
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
+        type_ = self.get_type_for_name(routine.name)
+
         if routine.block is None:
             # it's an extern, that's fine
-            return None
+            return None, type_
 
         self.current_routine = routine
-        type_ = self.get_type_for_name(routine.name)
+
         context = AnalysisContext(self.symtab, routine, type_.inputs, type_.outputs, type_.trashes)
 
         # register any local statics as already-initialized
@@ -210,7 +214,7 @@ class Analyzer(object):
 
         self.exit_contexts = None
         self.current_routine = None
-        return context
+        return context, type_
 
     def analyze_block(self, block, context):
         assert isinstance(block, Block)
