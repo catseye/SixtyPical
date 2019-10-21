@@ -53,11 +53,21 @@ def process_input_files(filenames, options):
     if options.dump_callgraph:
         graph = {}
 
+        from sixtypical.model import RoutineType, VectorType
+
+        def find_routines_matching_vector_type(program, type_):
+            return []  # dummy
+
         for routine in program.routines:
             potentially_calls = []
-            for called_routine in routine.called_routines:
-                # TODO if called_routine is a vector, this should be all routines which can be assigned to this vector
-                potentially_calls.append(called_routine.name)
+            for (called_routine, called_routine_type) in routine.called_routines:
+                if isinstance(called_routine_type, RoutineType):
+                    potentially_calls.append(called_routine.name)
+                elif isinstance(called_routine_type, VectorType):
+                    for potentially_called in find_routines_matching_vector_type(program, called_routine_type):
+                        potentially_calls.append(potentially_called.name)
+                else:
+                    raise NotImplementedError
             graph[routine.name] = {
                 'potentially-calls': potentially_calls,
             }

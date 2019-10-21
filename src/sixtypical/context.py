@@ -330,5 +330,5 @@ class AnalysisContext(object):
         else:
             return self.symtab.fetch_global_type(ref.name).max_range
 
-    def mark_as_called(self, routine):
-        self.called_routines.add(routine)
+    def mark_as_called(self, location, type_):
+        self.called_routines.add((location, type_))

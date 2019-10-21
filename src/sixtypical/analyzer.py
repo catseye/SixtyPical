@@ -516,7 +516,7 @@ class Analyzer(object):
         type = self.get_type(instr.location)
         if not isinstance(type, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, instr.location.name)
-        context.mark_as_called(instr.location)
+        context.mark_as_called(instr.location, type)
         if isinstance(type, VectorType):
             type = type.of_type
         for ref in type.inputs:
