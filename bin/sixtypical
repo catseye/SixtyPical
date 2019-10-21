@@ -53,7 +53,7 @@ def process_input_files(filenames, options):
     if options.dump_callgraph:
         from sixtypical.callgraph import construct_callgraph
         graph = construct_callgraph(program)
-        sys.stdout.write(json.dumps(graph, indent=4, sort_keys=True, separators=(',', ':')))
+        sys.stdout.write(json.dumps(graph, indent=4, sort_keys=True, separators=(',', ': ')))
 
     compilation_roster = None
     if options.optimize_fallthru:
@@ -64,7 +64,7 @@ def process_input_files(filenames, options):
                 return
             if label:
                 sys.stdout.write("*** {}:\n".format(label))
-            sys.stdout.write(json.dumps(data, indent=4, sort_keys=True, separators=(',', ':')))
+            sys.stdout.write(json.dumps(data, indent=4, sort_keys=True, separators=(',', ': ')))
             sys.stdout.write("\n")
 
         fa = FallthruAnalyzer(symtab, debug=options.debug)

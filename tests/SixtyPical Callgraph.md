@@ -15,8 +15,9 @@ The `main` routine is always called.
     | define main routine
     | {
     | }
-    = [
-    =     [
-    =         "main"
-    =     ]
-    = ]
+    = {
+    =     "main": {
+    =         "potentially-called-by": [],
+    =         "potentially-calls": []
+    =     }
+    = }
