@@ -16,5 +16,8 @@ implementation, `sixtypical`, that is going to implement these functionalities.
     -> Functionality "Dump fallthru info for SixtyPical program" is implemented by
     -> shell command "bin/sixtypical --optimize-fallthru --dump-fallthru-info --analyze-only --traceback %(test-body-file)"
 
+    -> Functionality "Dump callgraph info for SixtyPical program" is implemented by
+    -> shell command "bin/sixtypical --dump-callgraph --analyze-only --traceback %(test-body-file)"
+
     -> Functionality "Compile SixtyPical program with fallthru optimization" is implemented by
     -> shell command "bin/sixtypical --output-format=c64-basic-prg --optimize-fallthru --traceback %(test-body-file) --output /tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
