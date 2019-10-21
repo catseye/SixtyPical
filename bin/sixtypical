@@ -51,11 +51,28 @@ def process_input_files(filenames, options):
             sys.stdout.write("\n")
 
     if options.dump_callgraph:
+        graph = {}
+
         for routine in program.routines:
-            sys.stdout.write('-----------\n')
-            sys.stdout.write('{}\n'.format(routine.name))
+            potentially_calls = []
             for called_routine in routine.called_routines:
-                sys.stdout.write('    {}\n'.format(called_routine.name))
+                # TODO if called_routine is a vector, this should be all routines which can be assigned to this vector
+                potentially_calls.append(called_routine.name)
+            graph[routine.name] = {
+                'potentially-calls': potentially_calls,
+            }
+
+        # Reflexive closure
+
+        for routine in program.routines:
+            potentially_called_by = []
+            for (name, node) in graph.items():
+                potential_calls = node['potentially-calls']
+                if routine.name in potential_calls:
+                    potentially_called_by.append(name)
+            graph[routine.name]['potentially-called-by'] = potentially_called_by
+
+        sys.stdout.write(json.dumps(graph, indent=4, sort_keys=True, separators=(',', ':')))
 
     compilation_roster = None
     if options.optimize_fallthru:
