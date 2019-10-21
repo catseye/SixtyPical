@@ -1,6 +1,16 @@
 History of SixtyPical
 =====================
 
+0.21
+----
+
+*   The reference implementation constructs a callgraph and
+    approximates the set of routines which are not called
+    by any other routine, with an eye to omitting them from
+    the final executable.
+*   The `dcc6502-adapter` test adapter was updated to conform
+    to the output of the latest version of `dcc6502`.
+
 0.20
 ----
 
