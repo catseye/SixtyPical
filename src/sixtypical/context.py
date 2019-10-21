@@ -35,6 +35,7 @@ class AnalysisContext(object):
         self._terminated = False
         self._gotos_encountered = set()
         self._pointer_assoc = dict()
+        self.called_routines = set()
 
         for ref in inputs:
             if self.is_constant(ref):
@@ -79,6 +80,7 @@ class AnalysisContext(object):
         c._writeable = set(self._writeable)
         c._pointer_assoc = dict(self._pointer_assoc)
         c._gotos_encountered = set(self._gotos_encountered)
+        c.called_routines = set(self.called_routines)
         return c
 
     def update_from(self, other):
@@ -94,6 +96,7 @@ class AnalysisContext(object):
         self._writeable = set(other._writeable)
         self._terminated = other._terminated
         self._pointer_assoc = dict(other._pointer_assoc)
+        self.called_routines = set(other.called_routines)
 
     def each_meaningful(self):
         for ref in self._range.keys():
@@ -326,3 +329,6 @@ class AnalysisContext(object):
             return self.symtab.fetch_local_type(self.routine.name, ref.name).max_range
         else:
             return self.symtab.fetch_global_type(ref.name).max_range
+
+    def mark_as_called(self, routine):
+        self.called_routines.add(routine)

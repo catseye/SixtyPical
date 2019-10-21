@@ -143,6 +143,7 @@ class Analyzer(object):
         for routine in program.routines:
             context = self.analyze_routine(routine)
             routine.encountered_gotos = list(context.encountered_gotos()) if context else []
+            routine.called_routines = list(context.called_routines) if context else []
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
@@ -515,6 +516,7 @@ class Analyzer(object):
         type = self.get_type(instr.location)
         if not isinstance(type, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, instr.location.name)
+        context.mark_as_called(instr.location)
         if isinstance(type, VectorType):
             type = type.of_type
         for ref in type.inputs:

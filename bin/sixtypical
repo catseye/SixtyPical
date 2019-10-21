@@ -50,6 +50,13 @@ def process_input_files(filenames, options):
             sys.stdout.write(json.dumps(analyzer.exit_contexts_map, indent=4, sort_keys=True, separators=(',', ':')))
             sys.stdout.write("\n")
 
+    if options.dump_callgraph:
+        for routine in program.routines:
+            sys.stdout.write('-----------\n')
+            sys.stdout.write('{}\n'.format(routine.name))
+            for called_routine in routine.called_routines:
+                sys.stdout.write('    {}\n'.format(called_routine.name))
+
     compilation_roster = None
     if options.optimize_fallthru:
         from sixtypical.fallthru import FallthruAnalyzer
@@ -160,6 +167,11 @@ if __name__ == '__main__':
         "--dump-fallthru-info",
         action="store_true",
         help="Dump the ordered fallthru map, in JSON, to stdout after analyzing the program."
+    )
+    argparser.add_argument(
+        "--dump-callgraph",
+        action="store_true",
+        help="Dump the call graph, in JSON, to stdout after analyzing the program."
     )
     argparser.add_argument(
         "--parse-only",
