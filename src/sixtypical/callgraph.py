@@ -33,6 +33,8 @@ def construct_callgraph(program):
             potential_calls = node['potentially-calls']
             if routine.name in potential_calls:
                 potentially_called_by.append(name)
+        if getattr(routine, 'explicitly_marked_as_called', None) or routine.name == 'main':
+            potentially_called_by.append('*marked*')
         graph[routine.name]['potentially-called-by'] = potentially_called_by
 
     return graph
