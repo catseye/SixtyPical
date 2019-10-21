@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # script that allows the binary output of sixtypical --output-format=c64-basic-prg --compile to be
 # disassembled by https://github.com/tcarmelveilleux/dcc6502
@@ -19,5 +19,4 @@ f.close()
 
 lines = [line for line in check_output("dcc6502 -o 2061 {}".format(filename), shell=True).split('\n') if line and not line.startswith(';')]
 lines = [re.sub(r'\s*\;.*$', '', line) for line in lines]
-lines.pop()
 sys.stdout.write('\n'.join(lines))
