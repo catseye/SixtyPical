@@ -185,7 +185,7 @@ if __name__ == '__main__':
     argparser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.20"
+        version="%(prog)s 0.21"
     )
 
     options, unknown = argparser.parse_known_args(sys.argv[1:])
