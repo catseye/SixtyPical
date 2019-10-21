@@ -517,17 +517,17 @@ class Analyzer(object):
             raise NotImplementedError(opcode)
 
     def analyze_call(self, instr, context):
-        type = self.get_type(instr.location)
-        if not isinstance(type, (RoutineType, VectorType)):
+        type_ = self.get_type(instr.location)
+        if not isinstance(type_, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, instr.location.name)
-        context.mark_as_called(instr.location, type)
-        if isinstance(type, VectorType):
-            type = type.of_type
-        for ref in type.inputs:
+        context.mark_as_called(instr.location, type_)
+        if isinstance(type_, VectorType):
+            type_ = type_.of_type
+        for ref in type_.inputs:
             context.assert_meaningful(ref)
-        for ref in type.outputs:
+        for ref in type_.outputs:
             context.set_written(ref)
-        for ref in type.trashes:
+        for ref in type_.trashes:
             context.assert_writeable(ref)
             context.set_touched(ref)
             context.set_unmeaningful(ref)
@@ -538,6 +538,7 @@ class Analyzer(object):
 
         if not isinstance(type_, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, location.name)
+        context.mark_as_called(instr.location, type_)
 
         # assert that the dest routine's inputs are all initialized
         if isinstance(type_, VectorType):
