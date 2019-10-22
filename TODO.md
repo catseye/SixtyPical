@@ -31,14 +31,6 @@ For goodness sake, let the programmer say `'A'` instead of `65`.
 Not all computers think `'A'` should be `65`.  Allow the character set to be
 mapped.  Probably copy what Ophis does.
 
-### "Include" directives
-
-Search a searchlist of include paths.  And use them to make libraries of routines.
-
-One such library routine might be an `interrupt routine` type for various architectures.
-Since "the supervisor" has stored values on the stack, we should be able to trash them
-with impunity, in such a routine.
-
 ### Pointers into non-byte tables
 
 Right now you cannot get a pointer into a non-byte (for instance, word or vector) table.

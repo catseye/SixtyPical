@@ -1,5 +1,6 @@
-// Include `support/${PLATFORM}.60p` before this source
 // Should print ABCDEFGHIJKLMNOPQRSTUVWXYZ
+
+include "chrout.60p"
 
 define main routine
   trashes a, y, z, n, c

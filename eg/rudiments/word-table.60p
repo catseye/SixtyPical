@@ -1,5 +1,6 @@
-// Include `support/${PLATFORM}.60p` before this source
 // Should print YY
+
+include "chrout.60p"
 
 word one
 word table[256] many

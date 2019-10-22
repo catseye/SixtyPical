@@ -1,5 +1,6 @@
-// Include `support/${PLATFORM}.60p` before this source
 // Should print H (being ASCII 72 = 8 * 9)
+
+include "chrout.60p"
 
 // Increase y by 7, circuitously
 //

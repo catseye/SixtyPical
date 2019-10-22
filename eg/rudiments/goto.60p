@@ -1,5 +1,6 @@
-// Include `support/${PLATFORM}.60p` before this source
 // Should print AB
+
+include "chrout.60p"
 
 define bar routine trashes a, z, n {
     ld a, 66

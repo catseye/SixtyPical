@@ -1,5 +1,7 @@
-// Include `support/${PLATFORM}.60p` and `support/stdlib.60p` before this source
 // Should print 01
+
+include "chrout.60p"
+include "prbyte.60p"
 
 byte lives
 

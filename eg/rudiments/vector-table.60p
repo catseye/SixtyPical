@@ -1,6 +1,8 @@
-// Demonstrates vector tables.
-// Include `support/${PLATFORM}.60p` before this source
 // Should print AABAB
+
+// Demonstrates vector tables.
+
+include "chrout.60p"
 
 vector routine
   trashes a, z, n

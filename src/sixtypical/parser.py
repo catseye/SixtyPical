@@ -21,8 +21,9 @@ class ForwardReference(object):
 
 
 class Parser(object):
-    def __init__(self, symtab, text, filename):
+    def __init__(self, symtab, text, filename, include_path):
         self.symtab = symtab
+        self.include_path = include_path
         self.scanner = Scanner(text, filename)
         self.current_routine_name = None
 
@@ -100,7 +101,7 @@ class Parser(object):
         while self.scanner.consume('include'):
             filename = self.scanner.token
             self.scanner.scan()
-            program = load_program(filename, self.symtab)
+            program = load_program(filename, self.symtab, self.include_path)
             includes.append(program)
         while self.scanner.on('typedef', 'const'):
             if self.scanner.on('typedef'):
@@ -479,9 +480,14 @@ class Parser(object):
 # - - - -
 
 
-def load_program(filename, symtab):
+def load_program(filename, symtab, include_path):
+    import os
+    for include_dir in include_path:
+        if os.path.exists(os.path.join(include_dir, filename)):
+            filename = os.path.join(include_dir, filename)
+            break
     text = open(filename).read()
-    parser = Parser(symtab, text, filename)
+    parser = Parser(symtab, text, filename, include_path)
     program = parser.program()
     return program
 

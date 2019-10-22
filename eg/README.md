@@ -3,11 +3,18 @@ in subdirectories by machine architecture.
 
 ### rudiments
 
-In the [rudiments](rudiments/) directory are programs which are not for
-any particular machine, but meant to demonstrate the features of SixtyPical.
-Some are meant to fail and produce an error message.  Others can run on
-any architecture where there is a routine at 65490 which outputs the value
-of the accumulator as an ASCII character.
+In the [rudiments](rudiments/) directory are programs which are
+meant to demonstrate the elementary features of SixtyPical, and
+to serve as manual integration test cases.
+
+These sources are portable across architectures.  They include
+architecture-dependent libraries to produce output.  Libraries
+for such are provided in the `include` directory in the root
+directory of the repository; make it is on the compiler's include
+search path.
+
+Some others of these sources are meant to fail and produce an error
+message when compiled.
 
 ### c64
 

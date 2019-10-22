@@ -26,11 +26,12 @@ from sixtypical.compiler import Compiler
 
 def process_input_files(filenames, options):
     symtab = SymbolTable()
+    include_path = options.include_path.split(':')
 
     programs = []
 
     for filename in options.filenames:
-        program = load_program(filename, symtab)
+        program = load_program(filename, symtab, include_path)
         if options.debug:
             print(symtab)
         programs.append(program)
@@ -135,6 +136,12 @@ if __name__ == '__main__':
         help="Executable format to produce; also sets a default origin. "
              "Options are: raw, prg, c64-basic-prg, vic20-basic-prg, atari2600-cart."
              "Default: raw."
+    )
+
+    argparser.add_argument(
+        "--include-path", "-I", type=str, metavar='PATH', default='.',
+        help="A colon-separated list of directories in which to look for "
+             "files which are included during `include` directives."
     )
 
     argparser.add_argument(
