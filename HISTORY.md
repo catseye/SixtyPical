@@ -24,6 +24,8 @@ History of SixtyPical
     generation for constructs in tail position, notably
     tail optimization of `calls`, but also for `goto`s and
     `if` blocks at the end of a routine.
+*   Began collecting architecture-specific and portable
+    include-files for a nascent "standard library".
 
 0.20
 ----

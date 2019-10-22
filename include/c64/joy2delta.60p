@@ -1,0 +1,36 @@
+byte joy2 @ $dc00
+
+word delta
+
+define read_stick routine
+  inputs joy2
+  outputs delta
+  trashes a, x, z, n
+{
+    ld x, joy2
+    ld a, x
+    and a, 1                   // up
+    if z {
+        copy $ffd8, delta      // -40
+    } else {
+        ld a, x
+        and a, 2               // down
+        if z {
+            copy word 40, delta
+        } else {
+            ld a, x
+            and a, 4               // left
+            if z {
+                copy $ffff, delta  // -1
+            } else {
+                ld a, x
+                and a, 8           // right
+                if z {
+                    copy word 1, delta
+                } else {
+                    copy word 0, delta
+                }
+            }
+        }
+    }
+}

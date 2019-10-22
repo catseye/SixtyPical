@@ -78,15 +78,10 @@ zero-page locations to be re-used.
 Implementation
 --------------
 
-### Line numbers in analysis error messages
+### Filename and line number in analysis error messages
 
 For analysis errors, there is a line number, but it's the line of the routine
 after the routine in which the analysis error occurred.  Fix this.
-
-### Libraries
-
-Now that we have dead-code removal, establish some libraries of reusable
-routines.
 
 Blue-skying
 -----------
