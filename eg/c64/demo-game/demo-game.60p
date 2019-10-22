@@ -425,7 +425,7 @@ define game_state_game_over game_state_routine
 // * Main Game Loop Driver *
 // *************************
 
-define our_cinv game_state_routine
+define our_cinv preserved game_state_routine
 {
     goto dispatch_game_state
 }
