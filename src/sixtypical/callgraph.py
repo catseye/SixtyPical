@@ -8,6 +8,15 @@ def find_routines_matching_type(program, type_):
     return [r for r in program.routines if RoutineType.executable_types_compatible(r.routine_type, type_)]
 
 
+def mark_as_reachable(graph, routine_name):
+    node = graph[routine_name]
+    if node.get('reachable', False):
+        return
+    node['reachable'] = True
+    for next_routine_name in node['potentially-calls']:
+        mark_as_reachable(graph, next_routine_name)
+
+
 def construct_callgraph(program):
     graph = {}
 
@@ -33,8 +42,19 @@ def construct_callgraph(program):
             potential_calls = node['potentially-calls']
             if routine.name in potential_calls:
                 potentially_called_by.append(name)
-        if getattr(routine, 'preserved', None) or routine.name == 'main':
-            potentially_called_by.append('*preserved*')
         graph[routine.name]['potentially-called-by'] = potentially_called_by
+
+    # Root set
+
+    root_set = set()
+
+    for routine in program.routines:
+        if getattr(routine, 'preserved', False) or routine.name == 'main':
+            root_set.add(routine)
+
+    # Reachability
+
+    for routine in root_set:
+        mark_as_reachable(graph, routine.name)
 
     return graph

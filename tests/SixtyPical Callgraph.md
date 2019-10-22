@@ -11,22 +11,23 @@ called.
     -> Tests for functionality "Dump callgraph info for SixtyPical program"
 
 The `main` routine is always called.  The thing that it will
-be called by is the system, but the callgraph analyzer will
-simply consider it to be "marked as preserved".
+be called by is the system, but the callgraph analyzer simply
+considers it to be "reachable".
 
     | define main routine
     | {
     | }
     = {
     =     "main": {
-    =         "potentially-called-by": [
-    =             "*preserved*"
-    =         ],
-    =         "potentially-calls": []
+    =         "potentially-called-by": [],
+    =         "potentially-calls": [],
+    =         "reachable": true
     =     }
     = }
 
 If a routine is called by another routine, this fact will be noted.
+If it is reachable (directly or indirectly) from `main`, this will
+be noted as well.
 
     | define main routine
     | {
@@ -38,25 +39,25 @@ If a routine is called by another routine, this fact will be noted.
     | }
     = {
     =     "main": {
-    =         "potentially-called-by": [
-    =             "*preserved*"
-    =         ],
+    =         "potentially-called-by": [],
     =         "potentially-calls": [
     =             "other"
-    =         ]
+    =         ],
+    =         "reachable": true
     =     },
     =     "other": {
     =         "potentially-called-by": [
     =             "main"
     =         ],
-    =         "potentially-calls": []
+    =         "potentially-calls": [],
+    =         "reachable": true
     =     }
     = }
 
-If a routine is not called by another routine, and it is not `main`
-and it is not explicitly marked as preserved, this absence will be
-noted, and a compiler or linker will be permitted to omit it from
-the final executable.
+If a routine is not potentially called by any other routine that is
+ultimately potentially called by `main`, this absence will be noted
+— the routine will not be considered reachable — and a compiler or
+linker will be permitted to omit it from the final executable.
 
     | define main routine
     | {
@@ -67,10 +68,9 @@ the final executable.
     | }
     = {
     =     "main": {
-    =         "potentially-called-by": [
-    =             "*preserved*"
-    =         ],
-    =         "potentially-calls": []
+    =         "potentially-called-by": [],
+    =         "potentially-calls": [],
+    =         "reachable": true
     =     },
     =     "other": {
     =         "potentially-called-by": [],
@@ -79,11 +79,11 @@ the final executable.
     = }
 
 If a routine is not called by another routine, but it is declared
-explicitly as `preserved`, then it will not be considered unused,
-and a compiler or linker will not be permitted to omit it from
-the final executable.  This is useful for interrupt routines and
-such that really are used by some part of the system, even if not
-directly by another SixtyPical routine.
+explicitly as `preserved`, then it will still be considered
+reachable, and a compiler or linker will not be permitted to omit it
+from the final executable.  This is useful for interrupt routines
+and such that really are used by some part of the system, even if
+not directly by another SixtyPical routine.
 
     | define main routine
     | {
@@ -94,22 +94,58 @@ directly by another SixtyPical routine.
     | }
     = {
     =     "main": {
-    =         "potentially-called-by": [
-    =             "*preserved*"
-    =         ],
-    =         "potentially-calls": []
+    =         "potentially-called-by": [],
+    =         "potentially-calls": [],
+    =         "reachable": true
     =     },
     =     "other": {
-    =         "potentially-called-by": [
-    =             "*preserved*"
-    =         ],
-    =         "potentially-calls": []
+    =         "potentially-called-by": [],
+    =         "potentially-calls": [],
+    =         "reachable": true
     =     }
     = }
 
-If two routines potentially call each other, this will be noted,
-even if nothing else potentially calls either of those routines.
-This may change in the future.
+If a routine is called from a preserved routine, that routine is
+reachable.
+
+    | define main routine
+    | {
+    | }
+    | 
+    | define other1 preserved routine
+    | {
+    |   call other2
+    | }
+    | 
+    | define other2 preserved routine
+    | {
+    | }
+    = {
+    =     "main": {
+    =         "potentially-called-by": [],
+    =         "potentially-calls": [],
+    =         "reachable": true
+    =     },
+    =     "other1": {
+    =         "potentially-called-by": [],
+    =         "potentially-calls": [
+    =             "other2"
+    =         ],
+    =         "reachable": true
+    =     },
+    =     "other2": {
+    =         "potentially-called-by": [
+    =             "other1"
+    =         ],
+    =         "potentially-calls": [],
+    =         "reachable": true
+    =     }
+    = }
+
+If a group of routines potentially call each other, but neither is
+found to be reachable (directly or indirectly) from `main` or a
+`preserved` routine, the routines in the group will not be considered
+reachable.
 
     | define main routine
     | {
@@ -126,10 +162,9 @@ This may change in the future.
     | }
     = {
     =     "main": {
-    =         "potentially-called-by": [
-    =             "*preserved*"
-    =         ],
-    =         "potentially-calls": []
+    =         "potentially-called-by": [],
+    =         "potentially-calls": [],
+    =         "reachable": true
     =     },
     =     "other1": {
     =         "potentially-called-by": [

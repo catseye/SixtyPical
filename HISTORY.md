@@ -5,9 +5,9 @@ History of SixtyPical
 ----
 
 *   The reference implementation constructs a callgraph and
-    approximates the set of routines which are not called
-    by any other routine, with an eye to omitting them from
-    the final executable.
+    determines the set of routines which are not reachable
+    (directly or indirectly) from `main`, with an eye to
+    omitting them from the final executable.
 *   A routine can be declared `preserved`, which prevents a
     compiler from omitting it from the final executable, even
     if it determines it is not called by any other routine.

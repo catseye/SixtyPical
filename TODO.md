@@ -102,9 +102,6 @@ Once we have a call graph we can omit routines that we're sure aren't called.
 This would let us use include-files and standard-libraries nicely: any
 routines they define, but that you don't use, don't get included.
 
-Analyzing the set of possible routines that a vector can take on would help
-this immensely.
-
 Implementation
 --------------
 
