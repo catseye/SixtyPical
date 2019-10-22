@@ -167,6 +167,15 @@ class Compiler(object):
 
             needs_rts = True
             last_op = self.emitter.get_tail()
+
+            if isinstance(last_op, JSR):
+                if isinstance(last_op.operand, Absolute):
+                    if isinstance(last_op.operand.value, Label):
+                        label = last_op.operand.value
+                        self.emitter.retract()
+                        self.emitter.emit(JMP(Absolute(label)))
+                        last_op = self.emitter.get_tail()
+
             if isinstance(last_op, JMP):
                 needs_rts = False
                 if isinstance(last_op.operand, Absolute):

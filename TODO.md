@@ -83,13 +83,6 @@ This is not just an impressive trick -- in the presence of local pointers, which
 use up a word in zero-page, which we consider a precious resource, it allow those
 zero-page locations to be re-used.
 
-### Tail-call optimization
-
-If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can,
-if the block is in tail position.  The constraints should iron out the same both ways.
-
-As long as the routine has consistent type context every place it exits, that should be fine.
-
 Implementation
 --------------
 
