@@ -9,7 +9,7 @@ from sixtypical.model import (
     TableType, PointerType, RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
-from sixtypical.emitter import Byte, Word, Table, Label, Offset, LowAddressByte, HighAddressByte, Emitter
+from sixtypical.emitter import Byte, Word, Table, Label, Offset, LowAddressByte, HighAddressByte
 from sixtypical.gen6502 import (
     Immediate, Absolute, AbsoluteX, AbsoluteY, ZeroPage, Indirect, IndirectY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
@@ -160,27 +160,23 @@ class Compiler(object):
         assert isinstance(routine, Routine)
 
         self.current_routine = routine
-        saved_emitter = self.emitter
-        self.emitter = Emitter(saved_emitter.addr)
+
         if routine.block:
             self.emitter.resolve_label(self.get_label(routine.name))
             self.compile_block(routine.block)
 
             needs_rts = True
-            if self.emitter.accum:
-                last_op = self.emitter.accum[-1]
-                if isinstance(last_op, JMP):
-                    needs_rts = False
-                    if isinstance(last_op.operand, Absolute):
-                        if isinstance(last_op.operand.value, Label):
-                            if next_routine and last_op.operand.value.name == next_routine.name:
-                                self.emitter.retract()
+            last_op = self.emitter.get_tail()
+            if isinstance(last_op, JMP):
+                needs_rts = False
+                if isinstance(last_op.operand, Absolute):
+                    if isinstance(last_op.operand.value, Label):
+                        if next_routine and last_op.operand.value.name == next_routine.name:
+                            self.emitter.retract()
 
             if needs_rts:
                 self.emitter.emit(RTS())
 
-        saved_emitter.emit(*self.emitter.accum)
-        self.emitter = saved_emitter
         self.current_routine = None
 
     def compile_block(self, block):
