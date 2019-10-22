@@ -122,10 +122,11 @@ class Compiler(object):
             compilation_roster = [['main']] + [[routine.name] for routine in program.routines if routine.name != 'main']
 
         for roster_row in compilation_roster:
-            for routine_name in roster_row[0:-1]:
-                self.compile_routine(self.routines[routine_name], skip_final_goto=True)
-            routine_name = roster_row[-1]
-            self.compile_routine(self.routines[routine_name])
+            for i, routine_name in enumerate(roster_row):
+                if i < len(roster_row) - 1:
+                    self.compile_routine(self.routines[routine_name], next_routine=self.routines[roster_row[i + 1]])
+                else:
+                    self.compile_routine(self.routines[routine_name])
 
         for location, label in self.trampolines.items():
             self.emitter.resolve_label(label)
@@ -155,9 +156,9 @@ class Compiler(object):
             if defn.initial is None and defn.addr is None:
                 self.emitter.resolve_bss_label(label)
 
-    def compile_routine(self, routine, skip_final_goto=False):
+    def compile_routine(self, routine, next_routine=None):
         self.current_routine = routine
-        self.skip_final_goto = skip_final_goto
+        self.skip_final_goto = (next_routine is not None)
         self.final_goto_seen = False
         assert isinstance(routine, Routine)
         if routine.block:
@@ -170,8 +171,11 @@ class Compiler(object):
 
     def compile_block(self, block):
         assert isinstance(block, Block)
+        block.shallow_contains_goto = False
         for instr in block.instrs:
             self.compile_instr(instr)
+            if isinstance(instr, GoTo):
+                block.shallow_contains_goto = True
 
     def compile_instr(self, instr):
         if isinstance(instr, SingleOp):
