@@ -61,18 +61,11 @@ def process_input_files(filenames, options):
     if options.optimize_fallthru:
         from sixtypical.fallthru import FallthruAnalyzer
 
-        def dump(data, label=None):
-            if not options.dump_fallthru_info:
-                return
-            if label:
-                sys.stdout.write("*** {}:\n".format(label))
-            sys.stdout.write(json.dumps(data, indent=4, sort_keys=True, separators=(',', ': ')))
-            sys.stdout.write("\n")
-
         fa = FallthruAnalyzer(symtab, debug=options.debug)
         fa.analyze_program(program)
         compilation_roster = fa.serialize()
-        dump(compilation_roster)
+        if options.dump_fallthru_info:
+            sys.stdout.write(json.dumps(compilation_roster, indent=4, sort_keys=True, separators=(',', ': ')))
 
     if options.analyze_only or (options.output is None and not options.run_on):
         return
