@@ -141,11 +141,12 @@ class Analyzer(object):
     def analyze_program(self, program):
         assert isinstance(program, Program)
         for routine in program.routines:
+            routine.called_routines = set()
             context, type_ = self.analyze_routine(routine)
             if type_:
                 routine.routine_type = type_
             routine.encountered_gotos = list(context.encountered_gotos()) if context else []
-            routine.called_routines = list(context.called_routines) if context else []
+            routine.called_routines = list(routine.called_routines)
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
@@ -520,7 +521,9 @@ class Analyzer(object):
         type_ = self.get_type(instr.location)
         if not isinstance(type_, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, instr.location.name)
-        context.mark_as_called(instr.location, type_)
+
+        self.current_routine.called_routines.add((instr.location, type_))
+
         if isinstance(type_, VectorType):
             type_ = type_.of_type
         for ref in type_.inputs:
@@ -538,7 +541,8 @@ class Analyzer(object):
 
         if not isinstance(type_, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, location.name)
-        context.mark_as_called(instr.location, type_)
+
+        self.current_routine.called_routines.add((instr.location, type_))
 
         # assert that the dest routine's inputs are all initialized
         if isinstance(type_, VectorType):

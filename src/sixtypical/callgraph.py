@@ -36,6 +36,7 @@ def construct_callgraph(program):
         }
 
     # Reflexive closure
+    # (Note, this information isn't used anywhere yet)
 
     for routine in program.routines:
         potentially_called_by = []
