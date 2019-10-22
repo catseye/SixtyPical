@@ -5,16 +5,8 @@ in subdirectories by machine architecture.
 
 In the [rudiments](rudiments/) directory are programs which are
 meant to demonstrate the elementary features of SixtyPical, and
-to serve as manual integration test cases.
-
-These sources are portable across architectures.  They include
-architecture-dependent libraries to produce output.  Libraries
-for such are provided in the `include` directory in the root
-directory of the repository; make it is on the compiler's include
-search path.
-
-Some others of these sources are meant to fail and produce an error
-message when compiled.
+to serve as manual integration test cases.  See
+[the README in that directory](rudiments/README.md) for details.
 
 ### c64
 
