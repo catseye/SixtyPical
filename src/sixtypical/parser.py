@@ -128,6 +128,9 @@ class Parser(object):
         self.scanner.check_type('EOF')
 
         program = Program(self.scanner.line_number, defns=defns, routines=routines)
+        programs = includes + [program]
+        program = merge_programs(programs)
+
         self.resolve_symbols(program)
         return program
 
