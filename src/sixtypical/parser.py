@@ -96,6 +96,12 @@ class Parser(object):
     def program(self):
         defns = []
         routines = []
+        includes = []
+        while self.scanner.consume('include'):
+            filename = self.scanner.token
+            self.scanner.scan()
+            program = load_program(filename, self.symtab)
+            includes.append(program)
         while self.scanner.on('typedef', 'const'):
             if self.scanner.on('typedef'):
                 self.typedef()
@@ -468,6 +474,13 @@ class Parser(object):
 
 
 # - - - -
+
+
+def load_program(filename, symtab):
+    text = open(filename).read()
+    parser = Parser(symtab, text, filename)
+    program = parser.program()
+    return program
 
 
 def merge_programs(programs):

@@ -17,7 +17,7 @@ from tempfile import NamedTemporaryFile
 import traceback
 
 from sixtypical.symtab import SymbolTable
-from sixtypical.parser import Parser, merge_programs
+from sixtypical.parser import Parser, load_program, merge_programs
 from sixtypical.analyzer import Analyzer
 from sixtypical.callgraph import construct_callgraph, prune_unreachable_routines
 from sixtypical.outputter import outputter_class_for
@@ -30,11 +30,9 @@ def process_input_files(filenames, options):
     programs = []
 
     for filename in options.filenames:
-        text = open(filename).read()
-        parser = Parser(symtab, text, filename)
+        program = load_program(filename, symtab)
         if options.debug:
             print(symtab)
-        program = parser.program()
         programs.append(program)
 
     if options.parse_only:
