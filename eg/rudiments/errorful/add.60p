@@ -1,3 +1,8 @@
+// should fail analysis with an UnmeaningfulReadError
+// because adding 4 to the accumulator reads the carry
+//   but the carry has neither been provided as input
+//   nor set to anything in particular by this routine.
+
 define add_four routine
   inputs a
   outputs a
