@@ -183,3 +183,41 @@ reachable.
     =         ]
     =     }
     = }
+
+    -> Tests for functionality "Compile SixtyPical program with unreachable routine removal"
+
+Basic test for actually removing unreachable routines from the resulting
+executable when compiling SixtyPical programs.
+
+    | define main routine outputs a trashes z, n
+    | {
+    |   ld a, 100
+    | }
+    | 
+    | define other1 routine
+    | {
+    |   call other2
+    | }
+    | 
+    | define other2 routine
+    | {
+    |   call other1
+    | }
+    = $080D   LDA #$64
+    = $080F   RTS
+
+Test that marking routine as `preserved` preserves it in the output.
+
+    | define main routine outputs a trashes z, n
+    | {
+    |   ld a, 100
+    | }
+    | 
+    | define other preserved routine outputs a trashes z, n
+    | {
+    |   ld a, 5
+    | }
+    = $080D   LDA #$64
+    = $080F   RTS
+    = $0810   LDA #$05
+    = $0812   RTS

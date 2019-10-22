@@ -11,6 +11,9 @@ History of SixtyPical
 *   A routine can be declared `preserved`, which prevents a
     compiler from omitting it from the final executable, even
     if it determines it is not called by any other routine.
+*   Added `--prune-unreachable-routines` option, which causes
+    the compiler to in fact omit routines determined to be
+    unreachable as described above.
 *   The `dcc6502-adapter` test adapter was updated to conform
     to the output of the latest version of `dcc6502`.
 

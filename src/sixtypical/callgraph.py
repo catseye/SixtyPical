@@ -1,3 +1,4 @@
+from sixtypical.ast import Program
 from sixtypical.model import RoutineType, VectorType
 
 
@@ -58,3 +59,9 @@ def construct_callgraph(program):
         mark_as_reachable(graph, routine.name)
 
     return graph
+
+
+def prune_unreachable_routines(program, callgraph):
+    return Program(1, defns=program.defns, routines=[
+        r for r in program.routines if callgraph[r.name].get('reachable', False)
+    ])

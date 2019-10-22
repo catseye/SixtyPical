@@ -95,13 +95,6 @@ As long as the routine has consistent type context every place it exits, that sh
 Currently the `if` generator is not smart enough to avoid generating silly
 jump instructions.  (See the Fallthru tests.)  Improve it.
 
-### Dead code removal
-
-Once we have a call graph we can omit routines that we're sure aren't called.
-
-This would let us use include-files and standard-libraries nicely: any
-routines they define, but that you don't use, don't get included.
-
 Implementation
 --------------
 
@@ -109,6 +102,11 @@ Implementation
 
 For analysis errors, there is a line number, but it's the line of the routine
 after the routine in which the analysis error occurred.  Fix this.
+
+### Libraries
+
+Now that we have dead-code removal, establish some libraries of reusable
+routines.
 
 Blue-skying
 -----------
