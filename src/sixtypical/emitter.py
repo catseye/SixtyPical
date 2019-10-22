@@ -171,6 +171,10 @@ class Emitter(object):
             self.accum.append(thing)
             self.addr += thing.size()
 
+    def retract(self):
+        thing = self.accum.pop()
+        self.addr -= thing.size()
+
     def serialize_to(self, stream):
         """`stream` should be a file opened in binary mode."""
         addr = self.start_addr

@@ -14,6 +14,9 @@ History of SixtyPical
 *   Added `--prune-unreachable-routines` option, which causes
     the compiler to in fact omit routines determined to be
     unreachable as described above.
+*   Code generation now performs modest peephole optimization,
+    generating better code for `goto`s and `if` blocks at the
+    end of a routine.
 *   The `dcc6502-adapter` test adapter was updated to conform
     to the output of the latest version of `dcc6502`.
 

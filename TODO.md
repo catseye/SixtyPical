@@ -90,11 +90,6 @@ if the block is in tail position.  The constraints should iron out the same both
 
 As long as the routine has consistent type context every place it exits, that should be fine.
 
-### Branch optimization in `if`
-
-Currently the `if` generator is not smart enough to avoid generating silly
-jump instructions.  (See the Fallthru tests.)  Improve it.
-
 Implementation
 --------------
 

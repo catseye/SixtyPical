@@ -9,7 +9,7 @@ from sixtypical.model import (
     TableType, PointerType, RoutineType, VectorType,
     REG_A, REG_X, REG_Y, FLAG_C
 )
-from sixtypical.emitter import Byte, Word, Table, Label, Offset, LowAddressByte, HighAddressByte
+from sixtypical.emitter import Byte, Word, Table, Label, Offset, LowAddressByte, HighAddressByte, Emitter
 from sixtypical.gen6502 import (
     Immediate, Absolute, AbsoluteX, AbsoluteY, ZeroPage, Indirect, IndirectY, Relative,
     LDA, LDX, LDY, STA, STX, STY,
@@ -157,17 +157,31 @@ class Compiler(object):
                 self.emitter.resolve_bss_label(label)
 
     def compile_routine(self, routine, next_routine=None):
-        self.current_routine = routine
-        self.skip_final_goto = (next_routine is not None)
-        self.final_goto_seen = False
         assert isinstance(routine, Routine)
+
+        self.current_routine = routine
+        saved_emitter = self.emitter
+        self.emitter = Emitter(saved_emitter.addr)
         if routine.block:
             self.emitter.resolve_label(self.get_label(routine.name))
             self.compile_block(routine.block)
-            if not self.final_goto_seen:
+
+            needs_rts = True
+            if self.emitter.accum:
+                last_op = self.emitter.accum[-1]
+                if isinstance(last_op, JMP):
+                    needs_rts = False
+                    if isinstance(last_op.operand, Absolute):
+                        if isinstance(last_op.operand.value, Label):
+                            if next_routine and last_op.operand.value.name == next_routine.name:
+                                self.emitter.retract()
+
+            if needs_rts:
                 self.emitter.emit(RTS())
+
+        saved_emitter.emit(*self.emitter.accum)
+        self.emitter = saved_emitter
         self.current_routine = None
-        self.skip_final_goto = False
 
     def compile_block(self, block):
         assert isinstance(block, Block)
@@ -441,19 +455,15 @@ class Compiler(object):
             raise NotImplementedError(location_type)
 
     def compile_goto(self, instr):
-        self.final_goto_seen = True
-        if self.skip_final_goto:
-            pass
+        location = instr.location
+        label = self.get_label(instr.location.name)
+        location_type = self.get_type(location)
+        if isinstance(location_type, RoutineType):
+            self.emitter.emit(JMP(Absolute(label)))
+        elif isinstance(location_type, VectorType):
+            self.emitter.emit(JMP(Indirect(label)))
         else:
-            location = instr.location
-            label = self.get_label(instr.location.name)
-            location_type = self.get_type(location)
-            if isinstance(location_type, RoutineType):
-                self.emitter.emit(JMP(Absolute(label)))
-            elif isinstance(location_type, VectorType):
-                self.emitter.emit(JMP(Indirect(label)))
-            else:
-                raise NotImplementedError(location_type)
+            raise NotImplementedError(location_type)
 
     def compile_cmp(self, instr, src, dest):
         """`instr` is only for reporting purposes"""
@@ -666,12 +676,17 @@ class Compiler(object):
         else_label = Label('else_label')
         self.emitter.emit(cls(Relative(else_label)))
         self.compile_block(instr.block1)
+
         if instr.block2 is not None:
-            end_label = Label('end_label')
-            self.emitter.emit(JMP(Absolute(end_label)))
-            self.emitter.resolve_label(else_label)
-            self.compile_block(instr.block2)
-            self.emitter.resolve_label(end_label)
+            if instr.block1.shallow_contains_goto:
+                self.emitter.resolve_label(else_label)
+                self.compile_block(instr.block2)
+            else:
+                end_label = Label('end_label')
+                self.emitter.emit(JMP(Absolute(end_label)))
+                self.emitter.resolve_label(else_label)
+                self.compile_block(instr.block2)
+                self.emitter.resolve_label(end_label)
         else:
             self.emitter.resolve_label(else_label)
 

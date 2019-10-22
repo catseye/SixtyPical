@@ -610,7 +610,6 @@ Compiling `repeat forever`.
     = $080D   LDY #$41
     = $080F   INY
     = $0810   JMP $080F
-    = $0813   RTS
 
 The body of `repeat forever` can be empty.
 
@@ -620,7 +619,6 @@ The body of `repeat forever` can be empty.
     |     } forever
     | }
     = $080D   JMP $080D
-    = $0810   RTS
 
 Compiling `for ... up to`.
 
