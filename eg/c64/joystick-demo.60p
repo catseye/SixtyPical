@@ -1,4 +1,4 @@
-include "joy2delta.60p"
+include "joystick.60p"
 
 word screen @ 1024
 

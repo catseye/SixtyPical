@@ -1,0 +1,71 @@
+byte joy2 @ $dc00
+
+word delta
+
+// Read the joystick and compute the delta it represents
+// in a row-based 40-column grid like the C64's screen.
+
+define read_stick routine
+  inputs joy2
+  outputs delta
+  trashes a, x, z, n
+{
+    ld x, joy2
+    ld a, x
+    and a, 1                   // up
+    if z {
+        copy $ffd8, delta      // -40
+    } else {
+        ld a, x
+        and a, 2               // down
+        if z {
+            copy word 40, delta
+        } else {
+            ld a, x
+            and a, 4               // left
+            if z {
+                copy $ffff, delta  // -1
+            } else {
+                ld a, x
+                and a, 8           // right
+                if z {
+                    copy word 1, delta
+                } else {
+                    copy word 0, delta
+                }
+            }
+        }
+    }
+}
+
+// You can repeatedly (i.e. as part of actor logic or an IRQ handler)
+// call this routine.
+// Upon return, if carry is set, the button was pressed then released.
+
+define check_button routine
+  inputs joy2
+  outputs c
+  trashes a, z, n
+  static byte button_down : 0
+{
+    ld a, button_down
+    if z {
+        ld a, joy2
+        and a, $10
+        if z {
+            ld a, 1
+            st a, button_down
+        }
+        st off, c
+    } else {
+        ld a, joy2
+        and a, $10
+        if not z {
+            ld a, 0
+            st a, button_down
+            st on, c
+        } else {
+            st off, c
+        }
+    }
+}

@@ -2,7 +2,7 @@
 // * Demo Game for SixtyPical *
 // ****************************
 
-include "joy2delta.60p"
+include "joystick.60p"
 
 // ----------------------------------------------------------------
 // Type Definitions
@@ -102,38 +102,6 @@ vector game_state_routine
 // ----------------------------------------------------------------
 // Utility Routines
 // ----------------------------------------------------------------
-
-// You can repeatedly (i.e. as part of actor logic or an IRQ handler)
-// call this routine.
-// Upon return, if carry is set, the button was pressed then released.
-
-define check_button routine
-  inputs joy2
-  outputs c
-  trashes a, z, n
-  static byte button_down : 0
-{
-    ld a, button_down
-    if z {
-        ld a, joy2
-        and a, $10
-        if z {
-            ld a, 1
-            st a, button_down
-        }
-        st off, c
-    } else {
-        ld a, joy2
-        and a, $10
-        if not z {
-            ld a, 0
-            st a, button_down
-            st on, c
-        } else {
-            st off, c
-        }
-    }
-}
 
 define clear_screen routine
   outputs screen, colormap

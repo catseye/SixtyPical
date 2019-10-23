@@ -55,6 +55,14 @@ What happens if a routine calls itself, directly or indirectly?  Many
 constraints might be violated in this case.  We should probably disallow
 recursion by default.  (Which means assembling the callgraph in all cases.)
 
+However note, it's okay for a routine to goto itself.  It's a common
+pattern for implementing a state machine, for a routine to tail-goto a
+vector, which might contain the address of the same routine.
+
+The problems only come up, I think, when a routine calls itself re-entrantly.
+
+So the callgraph would need to distinguish between these two cases.
+
 ### Analyze memory usage
 
 If you define two variables that occupy the same address, an analysis error ought
@@ -82,6 +90,23 @@ Implementation
 
 For analysis errors, there is a line number, but it's the line of the routine
 after the routine in which the analysis error occurred.  Fix this.
+
+### Better selection of options
+
+`-O` should turn on the standard optimizations.
+
+There should maybe be a flag to turn off tail-call optimization.
+
+Some options should automatically add the appropriate architecture include
+directory to the path.
+
+Distribution
+------------
+
+### Demo game
+
+Seems you're not be able to get killed unless you go off the top or bottom of
+the screen?  In particular, you cannot collide with a bar?
 
 Blue-skying
 -----------
