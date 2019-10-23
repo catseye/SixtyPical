@@ -101,7 +101,7 @@ class Parser(object):
         while self.scanner.consume('include'):
             filename = self.scanner.token
             self.scanner.scan()
-            program = load_program(filename, self.symtab, self.include_path)
+            program = load_program(filename, self.symtab, self.include_path, include_file=True)
             includes.append(program)
         while self.scanner.on('typedef', 'const'):
             if self.scanner.on('typedef'):
@@ -480,12 +480,13 @@ class Parser(object):
 # - - - -
 
 
-def load_program(filename, symtab, include_path):
+def load_program(filename, symtab, include_path, include_file=False):
     import os
-    for include_dir in include_path:
-        if os.path.exists(os.path.join(include_dir, filename)):
-            filename = os.path.join(include_dir, filename)
-            break
+    if include_file:
+        for include_dir in include_path:
+            if os.path.exists(os.path.join(include_dir, filename)):
+                filename = os.path.join(include_dir, filename)
+                break
     text = open(filename).read()
     parser = Parser(symtab, text, filename, include_path)
     program = parser.program()

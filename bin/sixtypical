@@ -31,7 +31,7 @@ def process_input_files(filenames, options):
     programs = []
 
     for filename in options.filenames:
-        program = load_program(filename, symtab, include_path)
+        program = load_program(filename, symtab, include_path, include_file=False)
         if options.debug:
             print(symtab)
         programs.append(program)
