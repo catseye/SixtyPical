@@ -116,6 +116,7 @@ In order to run the tests for compilation, [dcc6502][] needs to be installed.
 *   [Literate test suite for SixtyPical analysis (control flow)](tests/SixtyPical%20Control%20Flow.md)
 *   [Literate test suite for SixtyPical compilation](tests/SixtyPical%20Compilation.md)
 *   [Literate test suite for SixtyPical fallthru optimization](tests/SixtyPical%20Fallthru.md)
+*   [Literate test suite for SixtyPical callgraph construction](tests/SixtyPical%20Callgraph.md)
 
 Documentation
 -------------
