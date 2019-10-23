@@ -35,7 +35,7 @@ def construct_callgraph(program):
             'potentially-calls': potentially_calls,
         }
 
-    # Reflexive closure
+    # Symmetric closure
     # (Note, this information isn't used anywhere yet)
 
     for routine in program.routines:
