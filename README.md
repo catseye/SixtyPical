@@ -5,7 +5,7 @@ _Version 0.21.  Work-in-progress, everything is subject to change._
 
 **SixtyPical** brings [extended static checking][] to the [6502][].
 
-**SixtyPical** is a [low-level](#low-level) programming language
+SixtyPical is a [low-level](#low-level) programming language
 supporting some advanced [static analysis](#static-analysis) methods.
 Its reference compiler can generate [efficient code](#efficient-code) for
 several 6502-based [target platforms](#target-platforms) while catching many
