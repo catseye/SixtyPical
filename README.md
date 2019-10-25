@@ -1,10 +1,12 @@
 SixtyPical
 ==========
 
-_Version 0.20.  Work-in-progress, everything is subject to change._
+_Version 0.21.  Work-in-progress, everything is subject to change._
 
-**SixtyPical** is a [low-level](#low-level) programming language
-supporting a sophisticated [static analysis](#static-analysis).
+**SixtyPical** brings [extended static checking][] to the [6502][].
+
+SixtyPical is a [low-level](#low-level) programming language
+supporting some advanced [static analysis](#static-analysis) methods.
 Its reference compiler can generate [efficient code](#efficient-code) for
 several 6502-based [target platforms](#target-platforms) while catching many
 common mistakes at compile-time, reducing the time spent in debugging.
@@ -114,6 +116,7 @@ In order to run the tests for compilation, [dcc6502][] needs to be installed.
 *   [Literate test suite for SixtyPical analysis (control flow)](tests/SixtyPical%20Control%20Flow.md)
 *   [Literate test suite for SixtyPical compilation](tests/SixtyPical%20Compilation.md)
 *   [Literate test suite for SixtyPical fallthru optimization](tests/SixtyPical%20Fallthru.md)
+*   [Literate test suite for SixtyPical callgraph construction](tests/SixtyPical%20Callgraph.md)
 
 Documentation
 -------------
@@ -124,7 +127,9 @@ Documentation
 *   [Output formats supported by `sixtypical`](doc/Output%20Formats.md)
 *   [TODO](TODO.md)
 
+[6502]: https://en.wikipedia.org/wiki/MOS_Technology_6502
 [MOS Technology 6502]: https://en.wikipedia.org/wiki/MOS_Technology_6502
+[extended static checking]: https://en.wikipedia.org/wiki/Extended_static_checking
 [effect system]: https://en.wikipedia.org/wiki/Effect_system
 [abstractly interprets]: https://en.wikipedia.org/wiki/Abstract_interpretation
 [calling conventions]: https://en.wikipedia.org/wiki/Calling_convention

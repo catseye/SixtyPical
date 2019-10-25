@@ -1,0 +1,15 @@
+include "joystick.60p"
+
+word screen @ 1024
+
+define main routine
+  inputs joy2
+  outputs delta
+  trashes a, x, z, n, screen
+{
+    repeat {
+        call read_stick
+        copy delta, screen
+        ld a, 1
+    } until z
+}

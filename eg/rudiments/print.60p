@@ -1,5 +1,6 @@
-// Include `support/${PLATFORM}.60p` before this source
 // Should print A
+
+include "chrout.60p"
 
 define main routine
   inputs a

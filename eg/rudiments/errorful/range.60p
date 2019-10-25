@@ -1,3 +1,7 @@
+// should fail analysis with a RangeExceededError
+// because the index is detected to fall outside the
+//   allowable range of the table it is indexing.
+
 byte table[8] message : "WHAT?"
 
 define main routine

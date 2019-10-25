@@ -1,5 +1,6 @@
-// Include `support/${PLATFORM}.60p` before this source
 // Should print YA
+
+include "chrout.60p"
 
 define main routine
   trashes a, x, y, z, n, c, v

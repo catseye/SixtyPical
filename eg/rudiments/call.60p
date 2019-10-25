@@ -1,5 +1,6 @@
-// Include `support/${PLATFORM}.60p` before this source
 // Should print AA
+
+include "chrout.60p"
 
 define print routine
   trashes a, z, n

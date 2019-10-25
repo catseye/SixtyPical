@@ -13,6 +13,12 @@ implementation, `sixtypical`, that is going to implement these functionalities.
     -> Functionality "Compile SixtyPical program" is implemented by
     -> shell command "bin/sixtypical --output-format=c64-basic-prg --traceback %(test-body-file) --output /tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
 
+    -> Functionality "Dump callgraph info for SixtyPical program" is implemented by
+    -> shell command "bin/sixtypical --dump-callgraph --analyze-only --traceback %(test-body-file)"
+
+    -> Functionality "Compile SixtyPical program with unreachable routine removal" is implemented by
+    -> shell command "bin/sixtypical --output-format=c64-basic-prg --prune-unreachable-routines --traceback %(test-body-file) --output /tmp/foo && tests/appliances/bin/dcc6502-adapter </tmp/foo"
+
     -> Functionality "Dump fallthru info for SixtyPical program" is implemented by
     -> shell command "bin/sixtypical --optimize-fallthru --dump-fallthru-info --analyze-only --traceback %(test-body-file)"
 

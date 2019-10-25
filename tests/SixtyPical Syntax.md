@@ -73,6 +73,18 @@ Extern routines
     |   @ 65487
     = ok
 
+Preserved routine.
+
+    | define main routine {
+    |     ld a, $ff
+    |     add a, $01
+    | }
+    | define foo preserved routine {
+    |     ld a, 0
+    |     add a, 1
+    | }
+    = ok
+
 Trash.
 
     | define main routine {

@@ -1,9 +1,14 @@
-vector vec
+// should fail analysis with a ConstantConstraintError
+// because it cannot copy the address of `foo` into `vec`
+// because it has incompatible constraints.
+
+vector routine
   inputs y
   outputs y
   trashes z, n
+  vec
 
-routine foo
+define foo routine
   inputs x
   outputs x
   trashes z, n
@@ -11,7 +16,7 @@ routine foo
   inc x
 }
 
-routine main
+define main routine
   inputs foo
   outputs vec
   trashes a, z, n

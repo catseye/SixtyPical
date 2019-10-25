@@ -21,8 +21,9 @@ class ForwardReference(object):
 
 
 class Parser(object):
-    def __init__(self, symtab, text, filename):
+    def __init__(self, symtab, text, filename, include_path):
         self.symtab = symtab
+        self.include_path = include_path
         self.scanner = Scanner(text, filename)
         self.current_routine_name = None
 
@@ -96,6 +97,12 @@ class Parser(object):
     def program(self):
         defns = []
         routines = []
+        includes = []
+        while self.scanner.consume('include'):
+            filename = self.scanner.token
+            self.scanner.scan()
+            program = load_program(filename, self.symtab, self.include_path, include_file=True)
+            includes.append(program)
         while self.scanner.on('typedef', 'const'):
             if self.scanner.on('typedef'):
                 self.typedef()
@@ -111,13 +118,20 @@ class Parser(object):
             name = self.scanner.token
             self.scanner.scan()
             self.current_routine_name = name
+            preserved = False
+            if self.scanner.consume('preserved'):
+                preserved = True
             type_, routine = self.routine(name)
             self.declare(name, routine, type_)
+            routine.preserved = preserved
             routines.append(routine)
             self.current_routine_name = None
         self.scanner.check_type('EOF')
 
         program = Program(self.scanner.line_number, defns=defns, routines=routines)
+        programs = includes + [program]
+        program = merge_programs(programs)
+
         self.resolve_symbols(program)
         return program
 
@@ -464,6 +478,19 @@ class Parser(object):
 
 
 # - - - -
+
+
+def load_program(filename, symtab, include_path, include_file=False):
+    import os
+    if include_file:
+        for include_dir in include_path:
+            if os.path.exists(os.path.join(include_dir, filename)):
+                filename = os.path.join(include_dir, filename)
+                break
+    text = open(filename).read()
+    parser = Parser(symtab, text, filename, include_path)
+    program = parser.program()
+    return program
 
 
 def merge_programs(programs):

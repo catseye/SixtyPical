@@ -384,11 +384,6 @@ It can optimize out one of the `goto`s if they are the same.
 
 It cannot optimize out the `goto`s if they are different.
 
-Note, this currently produces unfortunately unoptimized code,
-because generating code for the "true" branch of an `if` always
-generates a jump out of the `if`, even if the last instruction
-in the "true" branch is a `goto`.
-
     | define foo routine trashes a, z, n
     | {
     |     ld a, 0
@@ -411,11 +406,10 @@ in the "true" branch is a `goto`.
     | }
     = $080D   RTS
     = $080E   LDA #$00
-    = $0810   BNE $081A
+    = $0810   BNE $0817
     = $0812   LDA #$01
-    = $0814   JMP $081F
-    = $0817   JMP $081F
-    = $081A   LDA #$02
-    = $081C   JMP $080D
-    = $081F   LDA #$FF
-    = $0821   RTS
+    = $0814   JMP $081C
+    = $0817   LDA #$02
+    = $0819   JMP $080D
+    = $081C   LDA #$FF
+    = $081E   RTS

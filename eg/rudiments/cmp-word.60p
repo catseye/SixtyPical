@@ -1,5 +1,6 @@
-// Include `support/${PLATFORM}.60p` before this source
 // Should print ENGGL
+
+include "chrout.60p"
 
 word w1
 word w2

@@ -1,6 +1,32 @@
 History of SixtyPical
 =====================
 
+0.21
+----
+
+*   A source file can be included in another source file
+    by means of the `include` directive.
+*   A routine can be declared `preserved`, which prevents a
+    compiler from omitting it from the final executable, even
+    if it determines it is not called by any other routine.
+*   The reference implementation constructs a callgraph and
+    determines the set of routines which are not reachable
+    (directly or indirectly) from `main`, with an eye to
+    omitting them from the final executable.
+*   Added `--prune-unreachable-routines` option, which causes
+    the compiler to in fact omit routines determined to be
+    unreachable as described above.
+*   Added `--include-path` option, which configures the list
+    of directories that are searched when a source file is
+    included with the `include` directive.
+*   Code generation now performs modest peephole optimization
+    at the end of each routine.  This results in better code
+    generation for constructs in tail position, notably
+    tail optimization of `calls`, but also for `goto`s and
+    `if` blocks at the end of a routine.
+*   Began collecting architecture-specific and portable
+    include-files for a nascent "standard library".
+
 0.20
 ----
 

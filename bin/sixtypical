@@ -17,23 +17,23 @@ from tempfile import NamedTemporaryFile
 import traceback
 
 from sixtypical.symtab import SymbolTable
-from sixtypical.parser import Parser, merge_programs
+from sixtypical.parser import Parser, load_program, merge_programs
 from sixtypical.analyzer import Analyzer
+from sixtypical.callgraph import construct_callgraph, prune_unreachable_routines
 from sixtypical.outputter import outputter_class_for
 from sixtypical.compiler import Compiler
 
 
 def process_input_files(filenames, options):
     symtab = SymbolTable()
+    include_path = options.include_path.split(':')
 
     programs = []
 
     for filename in options.filenames:
-        text = open(filename).read()
-        parser = Parser(symtab, text, filename)
+        program = load_program(filename, symtab, include_path, include_file=False)
         if options.debug:
             print(symtab)
-        program = parser.program()
         programs.append(program)
 
     if options.parse_only:
@@ -47,25 +47,24 @@ def process_input_files(filenames, options):
         analyzer.analyze_program(program)
     finally:
         if options.dump_exit_contexts:
-            sys.stdout.write(json.dumps(analyzer.exit_contexts_map, indent=4, sort_keys=True, separators=(',', ':')))
+            sys.stdout.write(json.dumps(analyzer.exit_contexts_map, indent=4, sort_keys=True, separators=(',', ': ')))
             sys.stdout.write("\n")
+
+    callgraph = construct_callgraph(program)
+    if options.dump_callgraph:
+        sys.stdout.write(json.dumps(callgraph, indent=4, sort_keys=True, separators=(',', ': ')))
+    if options.prune_unreachable_routines:
+        program = prune_unreachable_routines(program, callgraph)
 
     compilation_roster = None
     if options.optimize_fallthru:
         from sixtypical.fallthru import FallthruAnalyzer
 
-        def dump(data, label=None):
-            if not options.dump_fallthru_info:
-                return
-            if label:
-                sys.stdout.write("*** {}:\n".format(label))
-            sys.stdout.write(json.dumps(data, indent=4, sort_keys=True, separators=(',', ':')))
-            sys.stdout.write("\n")
-
         fa = FallthruAnalyzer(symtab, debug=options.debug)
         fa.analyze_program(program)
         compilation_roster = fa.serialize()
-        dump(compilation_roster)
+        if options.dump_fallthru_info:
+            sys.stdout.write(json.dumps(compilation_roster, indent=4, sort_keys=True, separators=(',', ': ')))
 
     if options.analyze_only or (options.output is None and not options.run_on):
         return
@@ -140,6 +139,12 @@ if __name__ == '__main__':
     )
 
     argparser.add_argument(
+        "--include-path", "-I", type=str, metavar='PATH', default='.',
+        help="A colon-separated list of directories in which to look for "
+             "files which are included during `include` directives."
+    )
+
+    argparser.add_argument(
         "--analyze-only",
         action="store_true",
         help="Only parse and analyze the program; do not compile it."
@@ -160,6 +165,17 @@ if __name__ == '__main__':
         "--dump-fallthru-info",
         action="store_true",
         help="Dump the ordered fallthru map, in JSON, to stdout after analyzing the program."
+    )
+    argparser.add_argument(
+        "--prune-unreachable-routines",
+        action="store_true",
+        help="Omit code for unreachable routines (as determined by the callgraph) "
+             "from the final output."
+    )
+    argparser.add_argument(
+        "--dump-callgraph",
+        action="store_true",
+        help="Dump the call graph, in JSON, to stdout after analyzing the program."
     )
     argparser.add_argument(
         "--parse-only",
@@ -185,7 +201,7 @@ if __name__ == '__main__':
     argparser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.20"
+        version="%(prog)s 0.21"
     )
 
     options, unknown = argparser.parse_known_args(sys.argv[1:])

@@ -141,17 +141,23 @@ class Analyzer(object):
     def analyze_program(self, program):
         assert isinstance(program, Program)
         for routine in program.routines:
-            context = self.analyze_routine(routine)
+            routine.called_routines = set()
+            context, type_ = self.analyze_routine(routine)
+            if type_:
+                routine.routine_type = type_
             routine.encountered_gotos = list(context.encountered_gotos()) if context else []
+            routine.called_routines = list(routine.called_routines)
 
     def analyze_routine(self, routine):
         assert isinstance(routine, Routine)
+        type_ = self.get_type_for_name(routine.name)
+
         if routine.block is None:
             # it's an extern, that's fine
-            return None
+            return None, type_
 
         self.current_routine = routine
-        type_ = self.get_type_for_name(routine.name)
+
         context = AnalysisContext(self.symtab, routine, type_.inputs, type_.outputs, type_.trashes)
 
         # register any local statics as already-initialized
@@ -209,7 +215,7 @@ class Analyzer(object):
 
         self.exit_contexts = None
         self.current_routine = None
-        return context
+        return context, type_
 
     def analyze_block(self, block, context):
         assert isinstance(block, Block)
@@ -512,16 +518,19 @@ class Analyzer(object):
             raise NotImplementedError(opcode)
 
     def analyze_call(self, instr, context):
-        type = self.get_type(instr.location)
-        if not isinstance(type, (RoutineType, VectorType)):
+        type_ = self.get_type(instr.location)
+        if not isinstance(type_, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, instr.location.name)
-        if isinstance(type, VectorType):
-            type = type.of_type
-        for ref in type.inputs:
+
+        self.current_routine.called_routines.add((instr.location, type_))
+
+        if isinstance(type_, VectorType):
+            type_ = type_.of_type
+        for ref in type_.inputs:
             context.assert_meaningful(ref)
-        for ref in type.outputs:
+        for ref in type_.outputs:
             context.set_written(ref)
-        for ref in type.trashes:
+        for ref in type_.trashes:
             context.assert_writeable(ref)
             context.set_touched(ref)
             context.set_unmeaningful(ref)
@@ -532,6 +541,8 @@ class Analyzer(object):
 
         if not isinstance(type_, (RoutineType, VectorType)):
             raise TypeMismatchError(instr, location.name)
+
+        self.current_routine.called_routines.add((instr.location, type_))
 
         # assert that the dest routine's inputs are all initialized
         if isinstance(type_, VectorType):

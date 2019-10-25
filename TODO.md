@@ -31,14 +31,6 @@ For goodness sake, let the programmer say `'A'` instead of `65`.
 Not all computers think `'A'` should be `65`.  Allow the character set to be
 mapped.  Probably copy what Ophis does.
 
-### "Include" directives
-
-Search a searchlist of include paths.  And use them to make libraries of routines.
-
-One such library routine might be an `interrupt routine` type for various architectures.
-Since "the supervisor" has stored values on the stack, we should be able to trash them
-with impunity, in such a routine.
-
 ### Pointers into non-byte tables
 
 Right now you cannot get a pointer into a non-byte (for instance, word or vector) table.
@@ -63,6 +55,14 @@ What happens if a routine calls itself, directly or indirectly?  Many
 constraints might be violated in this case.  We should probably disallow
 recursion by default.  (Which means assembling the callgraph in all cases.)
 
+However note, it's okay for a routine to goto itself.  It's a common
+pattern for implementing a state machine, for a routine to tail-goto a
+vector, which might contain the address of the same routine.
+
+The problems only come up, I think, when a routine calls itself re-entrantly.
+
+So the callgraph would need to distinguish between these two cases.
+
 ### Analyze memory usage
 
 If you define two variables that occupy the same address, an analysis error ought
@@ -83,35 +83,30 @@ This is not just an impressive trick -- in the presence of local pointers, which
 use up a word in zero-page, which we consider a precious resource, it allow those
 zero-page locations to be re-used.
 
-### Tail-call optimization
-
-If a block ends in a `call` can that be converted to end in a `goto`?  Why not?  I think it can,
-if the block is in tail position.  The constraints should iron out the same both ways.
-
-As long as the routine has consistent type context every place it exits, that should be fine.
-
-### Branch optimization in `if`
-
-Currently the `if` generator is not smart enough to avoid generating silly
-jump instructions.  (See the Fallthru tests.)  Improve it.
-
-### Dead code removal
-
-Once we have a call graph we can omit routines that we're sure aren't called.
-
-This would let us use include-files and standard-libraries nicely: any
-routines they define, but that you don't use, don't get included.
-
-Analyzing the set of possible routines that a vector can take on would help
-this immensely.
-
 Implementation
 --------------
 
-### Line numbers in analysis error messages
+### Filename and line number in analysis error messages
 
 For analysis errors, there is a line number, but it's the line of the routine
 after the routine in which the analysis error occurred.  Fix this.
+
+### Better selection of options
+
+`-O` should turn on the standard optimizations.
+
+There should maybe be a flag to turn off tail-call optimization.
+
+Some options should automatically add the appropriate architecture include
+directory to the path.
+
+Distribution
+------------
+
+### Demo game
+
+Seems you're not be able to get killed unless you go off the top or bottom of
+the screen?  In particular, you cannot collide with a bar?
 
 Blue-skying
 -----------

@@ -122,10 +122,11 @@ class Compiler(object):
             compilation_roster = [['main']] + [[routine.name] for routine in program.routines if routine.name != 'main']
 
         for roster_row in compilation_roster:
-            for routine_name in roster_row[0:-1]:
-                self.compile_routine(self.routines[routine_name], skip_final_goto=True)
-            routine_name = roster_row[-1]
-            self.compile_routine(self.routines[routine_name])
+            for i, routine_name in enumerate(roster_row):
+                if i < len(roster_row) - 1:
+                    self.compile_routine(self.routines[routine_name], next_routine=self.routines[roster_row[i + 1]])
+                else:
+                    self.compile_routine(self.routines[routine_name])
 
         for location, label in self.trampolines.items():
             self.emitter.resolve_label(label)
@@ -155,23 +156,45 @@ class Compiler(object):
             if defn.initial is None and defn.addr is None:
                 self.emitter.resolve_bss_label(label)
 
-    def compile_routine(self, routine, skip_final_goto=False):
-        self.current_routine = routine
-        self.skip_final_goto = skip_final_goto
-        self.final_goto_seen = False
+    def compile_routine(self, routine, next_routine=None):
         assert isinstance(routine, Routine)
+
+        self.current_routine = routine
+
         if routine.block:
             self.emitter.resolve_label(self.get_label(routine.name))
             self.compile_block(routine.block)
-            if not self.final_goto_seen:
+
+            needs_rts = True
+            last_op = self.emitter.get_tail()
+
+            if isinstance(last_op, JSR):
+                if isinstance(last_op.operand, Absolute):
+                    if isinstance(last_op.operand.value, Label):
+                        label = last_op.operand.value
+                        self.emitter.retract()
+                        self.emitter.emit(JMP(Absolute(label)))
+                        last_op = self.emitter.get_tail()
+
+            if isinstance(last_op, JMP):
+                needs_rts = False
+                if isinstance(last_op.operand, Absolute):
+                    if isinstance(last_op.operand.value, Label):
+                        if next_routine and last_op.operand.value.name == next_routine.name:
+                            self.emitter.retract()
+
+            if needs_rts:
                 self.emitter.emit(RTS())
+
         self.current_routine = None
-        self.skip_final_goto = False
 
     def compile_block(self, block):
         assert isinstance(block, Block)
+        block.shallow_contains_goto = False
         for instr in block.instrs:
             self.compile_instr(instr)
+            if isinstance(instr, GoTo):
+                block.shallow_contains_goto = True
 
     def compile_instr(self, instr):
         if isinstance(instr, SingleOp):
@@ -437,19 +460,15 @@ class Compiler(object):
             raise NotImplementedError(location_type)
 
     def compile_goto(self, instr):
-        self.final_goto_seen = True
-        if self.skip_final_goto:
-            pass
+        location = instr.location
+        label = self.get_label(instr.location.name)
+        location_type = self.get_type(location)
+        if isinstance(location_type, RoutineType):
+            self.emitter.emit(JMP(Absolute(label)))
+        elif isinstance(location_type, VectorType):
+            self.emitter.emit(JMP(Indirect(label)))
         else:
-            location = instr.location
-            label = self.get_label(instr.location.name)
-            location_type = self.get_type(location)
-            if isinstance(location_type, RoutineType):
-                self.emitter.emit(JMP(Absolute(label)))
-            elif isinstance(location_type, VectorType):
-                self.emitter.emit(JMP(Indirect(label)))
-            else:
-                raise NotImplementedError(location_type)
+            raise NotImplementedError(location_type)
 
     def compile_cmp(self, instr, src, dest):
         """`instr` is only for reporting purposes"""
@@ -662,12 +681,17 @@ class Compiler(object):
         else_label = Label('else_label')
         self.emitter.emit(cls(Relative(else_label)))
         self.compile_block(instr.block1)
+
         if instr.block2 is not None:
-            end_label = Label('end_label')
-            self.emitter.emit(JMP(Absolute(end_label)))
-            self.emitter.resolve_label(else_label)
-            self.compile_block(instr.block2)
-            self.emitter.resolve_label(end_label)
+            if instr.block1.shallow_contains_goto:
+                self.emitter.resolve_label(else_label)
+                self.compile_block(instr.block2)
+            else:
+                end_label = Label('end_label')
+                self.emitter.emit(JMP(Absolute(end_label)))
+                self.emitter.resolve_label(else_label)
+                self.compile_block(instr.block2)
+                self.emitter.resolve_label(end_label)
         else:
             self.emitter.resolve_label(else_label)
 

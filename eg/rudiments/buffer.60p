@@ -1,5 +1,6 @@
-// Include `support/${PLATFORM}.60p` before this source
 // Should print Y
+
+include "chrout.60p"
 
 byte table[2048] buf
 pointer ptr @ 254

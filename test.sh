@@ -10,4 +10,5 @@ falderal --substring-error \
     "tests/SixtyPical Storage.md" \
     "tests/SixtyPical Control Flow.md" \
     "tests/SixtyPical Fallthru.md" \
+    "tests/SixtyPical Callgraph.md" \
     "tests/SixtyPical Compilation.md"

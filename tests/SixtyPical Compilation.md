@@ -51,10 +51,12 @@ Call extern.
     | {
     |     ld a, 65
     |     call chrout
+    |     ld a, 0
     | }
     = $080D   LDA #$41
     = $080F   JSR $FFD2
-    = $0812   RTS
+    = $0812   LDA #$00
+    = $0814   RTS
 
 Call defined routine.
 
@@ -71,13 +73,39 @@ Call defined routine.
     |   trashes a, x, y, z, n
     | {
     |     call foo
+    |     ld a, 1
     | }
-    = $080D   JSR $0811
-    = $0810   RTS
-    = $0811   LDA #$00
-    = $0813   LDX #$00
-    = $0815   LDY #$00
-    = $0817   RTS
+    = $080D   JSR $0813
+    = $0810   LDA #$01
+    = $0812   RTS
+    = $0813   LDA #$00
+    = $0815   LDX #$00
+    = $0817   LDY #$00
+    = $0819   RTS
+
+Tail call is optimized into a jump.
+
+    | define foo routine
+    |   outputs a, x, y
+    |   trashes z, n
+    | {
+    |   ld a, 0
+    |   ld x, 0
+    |   ld y, 0
+    | }
+    | 
+    | define main routine
+    |   trashes a, x, y, z, n
+    | {
+    |     ld a, 1
+    |     call foo
+    | }
+    = $080D   LDA #$01
+    = $080F   JMP $0812
+    = $0812   LDA #$00
+    = $0814   LDX #$00
+    = $0816   LDY #$00
+    = $0818   RTS
 
 Access a defined memory location.
 
@@ -610,7 +638,6 @@ Compiling `repeat forever`.
     = $080D   LDY #$41
     = $080F   INY
     = $0810   JMP $080F
-    = $0813   RTS
 
 The body of `repeat forever` can be empty.
 
@@ -620,7 +647,6 @@ The body of `repeat forever` can be empty.
     |     } forever
     | }
     = $080D   JMP $080D
-    = $0810   RTS
 
 Compiling `for ... up to`.
 
@@ -1055,7 +1081,7 @@ Copy word to word table and back, with constant offsets.
     = $0848   STA $084D
     = $084B   RTS
 
-Indirect call.
+Indirect call.  TODO: we don't need the final RTS here, omit it.
 
     | vector routine
     |   outputs x
@@ -1076,16 +1102,15 @@ Indirect call.
     |     copy bar, foo
     |     call foo
     | }
-    = $080D   LDA #$1B
-    = $080F   STA $0822
+    = $080D   LDA #$1A
+    = $080F   STA $0821
     = $0812   LDA #$08
-    = $0814   STA $0823
-    = $0817   JSR $081E
-    = $081A   RTS
-    = $081B   LDX #$C8
-    = $081D   RTS
-    = $081E   JMP ($0822)
-    = $0821   RTS
+    = $0814   STA $0822
+    = $0817   JMP $081D
+    = $081A   LDX #$C8
+    = $081C   RTS
+    = $081D   JMP ($0821)
+    = $0820   RTS
 
 Compiling `goto`.  Note that no `RTS` is emitted after the `JMP`.
 
@@ -1139,28 +1164,27 @@ Copying to and from a vector table.
     |     call one
     | }
     = $080D   LDX #$00
-    = $080F   LDA #$3F
-    = $0811   STA $0846
+    = $080F   LDA #$3E
+    = $0811   STA $0845
     = $0814   LDA #$08
-    = $0816   STA $0847
-    = $0819   LDA #$3F
-    = $081B   STA $0848,X
+    = $0816   STA $0846
+    = $0819   LDA #$3E
+    = $081B   STA $0847,X
     = $081E   LDA #$08
-    = $0820   STA $0948,X
-    = $0823   LDA $0846
-    = $0826   STA $0848,X
-    = $0829   LDA $0847
-    = $082C   STA $0948,X
-    = $082F   LDA $0848,X
-    = $0832   STA $0846
-    = $0835   LDA $0948,X
-    = $0838   STA $0847
-    = $083B   JSR $0842
-    = $083E   RTS
-    = $083F   LDX #$C8
-    = $0841   RTS
-    = $0842   JMP ($0846)
-    = $0845   RTS
+    = $0820   STA $0947,X
+    = $0823   LDA $0845
+    = $0826   STA $0847,X
+    = $0829   LDA $0846
+    = $082C   STA $0947,X
+    = $082F   LDA $0847,X
+    = $0832   STA $0845
+    = $0835   LDA $0947,X
+    = $0838   STA $0846
+    = $083B   JMP $0841
+    = $083E   LDX #$C8
+    = $0840   RTS
+    = $0841   JMP ($0845)
+    = $0844   RTS
 
 Copying to and from a vector table, with constant offsets.
 
@@ -1190,28 +1214,27 @@ Copying to and from a vector table, with constant offsets.
     |     call one
     | }
     = $080D   LDX #$00
-    = $080F   LDA #$3F
-    = $0811   STA $0846
+    = $080F   LDA #$3E
+    = $0811   STA $0845
     = $0814   LDA #$08
-    = $0816   STA $0847
-    = $0819   LDA #$3F
-    = $081B   STA $0849,X
+    = $0816   STA $0846
+    = $0819   LDA #$3E
+    = $081B   STA $0848,X
     = $081E   LDA #$08
-    = $0820   STA $0949,X
-    = $0823   LDA $0846
-    = $0826   STA $084A,X
-    = $0829   LDA $0847
-    = $082C   STA $094A,X
-    = $082F   LDA $084B,X
-    = $0832   STA $0846
-    = $0835   LDA $094B,X
-    = $0838   STA $0847
-    = $083B   JSR $0842
-    = $083E   RTS
-    = $083F   LDX #$C8
-    = $0841   RTS
-    = $0842   JMP ($0846)
-    = $0845   RTS
+    = $0820   STA $0948,X
+    = $0823   LDA $0845
+    = $0826   STA $0849,X
+    = $0829   LDA $0846
+    = $082C   STA $0949,X
+    = $082F   LDA $084A,X
+    = $0832   STA $0845
+    = $0835   LDA $094A,X
+    = $0838   STA $0846
+    = $083B   JMP $0841
+    = $083E   LDX #$C8
+    = $0840   RTS
+    = $0841   JMP ($0845)
+    = $0844   RTS
 
 ### add, sub
 
@@ -1697,15 +1720,14 @@ just the same as initialized global storage locations are.
     |   ld x, t
     |   call foo
     | }
-    = $080D   LDX $081F
-    = $0810   JSR $0814
-    = $0813   RTS
-    = $0814   STX $081E
-    = $0817   INC $081E
-    = $081A   LDX $081E
-    = $081D   RTS
-    = $081E   .byte $FF
-    = $081F   .byte $07
+    = $080D   LDX $081E
+    = $0810   JMP $0813
+    = $0813   STX $081D
+    = $0816   INC $081D
+    = $0819   LDX $081D
+    = $081C   RTS
+    = $081D   .byte $FF
+    = $081E   .byte $07
 
 Memory locations defined local dynamic to a routine are allocated
 just the same as uninitialized global storage locations are.
@@ -1730,13 +1752,12 @@ just the same as uninitialized global storage locations are.
     |   call foo
     | }
     = $080D   LDX #$00
-    = $080F   STX $0821
-    = $0812   JSR $0816
-    = $0815   RTS
-    = $0816   STX $0820
-    = $0819   INC $0820
-    = $081C   LDX $0820
-    = $081F   RTS
+    = $080F   STX $0820
+    = $0812   JMP $0815
+    = $0815   STX $081F
+    = $0818   INC $081F
+    = $081B   LDX $081F
+    = $081E   RTS
 
 Memory locations defined local dynamic to a routine are allocated
 just the same as uninitialized global storage locations are, even
@@ -1763,9 +1784,8 @@ when declared with a fixed address.
     | }
     = $080D   LDX #$00
     = $080F   STX $0401
-    = $0812   JSR $0816
-    = $0815   RTS
-    = $0816   STX $0400
-    = $0819   INC $0400
-    = $081C   LDX $0400
-    = $081F   RTS
+    = $0812   JMP $0815
+    = $0815   STX $0400
+    = $0818   INC $0400
+    = $081B   LDX $0400
+    = $081E   RTS
