@@ -2,14 +2,14 @@ SixtyPical
 ==========
 
 _Version 0.21_
-| _See also:_ [Bubble Escape 2K](https://github.com/catseye/Bubble-Escape)
-∘ [SITU-SOL](https://github.com/catseye/SITU-SOL)
+| _See also:_ [Bubble Escape 2K](https://github.com/catseye/Bubble-Escape#readme)
+∘ [SITU-SOL](https://github.com/catseye/SITU-SOL#readme)
 
 - - - -
 
-_NOTE:_ Having met the majority of its goals, the SixtyPical project
-might not see much more development going forward.  See
-[Future directions for SixtyPical][] for more information.
+_NOTE: Having met the majority of its goals, the SixtyPical project_
+_might not undergo much more development going forward.  See_
+[Future directions for SixtyPical][] _for more information._
 
 - - - -
 
