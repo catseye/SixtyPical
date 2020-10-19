@@ -1,9 +1,19 @@
 SixtyPical
 ==========
 
-_Version 0.21.  Work-in-progress, everything is subject to change._
+_Version 0.21_
+| _See also:_ [Bubble Escape 2K](https://github.com/catseye/Bubble-Escape)
+∘ [SITU-SOL](https://github.com/catseye/SITU-SOL)
 
-**SixtyPical** brings [extended static checking][] to the [6502][].
+- - - -
+
+_NOTE:_ Having met the majority of its goals, the SixtyPical project
+might not see much more development going forward.  See
+[Future directions for SixtyPical][] for more information.
+
+- - - -
+
+**SixtyPical** brings advanced static analysis to the [6502][].
 
 SixtyPical is a [low-level](#low-level) programming language
 supporting some advanced [static analysis](#static-analysis) methods.
@@ -68,8 +78,9 @@ inclusion in the language is primarily to make programs easier to analyze.
 ### Static analysis
 
 The SixtyPical language defines an [effect system][], and the reference
-compiler [abstractly interprets][] the input program to check that
-it conforms to it.  It can detect common mistakes such as
+compiler [symbolically executes][] the input program in the manner of
+[flow typing][] to confirm that it does not violate it.  This can detect
+common mistakes such as
 
 *   you forgot to clear carry before adding something to the accumulator
 *   a subroutine that you called trashes a register you thought it preserved
@@ -127,11 +138,12 @@ Documentation
 *   [Output formats supported by `sixtypical`](doc/Output%20Formats.md)
 *   [TODO](TODO.md)
 
+[Future directions for SixtyPical]: https://gist.github.com/cpressey/f35e104b3e3cf555824aa2b4d15ea858
 [6502]: https://en.wikipedia.org/wiki/MOS_Technology_6502
 [MOS Technology 6502]: https://en.wikipedia.org/wiki/MOS_Technology_6502
-[extended static checking]: https://en.wikipedia.org/wiki/Extended_static_checking
 [effect system]: https://en.wikipedia.org/wiki/Effect_system
-[abstractly interprets]: https://en.wikipedia.org/wiki/Abstract_interpretation
+[symbolically executes]: https://en.wikipedia.org/wiki/Symbolic_execution
+[flow typing]: https://en.wikipedia.org/wiki/Flow-sensitive_typing
 [calling conventions]: https://en.wikipedia.org/wiki/Calling_convention
 [register allocation]: https://en.wikipedia.org/wiki/Register_allocation
 [VICE]: http://vice-emu.sourceforge.net/
