@@ -1,6 +1,14 @@
 History of SixtyPical
 =====================
 
+0.21-2023.0309
+--------------
+
+*   Python 3 is the default interpreter for `sixtypical`.
+*   Test appliance added for testing under Python 2.7.
+*   `dcc6502` test adapter made runnable under both
+    Python 2 and Python 3.
+
 0.21
 ----
 
