@@ -2,8 +2,8 @@ SixtyPical
 ==========
 
 _Version 0.21_
-| _See also:_ [Bubble Escape 2K](https://github.com/catseye/Bubble-Escape#readme)
-∘ [SITU-SOL](https://github.com/catseye/SITU-SOL#readme)
+| _See also:_ [Bubble Escape 2K](https://codeberg.org/catseye/Bubble-Escape#bubble-escape)
+∘ [SITU-SOL](https://git.catseye.tc/SITU-SOL/)
 
 - - - -
 
@@ -138,7 +138,7 @@ Documentation
 *   [Output formats supported by `sixtypical`](doc/Output%20Formats.md)
 *   [TODO](TODO.md)
 
-[Future directions for SixtyPical]: https://gist.github.com/cpressey/f35e104b3e3cf555824aa2b4d15ea858
+[Future directions for SixtyPical]: doc/Future%20directions%20for%20SixtyPical.md
 [6502]: https://en.wikipedia.org/wiki/MOS_Technology_6502
 [MOS Technology 6502]: https://en.wikipedia.org/wiki/MOS_Technology_6502
 [effect system]: https://en.wikipedia.org/wiki/Effect_system
