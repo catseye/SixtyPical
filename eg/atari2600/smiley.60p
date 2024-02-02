@@ -1,6 +1,10 @@
 // smiley.60p - SixtyPical translation of smiley.oph (2018),
 //   which is itself a stripped-down version of atari-2600-example.oph
 
+// SPDX-FileCopyrightText:  Chris Pressey, the author of this work, has dedicated it to the public domain.
+// For more information, please refer to <https://unlicense.org/>
+// SPDX-License-Identifier: Unlicense
+
 byte VSYNC         @ $00
 byte VBLANK        @ $01
 byte WSYNC         @ $02

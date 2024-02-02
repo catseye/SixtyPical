@@ -2,8 +2,10 @@
 // Demonstration of the VIC-II raster interrupt on the Commodore 64:
 // Alter the border colour in the middle part of the screen only,
 // Simplified (KERNAL IRQ vector) version.
-// By Chris Pressey, Cat's Eye Technologies.
-// This work has been placed in the public domain.
+
+// SPDX-FileCopyrightText:  Chris Pressey, the author of this work, has dedicated it to the public domain.
+// For more information, please refer to <https://unlicense.org/>
+// SPDX-License-Identifier: Unlicense
 
 // For comments, see ribos2.p65.
 

@@ -1,6 +1,12 @@
 The PETulant Cursor
 ===================
 
+<!--
+SPDX-FileCopyrightText:  Chris Pressey, the author of this work, has dedicated it to the public domain.
+For more information, please refer to <https://unlicense.org/>
+SPDX-License-Identifier: Unlicense
+-->
+
 This is a tiny (44 bytes long) machine-language demo for the Commodore 64,
 somewhat in the style of later "display hacks" for the Amiga -- surprising
 and silly ways to play with the user interface.
@@ -10,8 +16,8 @@ So as not to not spoil the fun, try running it before reading the source.
 To run it, make the file PETULANT.PRG accessible to your favourite Commodore
 64 (or Commodore 64 emulator) in your favourite way, then
 
-  LOAD "PETULANT.PRG",8,1
-  SYS 679
+    LOAD "PETULANT.PRG",8,1
+    SYS 679
 
 For further fun, try changing the text colour (hold the C= or CTRL key while
 pressing a number) or the background colour (POKE 53281 with a number from
@@ -27,6 +33,6 @@ makes it much more obvious when control has returned to BASIC immediate mode
 
 Enjoy!
 
--Chris Pressey
-April 1, 2008
-Chicago, IL
+-Chris Pressey  
+April 1, 2008  
+Chicago, IL  

@@ -1,6 +1,12 @@
 Future directions for SixtyPical
 ================================
 
+<!--
+Copyright (c) 2014-2024, Chris Pressey, Cat's Eye Technologies.
+This file is distributed under a 2-clause BSD license.  See LICENSES/ dir.
+SPDX-License-Identifier: LicenseRef-BSD-2-Clause-X-SixtyPical
+-->
+
 [SixtyPical](https://codeberg.org/catseye/SixtyPical) has reached a mature
 stage of development.  There are small features that could be added, but
 they are minor compared to the main features

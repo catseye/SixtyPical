@@ -1,7 +1,10 @@
 ; petulant.p65 - The PETulant Cursor, a "display hack" for the Commodore 64
 ; Originally written by Chris Pressey sometime in the late 1980's
 ; Rewritten in P65 assembly and released March 2008
-; This work is part of the public domain.
+
+; SPDX-FileCopyrightText:  Chris Pressey, the author of this work, has dedicated it to the public domain.
+; For more information, please refer to <https://unlicense.org/>
+; SPDX-License-Identifier: Unlicense
 
 ; ----- BEGIN petulant.p65 -----
 

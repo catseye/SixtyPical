@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText:  Chris Pressey, the original author of this work, has dedicated it to the public domain.
+// For more information, please refer to <https://unlicense.org/>
+// SPDX-License-Identifier: Unlicense
+
 byte joy2 @ $dc00
 
 word delta

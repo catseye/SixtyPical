@@ -1,6 +1,12 @@
 Ribos
 =====
 
+<!--
+SPDX-FileCopyrightText:  Chris Pressey, the author of this work, has dedicated it to the public domain.
+For more information, please refer to <https://unlicense.org/>
+SPDX-License-Identifier: Unlicense
+-->
+
 This little demo is intended to be a well-commented example of how to
 program a raster interrupt in 6502 assembly language on a Commodore 64.
 
@@ -18,9 +24,9 @@ How to Run the Demo (using the VICE C64 emulator, x64)
 1. Mount this project's directory as drive 8:
 
    Make sure
-     Peripheral settings > Device #8 > Enable IEC Device
+     `Peripheral settings > Device #8 > Enable IEC Device`
    is checked, then select
-     Peripheral settings > Device #8 > File system directory...
+     `Peripheral settings > Device #8 > File system directory...`
    and enter the path to the project directory.
 
 2. LOAD "RIBOS.PRG",8,1
@@ -74,6 +80,6 @@ points.  What I learned in the process is written into the comments.
 
 Happy raster-interrupting!
 
--Chris Pressey
-April 10, 2007
-Vancouver, BC
+-Chris Pressey  
+April 10, 2007  
+Vancouver, BC  

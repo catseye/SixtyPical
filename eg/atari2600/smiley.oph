@@ -2,7 +2,9 @@
 ; smiley.oph (2018)
 ; stripped-down version of atari-2600-example.oph (2012)
 ;
-; This work is in the public domain.  See the file UNLICENSE for more info.
+; SPDX-FileCopyrightText:  Chris Pressey, the author of this work, has dedicated it to the public domain.
+; For more information, please refer to <https://unlicense.org/>
+; SPDX-License-Identifier: Unlicense
 ;
 ; to build and run in Stella:
 ;   ophis smiley.oph -o smiley.bin

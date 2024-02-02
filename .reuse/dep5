@@ -1,0 +1,17 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+
+Files:
+  .gitignore
+  bin/sixtypical
+  eg/rudiments/errorful/*.60p
+  eg/rudiments/*.60p
+  eg/*/.gitignore
+  eg/*/*.png
+  eg/*/*.prg
+  eg/*/*.sh
+  images/*
+  src/sixtypical/__init__.py
+  test.sh
+  tests/appliances/*
+Copyright: Chris Pressey, the original author of this work, has dedicated it to the public domain.
+License: Unlicense

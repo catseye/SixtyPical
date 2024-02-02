@@ -1,6 +1,12 @@
 SixtyPical
 ==========
 
+<!--
+Copyright (c) 2014-2024, Chris Pressey, Cat's Eye Technologies.
+This file is distributed under a 2-clause BSD license.  See LICENSES/ dir.
+SPDX-License-Identifier: LicenseRef-BSD-2-Clause-X-SixtyPical
+-->
+
 This document describes the SixtyPical programming language version 0.20,
 both its static semantics (the capabilities and limits of the static
 analyses it defines) and its runtime semantics (with reference to the

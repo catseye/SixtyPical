@@ -1,3 +1,7 @@
+# Copyright (c) 2014-2024, Chris Pressey, Cat's Eye Technologies.
+# This file is distributed under a 2-clause BSD license.  See LICENSES/ dir.
+# SPDX-License-Identifier: LicenseRef-BSD-2-Clause-X-SixtyPical
+
 """Binary machine code emitter.  Used in SixtyPical to emit 6502 machine code,
 but not specific to SixtyPical, or 6502.  Not even necessarily machine code -
 though some parts are written around the assumptions of 8-bit architectures."""

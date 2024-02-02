@@ -1,3 +1,7 @@
+# Copyright (c) 2014-2024, Chris Pressey, Cat's Eye Technologies.
+# This file is distributed under a 2-clause BSD license.  See LICENSES/ dir.
+# SPDX-License-Identifier: LicenseRef-BSD-2-Clause-X-SixtyPical
+
 # encoding: UTF-8
 
 from sixtypical.model import (

@@ -1,6 +1,12 @@
 SixtyPical
 ==========
 
+<!--
+Copyright (c) 2014-2024, Chris Pressey, Cat's Eye Technologies.
+This file is distributed under a 2-clause BSD license.  See LICENSES/ dir.
+SPDX-License-Identifier: LicenseRef-BSD-2-Clause-X-SixtyPical
+-->
+
 _Version 0.21_
 | _See also:_ [Bubble Escape 2K](https://codeberg.org/catseye/Bubble-Escape#bubble-escape)
 ∘ [SITU-SOL](https://git.catseye.tc/SITU-SOL/)

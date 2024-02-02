@@ -4,7 +4,9 @@
 ;   plus an example of reading the joystick.
 ; By Chris Pressey, November 2, 2012.
 ;
-; This work is in the public domain.  See the file UNLICENSE for more info.
+; SPDX-FileCopyrightText:  Chris Pressey, the author of this work, has dedicated it to the public domain.
+; For more information, please refer to <https://unlicense.org/>
+; SPDX-License-Identifier: Unlicense
 ;
 ; Based on Chris Cracknell's Atari 2600 clock (also in the public domain):
 ;   http://everything2.com/title/An+example+of+Atari+2600+source+code

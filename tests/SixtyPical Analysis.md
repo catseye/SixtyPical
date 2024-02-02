@@ -1,6 +1,12 @@
 SixtyPical Analysis
 ===================
 
+<!--
+Copyright (c) 2014-2024, Chris Pressey, Cat's Eye Technologies.
+This file is distributed under a 2-clause BSD license.  See LICENSES/ dir.
+SPDX-License-Identifier: LicenseRef-BSD-2-Clause-X-SixtyPical
+-->
+
 This is a test suite, written in [Falderal][] format, for the SixtyPical
 static analysis rules.
 
