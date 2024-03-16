@@ -84,7 +84,7 @@ inclusion in the language is primarily to make programs easier to analyze.
 ### Static analysis
 
 The SixtyPical language defines an [effect system][], and the reference
-compiler [symbolically executes][] the input program in the manner of
+compiler [abstractly interprets][] the input program in the manner of
 [flow typing][] to confirm that it does not violate it.  This can detect
 common mistakes such as
 
@@ -148,7 +148,7 @@ Documentation
 [6502]: https://en.wikipedia.org/wiki/MOS_Technology_6502
 [MOS Technology 6502]: https://en.wikipedia.org/wiki/MOS_Technology_6502
 [effect system]: https://en.wikipedia.org/wiki/Effect_system
-[symbolically executes]: https://en.wikipedia.org/wiki/Symbolic_execution
+[abstractly interprets]: https://en.wikipedia.org/wiki/Abstract_interpretation
 [flow typing]: https://en.wikipedia.org/wiki/Flow-sensitive_typing
 [calling conventions]: https://en.wikipedia.org/wiki/Calling_convention
 [register allocation]: https://en.wikipedia.org/wiki/Register_allocation
